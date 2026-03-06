@@ -259,7 +259,7 @@ const Login = ({ onLogin }) => {
           </div>
         </div>
         {err && <div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',borderRadius:5,padding:'8px 12px',fontSize:12,color:'var(--err)',marginBottom:14}}>{err}</div>}
-        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onClick={submit}>Sign In →</button>
+        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onMouseDown={e=>{e.preventDefault();submit();}}>Sign In →</button>
         <div className="divider" style={{margin:'20px 0 14px'}}/>
         <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Demo Credentials</div>
         {DEMO_USERS.map(u=>(
