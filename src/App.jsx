@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -27550,16 +27550,23 @@ const TITLES = {
 };
 
 class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-  static getDerivedStateFromError(error) { return { hasError: true, error }; }
-  componentDidCatch(error, info) { console.error('Page crash:', error, info); }
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('Page crash:', error, info);
+  }
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{padding:40,textAlign:'center'}}>
+        <div style={{padding:40,textAlign:'center',background:'var(--bg)',minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
           <div style={{fontSize:48,marginBottom:16}}>⚠️</div>
           <div style={{fontFamily:'Barlow Condensed',fontSize:24,fontWeight:700,color:'var(--err)',marginBottom:8}}>Page Error</div>
-          <div style={{color:'var(--muted)',fontSize:13,marginBottom:24,maxWidth:400,margin:'0 auto 24px'}}>{this.state.error?.message || 'Something went wrong rendering this page.'}</div>
+          <div style={{color:'var(--muted)',fontSize:13,marginBottom:24,maxWidth:400,textAlign:'center'}}>{this.state.error?.message || 'Something went wrong on this page.'}</div>
           <button className="btn btn-p" onClick={()=>this.setState({hasError:false,error:null})}>← Go Back</button>
         </div>
       );
@@ -27567,6 +27574,7 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
 
 export default function MaisyERP() {
   const [user,  setUser]  = useState(null);
