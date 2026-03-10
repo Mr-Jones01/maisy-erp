@@ -1,4 +1,97 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+
+      {prodTab==='defects'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.defectLog||[]).length} defects logged</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'DEF-'+uid(),dateFound:now(),orderId:'',productType:'',station:'',defectType:'',description:'',severity:'Minor',disposition:'Rework',rootCause:'',corrAction:'',status:'Open',cost:0});setModal('defect');}}>+ Log Defect</button>
+        </div>
+        <table><thead><tr><th>Defect ID</th><th>Date</th><th>Order</th><th>Product Type</th><th>Station</th><th>Type</th><th>Description</th><th>Severity</th><th>Disposition</th><th>Root Cause</th><th>Status</th><th>Cost</th><th/></tr></thead>
+          <tbody>{(data.defectLog||[]).length===0&&<tr><td colSpan={13}><Empty msg="No defects logged — perfect quality!"/></td></tr>}
+          {(data.defectLog||[]).map((d,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{d.id}</td>
+              <td style={{fontSize:11}}>{d.dateFound}</td>
+              <td style={{fontFamily:'monospace',fontSize:10}}>{d.orderId}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{d.productType}</td>
+              <td><span className="chip">{d.station}</span></td>
+              <td style={{fontSize:11}}>{d.defectType}</td>
+              <td style={{fontSize:10,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.description}>{d.description}</td>
+              <td><span style={{color:d.severity==='Critical'?'var(--err)':d.severity==='Major'?'var(--warn)':'var(--ok)',fontWeight:700,fontSize:10}}>{d.severity}</span></td>
+              <td style={{fontSize:10}}>{d.disposition}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{d.rootCause}</td>
+              <td><Badge s={d.status||'Open'}/></td>
+              <td>{d.cost?'$'+d.cost:'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...d});setModal('defect');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>setData(dt=>({...dt,defectLog:(dt.defectLog||[]).filter((_,j)=>j!==i)}))}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {prodTab==='shifts'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.shiftHandoff||[]).length} shift entries</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({date:now(),lead:'',ordersCompleted:0,ordersInProgress:0,stationsDown:'None',qualityIssues:'None',materialShortages:'None',safetyIssues:'None',tomorrowPriorities:'',notes:''});setModal('shift');}}>+ Log Shift</button>
+        </div>
+        <table><thead><tr><th>Date</th><th>Lead</th><th>Completed</th><th>In Progress</th><th>Stations Down</th><th>Quality Issues</th><th>Material Shortages</th><th>Safety Issues</th><th>Tomorrow's Priorities</th><th/></tr></thead>
+          <tbody>{(data.shiftHandoff||[]).length===0&&<tr><td colSpan={10}><Empty msg="No shift handoffs logged"/></td></tr>}
+          {(data.shiftHandoff||[]).map((s,i)=>(
+            <tr key={i}>
+              <td style={{fontWeight:600}}>{s.date}</td><td>{s.lead}</td>
+              <td style={{textAlign:'center',color:'var(--ok)',fontWeight:700}}>{s.ordersCompleted}</td>
+              <td style={{textAlign:'center',color:'var(--warn)'}}>{s.ordersInProgress}</td>
+              <td style={{fontSize:10,color:s.stationsDown&&s.stationsDown!=='None'?'var(--err)':''}}>{s.stationsDown||'—'}</td>
+              <td style={{fontSize:10,color:s.qualityIssues&&s.qualityIssues!=='None'?'var(--warn)':''}}>{s.qualityIssues||'—'}</td>
+              <td style={{fontSize:10,color:s.materialShortages&&s.materialShortages!=='None'?'var(--warn)':''}}>{s.materialShortages||'—'}</td>
+              <td style={{fontSize:10,color:s.safetyIssues&&s.safetyIssues!=='None'?'var(--err)':''}}>{s.safetyIssues||'—'}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{s.tomorrowPriorities}</td>
+              <td><button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,shiftHandoff:(d.shiftHandoff||[]).filter((_,j)=>j!==i)}))}>×</button></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {modal==='defect'&&<Modal title="Log Defect" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Date Found"><input type="date" value={form.dateFound||''} onChange={e=>setForm(f=>({...f,dateFound:e.target.value}))}/></Field>
+          <Field label="Order #"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
+          <Field label="Product Type"><input value={form.productType||''} onChange={e=>setForm(f=>({...f,productType:e.target.value}))}/></Field>
+          <Field label="Station"><select value={form.station||''} onChange={e=>setForm(f=>({...f,station:e.target.value}))}>{['','CNC Cut','CNC Drill','Welding','Powder Coat','Assembly','QC Inspection','Packaging'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Defect Type"><input value={form.defectType||''} onChange={e=>setForm(f=>({...f,defectType:e.target.value}))}/></Field>
+          <Field label="Severity"><select value={form.severity||'Minor'} onChange={e=>setForm(f=>({...f,severity:e.target.value}))}>{['Minor','Major','Critical'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Disposition"><select value={form.disposition||'Rework'} onChange={e=>setForm(f=>({...f,disposition:e.target.value}))}>{['Rework','Scrap','Accept As-Is','Return to Vendor'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Status"><select value={form.status||'Open'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Open','In Progress','Closed'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Cost ($)"><input type="number" step="0.01" value={form.cost||''} onChange={e=>setForm(f=>({...f,cost:Number(e.target.value)}))}/></Field>
+        </div>
+        <Field label="Description"><textarea rows={2} value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <Field label="Root Cause"><input value={form.rootCause||''} onChange={e=>setForm(f=>({...f,rootCause:e.target.value}))}/></Field>
+        <Field label="Corrective Action"><input value={form.corrAction||''} onChange={e=>setForm(f=>({...f,corrAction:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{const d={...form};if(!(data.defectLog||[]).find(x=>x.id===d.id))setData(dt=>({...dt,defectLog:[...(dt.defectLog||[]),d]}));else setData(dt=>({...dt,defectLog:(dt.defectLog||[]).map(x=>x.id===d.id?d:x)}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+      {modal==='shift'&&<Modal title="Shift Handoff" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Shift Lead"><input value={form.lead||''} onChange={e=>setForm(f=>({...f,lead:e.target.value}))}/></Field>
+          <Field label="Orders Completed"><input type="number" value={form.ordersCompleted||''} onChange={e=>setForm(f=>({...f,ordersCompleted:Number(e.target.value)}))}/></Field>
+          <Field label="Orders In Progress"><input type="number" value={form.ordersInProgress||''} onChange={e=>setForm(f=>({...f,ordersInProgress:Number(e.target.value)}))}/></Field>
+        </div>
+        <Field label="Stations Down"><input value={form.stationsDown||''} onChange={e=>setForm(f=>({...f,stationsDown:e.target.value}))}/></Field>
+        <Field label="Quality Issues"><input value={form.qualityIssues||''} onChange={e=>setForm(f=>({...f,qualityIssues:e.target.value}))}/></Field>
+        <Field label="Material Shortages"><input value={form.materialShortages||''} onChange={e=>setForm(f=>({...f,materialShortages:e.target.value}))}/></Field>
+        <Field label="Safety Issues"><input value={form.safetyIssues||''} onChange={e=>setForm(f=>({...f,safetyIssues:e.target.value}))}/></Field>
+        <Field label="Tomorrow's Priorities"><textarea rows={2} value={form.tomorrowPriorities||''} onChange={e=>setForm(f=>({...f,tomorrowPriorities:e.target.value}))}/></Field>
+        <Field label="Notes"><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{setData(d=>({...d,shiftHandoff:[...(d.shiftHandoff||[]),form]}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+ useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -6546,22 +6639,3879 @@ const INIT = {
     }
 ],
 
-  // ERP.xlsx (pre-2026) — 387 historical customer orders Nov 2024-Feb 2025
+  // ERP: 387 historical orders (safe null fields)
   legacyOrders: [
-    {
-        "id": "LEG-0001",
-        "customer": "Marshon Smith Kempf",
-        "date": "2025-11-20",
-        "shipTo": "Local Pickup",
-        "productType": "42\u201d Cable - Fascia",
-        "quantities": [
-            30.0,
-            16.0,
-            16.0,
-            6.0,
-            26.0,
-            338.0
-        ],
+  {
+    "id": "LEG-0001",
+    "customer": "Marshon Smith Kempf",
+    "date": "2025-11-20",
+    "shipTo": "Local Pickup",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 30.0,
+    "qty2": 16.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0002",
+    "customer": "Ford Perry",
+    "date": "2025-11-20",
+    "shipTo": "Local Install 3bd",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 63.0,
+    "qty2": 29.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0003",
+    "customer": "Stan Thornton",
+    "date": "2025-11-20",
+    "shipTo": "Local Install 3bd",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 26.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0004",
+    "customer": "Ben Hall (dads job)",
+    "date": "2025-11-20",
+    "shipTo": "Shipping",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0005",
+    "customer": "Paul Beagle",
+    "date": "2025-11-20",
+    "shipTo": "Shipping",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 13.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0006",
+    "customer": "Carol Oliver & Elliav",
+    "date": "2025-11-21",
+    "shipTo": "3bd w/side install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 59.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0007",
+    "customer": "Jrscates LLC James Scate",
+    "date": "2025-11-25",
+    "shipTo": "Shipping",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 16.0,
+    "qty2": 14.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0008",
+    "customer": "Ac Wool",
+    "date": "2025-11-26",
+    "shipTo": "Local Install 3bd",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 27.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0009",
+    "customer": "Patrick McMullen",
+    "date": "2025-12-02",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 6.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0010",
+    "customer": "Nathan Oines",
+    "date": "2025-11-12",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 34.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0011",
+    "customer": "3bd - Inventory",
+    "date": "2025-11-12",
+    "shipTo": "Bellevue",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 100.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0012",
+    "customer": "Kristen Jepsen",
+    "date": "2025-11-12",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0013",
+    "customer": "Amy Talarico",
+    "date": "2025-11-10",
+    "shipTo": "California Ship",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0014",
+    "customer": "Lisa Brown",
+    "date": "2025-11-10",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 8.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0015",
+    "customer": "Kim Sloat",
+    "date": "2025-11-10",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 40.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0016",
+    "customer": "Cary Jones",
+    "date": "2025-11-10",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 23.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0017",
+    "customer": "Joe Christman",
+    "date": "2025-11-06",
+    "shipTo": "Ship to: Denver",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 45.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0018",
+    "customer": "Judd & Ellie Mathiason",
+    "date": "2025-11-05",
+    "shipTo": "Local Pickup",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 47.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0019",
+    "customer": "BRAD Lewandowski",
+    "date": "2025-11-05",
+    "shipTo": "Local Install 3bd",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 18.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0020",
+    "customer": "Keith Robertson",
+    "date": "2025-11-03",
+    "shipTo": "Local Install 3bd",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 26.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0021",
+    "customer": "Dean Brotzman",
+    "date": "2025-11-03",
+    "shipTo": "Local Pickup",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 2.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0022",
+    "customer": "Rick Taylor",
+    "date": "2025-10-24",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 38.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0023",
+    "customer": "Rob Motts",
+    "date": "2025-10-30",
+    "shipTo": "Local Install 3bd",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0024",
+    "customer": "Barry McLane (CUSTOM COLOR)",
+    "date": "2025-10-23",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 34.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0025",
+    "customer": "David Jumpa",
+    "date": "2024-12-30",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 7.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0026",
+    "customer": "Zhuang",
+    "date": "2024-12-30",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 14.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0027",
+    "customer": "Blake Carson",
+    "date": "2025-01-03",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 25.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0028",
+    "customer": "Merwin Storage",
+    "date": "2025-01-03",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 16.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0029",
+    "customer": "JC",
+    "date": "2024-12-27",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 5.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0030",
+    "customer": "Lisa Addy / Rock Ext",
+    "date": "2025-01-10",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0031",
+    "customer": "Cheryl Johnson",
+    "date": "2025-01-06",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0032",
+    "customer": "Chris Campbell",
+    "date": "2025-01-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 27.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0033",
+    "customer": "David Johnson (WHITE!)",
+    "date": "2025-01-23",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0034",
+    "customer": "Lillian Colbert",
+    "date": "2025-02-04",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0035",
+    "customer": "Ryan Rauschert",
+    "date": "2025-01-17",
+    "shipTo": "Oregon (Mail)",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0036",
+    "customer": "Tami Neumann (Rework 2)",
+    "date": "2025-02-11",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0037",
+    "customer": "Justin Whitman",
+    "date": "2025-01-29",
+    "shipTo": "Montana",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 10.0,
+    "qty2": 5.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0038",
+    "customer": "3BD - Matt Kimmerly",
+    "date": "2025-01-29",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 39.0,
+    "qty2": 18.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0039",
+    "customer": "Zach Yamagishi",
+    "date": "2025-02-04",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 8.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0040",
+    "customer": "3BD - Daniel Phillips",
+    "date": "2025-01-29",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 16.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0041",
+    "customer": "3BD - Craig Feldman",
+    "date": "2025-01-30",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 16.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0042",
+    "customer": "Garret Jacobs",
+    "date": "2025-01-29",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0043",
+    "customer": "3BD - Chris Helgeson",
+    "date": "2025-02-27",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 47.0,
+    "qty2": 14.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0044",
+    "customer": "3BD - Juan Morales",
+    "date": "2025-02-27",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 50.0,
+    "qty2": 16.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0045",
+    "customer": "Ben Murphy - Monica",
+    "date": "2025-02-19",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 11.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0046",
+    "customer": "Ben Murphy - Eric",
+    "date": "2025-02-19",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 14.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0047",
+    "customer": "Ben Murphy - Clifton",
+    "date": "2025-02-13",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 9.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0048",
+    "customer": "Cheri Douglas",
+    "date": "2025-02-17",
+    "shipTo": "Wisconsin",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 24.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0049",
+    "customer": "Terry Walker",
+    "date": "2025-02-27",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 6.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0050",
+    "customer": "Alan / Vicky / Kathren",
+    "date": "2025-02-20",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 16.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0051",
+    "customer": "John Barnwell",
+    "date": "2025-03-20",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0052",
+    "customer": "3BD - Todd Dunlap",
+    "date": "2025-02-27",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0053",
+    "customer": "Andrew Luccock",
+    "date": "2025-03-11",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 17.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0054",
+    "customer": "3BD - Matt Kimmberly - REWORK 3",
+    "date": "2025-03-11",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 5.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0055",
+    "customer": "Isaiah Banfro",
+    "date": "2025-03-17",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 24.0,
+    "qty2": 20.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0056",
+    "customer": "Heather Wilson",
+    "date": "2025-03-14",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 24.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0057",
+    "customer": "Erin Hope",
+    "date": "2025-03-14",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0058",
+    "customer": "Sage Decks - Dave Holma",
+    "date": "2025-03-18",
+    "shipTo": "Montana",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 34.0,
+    "qty2": 16.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0059",
+    "customer": "Coeur Builders - Cochran",
+    "date": "2025-03-21",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 29.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0060",
+    "customer": "Junity - Lot 5",
+    "date": "2025-03-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 20.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0061",
+    "customer": "Junity - Lot 6",
+    "date": "2025-03-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0062",
+    "customer": "Claudia Scruzr",
+    "date": "2025-03-24",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0063",
+    "customer": "3BD - Gulstrom",
+    "date": "2025-03-24",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 17.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0064",
+    "customer": "3BD - JoLynn Garrett",
+    "date": "2025-03-24",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 37.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0065",
+    "customer": "3BD - Traci Grant",
+    "date": "2025-04-01",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0066",
+    "customer": "Curtis Kiepprien",
+    "date": "2025-03-31",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 8.0,
+    "qty2": 3.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0067",
+    "customer": "3BD - Kristine Marshall",
+    "date": "2025-04-01",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 26.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0068",
+    "customer": "Sarah Rodriguez",
+    "date": "2025-04-01",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 29.0,
+    "qty2": 0.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0069",
+    "customer": "SkyPro Remodeling",
+    "date": "2025-03-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 11.0,
+    "qty2": 15.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0070",
+    "customer": "3BD - Greg Appert",
+    "date": "2025-03-30",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 37.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0071",
+    "customer": "Bryan Cooley",
+    "date": "2025-03-30",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 35.0,
+    "qty2": 17.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0072",
+    "customer": "Nicole Hawkins",
+    "date": "2025-04-11",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 32.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0073",
+    "customer": "Ruvim Dragomir",
+    "date": "2025-04-11",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 22.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0074",
+    "customer": "Clearwater Construction",
+    "date": "2025-04-09",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0075",
+    "customer": "Lynne O'Callaghan",
+    "date": "2025-04-11",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 11.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0076",
+    "customer": "Rich Boyer",
+    "date": "2025-04-04",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 35.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0077",
+    "customer": "Matthew Siegel",
+    "date": "2025-04-07",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 30.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0078",
+    "customer": "Myles Magnuson",
+    "date": "2025-04-22",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0079",
+    "customer": "Claudia Scruzr - Rework",
+    "date": "2025-04-21",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0080",
+    "customer": "3BD - Paul Mathews",
+    "date": "2025-04-07",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0081",
+    "customer": "Dale Bernardson",
+    "date": "2025-04-07",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 45.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0082",
+    "customer": "Javier Rodriguez - Echo Hallow",
+    "date": "2025-04-16",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0083",
+    "customer": "3BD  - Will Green",
+    "date": "2025-05-12",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 9.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0084",
+    "customer": "JEM Builders - Vincent Valesquez",
+    "date": "2025-04-07",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 132.0,
+    "qty2": 14.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0085",
+    "customer": "Cathie Haas",
+    "date": "2025-04-09",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0086",
+    "customer": "3BD - Dave Peters",
+    "date": "2025-04-22",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0087",
+    "customer": "3BD - Pascucci Posts / Gate",
+    "date": "2025-05-16",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0088",
+    "customer": "3BD - Pham Custom Posts",
+    "date": "2025-05-16",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0089",
+    "customer": "Jason - Everett - New Posts",
+    "date": "2025-05-12",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 22.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0090",
+    "customer": "Jesse Farrat",
+    "date": "2025-05-12",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 50.0,
+    "qty2": 13.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0091",
+    "customer": "Chelsea Mae",
+    "date": "2025-04-22",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 32.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0092",
+    "customer": "NWBNR - Scott Peterson",
+    "date": "2025-04-16",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 11.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0093",
+    "customer": "3BD - Wilder Heath / Custom",
+    "date": "2025-05-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0094",
+    "customer": "Coeur Builders - Juliet Rail",
+    "date": "2025-05-12",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0095",
+    "customer": "3BD - Tom Fink",
+    "date": "2025-05-27",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 7.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0096",
+    "customer": "3BD - Ken Kolbe",
+    "date": "2025-05-28",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0097",
+    "customer": "Koinonia Construction",
+    "date": "2025-04-23",
+    "shipTo": "Nevada",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0098",
+    "customer": "Peterson Const. - Bruce Peterson",
+    "date": "2025-05-07",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0099",
+    "customer": "Bar Rozner",
+    "date": "2025-06-13",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0100",
+    "customer": "Linda & Tom Dabbs",
+    "date": "2025-05-30",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 27.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0101",
+    "customer": "3BD - Mark Anderson",
+    "date": "2025-05-09",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 48.0,
+    "qty2": 41.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0102",
+    "customer": "3BD - Robyn Borders",
+    "date": "2025-07-01",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0103",
+    "customer": "3BD - Tom Fink / Order 2",
+    "date": "2025-07-01",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 18.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0104",
+    "customer": "Jack Rosemary",
+    "date": "2025-06-24",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0105",
+    "customer": "Brittney Lissner",
+    "date": "2025-06-24",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 48.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0106",
+    "customer": "Brady Frandsen - Constitutional",
+    "date": "2025-06-24",
+    "shipTo": "Utah",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 10.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0107",
+    "customer": "JDM Customs",
+    "date": "2025-07-01",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0108",
+    "customer": "Sarah Cichosz - Columbia Pools",
+    "date": "2025-05-16",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 36.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0109",
+    "customer": "Paul Harrington",
+    "date": "2025-05-29",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 10.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0110",
+    "customer": "Tom Kelly",
+    "date": "2025-05-30",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 18.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0111",
+    "customer": "Louise Conroy",
+    "date": "2025-06-04",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0112",
+    "customer": "Kenneth Nguyen",
+    "date": "2025-06-11",
+    "shipTo": "Pennsylvania",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 24.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0113",
+    "customer": "Kevin Hungate",
+    "date": "2025-06-25",
+    "shipTo": "Idaho",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 8.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0114",
+    "customer": "Bar Rozner - Bloch Street",
+    "date": "2025-07-03",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0115",
+    "customer": "Ben Murphy - Spirit Lake",
+    "date": "2025-07-14",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 13.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0116",
+    "customer": "Keith Moses",
+    "date": "2025-07-02",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 10.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0117",
+    "customer": "Maravilla Projects - Scouts Overlook",
+    "date": "2025-07-02",
+    "shipTo": "Georgia",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0118",
+    "customer": "Todd Bassen",
+    "date": "2025-07-09",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 22.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0119",
+    "customer": "Brad Anderson",
+    "date": "2025-07-14",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 7.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0120",
+    "customer": "Menno Vanderlist",
+    "date": "2025-06-20",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 29.0,
+    "qty2": 9.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0121",
+    "customer": "Daniel Jaimes",
+    "date": "2025-07-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 18.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0122",
+    "customer": "Greg Mixon",
+    "date": "2025-07-02",
+    "shipTo": "Montana",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 16.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0123",
+    "customer": "Glenn Boarman",
+    "date": "2025-06-04",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 17.0,
+    "qty2": 16.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0124",
+    "customer": "Mike Cortinas",
+    "date": "2025-07-18",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0125",
+    "customer": "Eyo Ekpo",
+    "date": "2025-07-18",
+    "shipTo": "Minnesota",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 10.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0126",
+    "customer": "Alyssa Shaw",
+    "date": "2025-07-18",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0127",
+    "customer": "James Forsyth",
+    "date": "2025-07-28",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0128",
+    "customer": "Sherri Meck",
+    "date": "2025-08-04",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0129",
+    "customer": "Aaron Egger",
+    "date": "2025-08-08",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0130",
+    "customer": "3BD Inventory - Week of 08.11",
+    "date": "2025-08-11",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 100.0,
+    "qty2": 50.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0131",
+    "customer": "Ben Murphy - Spirit Lake 2",
+    "date": "2025-08-04",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 11.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0132",
+    "customer": "Viking Construction - Harold Hopkins",
+    "date": "2025-08-04",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0133",
+    "customer": "Tennaile Timbrook",
+    "date": "2025-08-06",
+    "shipTo": "Ohio",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 26.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0134",
+    "customer": "3BD Inventory - Week of 08.18",
+    "date": "2025-08-18",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 200.0,
+    "qty2": 30.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0135",
+    "customer": "Duane Klinge",
+    "date": "2025-08-12",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 29.0,
+    "qty2": 14.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0136",
+    "customer": "KingBuilt LLC",
+    "date": "2025-08-12",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 36.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0137",
+    "customer": "Dan Kozak",
+    "date": "2025-08-18",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 33.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0138",
+    "customer": "River A Construction",
+    "date": "2025-08-20",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 14.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0139",
+    "customer": "Debi Ferguson",
+    "date": "2025-08-25",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 30.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0140",
+    "customer": "3BD Inventory - Week of 08.25",
+    "date": "2025-08-15",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 200.0,
+    "qty2": 30.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0141",
+    "customer": "Cecil Roby, Jr.",
+    "date": "2025-08-11",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 43.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0142",
+    "customer": "3BD - Graham Johnson",
+    "date": "2025-09-02",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0143",
+    "customer": "Renan Morals",
+    "date": "2025-08-18",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 25.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0144",
+    "customer": "3BD Inventory - Week of Sept 01",
+    "date": "2025-08-25",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 200.0,
+    "qty2": 60.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0145",
+    "customer": "Blake Carson - Nelson Project",
+    "date": "2025-09-04",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 21.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0146",
+    "customer": "3BD - McKenzie Construstion",
+    "date": "2025-09-02",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0147",
+    "customer": "David Victor",
+    "date": "2025-08-28",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0148",
+    "customer": "Chirs McCartney",
+    "date": "2025-09-03",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0149",
+    "customer": "Rocky Fresh",
+    "date": "2025-08-29",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 13.0,
+    "qty2": 7.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0150",
+    "customer": "Bonified Wood - Nick Lazzaretto",
+    "date": "2025-09-10",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 34.0,
+    "qty2": 9.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0151",
+    "customer": "Glenn Boarman",
+    "date": "2025-08-29",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 2.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0152",
+    "customer": "3BD Inventory - Week of Sept 08",
+    "date": "2025-09-01",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 200.0,
+    "qty2": 60.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0153",
+    "customer": "Kelly Crandell",
+    "date": "2025-08-29",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 7.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0154",
+    "customer": "Kambell & Jarvis Excavating",
+    "date": "2025-09-11",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 14.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0155",
+    "customer": "Seattle Style - Luis",
+    "date": "2025-09-12",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 15.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0156",
+    "customer": "Revolutionary Construction",
+    "date": "2025-08-28",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 46.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0157",
+    "customer": "Missy Borgen",
+    "date": "2025-08-29",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 9.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0158",
+    "customer": "Natalia Krasnova",
+    "date": "2025-09-04",
+    "shipTo": "Nevada",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 45.0,
+    "qty2": 17.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0159",
+    "customer": "Chris McCartney",
+    "date": "2025-09-17",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0160",
+    "customer": "Mark Anderson",
+    "date": "2025-09-22",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0161",
+    "customer": "Matt Snodgrass",
+    "date": "2025-09-12",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 25.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0162",
+    "customer": "Sean Slaughter",
+    "date": "2025-08-29",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0163",
+    "customer": "Scott Venera",
+    "date": "2025-09-22",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 24.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0164",
+    "customer": "Lisa Aslanzadeh",
+    "date": "2025-09-26",
+    "shipTo": "Local Deliver",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 11.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0165",
+    "customer": "3BD - Courtney Gifford",
+    "date": "2025-10-09",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 4.0,
+    "qty2": 1.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0166",
+    "customer": "Jerry Vosberg",
+    "date": "2025-09-25",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 26.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0167",
+    "customer": "Dean Brotzman",
+    "date": "2025-10-02",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0168",
+    "customer": "Nick Upton",
+    "date": "2025-10-03",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 25.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0169",
+    "customer": "Chris Saliture",
+    "date": "2025-10-07",
+    "shipTo": "Minnesota",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0170",
+    "customer": "John Hofland (CUSTOM COLOR WH120)",
+    "date": "2025-09-22",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0171",
+    "customer": "Benjamin Pugh",
+    "date": "2025-10-07",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0172",
+    "customer": "Bill Fargher",
+    "date": "2025-10-07",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0173",
+    "customer": "3BD - Christopher Lee (TED)",
+    "date": "2025-10-07",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 49.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0174",
+    "customer": "Melissa Ramis",
+    "date": "2025-10-14",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 4.0,
+    "qty2": 18.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0175",
+    "customer": "Matt Dover",
+    "date": "2025-10-03",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 22.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0176",
+    "customer": "Heigi Gudnason (CUSTOM COLOR WH120)",
+    "date": "2025-09-29",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 8.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0177",
+    "customer": "Tenalle Timbrook - EXTRA",
+    "date": "2025-10-17",
+    "shipTo": "Ohio",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 1.0,
+    "qty2": 1.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0178",
+    "customer": "Kathryn Jarboe",
+    "date": "2025-09-22",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 10.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0179",
+    "customer": "Preston Scott",
+    "date": "2025-10-21",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 14.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0180",
+    "customer": "Shari Pierson",
+    "date": "2025-08-06",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 39.0,
+    "qty2": 7.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0181",
+    "customer": "Josh Rasmason",
+    "date": "2025-10-22",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 25.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0182",
+    "customer": "3BD - Chris Lee (extra)",
+    "date": "2025-10-31",
+    "shipTo": "Local Install 3bd",
+    "productType": "42\u201d Cable - Fascia",
+    "qty1": 0.0,
+    "qty2": 1.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0183",
+    "customer": "Lee Shalett",
+    "date": "2025-11-10",
+    "shipTo": "Florida",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 14.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0184",
+    "customer": "Gian Simsuangco",
+    "date": "2025-11-25",
+    "shipTo": "LaVerne CA Shipping",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 5.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0185",
+    "customer": "Luke Welch",
+    "date": "2025-12-02",
+    "shipTo": "Lebanon OR",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0186",
+    "customer": "Ser Avendeyenko",
+    "date": "2025-10-30",
+    "shipTo": "3bd Truck",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 8.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0187",
+    "customer": "Michael Minka",
+    "date": "2025-10-30",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0188",
+    "customer": "Rob Motts",
+    "date": "2025-10-30",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0189",
+    "customer": "Rick Taylor",
+    "date": "2025-10-24",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 73.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0190",
+    "customer": "Jerry Vossberg - 10.23",
+    "date": "2025-10-23",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 26.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0191",
+    "customer": "James Hamilton",
+    "date": "2025-01-02",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 23.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0192",
+    "customer": "Shawn Ho",
+    "date": "2024-12-26",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0193",
+    "customer": "Kirk McElroy",
+    "date": "2025-01-07",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 9.0,
+    "qty2": 4.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0194",
+    "customer": "Jeff Pool",
+    "date": "2025-01-03",
+    "shipTo": "Burley, ID",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 2.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0195",
+    "customer": "Michaela Loebel",
+    "date": "2025-01-03",
+    "shipTo": "Nebraska",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 2.0,
+    "qty2": 0.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0196",
+    "customer": "Russ Ellersick",
+    "date": "2025-01-21",
+    "shipTo": "Washiington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 10.0,
+    "qty2": 7.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0197",
+    "customer": "John Sebring",
+    "date": "2024-12-30",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 14.0,
+    "qty2": 8.0,
+    "qty3": 4.0
+  },
+  {
+    "id": "LEG-0198",
+    "customer": "Javier Rodriguez",
+    "date": "2025-01-21",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 16.0,
+    "qty2": 6.0,
+    "qty3": 4.0
+  },
+  {
+    "id": "LEG-0199",
+    "customer": "Ben Hall",
+    "date": "2025-01-21",
+    "shipTo": "Missouri",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 40.0,
+    "qty2": 11.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0200",
+    "customer": "Zach Yamagishi",
+    "date": "2025-02-04",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 16.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0201",
+    "customer": "Paul Carpenter",
+    "date": "2025-02-04",
+    "shipTo": "Worley, ID",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 31.0,
+    "qty2": 10.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0202",
+    "customer": "Finish Line Cons.",
+    "date": "2025-01-21",
+    "shipTo": "Hayden",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 51.0,
+    "qty2": 4.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0203",
+    "customer": "Eddie - NWBNR",
+    "date": "2025-02-13",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 1.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0204",
+    "customer": "Ryan Rauscart",
+    "date": "2025-02-21",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0205",
+    "customer": "Cathy Reynolds",
+    "date": "2025-02-20",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0206",
+    "customer": "John Barnwell",
+    "date": "2025-03-20",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0207",
+    "customer": "Javier Rodriguez",
+    "date": "2025-03-13",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 10.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0208",
+    "customer": "Tom Peterson",
+    "date": "2025-02-20",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 31.0,
+    "qty2": 8.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0209",
+    "customer": "Caleb Barlow",
+    "date": "2025-02-26",
+    "shipTo": "Utah",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 20.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0210",
+    "customer": "Steve Johnson",
+    "date": "2025-03-04",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 14.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0211",
+    "customer": "Zach Yamaghishi - Extra Stuff",
+    "date": "2025-03-18",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0212",
+    "customer": "Alex Dudrov",
+    "date": "2025-03-28",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 16.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0213",
+    "customer": "Mike Cloke",
+    "date": "2025-03-26",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 15.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0214",
+    "customer": "SkyPro Remodeling - Adam Elbaz",
+    "date": "2025-03-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0215",
+    "customer": "Clearwater Construction",
+    "date": "2025-04-09",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 14.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0216",
+    "customer": "Robert Gregg",
+    "date": "2025-04-10",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 24.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0217",
+    "customer": "Brittany Venner",
+    "date": "2025-04-10",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 15.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0218",
+    "customer": "John Frack",
+    "date": "2025-03-21",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 8.0,
+    "qty2": 0.0,
+    "qty3": 3.0
+  },
+  {
+    "id": "LEG-0219",
+    "customer": "Rich Boyer",
+    "date": "2025-04-04",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0220",
+    "customer": "Scott Andreason",
+    "date": "2025-04-07",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 34.0,
+    "qty2": 3.0,
+    "qty3": 5.0
+  },
+  {
+    "id": "LEG-0221",
+    "customer": "Pike Sowie",
+    "date": "2025-03-08",
+    "shipTo": "Utah",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 38.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0222",
+    "customer": "Sage Decks - Ryan Bennet",
+    "date": "2025-04-07",
+    "shipTo": "Montana",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 32.0,
+    "qty2": 12.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0223",
+    "customer": "Travis Berends",
+    "date": "2025-04-07",
+    "shipTo": "Minnesota",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 17.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0224",
+    "customer": "Mel Everes",
+    "date": "2025-04-07",
+    "shipTo": "Louisiana",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 22.0,
+    "qty2": 14.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0225",
+    "customer": "Angus McLean",
+    "date": "2025-04-09",
+    "shipTo": "Tennessee",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 8.0,
+    "qty2": 16.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0226",
+    "customer": "Scott Andreason - Corners",
+    "date": "2025-05-12",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 5.0
+  },
+  {
+    "id": "LEG-0227",
+    "customer": "Alex Dudrov - Stairs",
+    "date": "2025-05-12",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0228",
+    "customer": "3BD - Kristie Keene",
+    "date": "2025-05-16",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0229",
+    "customer": "Keith Kriegh",
+    "date": "2025-04-28",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 4.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0230",
+    "customer": "Mike Stephenson",
+    "date": "2025-05-01",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 37.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0231",
+    "customer": "HD - Patrick Targete",
+    "date": "2025-05-28",
+    "shipTo": "Massachusetts",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 3.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0232",
+    "customer": "Coeur Builders - Echo Canyon",
+    "date": "2025-05-15",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 36.0,
+    "qty2": 0.0,
+    "qty3": 6.0
+  },
+  {
+    "id": "LEG-0233",
+    "customer": "Cynthia Knox Guenther",
+    "date": "2025-04-25",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 43.0,
+    "qty2": 9.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0234",
+    "customer": "Bob Burgnaler",
+    "date": "2025-04-30",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0235",
+    "customer": "Mark Anderson",
+    "date": "2025-05-09",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 6.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0236",
+    "customer": "Randy Pratt",
+    "date": "2025-05-12",
+    "shipTo": "North Carolina",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 37.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0237",
+    "customer": "Revolutionary Construction",
+    "date": "2025-05-20",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 18.0,
+    "qty2": 11.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0238",
+    "customer": "Bob Burgnaier",
+    "date": "2025-04-15",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 6.0,
+    "qty2": 0.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0239",
+    "customer": "Jon Frack",
+    "date": "2025-05-09",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 22.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0240",
+    "customer": "Jon Altman",
+    "date": "2025-06-27",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0241",
+    "customer": "Jack Rosemary",
+    "date": "2025-06-23",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0242",
+    "customer": "Cathie Haas - Remake",
+    "date": "2025-06-05",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 12.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0243",
+    "customer": "Jerry / Kathy Vosberg",
+    "date": "2025-05-13",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 22.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0244",
+    "customer": "Craig Johnson - Extra",
+    "date": "2025-07-02",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0245",
+    "customer": "3BD - Jeanne Foss",
+    "date": "2025-07-01",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 9.0,
+    "qty2": 5.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0246",
+    "customer": "Ziggys - Collen Ewasko",
+    "date": "2025-06-19",
+    "shipTo": "Local",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 22.0,
+    "qty2": 4.0,
+    "qty3": 1.0
+  },
+  {
+    "id": "LEG-0247",
+    "customer": "Menno Vanderlist",
+    "date": "2025-06-19",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 6.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0248",
+    "customer": "Alison West",
+    "date": "2025-06-19",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 4.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0249",
+    "customer": "3BD - Reid Redinger",
+    "date": "2025-07-28",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 34.0,
+    "qty2": 3.0,
+    "qty3": 5.0
+  },
+  {
+    "id": "LEG-0250",
+    "customer": "Sarah Olney",
+    "date": "2025-07-23",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 24.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0251",
+    "customer": "Craig Charbonneau",
+    "date": "2025-08-04",
+    "shipTo": "Washington",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0252",
+    "customer": "Greg Hart",
+    "date": "2025-07-30",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 35.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0253",
+    "customer": "Lisa & Ryan Carpenter",
+    "date": "2025-08-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 35.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0254",
+    "customer": "Duane Klinge",
+    "date": "2025-08-12",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 3.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0255",
+    "customer": "River A Construction",
+    "date": "2025-08-20",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0256",
+    "customer": "Sheila",
+    "date": "2025-08-13",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 7.0,
+    "qty2": 7.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0257",
+    "customer": "Cecil Roby, Jr.",
+    "date": "2025-08-11",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 5.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0258",
+    "customer": "Nick Haughn",
+    "date": "2025-08-29",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 6.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0259",
+    "customer": "Ziggy's - Collen Ewasko",
+    "date": "2025-09-11",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 15.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0260",
+    "customer": "Todd Folsom",
+    "date": "2025-09-08",
+    "shipTo": "Local Pick-Up",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 3.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0261",
+    "customer": "Mercado Brothers Fencing",
+    "date": "2025-08-25",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 29.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0262",
+    "customer": "Maria Miller",
+    "date": "2025-08-28",
+    "shipTo": "Oregon",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 6.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0263",
+    "customer": "Glenn Boarman - Extra",
+    "date": "2025-08-20",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 10.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0264",
+    "customer": "Kelly Crandell",
+    "date": "2025-08-29",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 16.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0265",
+    "customer": "Justin Ryan",
+    "date": "2025-09-08",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 24.0,
+    "qty2": 7.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0266",
+    "customer": "Sean Slaughter",
+    "date": "2025-08-29",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 16.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0267",
+    "customer": "Richard Weatherman",
+    "date": "2025-09-24",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 27.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0268",
+    "customer": "Mike Ellison",
+    "date": "2025-09-22",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 2.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0269",
+    "customer": "Chris Saliture",
+    "date": "2025-10-07",
+    "shipTo": "Minnesota",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 0.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0270",
+    "customer": "Josh Rasmuson",
+    "date": "2025-10-22",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 2.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0271",
+    "customer": "Patricia Mather",
+    "date": "2025-10-22",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 29.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0272",
+    "customer": "David Maffetore",
+    "date": "2025-10-20",
+    "shipTo": "California",
+    "productType": "42\u201d Cable - Surface",
+    "qty1": 10.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0273",
+    "customer": "Dave Miller",
+    "date": "2025-11-21",
+    "shipTo": "Delaware",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0274",
+    "customer": "Cass Monroe",
+    "date": "2025-01-21",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0275",
+    "customer": "3BD - Larry McNutt",
+    "date": "2025-01-29",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 30.0,
+    "qty2": 24.0,
+    "qty3": 10.0
+  },
+  {
+    "id": "LEG-0276",
+    "customer": "3BD - Gilbo",
+    "date": "2025-02-09",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 16.0,
+    "qty2": 4.0,
+    "qty3": 4.0
+  },
+  {
+    "id": "LEG-0277",
+    "customer": "3BD - Larry McNutt (extra posts)",
+    "date": "2025-02-28",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 6.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0278",
+    "customer": "Lillian Xiong - REWORK",
+    "date": "2025-03-24",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 25.0,
+    "qty2": 0.0,
+    "qty3": 6.0
+  },
+  {
+    "id": "LEG-0279",
+    "customer": "Johnathan Moeller",
+    "date": "2025-03-18",
+    "shipTo": "Colorado",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0280",
+    "customer": "Troy Hoerner",
+    "date": "2025-06-09",
+    "shipTo": "Local",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0281",
+    "customer": "Phil Virgil",
+    "date": "2025-05-07",
+    "shipTo": "Wyoming",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 23.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0282",
+    "customer": "Kurt Mueller",
+    "date": "2025-06-12",
+    "shipTo": "North Carolina",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 14.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0283",
+    "customer": "3BD - Lillian Xiong",
+    "date": "2025-07-29",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0284",
+    "customer": "3BD - Graham Johnson",
+    "date": "2025-09-03",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 11.0,
+    "qty2": 0.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0285",
+    "customer": "3BD - Chris Lee (extra)",
+    "date": "2025-10-31",
+    "shipTo": "Local Install",
+    "productType": "42\u201d Glass - Fascia",
+    "qty1": 0.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0286",
+    "customer": "Finish Line Cons",
+    "date": "2025-01-29",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 24.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0287",
+    "customer": "3BD - Lillian Xiong",
+    "date": "2025-01-21",
+    "shipTo": "Hayden",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 10.0,
+    "qty2": 0.0,
+    "qty3": 3.0
+  },
+  {
+    "id": "LEG-0288",
+    "customer": "Finish Line Const - Missing Posts",
+    "date": "2025-02-27",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 22.0,
+    "qty2": 0.0,
+    "qty3": 6.0
+  },
+  {
+    "id": "LEG-0289",
+    "customer": "3BD - Sam Riedeman (CUSTOM)",
+    "date": "2025-03-11",
+    "shipTo": "Local",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 6.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0290",
+    "customer": "???",
+    "date": "2025-03-27",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 10.0,
+    "qty2": 0.0,
+    "qty3": 3.0
+  },
+  {
+    "id": "LEG-0291",
+    "customer": "Kurt Mueller",
+    "date": "2025-06-12",
+    "shipTo": "North Carolina",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 0.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0292",
+    "customer": "Ziggy's - Megan Dietz",
+    "date": "2025-07-23",
+    "shipTo": "Local Delivery",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0293",
+    "customer": "3BD - Serren Wrap",
+    "date": "2025-08-11",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0294",
+    "customer": "Tessa Dover",
+    "date": "2025-08-20",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 6.0,
+    "qty2": 1.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0295",
+    "customer": "3BD - Lillian Xiong Interior",
+    "date": "2025-10-17",
+    "shipTo": "Seattle",
+    "productType": "42\u201d Glass - Surface",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0296",
+    "customer": "Jax (GFY Homes)",
+    "date": "2025-11-03",
+    "shipTo": "Bellevue P/U",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 17.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0297",
+    "customer": "Doug Dodson",
+    "date": "2025-11-12",
+    "shipTo": "Local Install",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 21.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0298",
+    "customer": "Maureen Ramirez",
+    "date": "2025-11-12",
+    "shipTo": "Local Install",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0299",
+    "customer": "Josh Taylor",
+    "date": "2025-11-20",
+    "shipTo": "Local Pickup",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 17.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0300",
+    "customer": "Sarah Stone",
+    "date": "2025-11-25",
+    "shipTo": "Deliver to Freeland",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0301",
+    "customer": "Tami Neumann",
+    "date": "2024-12-27",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0302",
+    "customer": "Tami Neumann (Rework)",
+    "date": "2024-12-27",
+    "shipTo": "Oregon",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0303",
+    "customer": "Jason Everett",
+    "date": "2025-01-21",
+    "shipTo": "Oregon",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 31.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0304",
+    "customer": "Chris Gonzalez",
+    "date": "2025-03-13",
+    "shipTo": "California",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 22.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0305",
+    "customer": "Jonathan Callans",
+    "date": "2025-03-11",
+    "shipTo": "Texas",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 38.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0306",
+    "customer": "Trevor Nowak",
+    "date": "2025-03-11",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0307",
+    "customer": "Ruben Lutat",
+    "date": "2025-03-01",
+    "shipTo": "Portland",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0308",
+    "customer": "Steve Anderson",
+    "date": "2025-04-01",
+    "shipTo": "Seatle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 34.0,
+    "qty2": 5.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0309",
+    "customer": "3BD - Ralph Mundell",
+    "date": "2025-04-02",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 21.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0310",
+    "customer": "Greg Metzgar",
+    "date": "2025-04-18",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 21.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0311",
+    "customer": "Legacy Decking - Dave Deyman",
+    "date": "2025-04-18",
+    "shipTo": "Local p/iu",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 23.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0312",
+    "customer": "Abby Thostenson",
+    "date": "2025-05-15",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 24.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0313",
+    "customer": "Stephanie Queen",
+    "date": "2025-05-16",
+    "shipTo": "Michigan",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 17.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0314",
+    "customer": "Simon Lystad",
+    "date": "2025-05-21",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0315",
+    "customer": "Ben Murphy - Spirt Lake 2",
+    "date": "2025-06-27",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 21.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0316",
+    "customer": "Deni Liechty",
+    "date": "2025-08-04",
+    "shipTo": "Local Pick-up",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0317",
+    "customer": "Matt Reichert - Smith",
+    "date": "2025-08-15",
+    "shipTo": "Arizona",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 24.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0318",
+    "customer": "Curtis Kiepprien",
+    "date": "2025-08-12",
+    "shipTo": "Local Delivery",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 12.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0319",
+    "customer": "McMorris Decks and Structures",
+    "date": "2025-08-21",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 45.0,
+    "qty2": 10.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0320",
+    "customer": "Nicholas Bincewski",
+    "date": "2025-08-25",
+    "shipTo": "Utah",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0321",
+    "customer": "Matthew Siegel",
+    "date": "2025-08-20",
+    "shipTo": "Local Delivery",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 32.0,
+    "qty2": 20.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0322",
+    "customer": "3BD - Graham Johnson REWORK",
+    "date": "2025-09-05",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 26.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0323",
+    "customer": "David Pelton",
+    "date": "2025-09-10",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 7.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0324",
+    "customer": "3BD - Carolyne Michels (CUSTOM COLOR)",
+    "date": "2025-09-16",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 15.0,
+    "qty2": 12.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0325",
+    "customer": "Cole Ferguson",
+    "date": "2025-09-24",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 62.0,
+    "qty2": 20.0,
+    "qty3": 3.0
+  },
+  {
+    "id": "LEG-0326",
+    "customer": "Rick Taylor",
+    "date": "2025-09-30",
+    "shipTo": "Local Pick-up",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 50.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0327",
+    "customer": "Karen Weber",
+    "date": "2025-10-16",
+    "shipTo": "Local Delivery",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 5.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0328",
+    "customer": "James Thomas, Jr",
+    "date": "2025-10-16",
+    "shipTo": "Bellevue P/U",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 9.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0329",
+    "customer": "Alex Avdeyev",
+    "date": "2025-10-15",
+    "shipTo": "Arizona",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 19.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0330",
+    "customer": "Linda Carpenter",
+    "date": "2025-10-20",
+    "shipTo": "Local Delivery",
+    "productType": "36\u201d Cable - Fascia",
+    "qty1": 41.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0331",
+    "customer": "Bellevue Inventory - Week of 11.03",
+    "date": "2025-11-03",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 30.0,
+    "qty2": 20.0,
+    "qty3": 10.0
+  },
+  {
+    "id": "LEG-0332",
+    "customer": "Jared Mehany",
+    "date": "2025-10-29",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0333",
+    "customer": "Harold Gambini",
+    "date": "2025-01-23",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 31.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0334",
+    "customer": "Landon McMorris",
+    "date": "2025-02-17",
+    "shipTo": "Utah",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0335",
+    "customer": "Cheri Douglas",
+    "date": "2025-02-17",
+    "shipTo": "Wisconsin",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0336",
+    "customer": "Todd Hodgen (CUSTOM)",
+    "date": "2025-02-17",
+    "shipTo": "Nevada",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 6.0,
+    "qty2": 6.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0337",
+    "customer": "Ruban Hipolito",
+    "date": "2025-03-14",
+    "shipTo": "Montana",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 28.0,
+    "qty2": 12.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0338",
+    "customer": "Buildsphere - Mike Ujano",
+    "date": "2025-02-21",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 14.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0339",
+    "customer": "Steve Anderson",
+    "date": "2025-04-02",
+    "shipTo": "Seatlle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 4.0,
+    "qty2": 35.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0340",
+    "customer": "Claudia Scruzr",
+    "date": "2025-04-21",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 3.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0341",
+    "customer": "Bridget Findley",
+    "date": "2025-04-30",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 9.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0342",
+    "customer": "Doug Smith",
+    "date": "2025-04-16",
+    "shipTo": "Local",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 35.0,
+    "qty2": 0.0,
+    "qty3": 8.0
+  },
+  {
+    "id": "LEG-0343",
+    "customer": "Carolyn Neblett",
+    "date": "2025-04-22",
+    "shipTo": "Idaho",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 2.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0344",
+    "customer": "Cami Fleming",
+    "date": "2025-05-07",
+    "shipTo": "Utah",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 28.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0345",
+    "customer": "Brady Frandsen",
+    "date": "2025-05-14",
+    "shipTo": "Utah",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 26.0,
+    "qty2": 18.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0346",
+    "customer": "Craig Johnson",
+    "date": "2025-05-29",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 20.0,
+    "qty2": 5.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0347",
+    "customer": "Gibson Fence and Deck",
+    "date": "2025-05-22",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 23.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0348",
+    "customer": "Sarah Cichosz - Columbia Pools",
+    "date": "2025-05-29",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 9.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0349",
+    "customer": "Blue Sky Decks - Patrick",
+    "date": "2025-06-03",
+    "shipTo": "Local Pick-UP",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0350",
+    "customer": "Vitaly Semenyuk",
+    "date": "2025-06-23",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 18.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0351",
+    "customer": "SkyPro - RUSH",
+    "date": "2025-05-28",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 9.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0352",
+    "customer": "Tessa Fitzgerald",
+    "date": "2025-06-11",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0353",
+    "customer": "Craig Johnson",
+    "date": "2025-07-21",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 11.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0354",
+    "customer": "Nate Lew",
+    "date": "2025-07-25",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 19.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0355",
+    "customer": "Lynn Bull",
+    "date": "2025-08-19",
+    "shipTo": "Local Delivery",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 11.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0356",
+    "customer": "Kirk Johnson",
+    "date": "2025-08-04",
+    "shipTo": "Colorado",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 4.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0357",
+    "customer": "3BD Inventory - Week of 08.18",
+    "date": "2025-08-18",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 30.0,
+    "qty2": 10.0,
+    "qty3": 10.0
+  },
+  {
+    "id": "LEG-0358",
+    "customer": "Robert Gregg - Exchange",
+    "date": "2025-08-06",
+    "shipTo": "Oregon",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 20.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0359",
+    "customer": "Jeremy Falls",
+    "date": "2025-08-14",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 21.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0360",
+    "customer": "Deni Liechty",
+    "date": "2025-08-15",
+    "shipTo": "Arizona",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 13.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0361",
+    "customer": "3BD Inventory - Week of 08.25",
+    "date": "2025-08-15",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 30.0,
+    "qty2": 10.0,
+    "qty3": 10.0
+  },
+  {
+    "id": "LEG-0362",
+    "customer": "Pike Sowie - Replacement",
+    "date": "2025-08-15",
+    "shipTo": "Utah",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 32.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0363",
+    "customer": "Samantha Buckley Huggessen",
+    "date": "2025-08-15",
+    "shipTo": "California",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 51.0,
+    "qty2": 12.0,
+    "qty3": 4.0
+  },
+  {
+    "id": "LEG-0364",
+    "customer": "Deni Liechty",
+    "date": "2025-08-15",
+    "shipTo": "Arizona",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 14.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0365",
+    "customer": "Matt Reichert - Park",
+    "date": "2025-08-15",
+    "shipTo": "Local Delivery",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 16.0,
+    "qty2": 14.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0366",
+    "customer": "Cory Michaels",
+    "date": "2025-08-22",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 13.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0367",
+    "customer": "Karen Gorzela",
+    "date": "2025-08-13",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 6.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0368",
+    "customer": "Curtis Kiepprien",
+    "date": "2025-08-21",
+    "shipTo": "Washington",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 4.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0369",
+    "customer": "3BD Inventory - Week of Setp 01",
+    "date": "2025-08-25",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 30.0,
+    "qty2": 10.0,
+    "qty3": 10.0
+  },
+  {
+    "id": "LEG-0370",
+    "customer": "Todd Folsom",
+    "date": "2025-09-15",
+    "shipTo": "Local Pick-Up",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 0.0,
+    "qty2": 3.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0371",
+    "customer": "Pike Sowie - Swap",
+    "date": "2025-09-09",
+    "shipTo": "Utah",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 32.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0372",
+    "customer": "3BD Inventory - Week of Sept 08",
+    "date": "2025-09-01",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 0.0,
+    "qty2": 10.0,
+    "qty3": 10.0
+  },
+  {
+    "id": "LEG-0373",
+    "customer": "Cami Fleming",
+    "date": "2010-09-09",
+    "shipTo": "Utah",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 21.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0374",
+    "customer": "Steve Dow",
+    "date": "2025-09-25",
+    "shipTo": "Local Pick-Up",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 37.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0375",
+    "customer": "Trevor Engman",
+    "date": "2025-09-22",
+    "shipTo": "Idaho",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 4.0,
+    "qty2": 2.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0376",
+    "customer": "Doug Geltz",
+    "date": "2025-09-29",
+    "shipTo": "Oregon",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 27.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0377",
+    "customer": "Ron Erickson - CUSTOM COLOR",
+    "date": "2025-09-22",
+    "shipTo": "Local Pick-Up",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 36.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0378",
+    "customer": "Debie Phillips",
+    "date": "2025-10-07",
+    "shipTo": "Local Delivery",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 9.0,
+    "qty2": 4.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0379",
+    "customer": "Jesse Farrar - Dragoon Dr - CUSTOM COLOR",
+    "date": "2025-10-10",
+    "shipTo": "Local Pick-Up",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 27.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0380",
+    "customer": "Kelly Crandell - Extra",
+    "date": "2025-10-17",
+    "shipTo": "California",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 0.0,
+    "qty2": 7.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0381",
+    "customer": "John Frack",
+    "date": "2025-10-22",
+    "shipTo": "Local Pick-up",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 8.0,
+    "qty2": 0.0,
+    "qty3": 3.0
+  },
+  {
+    "id": "LEG-0382",
+    "customer": "MSHS Construction - John Ashline",
+    "date": "2025-10-23",
+    "shipTo": "Local Pick-Up",
+    "productType": "36\u201d Cable - Suface",
+    "qty1": 13.0,
+    "qty2": 8.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0383",
+    "customer": "Curtis Kiepprien",
+    "date": "2025-08-21",
+    "shipTo": "Washington",
+    "productType": "36\u201d Glass - Fascia",
+    "qty1": 6.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0384",
+    "customer": "3BD - Graham Johnson REWORK",
+    "date": "2025-09-11",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Glass - Fascia",
+    "qty1": 12.0,
+    "qty2": 0.0,
+    "qty3": 2.0
+  },
+  {
+    "id": "LEG-0385",
+    "customer": "Shauny Jang",
+    "date": "2025-11-26",
+    "shipTo": "Bellevue Pickup",
+    "productType": "36\u201d Glass - Surface",
+    "qty1": 3.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0386",
+    "customer": "Steve Anderson",
+    "date": "2025-04-02",
+    "shipTo": "Seattle",
+    "productType": "36\u201d Glass - Surface",
+    "qty1": 5.0,
+    "qty2": 0.0,
+    "qty3": 0.0
+  },
+  {
+    "id": "LEG-0387",
+    "customer": "Stephanie Burgess",
+    "date": "2025-09-22",
+    "shipTo": "Washington",
+    "productType": "Frameless Glass - Fascia",
+    "qty1": 42.0,
+    "qty2": 0.0,
+    "qty3": 54.0
+  }
+],
         "source": "Pre-2026 ERP"
     },
     {
@@ -13352,845 +17302,10278 @@ const INIT = {
     }
 ],
 
-  // PRODUCT_SKU_MASTER_AM — SRS customer catalog (93 SKUs + GTINs, isolated from Maisy production)
+
+  // ─── COMPREHENSIVE DATA — v5.2 ───────────────────────────────────────────────
+
+  // 02_SALES: Product Catalog (27 kits with COGS/wholesale/retail)
+  productCatalog: [
+  {
+    "kitSku": "MR-KIT-CABLE-FM-L-BLK-4x42",
+    "kitName": "Cable Kit | FM | Line | BLK | 4ft",
+    "category": "Line Railing Kits",
+    "mountType": "FASCIA MOUNT",
+    "color": "BLACK",
+    "size": "4 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 372.11,
+    "wholesale": 558.17,
+    "retail": 1116.34
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-FM-L-BLK-8x42",
+    "kitName": "Cable Kit | FM | Line | BLK | 8ft",
+    "category": "Line Railing Kits",
+    "mountType": "FASCIA MOUNT",
+    "color": "BLACK",
+    "size": "8 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 526.21,
+    "wholesale": 789.31,
+    "retail": 1578.62
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-FM-L-BLK-12x42",
+    "kitName": "Cable Kit | FM | Line | BLK | 12ft",
+    "category": "Line Railing Kits",
+    "mountType": "FASCIA MOUNT",
+    "color": "BLACK",
+    "size": "12 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 612.57,
+    "wholesale": 918.85,
+    "retail": 1837.7
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-FM-L-BLK-16x42",
+    "kitName": "Cable Kit | FM | Line | BLK | 16ft",
+    "category": "Line Railing Kits",
+    "mountType": "FASCIA MOUNT",
+    "color": "BLACK",
+    "size": "16 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 834.39,
+    "wholesale": 1251.59,
+    "retail": 2503.18
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-FM-L-BLK-20x42",
+    "kitName": "Cable Kit | FM | Line | BLK | 20ft",
+    "category": "Line Railing Kits",
+    "mountType": "FASCIA MOUNT",
+    "color": "BLACK",
+    "size": "20 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 920.75,
+    "wholesale": 1381.13,
+    "retail": 2762.26
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-FM-L-BLK-40x42",
+    "kitName": "Cable Kit | FM | Line | BLK | 40ft",
+    "category": "Line Railing Kits",
+    "mountType": "FASCIA MOUNT",
+    "color": "BLACK",
+    "size": "40 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 1841.5,
+    "wholesale": 2762.25,
+    "retail": 5524.5
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-FM-L-BLK-60x42",
+    "kitName": "Cable Kit | FM | Line | BLK | 60ft",
+    "category": "Line Railing Kits",
+    "mountType": "FASCIA MOUNT",
+    "color": "BLACK",
+    "size": "60 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 2175.0,
+    "wholesale": 4143.38,
+    "retail": 8286.76
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-SM-L-BLK-4x42",
+    "kitName": "Cable Kit | SM | Line | BLK | 4ft",
+    "category": "Line Railing Kits",
+    "mountType": "SURFACE MOUNT",
+    "color": "BLACK",
+    "size": "4 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 372.11,
+    "wholesale": 558.17,
+    "retail": 1116.34
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-SM-L-BLK-8x42",
+    "kitName": "Cable Kit | SM | Line | BLK | 8ft",
+    "category": "Line Railing Kits",
+    "mountType": "SURFACE MOUNT",
+    "color": "BLACK",
+    "size": "8 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 526.21,
+    "wholesale": 789.31,
+    "retail": 1578.62
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-SM-L-BLK-12x42",
+    "kitName": "Cable Kit | SM | Line | BLK | 12ft",
+    "category": "Line Railing Kits",
+    "mountType": "SURFACE MOUNT",
+    "color": "BLACK",
+    "size": "12 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 612.57,
+    "wholesale": 918.85,
+    "retail": 1837.7
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-SM-L-BLK-16x42",
+    "kitName": "Cable Kit | SM | Line | BLK | 16ft",
+    "category": "Line Railing Kits",
+    "mountType": "SURFACE MOUNT",
+    "color": "BLACK",
+    "size": "16 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 834.39,
+    "wholesale": 1251.59,
+    "retail": 2503.18
+  },
+  {
+    "kitSku": "MR-KIT-CABLE-SM-L-BLK-20x42",
+    "kitName": "Cable Kit | SM | Line | BLK | 20ft",
+    "category": "Line Railing Kits",
+    "mountType": "SURFACE MOUNT",
+    "color": "BLACK",
+    "size": "20 ft",
+    "material": "Aluminum, 316 SS",
+    "cogs": 920.75,
+    "wholesale": 1381.13,
+    "retail": 2762.26
+  },
+  {
+    "kitSku": "OMSID",
+    "kitName": "Product Name",
+    "category": "GTIN",
+    "mountType": "UPC",
+    "color": "MFG Model #",
+    "size": "THD SKU #",
+    "material": "Channel Status",
+    "cogs": 0,
+    "wholesale": 0,
+    "retail": 0
+  },
+  {
+    "kitSku": "334143700",
+    "kitName": "MR Series 4 ft. Black Powder Coated Aluminum Surface Mounted Premium Cable Railing Kit",
+    "category": "00860013093617",
+    "mountType": "860013093617",
+    "color": "MR-CRSM-BLK-04",
+    "size": "1013666266",
+    "material": "Dotcom Discontinued, Omni Active",
+    "cogs": 0,
+    "wholesale": 558.9,
+    "retail": 0
+  },
+  {
+    "kitSku": "335654179",
+    "kitName": "4 ft. Aluminum Surface Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201905",
+    "mountType": "860014201905",
+    "color": "MR-KIT-CABLE-SM-L-BLK-4x42",
+    "size": "1014984226",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 1116.34,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757757",
+    "kitName": "8 ft. Aluminum Fascia Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201967",
+    "mountType": "860014201967",
+    "color": "MR-KIT-CABLE-FM-L-BLK-8x42",
+    "size": "1014984227",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 1638.62,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757767",
+    "kitName": "12 ft. Aluminum Fascia Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201974",
+    "mountType": "860014201974",
+    "color": "MR-KIT-CABLE-FM-L-BLK-12x42",
+    "size": "1014984228",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 1897.7,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757809",
+    "kitName": "20 ft. Aluminum Fascia Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201998",
+    "mountType": "860014201998",
+    "color": "MR-KIT-CABLE-FM-L-BLK-20x42",
+    "size": "1014984229",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 2822.26,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757826",
+    "kitName": "20 ft. Aluminum Surface Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201943",
+    "mountType": "860014201943",
+    "color": "MR-KIT-CABLE-SM-L-BLK-20x42",
+    "size": "1014984230",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 2832.26,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757838",
+    "kitName": "16 ft. Aluminum Surface Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201936",
+    "mountType": "860014201936",
+    "color": "MR-KIT-CABLE-SM-L-BLK-16x42",
+    "size": "1014984231",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 2573.18,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757847",
+    "kitName": "12 ft. Aluminum Surface Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201929",
+    "mountType": "860014201929",
+    "color": "MR-KIT-CABLE-SM-L-BLK-12x42",
+    "size": "1014984232",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 1907.7,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757849",
+    "kitName": "8 ft. Aluminum Surface Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201912",
+    "mountType": "860014201912",
+    "color": "MR-KIT-CABLE-SM-L-BLK-8x42",
+    "size": "1014984233",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 1648.64,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757909",
+    "kitName": "4 ft. Aluminum Fascia Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201950",
+    "mountType": "860014201950",
+    "color": "MR-KIT-CABLE-FM-L-BLK-4x42",
+    "size": "1014984234",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 1176.34,
+    "retail": 0
+  },
+  {
+    "kitSku": "336757923",
+    "kitName": "16 ft. Aluminum Fascia Mounted Railing Post Kit with Stainless Steel Cable for Cable Railing System",
+    "category": "00860014201981",
+    "mountType": "860014201981",
+    "color": "MR-KIT-CABLE-FM-L-BLK-16x42",
+    "size": "1014984235",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 2563.18,
+    "retail": 0
+  },
+  {
+    "kitSku": "337722667",
+    "kitName": "1 in. x 3 in. x 4 ft. Black Aluminum Top Rail for Cable Railing System",
+    "category": "00860014396403",
+    "mountType": "860014396403",
+    "color": "MR-TR-L-BLK-1x3-4",
+    "size": "",
+    "material": "Dotcom in Progress, Omni Active",
+    "cogs": 0,
+    "wholesale": 158.0,
+    "retail": 0
+  },
+  {
+    "kitSku": "337722696",
+    "kitName": "1 in. x 3 in. x 8 ft. Black Aluminum Top Rail for Cable Railing System",
+    "category": "00860014396410",
+    "mountType": "860014396410",
+    "color": "MR-TR-L-BLK-1x3-8",
+    "size": "1014990683",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 268.0,
+    "retail": 0
+  },
+  {
+    "kitSku": "337722730",
+    "kitName": "1 in. x 3 in. x 12 ft. Black Aluminum Top Rail for Cable Railing System",
+    "category": "00860014396427",
+    "mountType": "860014396427",
+    "color": "MR-TR-L-BLK-1x3-12",
+    "size": "1014990684",
+    "material": "Dotcom Active, Omni Active",
+    "cogs": 0,
+    "wholesale": 402.0,
+    "retail": 0
+  }
+],
+
+  // 02_SALES: Product SKU Master (71 SKUs with channels/distribution)
+  productSkuMaster: [
+  {
+    "sku": "CBL-SS-POL",
+    "desc": "Cable | Stainless Steel | Polished Finish",
+    "subCat": "Cable",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Polished",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "CBL-SS-BLK",
+    "desc": "Cable | Stainless Steel | Black Finish",
+    "subCat": "Cable",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "SWG-CBL-SS-POL",
+    "desc": "Cable | SS | Swage | Polished Finish",
+    "subCat": "Swage/Tensioner",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Polished",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "SWG-CBL-SS-BLK",
+    "desc": "Cable | SS | Swage | Black Finish",
+    "subCat": "Swage/Tensioner",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "SCR-ST-SS-POL",
+    "desc": "SS Self-Tap Screws | Polished Finish",
+    "subCat": "Self-Tap Screw",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Polished",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "SCR-ST-SS-BLK",
+    "desc": "SS Self-Tap Screws | Black Finish",
+    "subCat": "Self-Tap Screw",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "WSR-ANG-SS",
+    "desc": "Stainless Steel | Angle Washer",
+    "subCat": "Washer",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Natural",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "LAG-FM-SS-POL",
+    "desc": "Fascia Mount | SS Post Lags | Polished",
+    "subCat": "Lag Bolt",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Polished",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "LAG-FM-SS-BLK",
+    "desc": "Fascia Mount | SS Post Lags | Black",
+    "subCat": "Lag Bolt",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "LAG-FM-SS-WSR-POL",
+    "desc": "FM | SS Post Lags + Washer | Polished",
+    "subCat": "Lag Bolt Kit",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Polished",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "LAG-FM-SS-WSR-BLK",
+    "desc": "FM | SS Post Lags + Washer | Black",
+    "subCat": "Lag Bolt Kit",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "PS-SM-SS-BLK",
+    "desc": "Surface Mount | SS Post Screws | Black",
+    "subCat": "Post Screw",
+    "family": "Hardware",
+    "material": "316 SS",
+    "finish": "Black",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "TR-END-BLK",
+    "desc": "Top Rail | End Cap | Black",
+    "subCat": "End Cap",
+    "family": "Hardware",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "PLT-SM",
+    "desc": "Plate | Surface Mount",
+    "subCat": "Mounting Plate",
+    "family": "Fabricated Part",
+    "material": "Aluminum",
+    "finish": "Mill",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "PLT-TOP",
+    "desc": "Plate | Top Rail",
+    "subCat": "Mounting Plate",
+    "family": "Fabricated Part",
+    "material": "Aluminum",
+    "finish": "Mill",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "ANG-TOP",
+    "desc": "Angle | Top",
+    "subCat": "Bracket",
+    "family": "Fabricated Part",
+    "material": "Aluminum",
+    "finish": "Mill",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "ANG-BOT",
+    "desc": "Angle | Bottom",
+    "subCat": "Bracket",
+    "family": "Fabricated Part",
+    "material": "Aluminum",
+    "finish": "Mill",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "TR-20-BLK",
+    "desc": "Top Rail | 20' | Black",
+    "subCat": "Top Rail",
+    "family": "Rail",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "TR-20-CLR",
+    "desc": "Top Rail | 20' | Custom Color",
+    "subCat": "Top Rail",
+    "family": "Rail",
+    "material": "Aluminum",
+    "finish": "Custom",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "TR-12-BLK",
+    "desc": "Top Rail | 12' | Black",
+    "subCat": "Top Rail",
+    "family": "Rail",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "TR-12-CLR",
+    "desc": "Top Rail | 12' | Custom Color",
+    "subCat": "Top Rail",
+    "family": "Rail",
+    "material": "Aluminum",
+    "finish": "Custom",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "TR-8-BLK",
+    "desc": "Top Rail | 8' | Black",
+    "subCat": "Top Rail",
+    "family": "Rail",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "TR-8-CLR",
+    "desc": "Top Rail | 8' | Custom Color",
+    "subCat": "Top Rail",
+    "family": "Rail",
+    "material": "Aluminum",
+    "finish": "Custom",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-42-BLK",
+    "desc": "Post | Cable | Fascia Mount | Line - 42\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-42-CLR",
+    "desc": "Post | Cable | Fascia Mount | Line - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-36-BLK",
+    "desc": "Post | Cable | Fascia Mount | Line - 36\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-36-CLR",
+    "desc": "Post | Cable | Fascia Mount | Line - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-STR-42-BLK",
+    "desc": "Post | Cable | Fascia Mount | Stair - 42\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "P-CBL-FM-STR-42-CLR",
+    "desc": "Post | Cable | Fascia Mount | Stair - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-STR-36-BLK",
+    "desc": "Post | Cable | Fascia Mount | Stair - 36\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-STR-36-CLR",
+    "desc": "Post | Cable | Fascia Mount | Stair - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-42-BLK",
+    "desc": "Post | Cable | Fascia Mount | Corner - 42\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "Yes",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-42-CLR",
+    "desc": "Post | Cable | Fascia Mount | Corner - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-36-BLK",
+    "desc": "Post | Cable | Fascia Mount | Corner - 36\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-36-CLR",
+    "desc": "Post | Cable | Fascia Mount | Corner - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-42-BLK",
+    "desc": "Post | Cable | Surface Mount | Line - 42\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-42-CLR",
+    "desc": "Post | Cable | Surface Mount | Line - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-36-BLK",
+    "desc": "Post | Cable | Surface Mount | Line - 36\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-36-CLR",
+    "desc": "Post | Cable | Surface Mount | Line - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-STR-42-BLK",
+    "desc": "Post | Cable | Surface Mount | Stair - 42\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "P-CBL-SM-STR-42-CLR",
+    "desc": "Post | Cable | Surface Mount | Stair - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-STR-36-BLK",
+    "desc": "Post | Cable | Surface Mount | Stair - 36\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-STR-36-CLR",
+    "desc": "Post | Cable | Surface Mount | Stair - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-42-BLK",
+    "desc": "Post | Cable | Surface Mount | Corner - 42\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "Yes"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-42-CLR",
+    "desc": "Post | Cable | Surface Mount | Corner - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-36-BLK",
+    "desc": "Post | Cable | Surface Mount | Corner - 36\" | Black",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-36-CLR",
+    "desc": "Post | Cable | Surface Mount | Corner - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Cable Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-42-BLK",
+    "desc": "Post | Glass | Fascia Mount | Line - 42\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-42-CLR",
+    "desc": "Post | Glass | Fascia Mount | Line - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-36-BLK",
+    "desc": "Post | Glass | Fascia Mount | Line - 36\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-36-CLR",
+    "desc": "Post | Glass | Fascia Mount | Line - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-STR-42-BLK",
+    "desc": "Post | Glass | Fascia Mount | Stair - 42\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-STR-42-CLR",
+    "desc": "Post | Glass | Fascia Mount | Stair - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-STR-36-BLK",
+    "desc": "Post | Glass | Fascia Mount | Stair - 36\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-STR-36-CLR",
+    "desc": "Post | Glass | Fascia Mount | Stair - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-CRN-42-BLK",
+    "desc": "Post | Glass | Fascia Mount | Corner - 42\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-CRN-42-CLR",
+    "desc": "Post | Glass | Fascia Mount | Corner - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-CRN-36-BLK",
+    "desc": "Post | Glass | Fascia Mount | Corner - 36\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-FM-CRN-36-CLR",
+    "desc": "Post | Glass | Fascia Mount | Corner - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-42-BLK",
+    "desc": "Post | Glass | Surface Mount | Line - 42\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-42-CLR",
+    "desc": "Post | Glass | Surface Mount | Line - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-36-BLK",
+    "desc": "Post | Glass | Surface Mount | Line - 36\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-36-CLR",
+    "desc": "Post | Glass | Surface Mount | Line - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-STR-42-BLK",
+    "desc": "Post | Glass | Surface Mount | Stair - 42\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-STR-42-CLR",
+    "desc": "Post | Glass | Surface Mount | Stair - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-STR-36-BLK",
+    "desc": "Post | Glass | Surface Mount | Stair - 36\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-STR-36-CLR",
+    "desc": "Post | Glass | Surface Mount | Stair - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-CRN-42-BLK",
+    "desc": "Post | Glass | Surface Mount | Corner - 42\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-CRN-42-CLR",
+    "desc": "Post | Glass | Surface Mount | Corner - 42\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-CRN-36-BLK",
+    "desc": "Post | Glass | Surface Mount | Corner - 36\" | Black",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Black",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  },
+  {
+    "sku": "P-GLS-SM-CRN-36-CLR",
+    "desc": "Post | Glass | Surface Mount | Corner - 36\" | Custom Color",
+    "subCat": "Post",
+    "family": "Glass Post",
+    "material": "Aluminum",
+    "finish": "Custom Color",
+    "srsChannel": "No",
+    "onlineDirect": "Yes",
+    "homeDepot": "No"
+  }
+],
+
+  // 02_SALES: Customer Issues log
+  customerIssues: [
+  {
+    "id": "CI-001",
+    "dateReported": "2026-01-19",
+    "customer": "Morrison Deck Co.",
+    "orderId": "MR-2026-0098",
+    "product": "Cable Post SM 42",
+    "issueType": "DAMAGE",
+    "description": "Two posts dented \u2014 shipping damage",
+    "severity": 3.0,
+    "rootCause": "Insufficient packaging",
+    "resolution": "Reshipped + added foam to SOP",
+    "status": "Closed"
+  },
+  {
+    "id": "CI-002",
+    "dateReported": "2026-01-29",
+    "customer": "Home Depot \u2014 #3847",
+    "orderId": "MR-2026-0118",
+    "product": "Cable Post SM 36",
+    "issueType": "MISSING",
+    "description": "4 cable tensioner kits missing",
+    "severity": 2.0,
+    "rootCause": "Packing error",
+    "resolution": "Sent kits overnight",
+    "status": "Closed"
+  },
+  {
+    "id": "CI-003",
+    "dateReported": "2026-02-06",
+    "customer": "Clearwater Design",
+    "orderId": "MR-2026-0112",
+    "product": "Glass Post FM 42",
+    "issueType": "DEFECT",
+    "description": "Powder coat bubbling on 3 posts",
+    "severity": 4.0,
+    "rootCause": "Surface contamination",
+    "resolution": "Re-coated + improved wash",
+    "status": "Closed"
+  },
+  {
+    "id": "CI-004",
+    "dateReported": "2026-02-18",
+    "customer": "Sunset Terrace Dev",
+    "orderId": "MR-2026-0135",
+    "product": "Cable Post SM 42",
+    "issueType": "FIT",
+    "description": "Corner posts don't align",
+    "severity": 3.0,
+    "rootCause": "Incorrect field measurements",
+    "resolution": "Sent revised posts",
+    "status": "Open"
+  },
+  {
+    "id": "CI-005",
+    "dateReported": "2026-02-23",
+    "customer": "Baker Construction",
+    "orderId": "MR-2026-0139",
+    "product": "Handrail 8ft",
+    "issueType": "WRONG",
+    "description": "Received Bronze instead of Matte Black",
+    "severity": 2.0,
+    "rootCause": "Order entry error",
+    "resolution": "Rush replacement",
+    "status": "Open"
+  },
+  {
+    "id": "DAMAGE",
+    "dateReported": "Product ar",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  },
+  {
+    "id": "DEFECT",
+    "dateReported": "Manufactur",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  },
+  {
+    "id": "MISSING",
+    "dateReported": "Missing pa",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  },
+  {
+    "id": "WRONG",
+    "dateReported": "Wrong prod",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  },
+  {
+    "id": "FIT",
+    "dateReported": "Doesn't fi",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  },
+  {
+    "id": "WARRANTY",
+    "dateReported": "Warranty c",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  },
+  {
+    "id": "LATE",
+    "dateReported": "Late deliv",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  },
+  {
+    "id": "OTHER",
+    "dateReported": "Other \u2014 se",
+    "customer": "",
+    "orderId": "",
+    "product": "",
+    "issueType": "",
+    "description": "",
+    "severity": 0,
+    "rootCause": "",
+    "resolution": "",
+    "status": ""
+  }
+],
+
+  // 04_ARSENAL: Materials DB (135 items with costs/lead times)
+  materialsDB: [
+  {
+    "id": "RM-001",
+    "name": "6061-T6 Tube 1\"x3\"x1/8\"",
+    "category": "Aluminum Tube/Pipe",
+    "unit": "FT",
+    "unitCost": 3.47,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #1 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-003",
+    "name": "6061-T6 Tube 2\"x1/8\"",
+    "category": "Aluminum Tube/Pipe",
+    "unit": "FT",
+    "unitCost": 4.55,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #3 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-006",
+    "name": "6061-T6 Tube 1\"x2\"x1/8\"",
+    "category": "Aluminum Tube/Pipe",
+    "unit": "FT",
+    "unitCost": 2.7,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #6 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-011",
+    "name": "6061-T6 Tube 1/8\"x3/4\"",
+    "category": "Aluminum Tube/Pipe",
+    "unit": "FT",
+    "unitCost": 1.75,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #11 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-012",
+    "name": "6061-T6 Pipe 1/8\"x1-7/8\"",
+    "category": "Aluminum Tube/Pipe",
+    "unit": "FT",
+    "unitCost": 2.38,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #12 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-002",
+    "name": "6061-T6 Bar 1/8\"x2\"",
+    "category": "Aluminum Flat Bar",
+    "unit": "FT",
+    "unitCost": 3.1,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #2 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-004",
+    "name": "6061-T6 Bar 1/4\"x4\"",
+    "category": "Aluminum Flat Bar",
+    "unit": "FT",
+    "unitCost": 4.95,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #4 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-008",
+    "name": "6061-T6 Bar 1/4\"x3\"",
+    "category": "Aluminum Flat Bar",
+    "unit": "FT",
+    "unitCost": 3.7,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #8 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-010",
+    "name": "6061-T6 Bar 1/8\"x4\"",
+    "category": "Aluminum Flat Bar",
+    "unit": "FT",
+    "unitCost": 3.99,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #10 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-005",
+    "name": "6061-T6 Angle 2\"x4\"x1/8\"",
+    "category": "Aluminum Angle",
+    "unit": "FT",
+    "unitCost": 5.15,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #5 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-007",
+    "name": "6061-T6 Angle 2\"x2\"x1/8\"",
+    "category": "Aluminum Angle",
+    "unit": "FT",
+    "unitCost": 3.05,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #7 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-009",
+    "name": "6061-T6 Angle 1.5\"x1.5\"x1/8\"",
+    "category": "Aluminum Angle",
+    "unit": "FT",
+    "unitCost": 2.28,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #9 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-013",
+    "name": "6061-T6 Angle 2.5\"x2.5\"x1/4\"",
+    "category": "Aluminum Angle",
+    "unit": "FT",
+    "unitCost": 6.45,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #13 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-014",
+    "name": "6061-T6 Angle ROUNDED 2\"x4\"x1/4\"",
+    "category": "Aluminum Angle",
+    "unit": "FT",
+    "unitCost": 7.8,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #14 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-015",
+    "name": "6061-T6 Angle 2\"x4\"x1/4\"",
+    "category": "Aluminum Angle",
+    "unit": "FT",
+    "unitCost": 7.55,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #15 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-016",
+    "name": "6061-T6 Angle 4\"x4\"x1/2\"",
+    "category": "Aluminum Angle",
+    "unit": "FT",
+    "unitCost": 17.58,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #16 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-017",
+    "name": "Powder - T009-BG01 (Gloss-Smooth Bronze Gold)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #17 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-018",
+    "name": "Powder - T002-WH08 (Semi-Gloss White)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.65,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #18 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-019",
+    "name": "Powder - T075-BK211 (Semi-Gloss Vein Black)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.15,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #19 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-020",
+    "name": "Powder - T002-BK08 (Semi-Gloss Smooth Black)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.65,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #20 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-021",
+    "name": "Powder - C013-GR08 (Semi-Gloss Hammer Gray)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.35,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #21 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-022",
+    "name": "Powder - T005-BK78 (Semi-Gloss Smooth Black)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.65,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #22 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-023",
+    "name": "Powder - C241-GR305 (Semi-Gloss Texture Gray)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.75,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #23 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-024",
+    "name": "Powder - C206-BK266 (Semi-Gloss Smooth Black)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.55,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #24 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-025",
+    "name": "Powder - C241-GR07 (Semi-Gloss Texture Gray)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.6,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #25 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-026",
+    "name": "Powder - T025-BR01 (Semi-Gloss Bronze)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.55,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #26 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-027",
+    "name": "Powder - T243-GR301 (Semi-Gloss Texture Gray)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.9,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #27 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-028",
+    "name": "Powder - T064-BR24 (Semi-Gloss Hammertone Bronze)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.7,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #28 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-029",
+    "name": "Powder - T013-GR185 (Semi-Gloss Hammer Gray)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.4,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #29 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-030",
+    "name": "Powder - T291-BR251 (Semi-Gloss Texture Bronze)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.8,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #30 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-031",
+    "name": "Powder - T091-BR47 (Semi-Gloss Texture Bronze)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.6,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #31 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-032",
+    "name": "Powder - T375-BK26 (Semi-Gloss Vein Black)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #32 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-033",
+    "name": "Powder - T012-BR161 (Semi-Gloss Hammer Bronze)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.85,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #33 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-035",
+    "name": "Powder - P000-BK247 (Flat Smooth Black)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.45,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #34 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-036",
+    "name": "Powder - T375-BK07 (Semi-Gloss Vein Copper)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #35 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-037",
+    "name": "Powder - C031-WH120 (Semi-Gloss Texture White)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.6,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #36 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-038",
+    "name": "Powder - T238-GR2070 (Gloss Smooth Gray)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.9,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #37 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-039",
+    "name": "Powder - T209-C101 (Gloss Smooth Clear)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.65,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #38 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-040",
+    "name": "Powder - C209-BR358 (Gloss Smooth Bronze)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 6.3,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #39 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-041",
+    "name": "Powder - E305-GR533 (Semi-Gloss Smooth Gray Primer)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.8,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #40 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-042",
+    "name": "Powder - P000-BG631 (Flat Smooth Desert Sand)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 7.15,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #41 | Updated 02/25/2026"
+  },
+  {
+    "id": "RM-043",
+    "name": "Powder - C241-BK303 (Semi-Gloss Texture Black)",
+    "category": "Powder Coat",
+    "unit": "LB",
+    "unitCost": 5.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #42 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-001",
+    "name": "1/8\" Cable SS (T316 7x7)",
+    "category": "Cable",
+    "unit": "FT",
+    "unitCost": 0.55,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #43 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-015",
+    "name": "Swage Assembly 1/8\" (Fixed End)",
+    "category": "Swages",
+    "unit": "EA",
+    "unitCost": 5.35,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #54 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-016",
+    "name": "Swage Assembly 1/8\" (Tensioning End)",
+    "category": "Swages",
+    "unit": "EA",
+    "unitCost": 7.45,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #55 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-012",
+    "name": "Tensioner Body 1/4\" NC Thread 1/8\" Cable",
+    "category": "Tensioners",
+    "unit": "EA",
+    "unitCost": 8.25,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #51 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-014",
+    "name": "Swage Angle Washer 1/4\" ID x 57\u00b0 (Natural)",
+    "category": "Angle Washers",
+    "unit": "EA",
+    "unitCost": 1.38,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #53 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-017",
+    "name": "Swage Angle Washer 1/4\" ID x 57\u00b0 (Black)",
+    "category": "Angle Washers",
+    "unit": "EA",
+    "unitCost": 1.38,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #56 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-011",
+    "name": "Swage Nut 1/4\" NC Hex SS",
+    "category": "Nuts",
+    "unit": "EA",
+    "unitCost": 1.18,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #50 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-013",
+    "name": "Swage Acorn Nut 1/4\" SS",
+    "category": "Nuts",
+    "unit": "EA",
+    "unitCost": 1.72,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #52 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-002",
+    "name": "#11 Self-Tap Screw Sq Drive Pan Head #11x3/4\"",
+    "category": "Self-Tap Screw",
+    "unit": "EA",
+    "unitCost": 0.09,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #44 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-004",
+    "name": "Post Screw 9/32 x 2-7/8\" Lock Head T-25 Fully Threaded",
+    "category": "Post Screws",
+    "unit": "EA",
+    "unitCost": 0.42,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #45 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-005",
+    "name": "Lag Bolt Hex Head SS 3/8\" x 5\"",
+    "category": "Lags",
+    "unit": "EA",
+    "unitCost": 0.88,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #46 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-009",
+    "name": "Swage Washer 1/4\" ID OD 49/64\" SS (Small)",
+    "category": "Washers",
+    "unit": "EA",
+    "unitCost": 0.78,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #48 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-010",
+    "name": "Swage Washer 1/4\" ID OD 5/8\" SS (Large)",
+    "category": "Washers",
+    "unit": "EA",
+    "unitCost": 0.82,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #49 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-008",
+    "name": "Lag Bolt Washer SS 7/16\" OD 49/64\"",
+    "category": "Washers",
+    "unit": "EA",
+    "unitCost": 0.13,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #47 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-018",
+    "name": "Gate Hinge Kit 3.5\" Self-Closing Black",
+    "category": "Hinge Kits",
+    "unit": "KIT",
+    "unitCost": 17.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #57 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-019",
+    "name": "Handrail End Cap 3\"x1\" Black",
+    "category": "End Caps",
+    "unit": "EA",
+    "unitCost": 2.2,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #58 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-020",
+    "name": "6 Mil Poly Tubing Roll 5\"x1,000ft",
+    "category": "Poly Tubing",
+    "unit": "RL",
+    "unitCost": 44.95,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #59 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-021",
+    "name": "6 Mil Poly Tubing Roll 6\"x1,000ft",
+    "category": "Poly Tubing",
+    "unit": "RL",
+    "unitCost": 52.95,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #60 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-022",
+    "name": "6 Mil Poly Tubing Roll 10\"x1,000ft",
+    "category": "Poly Tubing",
+    "unit": "RL",
+    "unitCost": 82.95,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #61 | Updated 02/25/2026"
+  },
+  {
+    "id": "AI-023",
+    "name": "1 Mil Air Cushion Film 1-1/4\"x9\"x13\"",
+    "category": "Air Cushion Film",
+    "unit": "CS",
+    "unitCost": 88.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #62 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-001",
+    "name": "Argon Bottle (125 CF)",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #63 | Updated 02/25/2026 \u2014 \u26a0\ufe0f QUOTE REQ"
+  },
+  {
+    "id": "PSC-016",
+    "name": "Filler Rod ER4043 3/32\" Alum. (10 lb CTN)",
+    "category": "Weld",
+    "unit": "CTN",
+    "unitCost": 65.41,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #78 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-017",
+    "name": "Tungsten Rod 2% Ceriated 3/32\"x7\"",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 6.2,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #79 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-018",
+    "name": "TIG Collets Long 3/32\"",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 7.85,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #80 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-019",
+    "name": "TIG Collets Lens 3/32\"",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 8.25,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #81 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-020",
+    "name": "MIG Weld Wire ER5356 0.035\" (1 lb spool)",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 14.95,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #82 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-021",
+    "name": "Carbon Dioxide Bottle (20 lb)",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #83 | Updated 02/25/2026 \u2014 \u26a0\ufe0f QUOTE REQ"
+  },
+  {
+    "id": "PSC-022",
+    "name": "Weld Rod E7018 1/8\" (5 lb pk)",
+    "category": "Weld",
+    "unit": "PK",
+    "unitCost": 14.25,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #84 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-023",
+    "name": "TIG Back Cup Long (Pyrex #8)",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 7.25,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #85 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-024",
+    "name": "TIG Back Cup Medium (Pyrex #6)",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 5.95,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #86 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-025",
+    "name": "TIG Back Cup Short (Ceramic #5)",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 4.45,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #87 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-026",
+    "name": "TIG Gas Lens Cup #6 or #7",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 8.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #88 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-027",
+    "name": "TIG Gas Lens Body 3/32\"",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 18.25,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #89 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-028",
+    "name": "TIG Collet Body 3/32\"",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 10.85,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #90 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-029",
+    "name": "TIG Ceramic Cup #5 or #6",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 3.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #91 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-030",
+    "name": "Wire Brush SS for Aluminum Prep",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 7.85,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #92 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-031",
+    "name": "Weld Hood Lens Outer (4.5\"x5.25\")",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 3.85,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #93 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-032",
+    "name": "Weld Hood Lens Inner (2\"x4.25\")",
+    "category": "Weld",
+    "unit": "EA",
+    "unitCost": 3.45,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #94 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-002",
+    "name": "84T Saw Blade 10\"/.625 Arbor Alum/Plastic",
+    "category": "Machining",
+    "unit": "EA",
+    "unitCost": 71.99,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #64 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-009",
+    "name": "Drill Bit 5/16\" HSS Cobalt",
+    "category": "Machining",
+    "unit": "EA",
+    "unitCost": 7.49,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #71 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-010",
+    "name": "Drill Bit 7/16\" HSS Cobalt",
+    "category": "Machining",
+    "unit": "EA",
+    "unitCost": 10.99,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #72 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-011",
+    "name": "Drill Bit 3/8\" HSS Cobalt",
+    "category": "Machining",
+    "unit": "EA",
+    "unitCost": 8.99,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #73 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-012",
+    "name": "Drill Bit 1/2\" HSS Cobalt",
+    "category": "Machining",
+    "unit": "EA",
+    "unitCost": 13.49,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #74 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-013",
+    "name": "Drill Bit 1/8\" HSS Cobalt",
+    "category": "Machining",
+    "unit": "EA",
+    "unitCost": 2.99,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #75 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-003",
+    "name": "Lumber 2x4x96\" (8 ft)",
+    "category": "Shipping",
+    "unit": "EA",
+    "unitCost": 5.85,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #65 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-004",
+    "name": "Pallet 48\"x40\" Standard GMA",
+    "category": "Shipping",
+    "unit": "EA",
+    "unitCost": 10.5,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #66 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-007",
+    "name": "Shipping Labels 8.5\"x5.5\" (200/cs)",
+    "category": "Shipping",
+    "unit": "CS",
+    "unitCost": 22.95,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #69 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-005",
+    "name": "Gloves Work Leather Large (12pr/CTN)",
+    "category": "PPE",
+    "unit": "CTN",
+    "unitCost": 52.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #67 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-006",
+    "name": "Shop Rags Reclaimed Cotton (50 lb box)",
+    "category": "Shop",
+    "unit": "BX",
+    "unitCost": 38.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #68 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-008",
+    "name": "Sanding Disc 5\" Universal 80 Grit (25/pk)",
+    "category": "Prep",
+    "unit": "PK",
+    "unitCost": 14.99,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #70 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-014",
+    "name": "4.5\"x.045\"x7/8\" Cut-Off Wheel Aluminum",
+    "category": "Prep",
+    "unit": "EA",
+    "unitCost": 2.75,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #76 | Updated 02/25/2026"
+  },
+  {
+    "id": "PSC-015",
+    "name": "4.5\" Flap Disc 80 Grit T29",
+    "category": "Prep",
+    "unit": "EA",
+    "unitCost": 5.49,
+    "lastUpdated": "02/25/2026",
+    "vendor": "See Vendor Tracker",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #77 | Updated 02/25/2026"
+  },
+  {
+    "id": "POST-001",
+    "name": "Line Post 36\" \u2014 Finished Assembly",
+    "category": "Posts \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "Cost = alum extrusion + powder coat + labor. See Order Cost Calculator for breakdown."
+  },
+  {
+    "id": "POST-002",
+    "name": "Line Post 42\" \u2014 Finished Assembly",
+    "category": "Posts \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "Cost = alum extrusion + powder coat + labor. See Order Cost Calculator for breakdown."
+  },
+  {
+    "id": "POST-003",
+    "name": "Stair Post 36\" \u2014 Finished Assembly",
+    "category": "Posts \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "Stair angle cut both ends. Cost = alum + powder + labor. Update per product standard."
+  },
+  {
+    "id": "POST-004",
+    "name": "Stair Post 42\" \u2014 Finished Assembly",
+    "category": "Posts \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "Stair angle cut both ends. Cost = alum + powder + labor. Update per product standard."
+  },
+  {
+    "id": "POST-005",
+    "name": "Corner Post \u2014 Finished Assembly",
+    "category": "Posts \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "90 deg corner. Cost = alum + powder + labor. Update per product standard."
+  },
+  {
+    "id": "POST-006",
+    "name": "Custom Post \u2014 Finished Assembly",
+    "category": "Posts \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 3.0,
+    "minOrderQty": 1.0,
+    "notes": "Non-standard spec. Price varies by job. Update per order quote."
+  },
+  {
+    "id": "RAIL-001",
+    "name": "Top Rail 8ft Deck \u2014 Finished Assembly",
+    "category": "Top Rails \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "8LF deck rail. Cost = alum + end caps + powder + labor."
+  },
+  {
+    "id": "RAIL-002",
+    "name": "Top Rail 12ft Deck \u2014 Finished Assembly",
+    "category": "Top Rails \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "12LF deck rail. Cost = alum + end caps + powder + labor."
+  },
+  {
+    "id": "RAIL-003",
+    "name": "Top Rail 20ft Deck \u2014 Finished Assembly",
+    "category": "Top Rails \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "20LF deck rail. Cost = alum + end caps + powder + labor."
+  },
+  {
+    "id": "RAIL-004",
+    "name": "Top Rail 8ft Stair \u2014 Finished Assembly",
+    "category": "Top Rails \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "8LF stair rail, angle cut. Cost = alum + end caps + powder + labor."
+  },
+  {
+    "id": "RAIL-005",
+    "name": "Top Rail 12ft Stair \u2014 Finished Assembly",
+    "category": "Top Rails \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "12LF stair rail, angle cut. Cost = alum + end caps + powder + labor."
+  },
+  {
+    "id": "RAIL-006",
+    "name": "Top Rail 20ft Stair \u2014 Finished Assembly",
+    "category": "Top Rails \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 2.0,
+    "minOrderQty": 1.0,
+    "notes": "20LF stair rail, angle cut. Cost = alum + end caps + powder + labor."
+  },
+  {
+    "id": "RAIL-007",
+    "name": "Rail Cap \u2014 Finished, Powder Coated",
+    "category": "Top Rails \u2014 Finished",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Maisy Railing (In-House)",
+    "leadTimeDays": 1.0,
+    "minOrderQty": 1.0,
+    "notes": "Slip-over aluminum end cap for top rail. All lengths. Price per cap."
+  },
+  {
+    "id": "CAB-001",
+    "name": "Cable (per foot) \u2014 1/8\" T316 SS 7x7",
+    "category": "Cable",
+    "unit": "Linear Foot",
+    "unitCost": 0.55,
+    "lastUpdated": "02/25/2026",
+    "vendor": "E-Rigging",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #43"
+  },
+  {
+    "id": "CAB-002",
+    "name": "Swage \u2014 Avg Fixed+Tensioning",
+    "category": "Cable",
+    "unit": "Each",
+    "unitCost": 6.4,
+    "lastUpdated": "02/25/2026",
+    "vendor": "E-Rigging",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "(Fixed $5.35 + Tensioning $7.45)/2"
+  },
+  {
+    "id": "CAB-003",
+    "name": "Angle Washer \u2014 1/4\" ID x 57\u00b0",
+    "category": "Cable",
+    "unit": "Each",
+    "unitCost": 1.38,
+    "lastUpdated": "02/25/2026",
+    "vendor": "US Rigging",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #53"
+  },
+  {
+    "id": "HW-001",
+    "name": "Angle Bracket \u2014 Aluminum Post Mount",
+    "category": "Hardware",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Fastenal / McMaster-Carr",
+    "leadTimeDays": 3.0,
+    "minOrderQty": 10.0,
+    "notes": "Specify size (1.5in, 2in, 3in). Quote from Fastenal acct or McMaster-Carr #4356T22."
+  },
+  {
+    "id": "HW-002",
+    "name": "Lag Screw \u2014 3/8\" x 5\" SS",
+    "category": "Hardware",
+    "unit": "Each",
+    "unitCost": 0.88,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Fastenal",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #46"
+  },
+  {
+    "id": "HW-003",
+    "name": "Self-Tap Screw \u2014 #11x3/4\"",
+    "category": "Hardware",
+    "unit": "Each",
+    "unitCost": 0.09,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Fastenal",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #44"
+  },
+  {
+    "id": "HW-004",
+    "name": "Post Screw \u2014 9/32 x 2-7/8\"",
+    "category": "Hardware",
+    "unit": "Each",
+    "unitCost": 0.42,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Starborn",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT Item #45"
+  },
+  {
+    "id": "GLS-001",
+    "name": "Deck Glass Panel (Framed)",
+    "category": "Glass - Framed",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "TBD",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Enter quoted glass price"
+  },
+  {
+    "id": "GLS-002",
+    "name": "Custom Glass Panel (Framed)",
+    "category": "Glass - Framed",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "TBD",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Enter quoted glass price"
+  },
+  {
+    "id": "GLS-003",
+    "name": "Glass Clamp \u2014 Square Post, Framed",
+    "category": "Glass \u2014 Framed",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "C.R. Laurence / KN Crowder",
+    "leadTimeDays": 7.0,
+    "minOrderQty": 4.0,
+    "notes": "CRL part# varies by post size. KN Crowder for bulk pricing. Quote per order."
+  },
+  {
+    "id": "GLS-004",
+    "name": "Angle Clamp \u2014 Corner/Stair, Framed",
+    "category": "Glass \u2014 Framed",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "C.R. Laurence / KN Crowder",
+    "leadTimeDays": 7.0,
+    "minOrderQty": 4.0,
+    "notes": "Used at angles over 15 deg. CRL catalog. Price varies by stair pitch. Quote per job."
+  },
+  {
+    "id": "GLS-010",
+    "name": "Spigot \u2014 Surface Mount, Frameless",
+    "category": "Glass \u2014 Frameless",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "C.R. Laurence / KN Crowder",
+    "leadTimeDays": 7.0,
+    "minOrderQty": 2.0,
+    "notes": "Surface-mount base spigot. Specify core 1.5in or 2in. Quote from CRL or KN Crowder."
+  },
+  {
+    "id": "GLS-011",
+    "name": "180 Deg Clamp \u2014 Inline, Frameless",
+    "category": "Glass \u2014 Frameless",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "C.R. Laurence / KN Crowder",
+    "leadTimeDays": 7.0,
+    "minOrderQty": 4.0,
+    "notes": "Straight-run glass-to-glass clamp. Quote from CRL or KN Crowder."
+  },
+  {
+    "id": "GLS-012",
+    "name": "Swivel Clamp \u2014 Adjustable Angle, Frameless",
+    "category": "Glass \u2014 Frameless",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "C.R. Laurence / KN Crowder",
+    "leadTimeDays": 7.0,
+    "minOrderQty": 4.0,
+    "notes": "Stair/raked runs up to 45 deg. Quote from CRL or KN Crowder."
+  },
+  {
+    "id": "GLS-013",
+    "name": "Deck Glass Panel (Frameless)",
+    "category": "Glass - Frameless",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "TBD",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Enter quoted glass price"
+  },
+  {
+    "id": "GLS-014",
+    "name": "Custom Glass Panel (Frameless)",
+    "category": "Glass - Frameless",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "TBD",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Enter quoted glass price"
+  },
+  {
+    "id": "GLS-015",
+    "name": "Spigot Screw \u2014 M8 SS Allen Head",
+    "category": "Glass \u2014 Frameless",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "C.R. Laurence",
+    "leadTimeDays": 5.0,
+    "minOrderQty": 10.0,
+    "notes": "Torque-to-spec fastener for spigot base. Sold in packs of 10. Price per each."
+  },
+  {
+    "id": "ALU-001",
+    "name": "Aluminum Post Extrusion (per ft)",
+    "category": "Aluminum",
+    "unit": "Linear Foot",
+    "unitCost": 3.47,
+    "lastUpdated": "02/25/2026",
+    "vendor": "EMJ Metals",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT RM-001 1x3x1/8 tube"
+  },
+  {
+    "id": "ALU-002",
+    "name": "Aluminum Top Rail (per ft)",
+    "category": "Aluminum",
+    "unit": "Linear Foot",
+    "unitCost": 2.7,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Coast Alum",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT RM-006 1x2x1/8 tube"
+  },
+  {
+    "id": "ALU-003",
+    "name": "Aluminum End Cap",
+    "category": "Aluminum",
+    "unit": "Each",
+    "unitCost": 2.2,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Various",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "VT AI-019 Handrail End Cap"
+  },
+  {
+    "id": "PC-001",
+    "name": "Powder Coat - Standard Color (per post)",
+    "category": "Powder Coat",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Internal",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Estimate LB used \u00d7 VT price"
+  },
+  {
+    "id": "PC-002",
+    "name": "Powder Coat - Standard Color (per rail ft)",
+    "category": "Powder Coat",
+    "unit": "Linear Foot",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Internal",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Estimate LB used \u00d7 VT price"
+  },
+  {
+    "id": "PC-003",
+    "name": "Powder Coat - Custom Color (per post)",
+    "category": "Powder Coat",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Internal",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Estimate LB used \u00d7 VT price"
+  },
+  {
+    "id": "PC-004",
+    "name": "Powder Coat - Custom Color (per rail ft)",
+    "category": "Powder Coat",
+    "unit": "Linear Foot",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "Internal",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Estimate LB used \u00d7 VT price"
+  },
+  {
+    "id": "PKG-001",
+    "name": "Corrugated Cardboard Box (per order)",
+    "category": "Packaging",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "ULINE",
+    "leadTimeDays": 0,
+    "minOrderQty": 0,
+    "notes": "Enter box cost"
+  },
+  {
+    "id": "PKG-002",
+    "name": "Stretch Wrap \u2014 80ga Hand Roll",
+    "category": "Packaging",
+    "unit": "Roll",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "ULINE / Home Depot",
+    "leadTimeDays": 3.0,
+    "minOrderQty": 1.0,
+    "notes": "ULINE S-1027 (5in x 1,000ft). Approx $14-18 per roll. Update with current ULINE price."
+  },
+  {
+    "id": "PKG-003",
+    "name": "Poly Strapping & Buckles \u2014 50ft Kit",
+    "category": "Packaging",
+    "unit": "Kit",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "ULINE",
+    "leadTimeDays": 3.0,
+    "minOrderQty": 1.0,
+    "notes": "ULINE S-6065. Approx $8-12 per kit. Update with current ULINE price."
+  },
+  {
+    "id": "PKG-004",
+    "name": "Edge Protectors \u2014 Cardboard 2x2x12in",
+    "category": "Packaging",
+    "unit": "Each",
+    "unitCost": 0.0,
+    "lastUpdated": "02/25/2026",
+    "vendor": "ULINE",
+    "leadTimeDays": 3.0,
+    "minOrderQty": 50.0,
+    "notes": "ULINE S-7451. Approx $0.40-0.60 each at qty 50+. Price per individual protector."
+  }
+],
+
+  // 04_ARSENAL: Vendor Scorecard
+  vendorScorecard: [],
+
+  // 04_ARSENAL: Cycle Count log
+  cycleCount: [],
+
+  // 05_MERIDIAN: SKU Reference (53 SKUs with cut lengths/raw stock)
+  skuReference: [
+  {
+    "sku": "36-22-GATE-KIT",
+    "desc": "36\" x 22\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "42-22-GATE-KIT",
+    "desc": "42\" x 22\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "CUSTOM-POSTS",
+    "desc": "Per Order Specification",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "GRASPABLE-HANDRAIL",
+    "desc": "Custom Length",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "2x ANG-TOP\n2x ANG-FM",
+    "tooling": "Saw\nDrill Press\nTIG Welder",
+    "fixtures": "Saw Stop\nFixture - Cable Holes\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "2x ANG-TOP\n2x ANG-FM",
+    "tooling": "Saw\nDrill Press\nTIG Welder",
+    "fixtures": "Saw Stop\nFixture - Cable Holes\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP",
+    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP",
+    "tooling": "Drill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-FM-STR-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nStair Angle Fixture\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-FM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nStair Angle Fixture\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "2x ANG-TOP\n1x PLT-SM",
+    "tooling": "Saw\nDrill Press\nTIG Welder",
+    "fixtures": "Saw Stop\nFixture - Cable Holes\nFixture - Post Weld\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "2x ANG-TOP\n1x PLT-SM",
+    "tooling": "Chop Saw\nDrill Press w/ 7/16\" bit\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Line Hole Template\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP\n1x PLT-SM",
+    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-42",
+    "desc": "42\" Surface Mount Cable Line Post",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Band Saw\nDrill Press w/ 5/16\" Bit\nTIG Welder\nSaw Stop Fixture\nCable Hole Template\nWeld Fixture \u2014 Post\nAUTOMATION OPPORTUNITIES\nCNC Drilling\nCNC Cutting\nRobotic Welding\nAutomated Powder Line\nPROJECTED IMPACT\nCurrent Manual Time\nProjected Automated Time\nLabor Reduction Target",
+    "fixtures": ""
+  },
+  {
+    "sku": "P-CBL-SM-MINI",
+    "desc": "13\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP\n1x PLT-SM\n1x RAIL-MINI",
+    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-SM-STR-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Saw\nDrill Press w/ 5/16\"\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nStair Angle Fixture\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-CBL-SM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-SM",
+    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-FM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "2x ANG-TOP\n2x ANG-BOT",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP",
+    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP",
+    "tooling": "Band Saw\nDrill Press w/ 7/16\" bit\nTIG Welder",
+    "fixtures": "Saw Stop\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-FM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Chop Saw\nDrill Press w/ 7/16\" bit",
+    "fixtures": "Saw Stop\n1/8 Shim Plate\nFascia Hole Template\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-SM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "2x ANG-TOP\n1x PLT-SM",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP\n1x PLT-SM",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-TOP\n1x PLT-SM",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "P-GLS-SM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "partsRequired": "1x PLT-SM",
+    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
+    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "TOP-RAIL",
+    "desc": "20' Sticks",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
+    "partsRequired": "",
+    "tooling": "Band Saw\nTIG Welder",
+    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
+  },
+  {
+    "sku": "SKU",
+    "desc": "Description",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Cut Length",
+    "partsRequired": "Raw Stock",
+    "tooling": "Holes",
+    "fixtures": "Yield"
+  },
+  {
+    "sku": "36-22-GATE-KIT",
+    "desc": "36\" x 22\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "31 3/4\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "No holes specified",
+    "fixtures": "Varies"
+  },
+  {
+    "sku": "42-22-GATE-KIT",
+    "desc": "42\" x 22\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "37 3/4\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "No holes specified",
+    "fixtures": "Varies"
+  },
+  {
+    "sku": "CUSTOM-POSTS",
+    "desc": "Per Order Specification",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Per order",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "Per order specification",
+    "fixtures": "Varies"
+  },
+  {
+    "sku": "GRASPABLE-HANDRAIL",
+    "desc": "Custom Length",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Per order",
+    "partsRequired": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
+    "tooling": "No holes",
+    "fixtures": "Per order"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "43\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "Field drilled - no factory holes",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-FM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "47 3/4\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "Field drilled - no factory holes",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "42 7/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "11 cable holes per side (22 total) + 2 lag holes = 24 total",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-FM-LINE-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "47 3/4\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "13 cable holes per side (26 total) + 2 lag holes = 28 total",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-FM-STR-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "42 7/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "10 cable holes + 10 offset stair holes + 2 lag holes = 22 total",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-FM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "47 3/4\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "12 cable holes + 12 offset stair holes = 24 total",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "34 3/4\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "Cable holes per corner configuration",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-SM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "40 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "13 cable holes + 13 offset holes (1/4\" offset) = 26 total",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "34 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "11 cable holes per side (22 total), 5/16\" dia, 3\" spacing",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-SM-LINE-42",
+    "desc": "42\" Surface Mount Cable Line Post",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "40 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "",
+    "fixtures": "5 posts per 20' stick (37\" drop retained)"
+  },
+  {
+    "sku": "P-CBL-SM-MINI",
+    "desc": "13\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "11 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "3 cable holes per side (6 total), 5/16\" dia, 3\" spacing",
+    "fixtures": "Use Drop"
+  },
+  {
+    "sku": "P-CBL-SM-STR-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "34 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "10 cable holes + 10 offset stair holes = 20 total",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-CBL-SM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "40 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "12 cable holes + 12 offset stair holes = 24 total",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-FM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "48\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "No holes - field drilled",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "42 7/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "2 lag holes (opposite sides)",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-FM-LINE-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "47 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "2 lag holes through both sides",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-FM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "47 7/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "2 fascia mount holes, 2\" from bottom, 3\" spacing",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-SM-CRN-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "40 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "No holes",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-36",
+    "desc": "36\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "34 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "No holes drilled",
+    "fixtures": "6 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-SM-LINE-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "40 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "No holes drilled",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "P-GLS-SM-STR-42",
+    "desc": "42\"",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "40 5/8\"",
+    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
+    "tooling": "No holes drilled in post",
+    "fixtures": "5 pieces per 20' stick"
+  },
+  {
+    "sku": "TOP-RAIL",
+    "desc": "20' Sticks",
+    "mfgHeight": 0,
+    "cutLength": 0,
+    "rawStock": "Per order",
+    "partsRequired": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
+    "tooling": "No holes",
+    "fixtures": "Per order"
+  }
+],
+
+  // 05_MERIDIAN: Product Profitability
+  productProfitability: [
+  {
+    "family": "TOTALS",
+    "unitsSold": 0.0,
+    "revenue": 0.0,
+    "matCost": 0.0,
+    "laborCost": 0.0,
+    "overheadAlloc": 0.0,
+    "totalCost": 0.0,
+    "grossProfit": 0.0,
+    "grossMarginPct": 0,
+    "avgSellPrice": 0
+  }
+],
+
+  // 05_MERIDIAN: Monthly P&L (all 12 months)
+  monthlyPL: [
+  {
+    "lineItem": "REVENUE",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Product Sales \u2014 Direct",
+    "category": "Revenue",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Product Sales \u2014 Home Depot",
+    "category": "Revenue",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Sister Company Revenue",
+    "category": "Revenue",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Custom / Special Orders",
+    "category": "Revenue",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "TOTAL REVENUE",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "COST OF GOODS SOLD",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Raw Materials (Aluminum)",
+    "category": "COGS",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Hardware & Fasteners",
+    "category": "COGS",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Powder Coat Materials",
+    "category": "COGS",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Glass Panels",
+    "category": "COGS",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Consumables (Welding, Abrasive)",
+    "category": "COGS",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Packaging Materials",
+    "category": "COGS",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Shipping & Freight",
+    "category": "COGS",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "TOTAL COGS",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "GROSS PROFIT",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "OPERATING EXPENSES",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Production Labor",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Management / Admin Labor",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Facility Rent",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Utilities (Electric, Gas, Water)",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Insurance",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Equipment Maintenance",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Software & Technology",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Office & Admin Supplies",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Travel & Training",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "Miscellaneous",
+    "category": "OpEx",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "TOTAL OPEX",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  },
+  {
+    "lineItem": "NET PROFIT",
+    "category": "",
+    "jan": 0,
+    "feb": 0,
+    "mar": 0,
+    "apr": 0,
+    "may": 0,
+    "jun": 0,
+    "jul": 0,
+    "aug": 0,
+    "sep": 0,
+    "oct": 0,
+    "nov": 0,
+    "dec": 0
+  }
+],
+
+  // 06_DISPATCH: Shipping Analysis by carrier
+  shippingAnalysis: [
+  {
+    "carrier": "Month",
+    "totalShipments": 0,
+    "totalSpend": 0,
+    "avgCostPerShipment": 0,
+    "avgCostPerLb": 0,
+    "avgTransitDays": 0,
+    "damageClaims": 0,
+    "onTimeRate": 0,
+    "rating": 0,
+    "notes": "Avg $/lb"
+  },
+  {
+    "carrier": "TOTALS",
+    "totalShipments": 0.0,
+    "totalSpend": 0.0,
+    "avgCostPerShipment": 0.0,
+    "avgCostPerLb": 0.0,
+    "avgTransitDays": 0.0,
+    "damageClaims": 0.0,
+    "onTimeRate": 0,
+    "rating": 0.0,
+    "notes": ""
+  }
+],
+
+  // 06_DISPATCH: Ship Monthly Summary by carrier
+  shipMonthlySummary: [
+  {
+    "month": "January",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 2589.34,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 2589.34
+  },
+  {
+    "month": "February",
+    "fedex": 0.0,
+    "ups": 448.74,
+    "abf": 5250.28,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 703.22,
+    "total": 6402.24
+  },
+  {
+    "month": "March",
+    "fedex": 0.0,
+    "ups": 80.83,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 80.83
+  },
+  {
+    "month": "April",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "May",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "June",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "July",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "August",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "September",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "October",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "November",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "December",
+    "fedex": 0.0,
+    "ups": 0.0,
+    "abf": 0.0,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 0.0,
+    "total": 0.0
+  },
+  {
+    "month": "ANNUAL TOTAL",
+    "fedex": 0.0,
+    "ups": 529.57,
+    "abf": 7839.62,
+    "estes": 0.0,
+    "oldDom": 0.0,
+    "rl": 0.0,
+    "xpo": 0.0,
+    "other": 703.22,
+    "total": 9072.41
+  }
+],
+
+  // 07_NEXUS: Equipment Log (9 machines)
+  equipmentLog: [
+  {
+    "id": "EQ-001",
+    "name": "Laguna Swift CNC",
+    "mfr": "Laguna",
+    "model": "Swift",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "CNC Station",
+    "condition": 0,
+    "nextPM": "",
+    "notes": "Primary CNC"
+  },
+  {
+    "id": "EQ-002",
+    "name": "Cold Saw (Primary)",
+    "mfr": "",
+    "model": "",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "Cutting",
+    "condition": 0,
+    "nextPM": "",
+    "notes": ""
+  },
+  {
+    "id": "EQ-003",
+    "name": "TIG Welder #1",
+    "mfr": "",
+    "model": "",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "Welding",
+    "condition": 0,
+    "nextPM": "",
+    "notes": ""
+  },
+  {
+    "id": "EQ-004",
+    "name": "TIG Welder #2",
+    "mfr": "",
+    "model": "",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "Welding",
+    "condition": 0,
+    "nextPM": "",
+    "notes": ""
+  },
+  {
+    "id": "EQ-005",
+    "name": "Powder Coat Gun",
+    "mfr": "",
+    "model": "",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "Powder Coat",
+    "condition": 0,
+    "nextPM": "",
+    "notes": ""
+  },
+  {
+    "id": "EQ-006",
+    "name": "Powder Coat Oven",
+    "mfr": "",
+    "model": "",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "Powder Coat",
+    "condition": 0,
+    "nextPM": "",
+    "notes": ""
+  },
+  {
+    "id": "EQ-007",
+    "name": "Band Saw",
+    "mfr": "",
+    "model": "",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "Cutting",
+    "condition": 0,
+    "nextPM": "",
+    "notes": ""
+  },
+  {
+    "id": "EQ-008",
+    "name": "Overhead Crane",
+    "mfr": "",
+    "model": "",
+    "serial": "",
+    "acquired": "",
+    "cost": 0,
+    "location": "Mat'l Rack",
+    "condition": 0,
+    "nextPM": "",
+    "notes": ""
+  },
+  {
+    "id": "Date",
+    "name": "Equip ID",
+    "mfr": "Equipment",
+    "model": "Type\n(PM/Repair)",
+    "serial": "Description",
+    "acquired": "Parts Used",
+    "cost": 0,
+    "location": "Downtime\n(hrs)",
+    "condition": 0,
+    "nextPM": "Next Actio",
+    "notes": "Notes"
+  }
+],
+
+  // 07_NEXUS: Facility Move items
+  facilityMove: [
+  {
+    "category": "Task",
+    "description": "Owner",
+    "estCost": 0,
+    "actualCost": 0,
+    "variance": 0,
+    "vendor": "Priority",
+    "status": "Depends\nOn",
+    "dueDate": "Notes",
+    "paid": "",
+    "notes": ""
+  }
+],
+
+  // 07_NEXUS: Employee Efficiency weekly tracking
+  employeeEfficiency: [
+  {
+    "weekEnding": "2026-02-28",
+    "station": "Assembly",
+    "unitsCompleted": 42.0,
+    "hoursWorked": 38.0,
+    "unitsPerHour": 1.11,
+    "fpqPct": 0.98,
+    "reworkUnits": 1.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 2.0
+  },
+  {
+    "weekEnding": "2026-02-21",
+    "station": "Assembly",
+    "unitsCompleted": 38.0,
+    "hoursWorked": 40.0,
+    "unitsPerHour": 0.95,
+    "fpqPct": 0.95,
+    "reworkUnits": 2.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 0.0
+  },
+  {
+    "weekEnding": "2026-02-14",
+    "station": "Packaging",
+    "unitsCompleted": 55.0,
+    "hoursWorked": 36.0,
+    "unitsPerHour": 1.53,
+    "fpqPct": 1.0,
+    "reworkUnits": 0.0,
+    "daysPresent": 4.0,
+    "daysLate": 1.0,
+    "otHours": 4.0
+  },
+  {
+    "weekEnding": "2026-02-28",
+    "station": "Welding",
+    "unitsCompleted": 28.0,
+    "hoursWorked": 40.0,
+    "unitsPerHour": 0,
+    "fpqPct": 0,
+    "reworkUnits": 3.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 0.0
+  },
+  {
+    "weekEnding": "2026-02-21",
+    "station": "Welding",
+    "unitsCompleted": 32.0,
+    "hoursWorked": 42.0,
+    "unitsPerHour": 0.76,
+    "fpqPct": 0.94,
+    "reworkUnits": 2.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 2.0
+  },
+  {
+    "weekEnding": "2026-02-14",
+    "station": "Welding",
+    "unitsCompleted": 30.0,
+    "hoursWorked": 38.0,
+    "unitsPerHour": 0.79,
+    "fpqPct": 0.97,
+    "reworkUnits": 1.0,
+    "daysPresent": 4.0,
+    "daysLate": 1.0,
+    "otHours": 4.0
+  },
+  {
+    "weekEnding": "2026-02-21",
+    "station": "CNC",
+    "unitsCompleted": 58.0,
+    "hoursWorked": 38.0,
+    "unitsPerHour": 0,
+    "fpqPct": 0,
+    "reworkUnits": 3.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 0.0
+  },
+  {
+    "weekEnding": "2026-02-14",
+    "station": "Cutting",
+    "unitsCompleted": 48.0,
+    "hoursWorked": 40.0,
+    "unitsPerHour": 1.2,
+    "fpqPct": 0.98,
+    "reworkUnits": 1.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 2.0
+  },
+  {
+    "weekEnding": "2026-02-28",
+    "station": "Powder Coat",
+    "unitsCompleted": 35.0,
+    "hoursWorked": 40.0,
+    "unitsPerHour": 0,
+    "fpqPct": 0,
+    "reworkUnits": 0.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 0.0
+  },
+  {
+    "weekEnding": "2026-02-14",
+    "station": "Powder Coat",
+    "unitsCompleted": 38.0,
+    "hoursWorked": 40.0,
+    "unitsPerHour": 0,
+    "fpqPct": 0,
+    "reworkUnits": 1.0,
+    "daysPresent": 5.0,
+    "daysLate": 0.0,
+    "otHours": 0.0
+  }
+],
+
+  // 03_FORGE: Shift Handoff log
+  shiftHandoff: [
+  {
+    "date": "2026-02-24",
+    "lead": "Daniel",
+    "ordersCompleted": 3.0,
+    "ordersInProgress": 5.0,
+    "stationsDown": "",
+    "qualityIssues": "",
+    "materialShortages": "",
+    "safetyIssues": "",
+    "tomorrowPriorities": "Finish Henderson, start Coastal Living",
+    "notes": "Good production day"
+  },
+  {
+    "date": "2026-02-25",
+    "lead": "Daniel",
+    "ordersCompleted": 4.0,
+    "ordersInProgress": 4.0,
+    "stationsDown": "",
+    "qualityIssues": "1 post failed QC",
+    "materialShortages": "",
+    "safetyIssues": "",
+    "tomorrowPriorities": "Coastal rush + Henderson rework",
+    "notes": "QC catch saved reship"
+  },
+  {
+    "date": "2026-02-26",
+    "lead": "Amber",
+    "ordersCompleted": 2.0,
+    "ordersInProgress": 6.0,
+    "stationsDown": "CNC \u2014 program issue",
+    "qualityIssues": "",
+    "materialShortages": "6063 tube running low",
+    "safetyIssues": "",
+    "tomorrowPriorities": "Get CNC online, reorder tube",
+    "notes": "CNC down 2hrs"
+  },
+  {
+    "date": "2026-02-27",
+    "lead": "Daniel",
+    "ordersCompleted": 5.0,
+    "ordersInProgress": 3.0,
+    "stationsDown": "",
+    "qualityIssues": "",
+    "materialShortages": "Ordered \u2014 ETA 3 days",
+    "safetyIssues": "",
+    "tomorrowPriorities": "Push HD order, finish Lakehouse color",
+    "notes": "CNC back up"
+  },
+  {
+    "date": "2026-02-28",
+    "lead": "Daniel",
+    "ordersCompleted": 3.0,
+    "ordersInProgress": 4.0,
+    "stationsDown": "",
+    "qualityIssues": "Powder coat DFT check",
+    "materialShortages": "",
+    "safetyIssues": "",
+    "tomorrowPriorities": "Apex order starts tomorrow \u2014 20 glass posts",
+    "notes": "Prepping fixtures"
+  }
+],
+
+  // 08_BLUEPRINT: Fastener Guide (141 entries)
+  fastenerGuide: [
+  {
+    "gauge": "#0",
+    "majorDiaIn": 0.06,
+    "majorDiaMm": 1.52,
+    "minorDiaIn": 0.04,
+    "tpi": 80.0,
+    "pilotSoft": "#55 (0.052\")",
+    "pilotHard": "#54 (0.055\")",
+    "pilotPlastic": "#56 (0.047\")"
+  },
+  {
+    "gauge": "#1",
+    "majorDiaIn": 0.07,
+    "majorDiaMm": 1.85,
+    "minorDiaIn": 0.05,
+    "tpi": 64.0,
+    "pilotSoft": "#53 (0.060\")",
+    "pilotHard": "1/16\"",
+    "pilotPlastic": "#54 (0.055\")"
+  },
+  {
+    "gauge": "#2",
+    "majorDiaIn": 0.09,
+    "majorDiaMm": 2.18,
+    "minorDiaIn": 0.06,
+    "tpi": 56.0,
+    "pilotSoft": "1/16\"",
+    "pilotHard": "5/64\"",
+    "pilotPlastic": "#50 (0.070\")"
+  },
+  {
+    "gauge": "#3",
+    "majorDiaIn": 0.1,
+    "majorDiaMm": 2.51,
+    "minorDiaIn": 0.07,
+    "tpi": 48.0,
+    "pilotSoft": "5/64\"",
+    "pilotHard": "3/32\"",
+    "pilotPlastic": "#47 (0.079\")"
+  },
+  {
+    "gauge": "#4",
+    "majorDiaIn": 0.11,
+    "majorDiaMm": 2.84,
+    "minorDiaIn": 0.07,
+    "tpi": 40.0,
+    "pilotSoft": "5/64\"",
+    "pilotHard": "3/32\"",
+    "pilotPlastic": "#43 (0.089\")"
+  },
+  {
+    "gauge": "#5",
+    "majorDiaIn": 0.12,
+    "majorDiaMm": 3.18,
+    "minorDiaIn": 0.08,
+    "tpi": 40.0,
+    "pilotSoft": "3/32\"",
+    "pilotHard": "7/64\"",
+    "pilotPlastic": "#38 (0.102\")"
+  },
+  {
+    "gauge": "#6",
+    "majorDiaIn": 0.14,
+    "majorDiaMm": 3.51,
+    "minorDiaIn": 0.09,
+    "tpi": 32.0,
+    "pilotSoft": "3/32\"",
+    "pilotHard": "7/64\"",
+    "pilotPlastic": "#36 (0.107\")"
+  },
+  {
+    "gauge": "#7",
+    "majorDiaIn": 0.15,
+    "majorDiaMm": 3.84,
+    "minorDiaIn": 0.1,
+    "tpi": 28.0,
+    "pilotSoft": "7/64\"",
+    "pilotHard": "1/8\"",
+    "pilotPlastic": "#30 (0.129\")"
+  },
+  {
+    "gauge": "#8",
+    "majorDiaIn": 0.16,
+    "majorDiaMm": 4.17,
+    "minorDiaIn": 0.11,
+    "tpi": 32.0,
+    "pilotSoft": "7/64\"",
+    "pilotHard": "9/64\"",
+    "pilotPlastic": "#29 (0.136\")"
+  },
+  {
+    "gauge": "#9",
+    "majorDiaIn": 0.18,
+    "majorDiaMm": 4.5,
+    "minorDiaIn": 0.12,
+    "tpi": 28.0,
+    "pilotSoft": "1/8\"",
+    "pilotHard": "9/64\"",
+    "pilotPlastic": "#26 (0.147\")"
+  },
+  {
+    "gauge": "#10",
+    "majorDiaIn": 0.19,
+    "majorDiaMm": 4.83,
+    "minorDiaIn": 0.13,
+    "tpi": 24.0,
+    "pilotSoft": "9/64\"",
+    "pilotHard": "5/32\"",
+    "pilotPlastic": "#21 (0.159\")"
+  },
+  {
+    "gauge": "#11",
+    "majorDiaIn": 0.2,
+    "majorDiaMm": 5.16,
+    "minorDiaIn": 0.14,
+    "tpi": 24.0,
+    "pilotSoft": "5/32\"",
+    "pilotHard": "11/64\"",
+    "pilotPlastic": "#17 (0.173\")"
+  },
+  {
+    "gauge": "#12",
+    "majorDiaIn": 0.22,
+    "majorDiaMm": 5.49,
+    "minorDiaIn": 0.15,
+    "tpi": 24.0,
+    "pilotSoft": "5/32\"",
+    "pilotHard": "11/64\"",
+    "pilotPlastic": "#14 (0.182\")"
+  },
+  {
+    "gauge": "#13",
+    "majorDiaIn": 0.23,
+    "majorDiaMm": 5.82,
+    "minorDiaIn": 0.16,
+    "tpi": 20.0,
+    "pilotSoft": "11/64\"",
+    "pilotHard": "3/16\"",
+    "pilotPlastic": "#10 (0.194\")"
+  },
+  {
+    "gauge": "#14",
+    "majorDiaIn": 0.24,
+    "majorDiaMm": 6.15,
+    "minorDiaIn": 0.17,
+    "tpi": 20.0,
+    "pilotSoft": "11/64\"",
+    "pilotHard": "3/16\"",
+    "pilotPlastic": "#7 (0.201\")"
+  },
+  {
+    "gauge": "#16",
+    "majorDiaIn": 0.27,
+    "majorDiaMm": 6.81,
+    "minorDiaIn": 0.19,
+    "tpi": 18.0,
+    "pilotSoft": "3/16\"",
+    "pilotHard": "13/64\"",
+    "pilotPlastic": "#1 (0.228\")"
+  },
+  {
+    "gauge": "#18",
+    "majorDiaIn": 0.29,
+    "majorDiaMm": 7.47,
+    "minorDiaIn": 0.21,
+    "tpi": 18.0,
+    "pilotSoft": "13/64\"",
+    "pilotHard": "7/32\"",
+    "pilotPlastic": "A (0.234\")"
+  },
+  {
+    "gauge": "#20",
+    "majorDiaIn": 0.32,
+    "majorDiaMm": 8.13,
+    "minorDiaIn": 0.23,
+    "tpi": 18.0,
+    "pilotSoft": "7/32\"",
+    "pilotHard": "15/64\"",
+    "pilotPlastic": "D (0.246\")"
+  },
+  {
+    "gauge": "#24",
+    "majorDiaIn": 0.37,
+    "majorDiaMm": 9.45,
+    "minorDiaIn": 0.26,
+    "tpi": 16.0,
+    "pilotSoft": "1/4\"",
+    "pilotHard": "17/64\"",
+    "pilotPlastic": "N (0.302\")"
+  },
+  {
+    "gauge": "1/4\"",
+    "majorDiaIn": 0.25,
+    "majorDiaMm": 6.35,
+    "minorDiaIn": 0.17,
+    "tpi": 20.0,
+    "pilotSoft": "3/16\"",
+    "pilotHard": "13/64\"",
+    "pilotPlastic": "#3 (0.213\")"
+  },
+  {
+    "gauge": "5/16\"",
+    "majorDiaIn": 0.31,
+    "majorDiaMm": 7.94,
+    "minorDiaIn": 0.22,
+    "tpi": 18.0,
+    "pilotSoft": "15/64\"",
+    "pilotHard": "1/4\"",
+    "pilotPlastic": "F (0.257\")"
+  },
+  {
+    "gauge": "3/8\"",
+    "majorDiaIn": 0.38,
+    "majorDiaMm": 9.53,
+    "minorDiaIn": 0.27,
+    "tpi": 16.0,
+    "pilotSoft": "9/32\"",
+    "pilotHard": "5/16\"",
+    "pilotPlastic": "Q (0.332\")"
+  },
+  {
+    "gauge": "7/16\"",
+    "majorDiaIn": 0.44,
+    "majorDiaMm": 11.11,
+    "minorDiaIn": 0.32,
+    "tpi": 14.0,
+    "pilotSoft": "5/16\"",
+    "pilotHard": "23/64\"",
+    "pilotPlastic": "V (0.377\")"
+  },
+  {
+    "gauge": "1/2\"",
+    "majorDiaIn": 0.5,
+    "majorDiaMm": 12.7,
+    "minorDiaIn": 0.36,
+    "tpi": 13.0,
+    "pilotSoft": "23/64\"",
+    "pilotHard": "25/64\"",
+    "pilotPlastic": "27/64 (0.422\")"
+  },
+  {
+    "gauge": "5/8\"",
+    "majorDiaIn": 0.62,
+    "majorDiaMm": 15.88,
+    "minorDiaIn": 0.46,
+    "tpi": 11.0,
+    "pilotSoft": "29/64\"",
+    "pilotHard": "31/64\"",
+    "pilotPlastic": "33/64 (0.516\")"
+  },
+  {
+    "gauge": "3/4\"",
+    "majorDiaIn": 0.75,
+    "majorDiaMm": 19.05,
+    "minorDiaIn": 0.55,
+    "tpi": 10.0,
+    "pilotSoft": "9/16\"",
+    "pilotHard": "19/32\"",
+    "pilotPlastic": "5/8 (0.625\")"
+  },
+  {
+    "gauge": "Metric\nSize",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Pilot Hole\nPlastic",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M1.4",
+    "majorDiaIn": 1.4,
+    "majorDiaMm": 0.3,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "0.9 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M1.6",
+    "majorDiaIn": 1.6,
+    "majorDiaMm": 0.35,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "1.1 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M1.8",
+    "majorDiaIn": 1.8,
+    "majorDiaMm": 0.35,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "1.3 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M2",
+    "majorDiaIn": 2.0,
+    "majorDiaMm": 0.4,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "1.5 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M2.2",
+    "majorDiaIn": 2.2,
+    "majorDiaMm": 0.45,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "1.6 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M2.5",
+    "majorDiaIn": 2.5,
+    "majorDiaMm": 0.45,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "1.9 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M2.6",
+    "majorDiaIn": 2.6,
+    "majorDiaMm": 0.45,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "2.0 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M3",
+    "majorDiaIn": 3.0,
+    "majorDiaMm": 0.5,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "2.2 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M3.5",
+    "majorDiaIn": 3.5,
+    "majorDiaMm": 0.6,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "2.6 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M4",
+    "majorDiaIn": 4.0,
+    "majorDiaMm": 0.7,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "3.0 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M4.5",
+    "majorDiaIn": 4.5,
+    "majorDiaMm": 0.75,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "3.4 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M5",
+    "majorDiaIn": 5.0,
+    "majorDiaMm": 0.8,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "3.7 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M5.5",
+    "majorDiaIn": 5.5,
+    "majorDiaMm": 0.9,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "4.1 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M6",
+    "majorDiaIn": 6.0,
+    "majorDiaMm": 1.0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "4.5 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M7",
+    "majorDiaIn": 7.0,
+    "majorDiaMm": 1.0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "5.2 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M8",
+    "majorDiaIn": 8.0,
+    "majorDiaMm": 1.25,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "6.0 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M9",
+    "majorDiaIn": 9.0,
+    "majorDiaMm": 1.25,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "6.7 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M10",
+    "majorDiaIn": 10.0,
+    "majorDiaMm": 1.5,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "7.5 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M11",
+    "majorDiaIn": 11.0,
+    "majorDiaMm": 1.5,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "8.2 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M12",
+    "majorDiaIn": 12.0,
+    "majorDiaMm": 1.75,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "9.0 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M14",
+    "majorDiaIn": 14.0,
+    "majorDiaMm": 2.0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "10.5 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M16",
+    "majorDiaIn": 16.0,
+    "majorDiaMm": 2.0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "12.0 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M18",
+    "majorDiaIn": 18.0,
+    "majorDiaMm": 2.5,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "13.5 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "M20",
+    "majorDiaIn": 20.0,
+    "majorDiaMm": 2.5,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "15.0 mm",
+    "pilotHard": "",
+    "pilotPlastic": ""
+  },
+  {
+    "gauge": "Screw\nGauge #",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Pilot Hole\nHardwood",
+    "pilotHard": "Countersink\nDia.",
+    "pilotPlastic": "Common\nLengths"
+  },
+  {
+    "gauge": "#2",
+    "majorDiaIn": 0.09,
+    "majorDiaMm": 2.18,
+    "minorDiaIn": 0.17,
+    "tpi": 0,
+    "pilotSoft": "5/64\"",
+    "pilotHard": "11/64\"",
+    "pilotPlastic": "3/8\" \u2013 3/4\""
+  },
+  {
+    "gauge": "#3",
+    "majorDiaIn": 0.1,
+    "majorDiaMm": 2.51,
+    "minorDiaIn": 0.2,
+    "tpi": 0,
+    "pilotSoft": "5/64\"",
+    "pilotHard": "13/64\"",
+    "pilotPlastic": "1/2\" \u2013 1\""
+  },
+  {
+    "gauge": "#4",
+    "majorDiaIn": 0.11,
+    "majorDiaMm": 2.84,
+    "minorDiaIn": 0.23,
+    "tpi": 0,
+    "pilotSoft": "3/32\"",
+    "pilotHard": "7/32\"",
+    "pilotPlastic": "1/2\" \u2013 1-1/2\""
+  },
+  {
+    "gauge": "#5",
+    "majorDiaIn": 0.12,
+    "majorDiaMm": 3.18,
+    "minorDiaIn": 0.25,
+    "tpi": 0,
+    "pilotSoft": "3/32\"",
+    "pilotHard": "1/4\"",
+    "pilotPlastic": "5/8\" \u2013 1-1/2\""
+  },
+  {
+    "gauge": "#6",
+    "majorDiaIn": 0.14,
+    "majorDiaMm": 3.51,
+    "minorDiaIn": 0.28,
+    "tpi": 0,
+    "pilotSoft": "7/64\"",
+    "pilotHard": "9/32\"",
+    "pilotPlastic": "1/2\" \u2013 2-1/2\""
+  },
+  {
+    "gauge": "#7",
+    "majorDiaIn": 0.15,
+    "majorDiaMm": 3.84,
+    "minorDiaIn": 0.3,
+    "tpi": 0,
+    "pilotSoft": "7/64\"",
+    "pilotHard": "5/16\"",
+    "pilotPlastic": "1/2\" \u2013 3\""
+  },
+  {
+    "gauge": "#8",
+    "majorDiaIn": 0.16,
+    "majorDiaMm": 4.17,
+    "minorDiaIn": 0.33,
+    "tpi": 0,
+    "pilotSoft": "1/8\"",
+    "pilotHard": "21/64\"",
+    "pilotPlastic": "5/8\" \u2013 3\""
+  },
+  {
+    "gauge": "#9",
+    "majorDiaIn": 0.18,
+    "majorDiaMm": 4.5,
+    "minorDiaIn": 0.36,
+    "tpi": 0,
+    "pilotSoft": "9/64\"",
+    "pilotHard": "23/64\"",
+    "pilotPlastic": "3/4\" \u2013 3\""
+  },
+  {
+    "gauge": "#10",
+    "majorDiaIn": 0.19,
+    "majorDiaMm": 4.83,
+    "minorDiaIn": 0.39,
+    "tpi": 0,
+    "pilotSoft": "9/64\"",
+    "pilotHard": "3/8\"",
+    "pilotPlastic": "3/4\" \u2013 3-1/2\""
+  },
+  {
+    "gauge": "#11",
+    "majorDiaIn": 0.2,
+    "majorDiaMm": 5.16,
+    "minorDiaIn": 0.41,
+    "tpi": 0,
+    "pilotSoft": "5/32\"",
+    "pilotHard": "13/32\"",
+    "pilotPlastic": "1\" \u2013 3-1/2\""
+  },
+  {
+    "gauge": "#12",
+    "majorDiaIn": 0.22,
+    "majorDiaMm": 5.49,
+    "minorDiaIn": 0.44,
+    "tpi": 0,
+    "pilotSoft": "5/32\"",
+    "pilotHard": "7/16\"",
+    "pilotPlastic": "1\" \u2013 4\""
+  },
+  {
+    "gauge": "#14",
+    "majorDiaIn": 0.24,
+    "majorDiaMm": 6.15,
+    "minorDiaIn": 0.51,
+    "tpi": 0,
+    "pilotSoft": "11/64\"",
+    "pilotHard": "1/2\"",
+    "pilotPlastic": "1\" \u2013 4\""
+  },
+  {
+    "gauge": "#16",
+    "majorDiaIn": 0.27,
+    "majorDiaMm": 6.81,
+    "minorDiaIn": 0.54,
+    "tpi": 0,
+    "pilotSoft": "3/16\"",
+    "pilotHard": "9/16\"",
+    "pilotPlastic": "1-1/2\" \u2013 4\""
+  },
+  {
+    "gauge": "#18",
+    "majorDiaIn": 0.29,
+    "majorDiaMm": 7.47,
+    "minorDiaIn": 0.64,
+    "tpi": 0,
+    "pilotSoft": "13/64\"",
+    "pilotHard": "5/8\"",
+    "pilotPlastic": "1-1/2\" \u2013 5\""
+  },
+  {
+    "gauge": "#20",
+    "majorDiaIn": 0.32,
+    "majorDiaMm": 8.13,
+    "minorDiaIn": 0.65,
+    "tpi": 0,
+    "pilotSoft": "7/32\"",
+    "pilotHard": "11/16\"",
+    "pilotPlastic": "2\" \u2013 5\""
+  },
+  {
+    "gauge": "#24",
+    "majorDiaIn": 0.37,
+    "majorDiaMm": 9.45,
+    "minorDiaIn": 0.76,
+    "tpi": 0,
+    "pilotSoft": "1/4\"",
+    "pilotHard": "3/4\"",
+    "pilotPlastic": "2\" \u2013 6\""
+  },
+  {
+    "gauge": "Bolt\nDiameter",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Pilot Hole\nHardwood",
+    "pilotHard": "Washer\nO.D.",
+    "pilotPlastic": "Socket\nSize"
+  },
+  {
+    "gauge": "1/4\"",
+    "majorDiaIn": 0.25,
+    "majorDiaMm": 6.35,
+    "minorDiaIn": 10.0,
+    "tpi": 0,
+    "pilotSoft": "3/16\"",
+    "pilotHard": "5/8\"",
+    "pilotPlastic": "7/16\""
+  },
+  {
+    "gauge": "5/16\"",
+    "majorDiaIn": 0.31,
+    "majorDiaMm": 7.94,
+    "minorDiaIn": 9.0,
+    "tpi": 0,
+    "pilotSoft": "7/32\"",
+    "pilotHard": "11/16\"",
+    "pilotPlastic": "1/2\""
+  },
+  {
+    "gauge": "3/8\"",
+    "majorDiaIn": 0.38,
+    "majorDiaMm": 9.53,
+    "minorDiaIn": 7.0,
+    "tpi": 0,
+    "pilotSoft": "5/16\"",
+    "pilotHard": "13/16\"",
+    "pilotPlastic": "9/16\""
+  },
+  {
+    "gauge": "7/16\"",
+    "majorDiaIn": 0.44,
+    "majorDiaMm": 11.11,
+    "minorDiaIn": 7.0,
+    "tpi": 0,
+    "pilotSoft": "3/8\"",
+    "pilotHard": "15/16\"",
+    "pilotPlastic": "5/8\""
+  },
+  {
+    "gauge": "1/2\"",
+    "majorDiaIn": 0.5,
+    "majorDiaMm": 12.7,
+    "minorDiaIn": 6.0,
+    "tpi": 0,
+    "pilotSoft": "7/16\"",
+    "pilotHard": "1-1/16\"",
+    "pilotPlastic": "3/4\""
+  },
+  {
+    "gauge": "5/8\"",
+    "majorDiaIn": 0.62,
+    "majorDiaMm": 15.88,
+    "minorDiaIn": 5.0,
+    "tpi": 0,
+    "pilotSoft": "9/16\"",
+    "pilotHard": "1-5/16\"",
+    "pilotPlastic": "15/16\""
+  },
+  {
+    "gauge": "3/4\"",
+    "majorDiaIn": 0.75,
+    "majorDiaMm": 19.05,
+    "minorDiaIn": 4.5,
+    "tpi": 0,
+    "pilotSoft": "11/16\"",
+    "pilotHard": "1-1/2\"",
+    "pilotPlastic": "1-1/8\""
+  },
+  {
+    "gauge": "7/8\"",
+    "majorDiaIn": 0.88,
+    "majorDiaMm": 22.23,
+    "minorDiaIn": 4.0,
+    "tpi": 0,
+    "pilotSoft": "13/16\"",
+    "pilotHard": "1-3/4\"",
+    "pilotPlastic": "1-5/16\""
+  },
+  {
+    "gauge": "1\"",
+    "majorDiaIn": 1.0,
+    "majorDiaMm": 25.4,
+    "minorDiaIn": 3.5,
+    "tpi": 0,
+    "pilotSoft": "15/16\"",
+    "pilotHard": "2\"",
+    "pilotPlastic": "1-1/2\""
+  },
+  {
+    "gauge": "Grade /\nClass",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Proof\nLoad (ksi)",
+    "pilotHard": "Tensile\n(ksi)",
+    "pilotPlastic": "Yield\n(ksi)"
+  },
+  {
+    "gauge": "Grade 1",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "33",
+    "pilotHard": "60",
+    "pilotPlastic": "36"
+  },
+  {
+    "gauge": "Grade 2",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "55\n33",
+    "pilotHard": "74\n60",
+    "pilotPlastic": "57\n36"
+  },
+  {
+    "gauge": "Grade 5",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "85\n74",
+    "pilotHard": "120\n105",
+    "pilotPlastic": "92\n81"
+  },
+  {
+    "gauge": "Grade 8",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "120",
+    "pilotHard": "150",
+    "pilotPlastic": "130"
+  },
+  {
+    "gauge": "Grade 8.2",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "120",
+    "pilotHard": "150",
+    "pilotPlastic": "130"
+  },
+  {
+    "gauge": "Grade 9\n(L9)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "140",
+    "pilotHard": "170",
+    "pilotPlastic": "150"
+  },
+  {
+    "gauge": "A307\nGrade A",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "\u2014",
+    "pilotHard": "60 min",
+    "pilotPlastic": "\u2014"
+  },
+  {
+    "gauge": "A325\nType 1",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "85\u2013120",
+    "pilotHard": "120\u2013150",
+    "pilotPlastic": "92\u2013130"
+  },
+  {
+    "gauge": "A490\nType 1",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "120\u2013150",
+    "pilotHard": "150\u2013173",
+    "pilotPlastic": "130"
+  },
+  {
+    "gauge": "F3125\nGrade A325",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "85\u2013120",
+    "pilotHard": "120\u2013150",
+    "pilotPlastic": "92\u2013130"
+  },
+  {
+    "gauge": "F3125\nGrade A490",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "120\u2013150",
+    "pilotHard": "150\u2013173",
+    "pilotPlastic": "130"
+  },
+  {
+    "gauge": "Class 4.6",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "225 MPa\n(33 ksi)",
+    "pilotHard": "400 MPa\n(58 ksi)",
+    "pilotPlastic": "240 MPa\n(35 ksi)"
+  },
+  {
+    "gauge": "Class 8.8",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "580 MPa\n(84 ksi)",
+    "pilotHard": "800 MPa\n(116 ksi)",
+    "pilotPlastic": "640 MPa\n(93 ksi)"
+  },
+  {
+    "gauge": "Class 10.9",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "830 MPa\n(120 ksi)",
+    "pilotHard": "1040 MPa\n(151 ksi)",
+    "pilotPlastic": "940 MPa\n(136 ksi)"
+  },
+  {
+    "gauge": "Class 12.9",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "970 MPa\n(141 ksi)",
+    "pilotHard": "1220 MPa\n(177 ksi)",
+    "pilotPlastic": "1100 MPa\n(160 ksi)"
+  },
+  {
+    "gauge": "Screw Type",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Common\nSizes",
+    "pilotHard": "Corrosion\nResistance",
+    "pilotPlastic": "Pull-Out\nStrength"
+  },
+  {
+    "gauge": "Type A\nSheet Metal",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#4\u2013#14",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2606\u2606"
+  },
+  {
+    "gauge": "Type AB\nSheet Metal",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#4\u2013#14",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2606\u2606"
+  },
+  {
+    "gauge": "Type B\nSheet Metal",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#2\u2013#14",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2606"
+  },
+  {
+    "gauge": "Self-Drilling\n(TEK)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#8\u2013#14",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2606"
+  },
+  {
+    "gauge": "Maisy Post\nScrew (Typ.)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#10\u2013#14\n1\"\u20132\" long",
+    "pilotHard": "\u2605\u2605\u2605\u2605\u2605",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2606"
+  },
+  {
+    "gauge": "Machine Screw\n(Standard)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#0\u20133/8\"\nM2\u2013M10",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2606\u2606"
+  },
+  {
+    "gauge": "Socket Head\nCap Screw",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#0\u20131\u00bd\"\nM3\u2013M36",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2606"
+  },
+  {
+    "gauge": "Button Head\nSocket",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#4\u20133/8\"\nM3\u2013M12",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2606\u2606"
+  },
+  {
+    "gauge": "Flat Head\nSocket",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#4\u20133/4\"\nM3\u2013M20",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2606"
+  },
+  {
+    "gauge": "Set Screw\n(Headless)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#4\u20133/4\"\nM3\u2013M20",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "N/A"
+  },
+  {
+    "gauge": "Structural Screw\n(GRK / SPAX)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#8\u2013#14,\n3\"\u201310\"",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\n(coated steel)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2605"
+  },
+  {
+    "gauge": "Concrete Screw\n(Tapcon)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "3/16\"\u20131/4\"\n1\u00bc\"\u20136\"",
+    "pilotHard": "\u2605\u2605\u2606\u2606\u2606\n(zinc coated)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2605"
+  },
+  {
+    "gauge": "Confirmat /\nEuroScrew",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "5mm \u00d7 40/50\n7mm \u00d7 50/70",
+    "pilotHard": "\u2605\u2605\u2606\u2606\u2606",
+    "pilotPlastic": "\u2605\u2605\u2605\u2606\u2606"
+  },
+  {
+    "gauge": "Thread-Forming\n(Taptite)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "#2\u20133/8\"\nM3\u2013M10",
+    "pilotHard": "\u2605\u2605\u2013\u2605\u2605\u2605\u2605\n(varies by mat'l)",
+    "pilotPlastic": "\u2605\u2605\u2605\u2605\u2605"
+  },
+  {
+    "gauge": "Nut Type",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Reusable?",
+    "pilotHard": "Size\nRange",
+    "pilotPlastic": "Strength\nMatch"
+  },
+  {
+    "gauge": "Hex Nut\n(Finished)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "1/4\"\u20133\"\nM4\u2013M64",
+    "pilotPlastic": "Must match\nbolt grade"
+  },
+  {
+    "gauge": "Heavy Hex Nut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "1/2\"\u20134\"\nM12\u2013M100",
+    "pilotPlastic": "Structural\nbolt grades"
+  },
+  {
+    "gauge": "Hex Jam Nut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "1/4\"\u20131\u00bd\"\nM4\u2013M36",
+    "pilotPlastic": "Lower than\nfull nut"
+  },
+  {
+    "gauge": "Hex Coupling\nNut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "1/4\"\u20131\"\nM6\u2013M24",
+    "pilotPlastic": "Standard"
+  },
+  {
+    "gauge": "Nylon Insert\n(Nyloc)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Limited\n(5\u00d7 max)",
+    "pilotHard": "1/4\"\u20131\u00bd\"\nM3\u2013M36",
+    "pilotPlastic": "Must match\nbolt grade"
+  },
+  {
+    "gauge": "All-Metal\nPrevailing Torque",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes\n(limited)",
+    "pilotHard": "1/4\"\u20131\u00bd\"\nM6\u2013M36",
+    "pilotPlastic": "Grade 8+"
+  },
+  {
+    "gauge": "Serrated Flange\nLock Nut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "No\n(single-use)",
+    "pilotHard": "1/4\"\u20133/4\"\nM5\u2013M16",
+    "pilotPlastic": "Match bolt\ngrade"
+  },
+  {
+    "gauge": "Castle / Slotted\nNut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "1/4\"\u20131\u00bd\"\nM6\u2013M36",
+    "pilotPlastic": "Standard"
+  },
+  {
+    "gauge": "Flange Nut\n(non-serrated)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "1/4\"\u20133/4\"\nM5\u2013M16",
+    "pilotPlastic": "Match bolt\ngrade"
+  },
+  {
+    "gauge": "Acorn / Cap\nNut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "#6\u20133/4\"\nM4\u2013M16",
+    "pilotPlastic": "Standard"
+  },
+  {
+    "gauge": "T-Nut / Tee\nNut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "No\n(permanent)",
+    "pilotHard": "#6\u20133/8\"\nM4\u2013M10",
+    "pilotPlastic": "Light duty"
+  },
+  {
+    "gauge": "Rivet Nut\n(Rivnut)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "N/A\n(permanent)",
+    "pilotHard": "#6\u20133/8\"\nM3\u2013M12",
+    "pilotPlastic": "Light\u2013Medium"
+  },
+  {
+    "gauge": "Weld Nut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "N/A\n(permanent)",
+    "pilotHard": "1/4\"\u20133/4\"\nM6\u2013M16",
+    "pilotPlastic": "Standard"
+  },
+  {
+    "gauge": "Wing Nut",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Yes",
+    "pilotHard": "#6\u20131/2\"\nM4\u2013M12",
+    "pilotPlastic": "Light duty\nonly"
+  },
+  {
+    "gauge": "Washer Type",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "I.D.\nTolerance",
+    "pilotHard": "Primary\nFunction",
+    "pilotPlastic": "Reusable?"
+  },
+  {
+    "gauge": "SAE Flat\nWasher",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close\n(bolt +0.015\")",
+    "pilotHard": "Load distribution,\nsurface protection",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "USS Flat\nWasher",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Loose\n(bolt +0.030\")",
+    "pilotHard": "Load distribution,\noversized holes",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Fender\nWasher",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close to\nloose",
+    "pilotHard": "Spreading load\nover large area",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Structural\n(F436)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close\n(bolt +0.030\")",
+    "pilotHard": "Structural bolt\nassembly",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Oversized\nPlate Washer",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Varies",
+    "pilotHard": "Extreme load\nspread",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Split Lock\nWasher",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close",
+    "pilotHard": "Vibration\nresistance",
+    "pilotPlastic": "Limited"
+  },
+  {
+    "gauge": "External Tooth\nLock Washer",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close",
+    "pilotHard": "Anti-rotation,\ngrounding",
+    "pilotPlastic": "No\n(single-use)"
+  },
+  {
+    "gauge": "Internal Tooth\nLock Washer",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close",
+    "pilotHard": "Anti-rotation,\nhidden teeth",
+    "pilotPlastic": "No\n(single-use)"
+  },
+  {
+    "gauge": "Belleville\n(Disc Spring)",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close",
+    "pilotHard": "Maintain preload,\ncompensate thermal",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Nord-Lock\nWedge Lock",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close",
+    "pilotHard": "Positive bolt\nlocking",
+    "pilotPlastic": "Yes\n(many cycles)"
+  },
+  {
+    "gauge": "EPDM Bonded\nSealing",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Screw-\nspecific",
+    "pilotHard": "Weatherproof\nseal",
+    "pilotPlastic": "No"
+  },
+  {
+    "gauge": "Neoprene\nBonded",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Screw-\nspecific",
+    "pilotHard": "Sealing,\nvibration",
+    "pilotPlastic": "No"
+  },
+  {
+    "gauge": "Plastic / Nylon\nWasher",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close to\nloose",
+    "pilotHard": "Electrical isolation,\nsurface protection",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Finishing /\nCup Washer",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Screw-\nspecific",
+    "pilotHard": "Decorative finish,\nscrew seat",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Wave Spring\nWasher",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close",
+    "pilotHard": "Controlled preload,\ntake-up play",
+    "pilotPlastic": "Yes"
+  },
+  {
+    "gauge": "Shoulder\nWasher",
+    "majorDiaIn": 0,
+    "majorDiaMm": 0,
+    "minorDiaIn": 0,
+    "tpi": 0,
+    "pilotSoft": "Close",
+    "pilotHard": "Electrical isolation,\nclearance",
+    "pilotPlastic": "Yes"
+  }
+],
+
+  // 08_BLUEPRINT: Material Properties (140 alloys)
+  materialProperties: [
+  {
+    "id": "RM-001",
+    "material": "6061-T6 Tube 1\"\u00d73\"\u00d71/8\" (Top Rail)",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-006",
+    "material": "6061-T6 Tube 1\"\u00d72\"\u00d71/8\" (Bottom Rail)",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-003",
+    "material": "6061-T6 Tube 2\"\u00d72\"\u00d71/8\" (Posts)",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-011",
+    "material": "6061-T6 Tube 3/4\"\u00d73/4\"\u00d71/8\" (Cable Tube)",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-012",
+    "material": "6061-T6 Pipe 1-7/8\"\u00d7.125\" (Handrail)",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-002",
+    "material": "6061-T6 Flat Bar 1/8\"\u00d72\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-008",
+    "material": "6061-T6 Flat Bar 1/4\"\u00d73\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-004",
+    "material": "6061-T6 Flat Bar 1/4\"\u00d74\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-010",
+    "material": "6061-T6 Flat Bar 1/8\"\u00d74\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-005",
+    "material": "6061-T6 Angle 2\"\u00d74\"\u00d71/8\" (Fascia Mount)",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-007",
+    "material": "6061-T6 Angle 2\"\u00d72\"\u00d71/8\" (Surface Mount)",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-009",
+    "material": "6061-T6 Angle 1.5\"\u00d71.5\"\u00d71/8\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-013",
+    "material": "6061-T6 Angle 2.5\"\u00d72.5\"\u00d71/4\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-014",
+    "material": "6061-T6 Angle \"Rounded\" 2\"\u00d74\"\u00d71/4\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-015",
+    "material": "6061-T6 Angle 2\"\u00d74\"\u00d71/4\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "RM-016",
+    "material": "6061-T6 Angle 4\"\u00d74\"\u00d71/2\"",
+    "alloy": "6061-T6",
+    "condition": "T6 Temper",
+    "tensile": 45.0,
+    "yield_": 40.0,
+    "shear": 30.0,
+    "elong": 12.0,
+    "hardness": 95.0,
+    "density": 0.1
+  },
+  {
+    "id": "\u2014",
+    "material": "6061-T6 HAZ with ER4043 Filler",
+    "alloy": "6061-T6",
+    "condition": "As-Welded",
+    "tensile": 24.0,
+    "yield_": 15.0,
+    "shear": 16.0,
+    "elong": 6.0,
+    "hardness": 52.0,
+    "density": 0.1
+  },
+  {
+    "id": "\u2014",
+    "material": "6061-T6 HAZ with ER5356 Filler",
+    "alloy": "6061-T6",
+    "condition": "As-Welded",
+    "tensile": 27.0,
+    "yield_": 17.0,
+    "shear": 18.0,
+    "elong": 8.0,
+    "hardness": 55.0,
+    "density": 0.1
+  },
+  {
+    "id": "\u2014",
+    "material": "6061-T6 Post-Weld Aged (T4\u2192T6 recovery)",
+    "alloy": "6061-T6",
+    "condition": "Re-Aged",
+    "tensile": 33.0,
+    "yield_": 28.0,
+    "shear": 22.0,
+    "elong": 10.0,
+    "hardness": 75.0,
+    "density": 0.1
+  },
+  {
+    "id": "\u2014",
+    "material": "ER4043 Filler Rod \u2014 Deposited Weld Metal",
+    "alloy": "ER4043",
+    "condition": "As-Deposited",
+    "tensile": 28.0,
+    "yield_": 15.0,
+    "shear": 18.0,
+    "elong": 8.0,
+    "hardness": 0,
+    "density": 0.1
+  },
+  {
+    "id": "\u2014",
+    "material": "ER5356 Filler Rod \u2014 Deposited Weld Metal",
+    "alloy": "ER5356",
+    "condition": "As-Deposited",
+    "tensile": 40.0,
+    "yield_": 26.0,
+    "shear": 25.0,
+    "elong": 5.0,
+    "hardness": 0,
+    "density": 0.1
+  },
+  {
+    "id": "\u2014",
+    "material": "\u2192 STRENGTH LOSS vs Base (ER4043)",
+    "alloy": "",
+    "condition": "",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "\u2014",
+    "material": "\u2192 STRENGTH LOSS vs Base (ER5356)",
+    "alloy": "",
+    "condition": "",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-001",
+    "material": "1/8\" Cable SS \u2014 1\u00d719 T316 Stainless",
+    "alloy": "316 SS",
+    "condition": "1\u00d719 Strand",
+    "tensile": 130.0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 40.0,
+    "hardness": 0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-002",
+    "material": "#11 Self-Tap Screw, Sq Drive Pan Head \u2014 #11\u00d73/4\"",
+    "alloy": "316 SS",
+    "condition": "Thread Form",
+    "tensile": 80.0,
+    "yield_": 35.0,
+    "shear": 48.0,
+    "elong": 40.0,
+    "hardness": 170.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-004",
+    "material": "Post Screw #14 (9/32\") \u00d7 2-7/8\" Lock Head, T-25 Drive",
+    "alloy": "316 SS",
+    "condition": "Thread Roll",
+    "tensile": 85.0,
+    "yield_": 40.0,
+    "shear": 50.0,
+    "elong": 35.0,
+    "hardness": 180.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-005",
+    "material": "Lag Bolt \u2014 3/8\" \u00d7 5\" Hex Head, SS",
+    "alloy": "316 SS",
+    "condition": "Cold Forged",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-008",
+    "material": "Lag Bolt Washer \u2014 7/16\" I.D., O.D. 49/64\" SS",
+    "alloy": "316 SS",
+    "condition": "Stamped",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-009",
+    "material": "Swage Washer Small \u2014 1/4\" I.D., O.D. 15/32\" SS",
+    "alloy": "316 SS",
+    "condition": "Stamped",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-010",
+    "material": "Swage Washer Large \u2014 1/4\" I.D., O.D. 5/8\" SS",
+    "alloy": "316 SS",
+    "condition": "Stamped",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-014",
+    "material": "Swage Angle Washer \u2014 1/4\" I.D. \u00d7 57\u00b0",
+    "alloy": "316 SS",
+    "condition": "Machined",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-017",
+    "material": "Swage Angle Washer \u2014 1/4\" I.D. \u00d7 57\u00b0 (Alt)",
+    "alloy": "316 SS",
+    "condition": "Machined",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-011",
+    "material": "Swage Nut \u2014 1/4\" NC Hex, SS",
+    "alloy": "316 SS",
+    "condition": "Machined",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-013",
+    "material": "Swage Acorn Nut \u2014 1/4\" SS",
+    "alloy": "316 SS",
+    "condition": "Machined",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-012",
+    "material": "Tensioner Body \u2014 1/4\" NC Thread, 1/8\" Cable",
+    "alloy": "316 SS",
+    "condition": "CNC Machined",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-015",
+    "material": "Swage Assembly \u2014 1/8\" (Fixed End)",
+    "alloy": "316 SS",
+    "condition": "Swaged",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-016",
+    "material": "Swage Assembly \u2014 1/8\" (Tensioning End)",
+    "alloy": "316 SS",
+    "condition": "Swaged",
+    "tensile": 75.0,
+    "yield_": 30.0,
+    "shear": 45.0,
+    "elong": 50.0,
+    "hardness": 160.0,
+    "density": 0.29
+  },
+  {
+    "id": "AI-018",
+    "material": "Gate Hinge Kit \u2014 3-1/2\" Self-Closing, Black",
+    "alloy": "Carbon Steel",
+    "condition": "Zinc + Powder",
+    "tensile": 60.0,
+    "yield_": 36.0,
+    "shear": 36.0,
+    "elong": 25.0,
+    "hardness": 120.0,
+    "density": 0.28
+  },
+  {
+    "id": "AI-019",
+    "material": "Handrail End Cap \u2014 3\" \u00d7 1\", Black",
+    "alloy": "ABS Plastic",
+    "condition": "Injection Mold",
+    "tensile": 5.8,
+    "yield_": 5.1,
+    "shear": 3.5,
+    "elong": 20.0,
+    "hardness": 0,
+    "density": 0.04
+  },
+  {
+    "id": "AI-020",
+    "material": "Poly Tubing Roll \u2014 5\" \u00d7 1,000' (6 Mil)",
+    "alloy": "LDPE",
+    "condition": "Film",
+    "tensile": 2.0,
+    "yield_": 1.5,
+    "shear": 0,
+    "elong": 500.0,
+    "hardness": 0,
+    "density": 0.03
+  },
+  {
+    "id": "AI-021",
+    "material": "Poly Tubing Roll \u2014 6\" \u00d7 1,000' (6 Mil)",
+    "alloy": "LDPE",
+    "condition": "Film",
+    "tensile": 2.0,
+    "yield_": 1.5,
+    "shear": 0,
+    "elong": 500.0,
+    "hardness": 0,
+    "density": 0.03
+  },
+  {
+    "id": "AI-022",
+    "material": "Poly Tubing Roll \u2014 10\" \u00d7 1,000' (6 Mil)",
+    "alloy": "LDPE",
+    "condition": "Film",
+    "tensile": 2.0,
+    "yield_": 1.5,
+    "shear": 0,
+    "elong": 500.0,
+    "hardness": 0,
+    "density": 0.03
+  },
+  {
+    "id": "AI-023",
+    "material": "Air Cushion Film \u2014 1-1/4\" \u00d7 9\" \u00d7 13\" (1 Mil)",
+    "alloy": "MDPE",
+    "condition": "Film",
+    "tensile": 3.0,
+    "yield_": 2.0,
+    "shear": 0,
+    "elong": 400.0,
+    "hardness": 0,
+    "density": 0.04
+  },
+  {
+    "id": "AI-024",
+    "material": "Cardboard Box \u2014 Mini Display (21\u00d76\u00d716)",
+    "alloy": "Corrugated",
+    "condition": "C-Flute",
+    "tensile": 0.04,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "Item ID",
+    "material": "Fastener",
+    "alloy": "Into\nSubstrate",
+    "condition": "Pilot Hole\nSize",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-002",
+    "material": "#11 Self-Tap \u00d7 3/4\"",
+    "alloy": "1/8\" 6061-T6",
+    "condition": "9/64\"",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-002",
+    "material": "#11 Self-Tap \u00d7 3/4\"",
+    "alloy": "3/16\" 6061-T6",
+    "condition": "9/64\"",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-004",
+    "material": "Post Screw #14 \u00d7 2-7/8\"",
+    "alloy": "1/8\" Alum + 1.5\" Wood",
+    "condition": "3/16\" / 9/64\"",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-004",
+    "material": "Post Screw #14 \u00d7 2-7/8\"",
+    "alloy": "1/8\" Alum Only",
+    "condition": "9/64\"",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-005",
+    "material": "Lag Bolt 3/8\" \u00d7 5\"",
+    "alloy": "Softwood (SPF)",
+    "condition": "1/4\"",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 2900.0,
+    "hardness": 1400.0,
+    "density": 0
+  },
+  {
+    "id": "AI-005",
+    "material": "Lag Bolt 3/8\" \u00d7 5\"",
+    "alloy": "Hardwood (Oak)",
+    "condition": "5/16\"",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 2900.0,
+    "hardness": 1700.0,
+    "density": 0
+  },
+  {
+    "id": "AI-005",
+    "material": "Lag Bolt 3/8\" \u00d7 5\"",
+    "alloy": "Pressure Treated",
+    "condition": "1/4\"",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 2900.0,
+    "hardness": 1300.0,
+    "density": 0
+  },
+  {
+    "id": "AI-005",
+    "material": "Lag Bolt 3/8\" \u00d7 5\"",
+    "alloy": "Concrete (w/ anchor)",
+    "condition": "3/8\" anchor",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 2900.0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-012",
+    "material": "Tensioner Body (1/4\"-20)",
+    "alloy": "SS Tensioner",
+    "condition": "\u2014",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 2400.0,
+    "hardness": 1200.0,
+    "density": 0
+  },
+  {
+    "id": "AI-011",
+    "material": "Swage Nut (1/4\" NC)",
+    "alloy": "On Tensioner",
+    "condition": "\u2014",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 2400.0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "\u2014",
+    "material": "1/8\" Cable at Terminal",
+    "alloy": "Swaged Fitting",
+    "condition": "\u2014",
+    "tensile": 0,
+    "yield_": 2100.0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AI-015/016",
+    "material": "Swage Assembly (1/8\")",
+    "alloy": "In Post Hole",
+    "condition": "\u2014",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "Grade",
+    "material": "Type /\nFamily",
+    "alloy": "Tensile\n(ksi)",
+    "condition": "Yield\n(ksi)",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "301",
+    "material": "Austenitic",
+    "alloy": "75\u2013185",
+    "condition": "30\u2013140",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "303",
+    "material": "Austenitic",
+    "alloy": "85\u201395",
+    "condition": "35\u201345",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "304",
+    "material": "Austenitic",
+    "alloy": "73\u201385",
+    "condition": "31\u201342",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "304L",
+    "material": "Austenitic",
+    "alloy": "70\u201380",
+    "condition": "25\u201335",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "309",
+    "material": "Austenitic",
+    "alloy": "90\u2013100",
+    "condition": "40\u201350",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "310",
+    "material": "Austenitic",
+    "alloy": "95\u2013105",
+    "condition": "40\u201350",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "316",
+    "material": "Austenitic",
+    "alloy": "75\u201390",
+    "condition": "30\u201342",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "316L",
+    "material": "Austenitic",
+    "alloy": "70\u201385",
+    "condition": "25\u201335",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "321",
+    "material": "Austenitic",
+    "alloy": "75\u201390",
+    "condition": "30\u201340",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "347",
+    "material": "Austenitic",
+    "alloy": "75\u201395",
+    "condition": "30\u201340",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "410",
+    "material": "Martensitic",
+    "alloy": "100\u2013180",
+    "condition": "65\u2013140",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "416",
+    "material": "Martensitic",
+    "alloy": "100\u2013180",
+    "condition": "65\u2013140",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "420",
+    "material": "Martensitic",
+    "alloy": "110\u2013230",
+    "condition": "70\u2013195",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "430",
+    "material": "Ferritic",
+    "alloy": "65\u201375",
+    "condition": "35\u201350",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "440A",
+    "material": "Martensitic",
+    "alloy": "105\u2013260",
+    "condition": "60\u2013240",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "440C",
+    "material": "Martensitic",
+    "alloy": "110\u2013285",
+    "condition": "65\u2013275",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "446",
+    "material": "Ferritic",
+    "alloy": "75\u201385",
+    "condition": "50\u201360",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "2205",
+    "material": "Duplex",
+    "alloy": "90\u2013100",
+    "condition": "65\u201380",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "2507",
+    "material": "Super Duplex",
+    "alloy": "116\u2013130",
+    "condition": "80\u201395",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "17-4 PH",
+    "material": "PH",
+    "alloy": "135\u2013190",
+    "condition": "110\u2013170",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "15-5 PH",
+    "material": "PH",
+    "alloy": "130\u2013190",
+    "condition": "105\u2013170",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "Alloy",
+    "material": "Temper",
+    "alloy": "Series /\nFamily",
+    "condition": "Tensile\n(ksi)",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6061",
+    "material": "T6",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "42\u201345",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6061",
+    "material": "T4",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "30\u201335",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6061",
+    "material": "O",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "18\u201322",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6063",
+    "material": "T5",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "22\u201327",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6063",
+    "material": "T6",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "30\u201335",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6005",
+    "material": "T5",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "35\u201338",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6082",
+    "material": "T6",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "42\u201347",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "6351",
+    "material": "T6",
+    "alloy": "6xxx\nMg-Si",
+    "condition": "41\u201345",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "1100",
+    "material": "H14",
+    "alloy": "1xxx\nPure Al",
+    "condition": "16\u201318",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "3003",
+    "material": "H14",
+    "alloy": "3xxx\nAl-Mn",
+    "condition": "20\u201322",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "3105",
+    "material": "H25",
+    "alloy": "3xxx\nAl-Mn",
+    "condition": "24\u201328",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "5052",
+    "material": "H32",
+    "alloy": "5xxx\nAl-Mg",
+    "condition": "31\u201334",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "5083",
+    "material": "H116",
+    "alloy": "5xxx\nAl-Mg",
+    "condition": "44\u201347",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "5086",
+    "material": "H32",
+    "alloy": "5xxx\nAl-Mg",
+    "condition": "36\u201340",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "5454",
+    "material": "H32",
+    "alloy": "5xxx\nAl-Mg",
+    "condition": "36\u201339",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "2024",
+    "material": "T3",
+    "alloy": "2xxx\nAl-Cu",
+    "condition": "62\u201370",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "2011",
+    "material": "T3",
+    "alloy": "2xxx\nAl-Cu",
+    "condition": "55\u201359",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "7075",
+    "material": "T6",
+    "alloy": "7xxx\nAl-Zn",
+    "condition": "78\u201383",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "7050",
+    "material": "T7451",
+    "alloy": "7xxx\nAl-Zn",
+    "condition": "72\u201376",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "Common\nName",
+    "material": "UNS / CDA\nDesignation",
+    "alloy": "Composition\n(Primary %)",
+    "condition": "Tensile\n(ksi)",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C260 Cartridge\nBrass",
+    "material": "C26000",
+    "alloy": "70 Cu / 30 Zn",
+    "condition": "44\u201376",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C270 Yellow\nBrass",
+    "material": "C27000",
+    "alloy": "65 Cu / 35 Zn",
+    "condition": "46\u201374",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C280 Muntz\nMetal",
+    "material": "C28000",
+    "alloy": "60 Cu / 40 Zn",
+    "condition": "50\u201375",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C353 Leaded\nBrass",
+    "material": "C35300",
+    "alloy": "62 Cu / 36 Zn / 2 Pb",
+    "condition": "47\u201358",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C360 Free-\nCutting Brass",
+    "material": "C36000",
+    "alloy": "61 Cu / 36 Zn / 3 Pb",
+    "condition": "49\u201368",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C385 Architec-\ntural Bronze",
+    "material": "C38500",
+    "alloy": "57 Cu / 40 Zn / 3 Pb",
+    "condition": "50\u201365",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C464 Naval\nBrass",
+    "material": "C46400",
+    "alloy": "60 Cu / 39 Zn / 1 Sn",
+    "condition": "55\u201385",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C510 Phosphor\nBronze A",
+    "material": "C51000",
+    "alloy": "95 Cu / 5 Sn / 0.2 P",
+    "condition": "44\u2013100",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C524 Phosphor\nBronze D",
+    "material": "C52400",
+    "alloy": "90 Cu / 10 Sn / 0.2 P",
+    "condition": "55\u2013120",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C614 Aluminum\nBronze",
+    "material": "C61400",
+    "alloy": "91 Cu / 7 Al / 2 Fe",
+    "condition": "76\u201389",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C630 Aluminum\nBronze",
+    "material": "C63000",
+    "alloy": "82 Cu / 10 Al / 5 Ni / 3 Fe",
+    "condition": "90\u2013120",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C655 Silicon\nBronze",
+    "material": "C65500",
+    "alloy": "97 Cu / 3 Si",
+    "condition": "56\u2013100",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C932 SAE 660\nBearing Bronze",
+    "material": "C93200",
+    "alloy": "83 Cu / 7 Sn / 7 Pb / 3 Zn",
+    "condition": "30\u201336",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C110 ETP\nCopper",
+    "material": "C11000",
+    "alloy": "99.9 Cu",
+    "condition": "32\u201355",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C172 Beryllium\nCopper",
+    "material": "C17200",
+    "alloy": "98 Cu / 2 Be",
+    "condition": "60\u2013200",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C706 Cu-Ni\n90/10",
+    "material": "C70600",
+    "alloy": "90 Cu / 10 Ni",
+    "condition": "40\u201360",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "C715 Cu-Ni\n70/30",
+    "material": "C71500",
+    "alloy": "70 Cu / 30 Ni",
+    "condition": "50\u201375",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "Grade /\nDesignation",
+    "material": "AISI /\nASTM",
+    "alloy": "Carbon\n(%)",
+    "condition": "Tensile\n(ksi)",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "1008",
+    "material": "AISI 1008",
+    "alloy": "0.08",
+    "condition": "44\u201349",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "1018",
+    "material": "AISI 1018",
+    "alloy": "0.18",
+    "condition": "58\u201364",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "1020",
+    "material": "AISI 1020",
+    "alloy": "0.20",
+    "condition": "55\u201365",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "A36",
+    "material": "ASTM A36",
+    "alloy": "0.25 max",
+    "condition": "58\u201380",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "A500\nGrade B",
+    "material": "ASTM A500",
+    "alloy": "0.25 max",
+    "condition": "58 min",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "A572\nGrade 50",
+    "material": "ASTM A572",
+    "alloy": "0.23 max",
+    "condition": "65 min",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "1045",
+    "material": "AISI 1045",
+    "alloy": "0.45",
+    "condition": "82\u201391",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "1095",
+    "material": "AISI 1095",
+    "alloy": "0.95",
+    "condition": "120\u2013180",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "4130",
+    "material": "AISI 4130",
+    "alloy": "0.30",
+    "condition": "81\u201397",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "4140",
+    "material": "AISI 4140",
+    "alloy": "0.40",
+    "condition": "95\u2013148",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "4340",
+    "material": "AISI 4340",
+    "alloy": "0.40",
+    "condition": "108\u2013185",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "8620",
+    "material": "AISI 8620",
+    "alloy": "0.20",
+    "condition": "85\u2013115",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "A2",
+    "material": "AISI A2",
+    "alloy": "1.00",
+    "condition": "220\u2013245",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "D2",
+    "material": "AISI D2",
+    "alloy": "1.50",
+    "condition": "230\u2013260",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "M2",
+    "material": "AISI M2",
+    "alloy": "0.85",
+    "condition": "250\u2013280",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "O1",
+    "material": "AISI O1",
+    "alloy": "0.90",
+    "condition": "200\u2013230",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "S7",
+    "material": "AISI S7",
+    "alloy": "0.50",
+    "condition": "200\u2013250",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "W1",
+    "material": "AISI W1",
+    "alloy": "1.00",
+    "condition": "190\u2013220",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "COR-TEN A",
+    "material": "ASTM A242",
+    "alloy": "0.12 max",
+    "condition": "70 min",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "COR-TEN B",
+    "material": "ASTM A588",
+    "alloy": "0.19 max",
+    "condition": "70 min",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AR400",
+    "material": "Abrasion\nResistant",
+    "alloy": "0.20",
+    "condition": "175\u2013210",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  },
+  {
+    "id": "AR500",
+    "material": "Abrasion\nResistant",
+    "alloy": "0.30",
+    "condition": "230\u2013260",
+    "tensile": 0,
+    "yield_": 0,
+    "shear": 0,
+    "elong": 0,
+    "hardness": 0,
+    "density": 0
+  }
+],
+
+  // 08_BLUEPRINT: Welding & Fab reference (92 specs)
+  weldingFab: [
+  {
+    "thickness": "1/8\"",
+    "jointType": "Butt Joint",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 0.7,
+    "fillerPerFt": 8.4,
+    "weldTimeIn": 18.0,
+    "weldTimeFt": "3:36",
+    "ampsRange": "125\u2013165",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "1/8\"",
+    "jointType": "Fillet (Tee)",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 1.0,
+    "fillerPerFt": 12.0,
+    "weldTimeIn": 15.0,
+    "weldTimeFt": "3:00",
+    "ampsRange": "130\u2013170",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "1/8\"",
+    "jointType": "Lap Joint",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 0.8,
+    "fillerPerFt": 9.6,
+    "weldTimeIn": 16.0,
+    "weldTimeFt": "3:12",
+    "ampsRange": "125\u2013160",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "1/8\"",
+    "jointType": "Corner Joint",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 0.9,
+    "fillerPerFt": 10.8,
+    "weldTimeIn": 16.0,
+    "weldTimeFt": "3:12",
+    "ampsRange": "130\u2013165",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "1/8\"",
+    "jointType": "Plug / Rosette",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "\u2014",
+    "ampsRange": "140\u2013170",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "1/8\"",
+    "jointType": "Tack Weld",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "\u2014",
+    "ampsRange": "150\u2013180",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "1/16\"",
+    "jointType": "Butt Joint",
+    "fillerDia": "1/16\"",
+    "fillerPerIn": 0.4,
+    "fillerPerFt": 4.8,
+    "weldTimeIn": 22.0,
+    "weldTimeFt": "4:24",
+    "ampsRange": "60\u201390",
+    "tungstenDia": "1/16\""
+  },
+  {
+    "thickness": "1/16\"",
+    "jointType": "Fillet (Tee)",
+    "fillerDia": "1/16\"",
+    "fillerPerIn": 0.6,
+    "fillerPerFt": 7.2,
+    "weldTimeIn": 20.0,
+    "weldTimeFt": "4:00",
+    "ampsRange": "65\u201395",
+    "tungstenDia": "1/16\""
+  },
+  {
+    "thickness": "3/32\"",
+    "jointType": "Butt Joint",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 0.5,
+    "fillerPerFt": 6.0,
+    "weldTimeIn": 20.0,
+    "weldTimeFt": "4:00",
+    "ampsRange": "90\u2013125",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "3/32\"",
+    "jointType": "Fillet (Tee)",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 0.8,
+    "fillerPerFt": 9.6,
+    "weldTimeIn": 17.0,
+    "weldTimeFt": "3:24",
+    "ampsRange": "95\u2013130",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "3/16\"",
+    "jointType": "Butt Joint",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 1.2,
+    "fillerPerFt": 14.4,
+    "weldTimeIn": 16.0,
+    "weldTimeFt": "3:12",
+    "ampsRange": "170\u2013220",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "3/16\"",
+    "jointType": "Fillet (Tee)",
+    "fillerDia": "3/32\"",
+    "fillerPerIn": 1.5,
+    "fillerPerFt": 18.0,
+    "weldTimeIn": 14.0,
+    "weldTimeFt": "2:48",
+    "ampsRange": "180\u2013230",
+    "tungstenDia": "3/32\""
+  },
+  {
+    "thickness": "1/4\"",
+    "jointType": "Butt Joint",
+    "fillerDia": "1/8\"",
+    "fillerPerIn": 1.8,
+    "fillerPerFt": 21.6,
+    "weldTimeIn": 14.0,
+    "weldTimeFt": "2:48",
+    "ampsRange": "220\u2013280",
+    "tungstenDia": "1/8\""
+  },
+  {
+    "thickness": "1/4\"",
+    "jointType": "Fillet (Tee)",
+    "fillerDia": "1/8\"",
+    "fillerPerIn": 2.2,
+    "fillerPerFt": 26.4,
+    "weldTimeIn": 12.0,
+    "weldTimeFt": "2:24",
+    "ampsRange": "230\u2013290",
+    "tungstenDia": "1/8\""
+  },
+  {
+    "thickness": "3/8\"",
+    "jointType": "V-Groove Butt",
+    "fillerDia": "1/8\"",
+    "fillerPerIn": 3.5,
+    "fillerPerFt": 42.0,
+    "weldTimeIn": 12.0,
+    "weldTimeFt": "2:24",
+    "ampsRange": "280\u2013340",
+    "tungstenDia": "1/8\""
+  },
+  {
+    "thickness": "1/2\"",
+    "jointType": "V-Groove Butt",
+    "fillerDia": "5/32\"",
+    "fillerPerIn": 5.0,
+    "fillerPerFt": 60.0,
+    "weldTimeIn": 10.0,
+    "weldTimeFt": "2:00",
+    "ampsRange": "320\u2013380",
+    "tungstenDia": "5/32\""
+  },
+  {
+    "thickness": "Component",
+    "jointType": "Weld\nLength\n(inches)",
+    "fillerDia": "Joint\nType",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Filler Rods\nUsed\n(36\" rods)",
+    "ampsRange": "ER4043\nWeight\n(oz)",
+    "tungstenDia": "Notes"
+  },
+  {
+    "thickness": "Line Post \u2013 Rail Pocket (\u00d72)",
+    "jointType": "12",
+    "fillerDia": "Fillet",
+    "fillerPerIn": 12.0,
+    "fillerPerFt": 1.0,
+    "weldTimeIn": 3.0,
+    "weldTimeFt": "0.33",
+    "ampsRange": "0.3",
+    "tungstenDia": "2 pockets \u00d7 6\" each"
+  },
+  {
+    "thickness": "End Post \u2013 Rail Pocket (\u00d72)",
+    "jointType": "12",
+    "fillerDia": "Fillet",
+    "fillerPerIn": 12.0,
+    "fillerPerFt": 1.0,
+    "weldTimeIn": 3.0,
+    "weldTimeFt": "0.33",
+    "ampsRange": "0.3",
+    "tungstenDia": "Same as line post"
+  },
+  {
+    "thickness": "Corner Post \u2013 Rail Pocket (\u00d74)",
+    "jointType": "24",
+    "fillerDia": "Fillet",
+    "fillerPerIn": 24.0,
+    "fillerPerFt": 2.0,
+    "weldTimeIn": 6.0,
+    "weldTimeFt": "0.67",
+    "ampsRange": "0.6",
+    "tungstenDia": "4 pockets (2 per direction)"
+  },
+  {
+    "thickness": "Post \u2013 Base Plate Weld",
+    "jointType": "8",
+    "fillerDia": "Fillet",
+    "fillerPerIn": 8.0,
+    "fillerPerFt": 0.67,
+    "weldTimeIn": 2.0,
+    "weldTimeFt": "0.22",
+    "ampsRange": "0.2",
+    "tungstenDia": "Perimeter of 2\" SQ post"
+  },
+  {
+    "thickness": "Top Rail \u2013 Splice Joint",
+    "jointType": "6",
+    "fillerDia": "Butt",
+    "fillerPerIn": 4.2,
+    "fillerPerFt": 0.35,
+    "weldTimeIn": 1.8,
+    "weldTimeFt": "0.12",
+    "ampsRange": "0.1",
+    "tungstenDia": "Where rails meet at corners"
+  },
+  {
+    "thickness": "Bottom Rail \u2013 Splice Joint",
+    "jointType": "5",
+    "fillerDia": "Butt",
+    "fillerPerIn": 3.5,
+    "fillerPerFt": 0.29,
+    "weldTimeIn": 1.5,
+    "weldTimeFt": "0.1",
+    "ampsRange": "0.1",
+    "tungstenDia": "Where rails meet at corners"
+  },
+  {
+    "thickness": "Fascia Angle \u2013 Post Clip",
+    "jointType": "4",
+    "fillerDia": "Fillet",
+    "fillerPerIn": 4.0,
+    "fillerPerFt": 0.33,
+    "weldTimeIn": 1.0,
+    "weldTimeFt": "0.11",
+    "ampsRange": "0.1",
+    "tungstenDia": "Per post connection"
+  },
+  {
+    "thickness": "Gate Post \u2013 Hinge Mount",
+    "jointType": "6",
+    "fillerDia": "Fillet",
+    "fillerPerIn": 6.0,
+    "fillerPerFt": 0.5,
+    "weldTimeIn": 1.5,
+    "weldTimeFt": "0.17",
+    "ampsRange": "0.15",
+    "tungstenDia": "Hinge plate to post"
+  },
+  {
+    "thickness": "Handrail Bracket",
+    "jointType": "3",
+    "fillerDia": "Fillet",
+    "fillerPerIn": 3.0,
+    "fillerPerFt": 0.25,
+    "weldTimeIn": 0.75,
+    "weldTimeFt": "0.08",
+    "ampsRange": "0.08",
+    "tungstenDia": "Per bracket"
+  },
+  {
+    "thickness": "Cable Hole Reinforcement",
+    "jointType": "1",
+    "fillerDia": "Plug",
+    "fillerPerIn": 1.5,
+    "fillerPerFt": 0.13,
+    "weldTimeIn": 0.4,
+    "weldTimeFt": "0.04",
+    "ampsRange": "0.04",
+    "tungstenDia": "Per hole (if applicable)"
+  },
+  {
+    "thickness": "Order Type",
+    "jointType": "Posts\nper 4 LF",
+    "fillerDia": "Weld Inches\nper Post",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Filler Rod\nFT/Deck LF",
+    "ampsRange": "Est. Minutes\nper Deck LF",
+    "tungstenDia": "36\" Rods\nper 100 LF"
+  },
+  {
+    "thickness": "Surface Cable (standard)",
+    "jointType": "0.25",
+    "fillerDia": "20",
+    "fillerPerIn": 2.0,
+    "fillerPerFt": 7.0,
+    "weldTimeIn": 7.7,
+    "weldTimeFt": "0.64",
+    "ampsRange": "2.1",
+    "tungstenDia": "21"
+  },
+  {
+    "thickness": "Fascia Cable",
+    "jointType": "0.25",
+    "fillerDia": "20",
+    "fillerPerIn": 2.0,
+    "fillerPerFt": 7.0,
+    "weldTimeIn": 7.7,
+    "weldTimeFt": "0.64",
+    "ampsRange": "2.1",
+    "tungstenDia": "21"
+  },
+  {
+    "thickness": "Surface Glass",
+    "jointType": "0.25",
+    "fillerDia": "24",
+    "fillerPerIn": 2.0,
+    "fillerPerFt": 8.0,
+    "weldTimeIn": 8.8,
+    "weldTimeFt": "0.73",
+    "ampsRange": "2.4",
+    "tungstenDia": "24"
+  },
+  {
+    "thickness": "Fascia Glass",
+    "jointType": "0.25",
+    "fillerDia": "24",
+    "fillerPerIn": 2.0,
+    "fillerPerFt": 8.0,
+    "weldTimeIn": 8.8,
+    "weldTimeFt": "0.73",
+    "ampsRange": "2.4",
+    "tungstenDia": "24"
+  },
+  {
+    "thickness": "Horizontal Bar",
+    "jointType": "0.25",
+    "fillerDia": "20",
+    "fillerPerIn": 4.0,
+    "fillerPerFt": 9.0,
+    "weldTimeIn": 9.9,
+    "weldTimeFt": "0.83",
+    "ampsRange": "2.7",
+    "tungstenDia": "28"
+  },
+  {
+    "thickness": "Material\nThickness",
+    "jointType": "Amps\n(Flat)",
+    "fillerDia": "Amps\n(Vertical)",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Gas Flow\n(CFH)",
+    "ampsRange": "Filler\nDia.",
+    "tungstenDia": "AC Freq.\n(Hz)"
+  },
+  {
+    "thickness": "1/16\" (0.063\")",
+    "jointType": "60\u201390",
+    "fillerDia": "50\u201375",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "15\u201318",
+    "ampsRange": "1/16\"",
+    "tungstenDia": "80\u2013120"
+  },
+  {
+    "thickness": "3/32\" (0.094\")",
+    "jointType": "90\u2013130",
+    "fillerDia": "80\u2013115",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "18\u201322",
+    "ampsRange": "3/32\"",
+    "tungstenDia": "80\u2013120"
+  },
+  {
+    "thickness": "1/8\" (0.125\")",
+    "jointType": "125\u2013170",
+    "fillerDia": "110\u2013150",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "20\u201325",
+    "ampsRange": "3/32\"",
+    "tungstenDia": "80\u2013120"
+  },
+  {
+    "thickness": "3/16\" (0.188\")",
+    "jointType": "170\u2013230",
+    "fillerDia": "150\u2013200",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "22\u201328",
+    "ampsRange": "3/32\"",
+    "tungstenDia": "60\u2013100"
+  },
+  {
+    "thickness": "1/4\" (0.250\")",
+    "jointType": "220\u2013290",
+    "fillerDia": "190\u2013250",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "25\u201330",
+    "ampsRange": "1/8\"",
+    "tungstenDia": "60\u2013100"
+  },
+  {
+    "thickness": "3/8\" (0.375\")",
+    "jointType": "280\u2013340",
+    "fillerDia": "250\u2013310",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "28\u201335",
+    "ampsRange": "1/8\"",
+    "tungstenDia": "60\u201380"
+  },
+  {
+    "thickness": "1/2\" (0.500\")",
+    "jointType": "320\u2013380",
+    "fillerDia": "290\u2013350",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "30\u201340",
+    "ampsRange": "5/32\"",
+    "tungstenDia": "40\u201380"
+  },
+  {
+    "thickness": "Thickness",
+    "jointType": "Preheat\nRequired?",
+    "fillerDia": "Preheat\nTemp (\u00b0F)",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "< 1/8\"",
+    "jointType": "No",
+    "fillerDia": "\u2014",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "1/8\" \u2013 1/4\"",
+    "jointType": "Optional",
+    "fillerDia": "150\u2013250\u00b0F",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "> 1/4\"",
+    "jointType": "Recommended",
+    "fillerDia": "200\u2013300\u00b0F",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "> 1/2\"",
+    "jointType": "Required",
+    "fillerDia": "250\u2013400\u00b0F",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Tungsten\nType",
+    "jointType": "Color\nCode",
+    "fillerDia": "Best For",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Amp Range\n(AC)",
+    "ampsRange": "Notes",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "2% Ceriated (WC20)",
+    "jointType": "Gray",
+    "fillerDia": "Aluminum, SS, mild steel",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Full range",
+    "ampsRange": "BEST all-around \u2014 Maisy standard. Low-amp starts, stable arc.",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "2% Lanthanated (WL20)",
+    "jointType": "Blue",
+    "fillerDia": "Aluminum, SS, mild steel",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Full range",
+    "ampsRange": "Very similar to Ceriated \u2014 slightly longer life. Good alternative.",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "2% Thoriated (WT20)",
+    "jointType": "Red",
+    "fillerDia": "Steel, SS (DC only)",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Not recommended",
+    "ampsRange": "DC steel standard. Radioactive dust \u2014 avoid grinding without ventilation.",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Pure Tungsten (WP)",
+    "jointType": "Green",
+    "fillerDia": "Aluminum (legacy)",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Low\u2013Mid",
+    "ampsRange": "Old-school AC aluminum. Balls up. Replaced by Ceriated/Lanthanated.",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "1.5% Lanthanated (WL15)",
+    "jointType": "Gold",
+    "fillerDia": "General purpose",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Full range",
+    "ampsRange": "Budget option \u2014 works but slightly less stable arc start.",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Profile / Form",
+    "jointType": "Thickness /\nWall",
+    "fillerDia": "Min Bend Radius\n(\u00d7 Thickness)",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Notes",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Flat Bar",
+    "jointType": "1/8\" (0.125\")",
+    "fillerDia": "4\u20136\u00d7 thickness",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Bend across grain if possible",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Flat Bar",
+    "jointType": "1/4\" (0.250\")",
+    "fillerDia": "4\u20136\u00d7 thickness",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Anneal locally for tight bends",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Sheet",
+    "jointType": "0.063\" (1/16\")",
+    "fillerDia": "3\u20134\u00d7 thickness",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Thinnest stock \u2014 most formable of T6",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Sheet",
+    "jointType": "0.125\" (1/8\")",
+    "fillerDia": "4\u20136\u00d7 thickness",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Standard brake bending",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Angle (equal leg)",
+    "jointType": "1/8\" wall",
+    "fillerDia": "6\u20138\u00d7 wall",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Straightening only \u2014 not for forming curves",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Tube (square)",
+    "jointType": "1/8\" wall",
+    "fillerDia": "8\u201310\u00d7 tube width",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Roll bending only \u2014 no press brake. Fill with sand or mandrel.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Tube (round)",
+    "jointType": "1/8\" wall",
+    "fillerDia": "6\u20138\u00d7 O.D.",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Internal mandrel required to prevent collapse",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "6061-O (Annealed)",
+    "jointType": "Any",
+    "fillerDia": "1\u20132\u00d7 thickness",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Anneal before bending, re-heat-treat after if strength needed",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Operation",
+    "jointType": "Tool",
+    "fillerDia": "Disc / Media\nType",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Notes / Technique",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Remove mill scale / oxide",
+    "jointType": "Hand",
+    "fillerDia": "SS Wire Brush",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Brush in ONE direction only. Dedicated aluminum-only brush. Never use steel brush.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Clean weld zone",
+    "jointType": "Hand",
+    "fillerDia": "Acetone or Denatured Alcohol",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Wipe with clean lint-free rag. Remove oil, marker, fingerprints. Let dry before welding.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Deburr cut edges",
+    "jointType": "4.5\" Grinder",
+    "fillerDia": "Flap Disc",
+    "fillerPerIn": 80.0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Quick pass to knock off burrs. Do not gouge or dish the surface.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Bevel for butt joint (>3/16\")",
+    "jointType": "4.5\" Grinder",
+    "fillerDia": "Flap Disc or Cut-Off",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "30\u201337.5\u00b0 bevel each side for V-groove. Clean after beveling.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Grind weld flush",
+    "jointType": "4.5\" Grinder",
+    "fillerDia": "Flap Disc",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "For visible seams. Work gradually \u2014 easy to gouge aluminum. Keep disc flat.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Blend / feather weld",
+    "jointType": "4.5\" Grinder",
+    "fillerDia": "Flap Disc",
+    "fillerPerIn": 120.0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "After flush grinding. Creates smooth transition. Visible surface quality.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Remove weld discoloration",
+    "jointType": "Hand / DA Sander",
+    "fillerDia": "Sanding Disc",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Removes dark oxide ring around weld. Required before powder coat for adhesion.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Final surface prep",
+    "jointType": "DA Sander",
+    "fillerDia": "Sanding Disc",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Last step before powder coat. Creates profile for powder adhesion. Uniform scratch pattern.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Scuff entire part",
+    "jointType": "DA Sander / Hand",
+    "fillerDia": "Scotch-Brite (Maroon)",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Creates adhesion profile. Every square inch must be scuffed \u2014 including inside corners.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Degrease",
+    "jointType": "Hand",
+    "fillerDia": "Acetone or Pre-Treatment",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Final wipe before hanging. No fingerprints after this step. Wear clean nitrile gloves.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Outgassing bake (if needed)",
+    "jointType": "Oven",
+    "fillerDia": "N/A",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Bake castings/forgings at 400\u00b0F for 20 min BEFORE powder coat. Prevents pinholes from trapped gas.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Mask threaded holes",
+    "jointType": "Hand",
+    "fillerDia": "Silicone plugs / HT tape",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Plug all holes that receive hardware. Powder in threads = cross-threading and hardware failure.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Miter saw (tube/bar)",
+    "jointType": "Miter Saw",
+    "fillerDia": "84T Carbide Blade (10\")",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Use non-ferrous blade ONLY. Wax blade periodically. Never force \u2014 let blade do the work.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "CNC router",
+    "jointType": "CNC",
+    "fillerDia": "Single-flute carbide",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Feed rate: 60\u2013120 IPM for 1/8\" aluminum. Use mist coolant or compressed air chip clearing.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Hole drilling",
+    "jointType": "Drill Press",
+    "fillerDia": "HSS Cobalt Bit",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Use cutting oil. Peck drill (in-out) every 1/4\" depth to clear chips. Deburr both sides.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Cut-off (field trim)",
+    "jointType": "4.5\" Grinder",
+    "fillerDia": "Cut-Off Wheel (Aluminum)",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Do NOT press hard \u2014 melts aluminum onto wheel and binds. Light pressure, steady pass.",
+    "ampsRange": "",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Fastener",
+    "jointType": "Size",
+    "fillerDia": "Substrate",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Tool",
+    "ampsRange": "Max RPM\n(Power)",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Self-Tap Screw (#11)",
+    "jointType": "#11 \u00d7 3/4\"",
+    "fillerDia": "1/8\" Aluminum",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Drill/Driver",
+    "ampsRange": "800\u20131200",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Self-Tap Screw (#11)",
+    "jointType": "#11 \u00d7 3/4\"",
+    "fillerDia": "3/16\" Aluminum",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Drill/Driver",
+    "ampsRange": "800\u20131200",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Post Screw (#14)",
+    "jointType": "#14 \u00d7 2-7/8\"",
+    "fillerDia": "1/8\" Aluminum + Wood",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Drill/Driver",
+    "ampsRange": "600\u20131000",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Post Screw (#14)",
+    "jointType": "#14 \u00d7 2-7/8\"",
+    "fillerDia": "Aluminum Only",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Drill/Driver",
+    "ampsRange": "600\u20131000",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Lag Bolt (3/8\")",
+    "jointType": "3/8\" \u00d7 5\"",
+    "fillerDia": "Softwood",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Ratchet",
+    "ampsRange": "Hand Only",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Lag Bolt (3/8\")",
+    "jointType": "3/8\" \u00d7 5\"",
+    "fillerDia": "Hardwood",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Ratchet",
+    "ampsRange": "Hand Only",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Lag Bolt (1/2\")",
+    "jointType": "1/2\" \u00d7 6\"",
+    "fillerDia": "Softwood",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Ratchet",
+    "ampsRange": "Hand Only",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Lag Bolt (1/2\")",
+    "jointType": "1/2\" \u00d7 6\"",
+    "fillerDia": "Hardwood",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Ratchet",
+    "ampsRange": "Hand Only",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Machine Screw (1/4\"-20)",
+    "jointType": "1/4\"-20",
+    "fillerDia": "6061-T6 Tapped",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Wrench",
+    "ampsRange": "\u2014",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Machine Screw (5/16\"-18)",
+    "jointType": "5/16\"-18",
+    "fillerDia": "6061-T6 Tapped",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Wrench",
+    "ampsRange": "\u2014",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Swage Nut (1/4\" NC)",
+    "jointType": "1/4\"-20",
+    "fillerDia": "Tensioner Body",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Wrench",
+    "ampsRange": "Hand Only",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Cable Tensioner (final)",
+    "jointType": "1/4\"-20",
+    "fillerDia": "Tensioner Body",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Wrench",
+    "ampsRange": "Hand Only",
+    "tungstenDia": ""
+  },
+  {
+    "thickness": "Hinge Kit Screws",
+    "jointType": "#12 \u00d7 1-1/2\"",
+    "fillerDia": "Aluminum Post",
+    "fillerPerIn": 0,
+    "fillerPerFt": 0,
+    "weldTimeIn": 0,
+    "weldTimeFt": "Drill/Driver",
+    "ampsRange": "600\u2013800",
+    "tungstenDia": ""
+  }
+],
+
+  // 08_BLUEPRINT: Product Reference (58 profiles)
+  productReference: [
+  {
+    "profile": "Top Rail (1\"x3\")",
+    "dims": "1\" x 3\" x 1/8\"",
+    "surfAreaSqFtLF": 0.67,
+    "powderOzLF": 1.11,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 14.4,
+    "lfPer50lb": 722.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "Bottom Rail (1\"x2\")",
+    "dims": "1\" x 2\" x 1/8\"",
+    "surfAreaSqFtLF": 0.5,
+    "powderOzLF": 0.83,
+    "powderLbLF": 0.05,
+    "coverageLFLb": 19.2,
+    "lfPer50lb": 962.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "Line Post (2\" SQ)",
+    "dims": "2\" x 2\" x 1/8\"",
+    "surfAreaSqFtLF": 0.67,
+    "powderOzLF": 1.11,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 14.4,
+    "lfPer50lb": 722.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "Corner Post (2\" SQ)",
+    "dims": "2\" x 2\" x 1/8\"",
+    "surfAreaSqFtLF": 0.67,
+    "powderOzLF": 1.11,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 14.4,
+    "lfPer50lb": 722.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "End Post (2\" SQ)",
+    "dims": "2\" x 2\" x 1/8\"",
+    "surfAreaSqFtLF": 0.67,
+    "powderOzLF": 1.11,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 14.4,
+    "lfPer50lb": 722.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "Stair Post (2\" SQ)",
+    "dims": "2\" x 2\" x 1/8\"",
+    "surfAreaSqFtLF": 0.67,
+    "powderOzLF": 1.11,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 14.4,
+    "lfPer50lb": 722.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "Gate Post (2\" SQ)",
+    "dims": "2\" x 2\" x 1/8\"",
+    "surfAreaSqFtLF": 0.67,
+    "powderOzLF": 1.11,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 14.4,
+    "lfPer50lb": 722.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "Fascia Mount Angle",
+    "dims": "2\" x 4\" x 1/8\"",
+    "surfAreaSqFtLF": 0.5,
+    "powderOzLF": 0.83,
+    "powderLbLF": 0.05,
+    "coverageLFLb": 19.2,
+    "lfPer50lb": 962.0,
+    "matCat": "Aluminum Angle"
+  },
+  {
+    "profile": "Surface Mount Angle",
+    "dims": "2\" x 2\" x 1/8\"",
+    "surfAreaSqFtLF": 0.33,
+    "powderOzLF": 0.56,
+    "powderLbLF": 0.04,
+    "coverageLFLb": 28.8,
+    "lfPer50lb": 1440.0,
+    "matCat": "Aluminum Angle"
+  },
+  {
+    "profile": "Flat Bar (2\")",
+    "dims": "1/8\" x 2\"",
+    "surfAreaSqFtLF": 0.33,
+    "powderOzLF": 0.56,
+    "powderLbLF": 0.04,
+    "coverageLFLb": 28.8,
+    "lfPer50lb": 1440.0,
+    "matCat": "Aluminum Flat Bar"
+  },
+  {
+    "profile": "Flat Bar (3\")",
+    "dims": "1/4\" x 3\"",
+    "surfAreaSqFtLF": 0.5,
+    "powderOzLF": 0.83,
+    "powderLbLF": 0.05,
+    "coverageLFLb": 19.2,
+    "lfPer50lb": 962.0,
+    "matCat": "Aluminum Flat Bar"
+  },
+  {
+    "profile": "Flat Bar (4\")",
+    "dims": "1/8\" x 4\"",
+    "surfAreaSqFtLF": 0.67,
+    "powderOzLF": 1.11,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 14.4,
+    "lfPer50lb": 722.0,
+    "matCat": "Aluminum Flat Bar"
+  },
+  {
+    "profile": "Pipe Handrail",
+    "dims": "1-7/8\" O.D.",
+    "surfAreaSqFtLF": 0.49,
+    "powderOzLF": 0.82,
+    "powderLbLF": 0.05,
+    "coverageLFLb": 19.6,
+    "lfPer50lb": 980.0,
+    "matCat": "Aluminum Pipe"
+  },
+  {
+    "profile": "Cable Tube (3/4\")",
+    "dims": "3/4\" SQ x 1/8\"",
+    "surfAreaSqFtLF": 0.25,
+    "powderOzLF": 0.42,
+    "powderLbLF": 0.03,
+    "coverageLFLb": 38.5,
+    "lfPer50lb": 1923.0,
+    "matCat": "Aluminum Tube"
+  },
+  {
+    "profile": "Component",
+    "dims": "Typical Qty\nper LF Deck",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Top Rail",
+    "dims": "1 per run",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 1.0,
+    "powderLbLF": 0.07,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Bottom Rail",
+    "dims": "1 per run",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 1.0,
+    "powderLbLF": 0.05,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Line Posts (42\")",
+    "dims": "1 per 4 LF",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.88,
+    "powderLbLF": 0.06,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "End/Corner Posts",
+    "dims": "Varies",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Fascia Angle",
+    "dims": "1 per run",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 1.0,
+    "powderLbLF": 0.05,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "ROUGH TOTAL",
+    "dims": "",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Profile / Part",
+    "dims": "Dimensions",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Top Rail",
+    "dims": "1\" x 3\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.96,
+    "powderLbLF": 1.43,
+    "coverageLFLb": 19.3,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Bottom Rail",
+    "dims": "1\" x 2\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.71,
+    "powderLbLF": 1.05,
+    "coverageLFLb": 14.1,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Post (2\" SQ)",
+    "dims": "2\" x 2\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.96,
+    "powderLbLF": 1.43,
+    "coverageLFLb": 19.3,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Cable Tube",
+    "dims": "3/4\" SQ",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.45,
+    "powderLbLF": 0.67,
+    "coverageLFLb": 9.0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Pipe Handrail",
+    "dims": "1-7/8\" O.D.",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.66,
+    "powderLbLF": 0.98,
+    "coverageLFLb": 13.2,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Flat Bar 2\"",
+    "dims": "1/8\" x 2\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.35,
+    "powderLbLF": 0.52,
+    "coverageLFLb": 6.9,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Flat Bar 3\"",
+    "dims": "1/4\" x 3\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 1.04,
+    "powderLbLF": 1.54,
+    "coverageLFLb": 20.7,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Flat Bar 4\"",
+    "dims": "1/8\" x 4\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.69,
+    "powderLbLF": 1.03,
+    "coverageLFLb": 13.8,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Angle 2\"x2\"",
+    "dims": "2\" x 2\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.71,
+    "powderLbLF": 1.05,
+    "coverageLFLb": 14.1,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Angle 2\"x4\"",
+    "dims": "2\" x 4\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 1.05,
+    "powderLbLF": 1.56,
+    "coverageLFLb": 21.0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Angle 2\"x4\" (Rounded)",
+    "dims": "2\" x 4\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 2.04,
+    "powderLbLF": 3.04,
+    "coverageLFLb": 40.8,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Angle 1.5\"x1.5\"",
+    "dims": "1.5\" x 1.5\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0.53,
+    "powderLbLF": 0.79,
+    "coverageLFLb": 10.7,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Angle 2.5\"x2.5\"",
+    "dims": "2.5\" x 2.5\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 1.7,
+    "powderLbLF": 2.53,
+    "coverageLFLb": 34.0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Angle 4\"x4\"",
+    "dims": "4\" x 4\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 5.4,
+    "powderLbLF": 8.04,
+    "coverageLFLb": 108.0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Specification",
+    "dims": "Value",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Cable Diameter",
+    "dims": "1/8\" (3.2 mm)",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Cable Break Strength",
+    "dims": "2,100 lbs",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Cable Working Load",
+    "dims": "420 lbs",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Cable Spacing (IRC)",
+    "dims": "3\" max on center",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Typical Cables Per Run",
+    "dims": "13 cables",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Post Height (Residential)",
+    "dims": "36\" min above deck",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Post Height (Commercial)",
+    "dims": "42\" min above floor",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Max Post Spacing",
+    "dims": "4 ft on center",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Max Cable Run Length",
+    "dims": "70 ft",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Min Cable Tension",
+    "dims": "200 lbs",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Cable Stretch (New)",
+    "dims": "~1% of length",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Hardware Item",
+    "dims": "Qty Per\nCable Line",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Tensioner Body (fixed end)",
+    "dims": "1",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Swage Assembly (tensioning end)",
+    "dims": "1",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Swage Nut (1/4\" NC Hex SS)",
+    "dims": "1",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Swage Washer \u2013 Small (1/4\" ID)",
+    "dims": "2",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Swage Washer \u2013 Large (1/4\" ID)",
+    "dims": "2",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Swage Acorn Nut (1/4\" SS)",
+    "dims": "1",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Cable (1/8\" SS)",
+    "dims": "Run length + 12\"",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Angle Washers (57\u00b0)",
+    "dims": "As needed",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  },
+  {
+    "profile": "Total Hardware Per 13 Cables",
+    "dims": "13 of each above",
+    "surfAreaSqFtLF": 0,
+    "powderOzLF": 0,
+    "powderLbLF": 0,
+    "coverageLFLb": 0,
+    "lfPer50lb": 0,
+    "matCat": ""
+  }
+],
+
+  // KPI: Monthly Summary
+  kpiMonthly: [],
+
+  // DEFECT: Defect Log (template — 0 rows, ready for entry)
+  defectLog: [],
+
+  // SRS: Full catalog with GTIN-12/UPC, weight, dimensions
   srsCatalog: [
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-STR-42-BLK",
-        "techDesc": "Post | Cable | Fascia Mount | Stair - 42\" | Black",
-        "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Black",
-        "srsStock": 72.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137020"
-    },
-    {
-        "category": "Hardware",
-        "sku": "CBL-SS-POL-500",
-        "techDesc": "Cable | Stainless Steel | Polished Finish | 500' Roll",
-        "commonName": "1/4\" Stainless Cable - Polished (500' Roll)",
-        "srsStock": 80.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137099"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-STR-36-BLK",
-        "techDesc": "Post | Cable | Surface Mount | Stair - 36\" | Black",
-        "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Black",
-        "srsStock": 90.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137068"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-CRN-36-BLK",
-        "techDesc": "Post | Cable | Surface Mount | Corner - 36\" | Black",
-        "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Black",
-        "srsStock": 105.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137075"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-20-BLK",
-        "techDesc": "Top Rail | 20' length | Black",
-        "commonName": "20' - 1\" x 3\" Toprail - Black",
-        "srsStock": 137.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137051"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-LINE-36-BLK",
-        "techDesc": "Post | Cable | Surface Mount | Line - 36\" | Black",
-        "commonName": "36\" Cable Railing - Line Post -  Surface Mount -  Black",
-        "srsStock": 275.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137037"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-LINE-42-BLK",
-        "techDesc": "Post | Cable | Fascia Mount | Line - 42\" | Black",
-        "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Black",
-        "srsStock": 325.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137006"
-    },
-    {
-        "category": "Hardware",
-        "sku": "TR-END-BLK",
-        "techDesc": "Top Rail | End Cap | Black",
-        "commonName": "Top Rail End Cap",
-        "srsStock": 600.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137013"
-    },
-    {
-        "category": "Hardware",
-        "sku": "LAGWSR-FM-SS-POL",
-        "techDesc": "Fascia Mount | Stainless Steel | Post Lag w/Washer| Polished Finish",
-        "commonName": "3/8\" x 5\" Stainless Lag Bolt w/ Flat Washer",
-        "srsStock": 800.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137082"
-    },
-    {
-        "category": "Hardware",
-        "sku": "WSR-ANG-SS",
-        "techDesc": "Stainless Steel | Angle Washer",
-        "commonName": "Angle Washer - Stainless - Polished",
-        "srsStock": 1000.0,
-        "gs1Prefix": "08600143964",
-        "gtin": "00860014396465"
-    },
-    {
-        "category": "Hardware",
-        "sku": "PS-SM-SS-BLK",
-        "techDesc": "Surface Mount | Stainless Steel | Post Screws | Black Finish",
-        "commonName": "Surface Mount Post Screws - Stainless - Black Finish",
-        "srsStock": 1900.0,
-        "gs1Prefix": "08600143964",
-        "gtin": "00860014396496"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SCR-ST-SS-BLK",
-        "techDesc": "Stainless Steel | Self-Tap Screws | Black Finish",
-        "commonName": "Self-Tap Screws Stainless Steel -  Black Finish-",
-        "srsStock": 3400.0,
-        "gs1Prefix": "0850084137",
-        "gtin": "00850084137044"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SWG-CBL-SS-POL",
-        "techDesc": "Swage | Stainless Steel |Polished Finish",
-        "commonName": "1/4\" Threaded Cable Stainless Swage - Polished",
-        "srsStock": 7200.0,
-        "gs1Prefix": "08600143964",
-        "gtin": "00860014396441"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SPG-FM-BSHD",
-        "techDesc": "Spigot | Fascia Mount | Brushed Finish",
-        "commonName": "Fascia Mount Spigot -  Brushed Finish",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SPG-FM-COL",
-        "techDesc": "Spigot | Fascia Mount | Color",
-        "commonName": "Fascia Mount Spigot -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SCR-ST-SS-POL",
-        "techDesc": "Stainless Steel | Self-Tap Screws | Polished Finish",
-        "commonName": "Self-Tap Screws Stainless Steel -  Polished Finish-",
-        "srsStock": 0,
-        "gs1Prefix": "08600143964",
-        "gtin": "00860014396458"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SPG-SM-BSHD",
-        "techDesc": "Spigot | Surface Mount | Brushed Finish",
-        "commonName": "Surface Mount Spigot -  Brushed Finish",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SPG-SM-COL",
-        "techDesc": "Spigot | Surface Mount | Color",
-        "commonName": "Surface Mount Spigot -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-CUT-FT-BLK",
-        "techDesc": "Top Rail |Cut | Per Ft",
-        "commonName": "1\" x 3\" Toprail - Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "CBL-SS-BLK-500",
-        "techDesc": "Cable | Stainless Steel | Black Finish | 500' Roll",
-        "commonName": "1/4\" Stainless Cable - Black (500' Roll)",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "CBL-SS-BLK",
-        "techDesc": "Cable | Stainless Steel | Black Finish",
-        "commonName": "1/4\" Stainless Cable - Black (Per Foot)",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "CBL-SS-POL",
-        "techDesc": "Cable | Stainless Steel | Polished Finish",
-        "commonName": "1/4\" Stainless Cable - Polished (Per Foot)",
-        "srsStock": 0,
-        "gs1Prefix": "08600143964",
-        "gtin": "00860014396434"
-    },
-    {
-        "category": "Hardware",
-        "sku": "SWG-CBL-SS-BLK",
-        "techDesc": "Swage | Stainless Steel |Black Finish",
-        "commonName": "1/4\" Threaded Cable Stainless Swage - Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-12-BLK",
-        "techDesc": "Top Rail | 12' length | Black",
-        "commonName": "12' - 1\" x 3\" Toprail - Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-12-CLR",
-        "techDesc": "Top Rail | 12' length | Custom Color",
-        "commonName": "12' - 1\" x 3\" Toprail - Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-16-BLK",
-        "techDesc": "Top Rail | 16' length | Black",
-        "commonName": "16' - 1\" x 3\" Toprail - Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-16-CLR",
-        "techDesc": "Top Rail | 16' length | Custom Color",
-        "commonName": "16' - 1\" x 3\" Toprail - Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-20-CLR",
-        "techDesc": "Top Rail | 20' length | Custom Color",
-        "commonName": "20' - 1\" x 3\" Toprail - Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "LAG-FM-SS-WSR-BLK",
-        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Washer | Black Finish",
-        "commonName": "3/8\" Flat Washer - Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "LAG-FM-SS-WSR-POL",
-        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Washer | Polished Finish",
-        "commonName": "3/8\" Flat Washer - Polished",
-        "srsStock": 0,
-        "gs1Prefix": "08600143964",
-        "gtin": "00860014396489"
-    },
-    {
-        "category": "Hardware",
-        "sku": "LAG-FM-SS-BLK",
-        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Black Finish",
-        "commonName": "3/8\" x 5\" Stainless Lag Bolt - Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "LAG-FM-SS-POL",
-        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Polished Finish",
-        "commonName": "3/8\" x 5\" Stainless Lag Bolt - Polished",
-        "srsStock": 0,
-        "gs1Prefix": "08600143964",
-        "gtin": "00860014396472"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-CRN-36-BLK",
-        "techDesc": "Post | Cable | Fascia Mount | Corner - 36\" | Black",
-        "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-CRN-36-CLR",
-        "techDesc": "Post | Cable | Fascia Mount | Corner - 36\" | Custom Color",
-        "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-CRN-36-CLR",
-        "techDesc": "Post | Cable | Surface Mount | Corner - 36\" | Custom Color",
-        "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-LINE-36-BLK",
-        "techDesc": "Post | Cable | Fascia Mount | Line - 36\" | Black",
-        "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-LINE-36-CLR",
-        "techDesc": "Post | Cable | Fascia Mount | Line - 36\" | Custom Color",
-        "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-LINE-36-CLR",
-        "techDesc": "Post | Cable | Surface Mount| Line - 36\" | Custom Color",
-        "commonName": "36\" Cable Railing - Line Post -  Surface Mount-  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-STR-36-BLK",
-        "techDesc": "Post | Cable | Fascia Mount | Stair - 36\" | Black",
-        "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-STR-36-CLR",
-        "techDesc": "Post | Cable | Fascia Mount | Stair - 36\" | Custom Color",
-        "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-STR-36-CLR",
-        "techDesc": "Post | Cable | Surface Mount | Stair - 36\" | Custom Color",
-        "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-CRN-36-BLK",
-        "techDesc": "Post | Glass | Fascia Mount | Corner - 36\" | Black",
-        "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-CRN-36-CLR",
-        "techDesc": "Post | Glass | Fascia Mount | Corner - 36\" | Custom Color",
-        "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-CRN-36-BLK",
-        "techDesc": "Post | Glass | Surface | Corner - 36\" | Black",
-        "commonName": "36\" Glass Railing - Corner Post -  Surface -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-CRN-36-CLR",
-        "techDesc": "Post | Glass | Surface | Corner - 36\" | Custom Color",
-        "commonName": "36\" Glass Railing - Corner Post -  Surface -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-LINE-36-BLK",
-        "techDesc": "Post | Glass | Fascia Mount | Line - 36\" | Black",
-        "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-LINE-36-CLR",
-        "techDesc": "Post | Glass | Fascia Mount | Line - 36\" | Custom Color",
-        "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-LINE-36-BLK",
-        "techDesc": "Post | Glass | Surface | Line - 36\" | Black",
-        "commonName": "36\" Glass Railing - Line Post -  Surface -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-LINE-36-CLR",
-        "techDesc": "Post | Glass | Surface | Line - 36\" | Custom Color",
-        "commonName": "36\" Glass Railing - Line Post -  Surface -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-STR-36-BLK",
-        "techDesc": "Post | Glass | Fascia Mount | Stair - 36\" | Black",
-        "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-STR-36-CLR",
-        "techDesc": "Post | Glass | Fascia Mount | Stair - 36\" | Custom Color",
-        "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-STR-36-BLK",
-        "techDesc": "Post | Glass | Surface | Stair - 36\" | Black",
-        "commonName": "36\" Glass Railing - Stair Post -  Surface -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-STR-36-CLR",
-        "techDesc": "Post | Glass | Surface | Stair - 36\" | Custom Color",
-        "commonName": "36\" Glass Railing - Stair Post -  Surface -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-4-BLK",
-        "techDesc": "Top Rail | 4' length | Black",
-        "commonName": "4' - 1\" x 3\" Toprail - Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-4-CLR",
-        "techDesc": "Top Rail | 4' length | Custom Color",
-        "commonName": "4' - 1\" x 3\" Toprail - Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-CRN-42-BLK",
-        "techDesc": "Post | Cable | Fascia Mount | Corner - 42\" | Black",
-        "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-CRN-42-CLR",
-        "techDesc": "Post | Cable | Fascia Mount | Corner - 42\" | Custom Color",
-        "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-CRN-42-BLK",
-        "techDesc": "Post | Cable | Surface Mount | Corner - 42\" | Black",
-        "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-CRN-42-CLR",
-        "techDesc": "Post | Cable | Surface Mount | Corner - 42\" | Custom Color",
-        "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-LINE-42-CLR",
-        "techDesc": "Post | Cable | Fascia Mount | Line - 42\" | Custom Color",
-        "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-LINE-42-BLK",
-        "techDesc": "Post | Cable | Surface Mount | Line - 42\" | Black",
-        "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-LINE-42-CLR",
-        "techDesc": "Post | Cable | Surface Mount | Line - 42\" | Custom Color",
-        "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-FM-STR-42-CLR",
-        "techDesc": "Post | Cable | Fascia Mount | Stair - 42\" | Custom Color",
-        "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-STR-42-BLK",
-        "techDesc": "Post | Cable | Surface Mount | Stair - 42\" | Black",
-        "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Cable Post",
-        "sku": "P-CBL-SM-STR-42-CLR",
-        "techDesc": "Post | Cable | Surface Mount | Stair - 42\" | Custom Color",
-        "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-CRN-42-BLK",
-        "techDesc": "Post | Glass | Fascia Mount | Corner - 42\" | Black",
-        "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-CRN-42-CLR",
-        "techDesc": "Post | Glass | Fascia Mount | Corner - 42\" | Custom Color",
-        "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-CRN-42-BLK",
-        "techDesc": "Post | Glass | Surface Mount | Corner - 42\" | Black",
-        "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-CRN-42-CLR",
-        "techDesc": "Post | Glass | Surface Mount | Corner - 42\" | Custom Color",
-        "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-LINE-42-BLK",
-        "techDesc": "Post | Glass | Fascia Mount | Line - 42\" | Black",
-        "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-LINE-42-CLR",
-        "techDesc": "Post | Glass | Fascia Mount | Line - 42\" | Custom Color",
-        "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-LINE-42-BLK",
-        "techDesc": "Post | Glass | Surface Mount | Line - 42\" | Black",
-        "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-LINE-42-CLR",
-        "techDesc": "Post | Glass | Surface Mount | Line - 42\" | Custom Color",
-        "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-STR-42-BLK",
-        "techDesc": "Post | Glass | Fascia Mount | Stair - 42\" | Black",
-        "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-FM-STR-42-CLR",
-        "techDesc": "Post | Glass | Fascia Mount | Stair - 42\" | Custom Color",
-        "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-STR-42-BLK",
-        "techDesc": "Post | Glass | Surface Mount | Stair - 42\" | Black",
-        "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Framed Glass Railing",
-        "sku": "P-GLS-SM-STR-42-CLR",
-        "techDesc": "Post | Glass | Surface Mount | Stair - 42\" | Custom Color",
-        "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-8-BLK",
-        "techDesc": "Top Rail | 8' length | Black",
-        "commonName": "8' - 1\" x 3\" Toprail - Black",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Top Rail",
-        "sku": "TR-8-CLR",
-        "techDesc": "Top Rail | 8' length | Custom Color",
-        "commonName": "8' - 1\" x 3\" Toprail - Custom Color",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Plates / Tabs",
-        "sku": "PLT-SM",
-        "techDesc": "Plate| Surface Mount",
-        "commonName": "Component - Post Surface Mount Plate",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Plates / Tabs",
-        "sku": "PLT-TOP",
-        "techDesc": "Plate| Top Rail",
-        "commonName": "Component - Post Top Rail Plate",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Hardware",
-        "sku": "ANG-TOP",
-        "techDesc": "Angle | Top | Bracket",
-        "commonName": "Stair Post Toprail Angle Bracket",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-FM-L-BLK-20x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK |  20 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093655"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-SM-L-BLK-20x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK |  20 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093693"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-FM-L-BLK-12x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 12 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093631"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-SM-L-BLK-12x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 12 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093679"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-FM-L-BLK-16x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 16 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093648"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-SM-L-BLK-16x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 16 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093686"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-FM-L-BLK-4x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 4 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093600"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-SM-L-BLK-4x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 4 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093617"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-FM-L-BLK-8x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 8 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093624"
-    },
-    {
-        "category": "Kit",
-        "sku": "MR-KIT-CABLE-SM-L-BLK-8x42",
-        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 8 ft x 42\u201d",
-        "commonName": "#N/A",
-        "srsStock": 0,
-        "gs1Prefix": "08600130936",
-        "gtin": "00860013093662"
-    },
-    {
-        "category": "Plates / Tabs",
-        "sku": "ANG-BOT",
-        "techDesc": "Angle| Bottom",
-        "commonName": "",
-        "srsStock": 0,
-        "gs1Prefix": "#N/A",
-        "gtin": "#N/A"
-    }
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-STR-42-BLK",
+    "techDesc": "Post | Cable | Fascia Mount | Stair - 42\" | Black",
+    "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Black",
+    "srsStock": 72.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137020",
+    "gtin12": "850084137020",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "CBL-SS-POL-500",
+    "techDesc": "Cable | Stainless Steel | Polished Finish | 500' Roll",
+    "commonName": "1/4\" Stainless Cable - Polished (500' Roll)",
+    "srsStock": 80.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137099",
+    "gtin12": "850084137099",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-STR-36-BLK",
+    "techDesc": "Post | Cable | Surface Mount | Stair - 36\" | Black",
+    "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Black",
+    "srsStock": 90.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137068",
+    "gtin12": "850084137068",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-CRN-36-BLK",
+    "techDesc": "Post | Cable | Surface Mount | Corner - 36\" | Black",
+    "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Black",
+    "srsStock": 105.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137075",
+    "gtin12": "850084137075",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-20-BLK",
+    "techDesc": "Top Rail | 20' length | Black",
+    "commonName": "20' - 1\" x 3\" Toprail - Black",
+    "srsStock": 137.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137051",
+    "gtin12": "850084137051",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-LINE-36-BLK",
+    "techDesc": "Post | Cable | Surface Mount | Line - 36\" | Black",
+    "commonName": "36\" Cable Railing - Line Post -  Surface Mount -  Black",
+    "srsStock": 275.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137037",
+    "gtin12": "850084137037",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-LINE-42-BLK",
+    "techDesc": "Post | Cable | Fascia Mount | Line - 42\" | Black",
+    "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Black",
+    "srsStock": 325.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137006",
+    "gtin12": "850084137006",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "TR-END-BLK",
+    "techDesc": "Top Rail | End Cap | Black",
+    "commonName": "Top Rail End Cap",
+    "srsStock": 600.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137013",
+    "gtin12": "850084137013",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "LAGWSR-FM-SS-POL",
+    "techDesc": "Fascia Mount | Stainless Steel | Post Lag w/Washer| Polished Finish",
+    "commonName": "3/8\" x 5\" Stainless Lag Bolt w/ Flat Washer",
+    "srsStock": 800.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137082",
+    "gtin12": "850084137082",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "WSR-ANG-SS",
+    "techDesc": "Stainless Steel | Angle Washer",
+    "commonName": "Angle Washer - Stainless - Polished",
+    "srsStock": 1000.0,
+    "gs1Prefix": "08600143964",
+    "gtin": "00860014396465",
+    "gtin12": "860014396465",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "PS-SM-SS-BLK",
+    "techDesc": "Surface Mount | Stainless Steel | Post Screws | Black Finish",
+    "commonName": "Surface Mount Post Screws - Stainless - Black Finish",
+    "srsStock": 1900.0,
+    "gs1Prefix": "08600143964",
+    "gtin": "00860014396496",
+    "gtin12": "860014396496",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SCR-ST-SS-BLK",
+    "techDesc": "Stainless Steel | Self-Tap Screws | Black Finish",
+    "commonName": "Self-Tap Screws Stainless Steel -  Black Finish-",
+    "srsStock": 3400.0,
+    "gs1Prefix": "0850084137",
+    "gtin": "00850084137044",
+    "gtin12": "850084137044",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SWG-CBL-SS-POL",
+    "techDesc": "Swage | Stainless Steel |Polished Finish",
+    "commonName": "1/4\" Threaded Cable Stainless Swage - Polished",
+    "srsStock": 7200.0,
+    "gs1Prefix": "08600143964",
+    "gtin": "00860014396441",
+    "gtin12": "860014396441",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SPG-FM-BSHD",
+    "techDesc": "Spigot | Fascia Mount | Brushed Finish",
+    "commonName": "Fascia Mount Spigot -  Brushed Finish",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SPG-FM-COL",
+    "techDesc": "Spigot | Fascia Mount | Color",
+    "commonName": "Fascia Mount Spigot -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SCR-ST-SS-POL",
+    "techDesc": "Stainless Steel | Self-Tap Screws | Polished Finish",
+    "commonName": "Self-Tap Screws Stainless Steel -  Polished Finish-",
+    "srsStock": 0,
+    "gs1Prefix": "08600143964",
+    "gtin": "00860014396458",
+    "gtin12": "860014396458",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SPG-SM-BSHD",
+    "techDesc": "Spigot | Surface Mount | Brushed Finish",
+    "commonName": "Surface Mount Spigot -  Brushed Finish",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SPG-SM-COL",
+    "techDesc": "Spigot | Surface Mount | Color",
+    "commonName": "Surface Mount Spigot -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-CUT-FT-BLK",
+    "techDesc": "Top Rail |Cut | Per Ft",
+    "commonName": "1\" x 3\" Toprail - Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "CBL-SS-BLK-500",
+    "techDesc": "Cable | Stainless Steel | Black Finish | 500' Roll",
+    "commonName": "1/4\" Stainless Cable - Black (500' Roll)",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "CBL-SS-BLK",
+    "techDesc": "Cable | Stainless Steel | Black Finish",
+    "commonName": "1/4\" Stainless Cable - Black (Per Foot)",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "CBL-SS-POL",
+    "techDesc": "Cable | Stainless Steel | Polished Finish",
+    "commonName": "1/4\" Stainless Cable - Polished (Per Foot)",
+    "srsStock": 0,
+    "gs1Prefix": "08600143964",
+    "gtin": "00860014396434",
+    "gtin12": "860014396434",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "SWG-CBL-SS-BLK",
+    "techDesc": "Swage | Stainless Steel |Black Finish",
+    "commonName": "1/4\" Threaded Cable Stainless Swage - Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-12-BLK",
+    "techDesc": "Top Rail | 12' length | Black",
+    "commonName": "12' - 1\" x 3\" Toprail - Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-12-CLR",
+    "techDesc": "Top Rail | 12' length | Custom Color",
+    "commonName": "12' - 1\" x 3\" Toprail - Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-16-BLK",
+    "techDesc": "Top Rail | 16' length | Black",
+    "commonName": "16' - 1\" x 3\" Toprail - Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-16-CLR",
+    "techDesc": "Top Rail | 16' length | Custom Color",
+    "commonName": "16' - 1\" x 3\" Toprail - Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-20-CLR",
+    "techDesc": "Top Rail | 20' length | Custom Color",
+    "commonName": "20' - 1\" x 3\" Toprail - Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "LAG-FM-SS-WSR-BLK",
+    "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Washer | Black Finish",
+    "commonName": "3/8\" Flat Washer - Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "LAG-FM-SS-WSR-POL",
+    "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Washer | Polished Finish",
+    "commonName": "3/8\" Flat Washer - Polished",
+    "srsStock": 0,
+    "gs1Prefix": "08600143964",
+    "gtin": "00860014396489",
+    "gtin12": "860014396489",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "LAG-FM-SS-BLK",
+    "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Black Finish",
+    "commonName": "3/8\" x 5\" Stainless Lag Bolt - Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "LAG-FM-SS-POL",
+    "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Polished Finish",
+    "commonName": "3/8\" x 5\" Stainless Lag Bolt - Polished",
+    "srsStock": 0,
+    "gs1Prefix": "08600143964",
+    "gtin": "00860014396472",
+    "gtin12": "860014396472",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-CRN-36-BLK",
+    "techDesc": "Post | Cable | Fascia Mount | Corner - 36\" | Black",
+    "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-CRN-36-CLR",
+    "techDesc": "Post | Cable | Fascia Mount | Corner - 36\" | Custom Color",
+    "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-CRN-36-CLR",
+    "techDesc": "Post | Cable | Surface Mount | Corner - 36\" | Custom Color",
+    "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-LINE-36-BLK",
+    "techDesc": "Post | Cable | Fascia Mount | Line - 36\" | Black",
+    "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-LINE-36-CLR",
+    "techDesc": "Post | Cable | Fascia Mount | Line - 36\" | Custom Color",
+    "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-LINE-36-CLR",
+    "techDesc": "Post | Cable | Surface Mount| Line - 36\" | Custom Color",
+    "commonName": "36\" Cable Railing - Line Post -  Surface Mount-  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-STR-36-BLK",
+    "techDesc": "Post | Cable | Fascia Mount | Stair - 36\" | Black",
+    "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-STR-36-CLR",
+    "techDesc": "Post | Cable | Fascia Mount | Stair - 36\" | Custom Color",
+    "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-STR-36-CLR",
+    "techDesc": "Post | Cable | Surface Mount | Stair - 36\" | Custom Color",
+    "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-CRN-36-BLK",
+    "techDesc": "Post | Glass | Fascia Mount | Corner - 36\" | Black",
+    "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-CRN-36-CLR",
+    "techDesc": "Post | Glass | Fascia Mount | Corner - 36\" | Custom Color",
+    "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-CRN-36-BLK",
+    "techDesc": "Post | Glass | Surface | Corner - 36\" | Black",
+    "commonName": "36\" Glass Railing - Corner Post -  Surface -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-CRN-36-CLR",
+    "techDesc": "Post | Glass | Surface | Corner - 36\" | Custom Color",
+    "commonName": "36\" Glass Railing - Corner Post -  Surface -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-LINE-36-BLK",
+    "techDesc": "Post | Glass | Fascia Mount | Line - 36\" | Black",
+    "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-LINE-36-CLR",
+    "techDesc": "Post | Glass | Fascia Mount | Line - 36\" | Custom Color",
+    "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-LINE-36-BLK",
+    "techDesc": "Post | Glass | Surface | Line - 36\" | Black",
+    "commonName": "36\" Glass Railing - Line Post -  Surface -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-LINE-36-CLR",
+    "techDesc": "Post | Glass | Surface | Line - 36\" | Custom Color",
+    "commonName": "36\" Glass Railing - Line Post -  Surface -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-STR-36-BLK",
+    "techDesc": "Post | Glass | Fascia Mount | Stair - 36\" | Black",
+    "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-STR-36-CLR",
+    "techDesc": "Post | Glass | Fascia Mount | Stair - 36\" | Custom Color",
+    "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-STR-36-BLK",
+    "techDesc": "Post | Glass | Surface | Stair - 36\" | Black",
+    "commonName": "36\" Glass Railing - Stair Post -  Surface -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-STR-36-CLR",
+    "techDesc": "Post | Glass | Surface | Stair - 36\" | Custom Color",
+    "commonName": "36\" Glass Railing - Stair Post -  Surface -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-4-BLK",
+    "techDesc": "Top Rail | 4' length | Black",
+    "commonName": "4' - 1\" x 3\" Toprail - Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-4-CLR",
+    "techDesc": "Top Rail | 4' length | Custom Color",
+    "commonName": "4' - 1\" x 3\" Toprail - Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-CRN-42-BLK",
+    "techDesc": "Post | Cable | Fascia Mount | Corner - 42\" | Black",
+    "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-CRN-42-CLR",
+    "techDesc": "Post | Cable | Fascia Mount | Corner - 42\" | Custom Color",
+    "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-CRN-42-BLK",
+    "techDesc": "Post | Cable | Surface Mount | Corner - 42\" | Black",
+    "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-CRN-42-CLR",
+    "techDesc": "Post | Cable | Surface Mount | Corner - 42\" | Custom Color",
+    "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-LINE-42-CLR",
+    "techDesc": "Post | Cable | Fascia Mount | Line - 42\" | Custom Color",
+    "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-LINE-42-BLK",
+    "techDesc": "Post | Cable | Surface Mount | Line - 42\" | Black",
+    "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-LINE-42-CLR",
+    "techDesc": "Post | Cable | Surface Mount | Line - 42\" | Custom Color",
+    "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-FM-STR-42-CLR",
+    "techDesc": "Post | Cable | Fascia Mount | Stair - 42\" | Custom Color",
+    "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-STR-42-BLK",
+    "techDesc": "Post | Cable | Surface Mount | Stair - 42\" | Black",
+    "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.0,
+    "length": 0
+  },
+  {
+    "category": "Cable Post",
+    "sku": "P-CBL-SM-STR-42-CLR",
+    "techDesc": "Post | Cable | Surface Mount | Stair - 42\" | Custom Color",
+    "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-CRN-42-BLK",
+    "techDesc": "Post | Glass | Fascia Mount | Corner - 42\" | Black",
+    "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-CRN-42-CLR",
+    "techDesc": "Post | Glass | Fascia Mount | Corner - 42\" | Custom Color",
+    "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 5.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-CRN-42-BLK",
+    "techDesc": "Post | Glass | Surface Mount | Corner - 42\" | Black",
+    "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-CRN-42-CLR",
+    "techDesc": "Post | Glass | Surface Mount | Corner - 42\" | Custom Color",
+    "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-LINE-42-BLK",
+    "techDesc": "Post | Glass | Fascia Mount | Line - 42\" | Black",
+    "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-LINE-42-CLR",
+    "techDesc": "Post | Glass | Fascia Mount | Line - 42\" | Custom Color",
+    "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.6,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-LINE-42-BLK",
+    "techDesc": "Post | Glass | Surface Mount | Line - 42\" | Black",
+    "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-LINE-42-CLR",
+    "techDesc": "Post | Glass | Surface Mount | Line - 42\" | Custom Color",
+    "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-STR-42-BLK",
+    "techDesc": "Post | Glass | Fascia Mount | Stair - 42\" | Black",
+    "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-FM-STR-42-CLR",
+    "techDesc": "Post | Glass | Fascia Mount | Stair - 42\" | Custom Color",
+    "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 4.2,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-STR-42-BLK",
+    "techDesc": "Post | Glass | Surface Mount | Stair - 42\" | Black",
+    "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Framed Glass Railing",
+    "sku": "P-GLS-SM-STR-42-CLR",
+    "techDesc": "Post | Glass | Surface Mount | Stair - 42\" | Custom Color",
+    "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-8-BLK",
+    "techDesc": "Top Rail | 8' length | Black",
+    "commonName": "8' - 1\" x 3\" Toprail - Black",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Top Rail",
+    "sku": "TR-8-CLR",
+    "techDesc": "Top Rail | 8' length | Custom Color",
+    "commonName": "8' - 1\" x 3\" Toprail - Custom Color",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Plates / Tabs",
+    "sku": "PLT-SM",
+    "techDesc": "Plate| Surface Mount",
+    "commonName": "Component - Post Surface Mount Plate",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Plates / Tabs",
+    "sku": "PLT-TOP",
+    "techDesc": "Plate| Top Rail",
+    "commonName": "Component - Post Top Rail Plate",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Hardware",
+    "sku": "ANG-TOP",
+    "techDesc": "Angle | Top | Bracket",
+    "commonName": "Stair Post Toprail Angle Bracket",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-FM-L-BLK-20x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK |  20 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093655",
+    "gtin12": "860013093655",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-SM-L-BLK-20x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK |  20 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093693",
+    "gtin12": "860013093693",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-FM-L-BLK-12x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 12 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093631",
+    "gtin12": "860013093631",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-SM-L-BLK-12x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 12 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093679",
+    "gtin12": "860013093679",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-FM-L-BLK-16x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 16 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093648",
+    "gtin12": "860013093648",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-SM-L-BLK-16x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 16 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093686",
+    "gtin12": "860013093686",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-FM-L-BLK-4x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 4 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093600",
+    "gtin12": "860013093600",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-SM-L-BLK-4x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 4 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093617",
+    "gtin12": "860013093617",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-FM-L-BLK-8x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 8 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093624",
+    "gtin12": "860013093624",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Kit",
+    "sku": "MR-KIT-CABLE-SM-L-BLK-8x42",
+    "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 8 ft x 42\u201d",
+    "commonName": "#N/A",
+    "srsStock": 0,
+    "gs1Prefix": "08600130936",
+    "gtin": "00860013093662",
+    "gtin12": "860013093662",
+    "weightLb": 0,
+    "length": 0
+  },
+  {
+    "category": "Plates / Tabs",
+    "sku": "ANG-BOT",
+    "techDesc": "Angle| Bottom",
+    "commonName": "",
+    "srsStock": 0,
+    "gs1Prefix": "#N/A",
+    "gtin": "#N/A",
+    "gtin12": "#N/A",
+    "weightLb": 0,
+    "length": 0
+  }
 ],
 
   // PRODUCT_SKU_MASTER_AM — SRS item dimensions (weight/length/width/height)
@@ -17970,7 +31353,7 @@ const Sales = ({data, setData}) => {
         <button className="btn btn-p" onClick={()=>open()}>+ New</button>
       </div>
       <div style={{display:'flex',gap:6,marginBottom:12,alignItems:'center'}}>
-        {['all','orders','quotes'].map(t=><button key={t} className={`tab${tab===t?' on':''}`} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='all'?'All':t}</button>)}
+        {['all','orders','quotes','catalog','skumaster','issues'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='all'?'All':t==='catalog'?'Product Catalog':t==='skumaster'?'SKU Master':t==='issues'?'Customer Issues':t}</button>)}
         <input className="search" placeholder="Search…" value={search} onChange={e=>setSearch(e.target.value)} style={{marginLeft:'auto',width:200}}/>
       </div>
       <div className="card" style={{padding:0,overflow:'hidden'}}>
@@ -18001,6 +31384,109 @@ const Sales = ({data, setData}) => {
         <Field label="Notes"><textarea value={form.notes||''} rows={2} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
       </Modal>}
+
+      {tab==='catalog'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.productCatalog||[]).length} kits in catalog</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({kitSku:'',kitName:'',category:'',mountType:'',color:'',size:'',material:'',cogs:0,wholesale:0,retail:0});setModal('catalog');}}>+ Add Kit</button>
+        </div>
+        <table><thead><tr><th>Kit SKU</th><th>Kit Name</th><th>Category</th><th>Mount Type</th><th>Color</th><th>Size</th><th>Material</th><th>COGS ($)</th><th>Wholesale ($)</th><th>Retail ($)</th><th/></tr></thead>
+          <tbody>{(data.productCatalog||[]).length===0&&<tr><td colSpan={11}><Empty msg="No products in catalog"/></td></tr>}
+          {(data.productCatalog||[]).map((p,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{p.kitSku}</td>
+              <td style={{fontWeight:500}}>{p.kitName}</td><td style={{fontSize:10,color:'var(--muted)'}}>{p.category}</td>
+              <td>{p.mountType}</td><td>{p.color}</td><td>{p.size}</td><td style={{fontSize:11}}>{p.material}</td>
+              <td style={{fontWeight:600}}>{p.cogs?'$'+p.cogs:'—'}</td>
+              <td style={{color:'var(--warn)',fontWeight:600}}>{p.wholesale?'$'+p.wholesale:'—'}</td>
+              <td style={{color:'var(--ok)',fontWeight:600}}>{p.retail?'$'+p.retail:'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...p});setModal('catalog');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,productCatalog:(d.productCatalog||[]).filter((_,j)=>j!==i)}))}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {tab==='skumaster'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>SKU</th><th>Description</th><th>Sub-Category</th><th>Product Family</th><th>Material</th><th>Finish/Color</th><th>SRS Channel</th><th>Online/Direct</th><th>Home Depot</th></tr></thead>
+          <tbody>{(data.productSkuMaster||[]).length===0&&<tr><td colSpan={9}><Empty msg="No SKU master data"/></td></tr>}
+          {(data.productSkuMaster||[]).map((s,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
+              <td style={{fontSize:11}}>{s.desc}</td><td style={{fontSize:10,color:'var(--muted)'}}>{s.subCat}</td>
+              <td>{s.family}</td><td style={{fontSize:11}}>{s.material}</td><td>{s.finish}</td>
+              <td style={{textAlign:'center'}}>{s.srsChannel}</td>
+              <td style={{textAlign:'center'}}>{s.onlineDirect}</td>
+              <td style={{textAlign:'center'}}>{s.homeDepot}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {tab==='issues'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.customerIssues||[]).length} issues logged</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'ISS-'+uid(),dateReported:now(),customer:'',orderId:'',product:'',issueType:'',description:'',severity:3,rootCause:'',resolution:'',status:'Open'});setModal('issue');}}>+ Log Issue</button>
+        </div>
+        <table><thead><tr><th>Issue #</th><th>Date</th><th>Customer</th><th>Order</th><th>Product</th><th>Type</th><th>Severity</th><th>Root Cause</th><th>Resolution</th><th>Status</th><th/></tr></thead>
+          <tbody>{(data.customerIssues||[]).length===0&&<tr><td colSpan={11}><Empty msg="No issues logged — great!"/></td></tr>}
+          {(data.customerIssues||[]).map((iss,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{iss.id}</td>
+              <td style={{fontSize:11}}>{iss.dateReported}</td><td style={{fontWeight:500}}>{iss.customer}</td>
+              <td style={{fontFamily:'monospace',fontSize:10}}>{iss.orderId}</td>
+              <td style={{fontSize:11}}>{iss.product}</td><td style={{fontSize:10}}>{iss.issueType}</td>
+              <td style={{textAlign:'center',color:iss.severity>=4?'var(--err)':iss.severity>=3?'var(--warn)':'var(--ok)',fontWeight:700}}>{iss.severity}/5</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{iss.rootCause}</td>
+              <td style={{fontSize:10}}>{iss.resolution}</td>
+              <td><Badge s={iss.status||'Open'}/></td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...iss});setModal('issue');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,customerIssues:(d.customerIssues||[]).filter((_,j)=>j!==i)}))}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {modal==='catalog'&&<Modal title="Product Kit" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Kit SKU"><input value={form.kitSku||''} onChange={e=>setForm(f=>({...f,kitSku:e.target.value}))}/></Field>
+          <Field label="Kit Name"><input value={form.kitName||''} onChange={e=>setForm(f=>({...f,kitName:e.target.value}))}/></Field>
+          <Field label="Category"><input value={form.category||''} onChange={e=>setForm(f=>({...f,category:e.target.value}))}/></Field>
+          <Field label="Mount Type"><input value={form.mountType||''} onChange={e=>setForm(f=>({...f,mountType:e.target.value}))}/></Field>
+          <Field label="Color"><input value={form.color||''} onChange={e=>setForm(f=>({...f,color:e.target.value}))}/></Field>
+          <Field label="Size"><input value={form.size||''} onChange={e=>setForm(f=>({...f,size:e.target.value}))}/></Field>
+          <Field label="COGS ($)"><input type="number" step="0.01" value={form.cogs||''} onChange={e=>setForm(f=>({...f,cogs:Number(e.target.value)}))}/></Field>
+          <Field label="Wholesale ($)"><input type="number" step="0.01" value={form.wholesale||''} onChange={e=>setForm(f=>({...f,wholesale:Number(e.target.value)}))}/></Field>
+          <Field label="Retail ($)"><input type="number" step="0.01" value={form.retail||''} onChange={e=>setForm(f=>({...f,retail:Number(e.target.value)}))}/></Field>
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{const p={...form};if(!(data.productCatalog||[]).find(x=>x.kitSku===p.kitSku))setData(d=>({...d,productCatalog:[...(d.productCatalog||[]),p]}));else setData(d=>({...d,productCatalog:(d.productCatalog||[]).map(x=>x.kitSku===p.kitSku?p:x)}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+      {modal==='issue'&&<Modal title="Customer Issue" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Date Reported"><input type="date" value={form.dateReported||''} onChange={e=>setForm(f=>({...f,dateReported:e.target.value}))}/></Field>
+          <Field label="Order #"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
+          <Field label="Product"><input value={form.product||''} onChange={e=>setForm(f=>({...f,product:e.target.value}))}/></Field>
+          <Field label="Issue Type"><input value={form.issueType||''} onChange={e=>setForm(f=>({...f,issueType:e.target.value}))}/></Field>
+          <Field label="Severity (1-5)"><input type="number" min="1" max="5" value={form.severity||''} onChange={e=>setForm(f=>({...f,severity:Number(e.target.value)}))}/></Field>
+          <Field label="Status"><select value={form.status||'Open'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Open','In Progress','Resolved','Closed'].map(s=><option key={s}>{s}</option>)}</select></Field>
+        </div>
+        <Field label="Description"><textarea rows={2} value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <Field label="Root Cause"><input value={form.rootCause||''} onChange={e=>setForm(f=>({...f,rootCause:e.target.value}))}/></Field>
+        <Field label="Resolution"><input value={form.resolution||''} onChange={e=>setForm(f=>({...f,resolution:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{const it={...form};if(!(data.customerIssues||[]).find(x=>x.id===it.id))setData(d=>({...d,customerIssues:[...(d.customerIssues||[]),it]}));else setData(d=>({...d,customerIssues:(d.customerIssues||[]).map(x=>x.id===it.id?it:x)}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+
     </div>
   );
 };
@@ -18305,6 +31791,7 @@ const Inventory = ({data, setData, user}) => {
 
 // ─── PRODUCTION ──────────────────────────────────────────────────────────────────
 const Production = ({data, setData, user}) => {
+  const [prodTab,setProdTab]=useState('wo');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   const stations=['CNC Cut','CNC Drill','Welding','Powder Coat','Assembly','QC Inspection','Packaging'];
@@ -18321,6 +31808,12 @@ const Production = ({data, setData, user}) => {
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.workOrders.filter(w=>w.status==='In Progress').length} active</span><span className="chip">{data.workOrders.filter(w=>w.status==='Queued').length} queued</span></div></div>
         {canEdit&&<button className="btn btn-p" onClick={()=>open()}>+ New Work Order</button>}
       </div>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        <button className={'tab'+(prodTab==='wo'?' on':'')} onClick={()=>setProdTab('wo')}>Work Orders</button>
+        <button className={'tab'+(prodTab==='defects'?' on':'')} onClick={()=>setProdTab('defects')}>Defect Log</button>
+        <button className={'tab'+(prodTab==='shifts'?' on':'')} onClick={()=>setProdTab('shifts')}>Shift Handoff</button>
+      </div>
+      {prodTab==='wo'&&
       <div className="card" style={{padding:0,overflow:'hidden'}}>
         <table><thead><tr><th>WO #</th><th>Order</th><th>Product</th><th>Station</th><th>Assigned</th><th>Status</th><th>Progress</th><th>Due</th><th>Job Cost</th><th/></tr></thead>
           <tbody>{data.workOrders.map(w=>{
@@ -18347,7 +31840,7 @@ const Production = ({data, setData, user}) => {
             );})}
           </tbody>
         </table>
-      </div>
+      </div>}
       {modal&&canEdit&&<Modal title={modal==='new'?'New Work Order':'Edit'} onClose={()=>setModal(null)}>
         <div className="grid2"><Field label="WO ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
         <Field label="Sales Order #"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field></div>
@@ -19109,7 +32602,7 @@ const People = ({data,setData,user}) => {
         {tab==='discipline'&&<button className="btn btn-p" onClick={()=>{setForm({id:`DIS-${uid()}`,empId:'',empName:'',type:'Verbal Warning',date:now(),issue:'',action:'',issuedBy:'Daniel Jones'});setModal('disc');}}>+ Add Entry</button>}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['employees','training','positions','discipline'].map(t=><button key={t} className={`tab${tab===t?' on':''}`} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t}</button>)}
+        {['employees','training','efficiency','positions','discipline','equipment','facility'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='efficiency'?'Efficiency':t==='facility'?'Facility Move':t==='equipment'?'Equipment':t}</button>)}
       </div>
 
       {tab==='employees'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
@@ -19204,7 +32697,87 @@ const People = ({data,setData,user}) => {
         </div>
       </div>}
 
-      {modal==='emp'&&<Modal title={data.employees.find(e=>e.id===form.id)?'Edit Employee':'Add Employee'} onClose={()=>setModal(null)}>
+      
+      {tab==='efficiency'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>Weekly efficiency tracking — {(data.employeeEfficiency||[]).length} entries</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({weekEnding:now(),station:'',unitsCompleted:0,hoursWorked:0,unitsPerHour:0,fpqPct:0,reworkUnits:0,daysPresent:0,daysLate:0,otHours:0});setModal('efficiency');}}>+ Log Entry</button>
+        </div>
+        <table><thead><tr><th>Week Ending</th><th>Station</th><th>Units Completed</th><th>Hours Worked</th><th>Units/Hour</th><th>FPQ %</th><th>Rework Units</th><th>Days Present</th><th>Days Late</th><th>OT Hours</th><th/></tr></thead>
+          <tbody>{(data.employeeEfficiency||[]).length===0&&<tr><td colSpan={11}><Empty msg="No efficiency data — click + Log Entry"/></td></tr>}
+          {(data.employeeEfficiency||[]).map((e,i)=>(
+            <tr key={i}>
+              <td style={{fontWeight:600}}>{e.weekEnding}</td><td>{e.station}</td>
+              <td style={{textAlign:'center',fontWeight:600,color:'var(--acc)'}}>{e.unitsCompleted}</td>
+              <td style={{textAlign:'center'}}>{e.hoursWorked}</td>
+              <td style={{textAlign:'center',color:e.unitsPerHour>5?'var(--ok)':''}}>{e.unitsPerHour}</td>
+              <td style={{textAlign:'center',color:e.fpqPct>=90?'var(--ok)':e.fpqPct>=80?'var(--warn)':'var(--err)'}}>{e.fpqPct}%</td>
+              <td style={{textAlign:'center',color:e.reworkUnits>0?'var(--warn)':''}}>{e.reworkUnits}</td>
+              <td style={{textAlign:'center'}}>{e.daysPresent}</td>
+              <td style={{textAlign:'center',color:e.daysLate>0?'var(--err)':''}}>{e.daysLate}</td>
+              <td style={{textAlign:'center',color:e.otHours>0?'var(--warn)':''}}>{e.otHours}</td>
+              <td><button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,employeeEfficiency:d.employeeEfficiency.filter((_,j)=>j!==i)}))}>×</button></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {tab==='equipment'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.equipmentLog||[]).length} machines tracked</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'EQ-'+uid(),name:'',mfr:'',model:'',serial:'',acquired:now(),cost:0,location:'',condition:3,nextPM:''});setModal('equipment');}}>+ Add Equipment</button>
+        </div>
+        <table><thead><tr><th>ID</th><th>Equipment Name</th><th>Manufacturer</th><th>Model</th><th>Serial #</th><th>Acquired</th><th>Purchase Cost</th><th>Location</th><th>Condition</th><th>Next PM Due</th><th/></tr></thead>
+          <tbody>{(data.equipmentLog||[]).length===0&&<tr><td colSpan={11}><Empty msg="No equipment logged"/></td></tr>}
+          {(data.equipmentLog||[]).map((e,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{e.id}</td>
+              <td style={{fontWeight:600}}>{e.name}</td><td style={{fontSize:11}}>{e.mfr}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{e.model}</td>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{e.serial}</td>
+              <td style={{fontSize:11}}>{e.acquired}</td>
+              <td>{e.cost?'$'+e.cost.toLocaleString():'—'}</td>
+              <td style={{fontSize:11}}>{e.location}</td>
+              <td style={{textAlign:'center'}}><span style={{color:e.condition>=4?'var(--ok)':e.condition>=3?'var(--warn)':'var(--err)',fontWeight:700}}>{e.condition}/5</span></td>
+              <td style={{fontSize:11,color:e.nextPM&&e.nextPM<=now()?'var(--err)':''}}>{e.nextPM||'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...e});setModal('equipment');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,equipmentLog:d.equipmentLog.filter((_,j)=>j!==i)}))}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {tab==='facility'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>Facility move & capital project tracker</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({category:'',description:'',estCost:0,actualCost:0,vendor:'',status:'Planned',dueDate:'',paid:'No'});setModal('facility');}}>+ Add Item</button>
+        </div>
+        <table><thead><tr><th>Category</th><th>Description</th><th>Est. Cost</th><th>Actual Cost</th><th>Variance</th><th>Vendor</th><th>Status</th><th>Due Date</th><th>Paid?</th><th>Notes</th><th/></tr></thead>
+          <tbody>{(data.facilityMove||[]).length===0&&<tr><td colSpan={11}><Empty msg="No facility move items"/></td></tr>}
+          {(data.facilityMove||[]).map((f,i)=>(
+            <tr key={i}>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{f.category}</td>
+              <td style={{fontWeight:500}}>{f.description}</td>
+              <td>{f.estCost?'$'+f.estCost.toLocaleString():'—'}</td>
+              <td style={{fontWeight:600}}>{f.actualCost?'$'+f.actualCost.toLocaleString():'—'}</td>
+              <td style={{color:f.variance<0?'var(--ok)':f.variance>0?'var(--err)':''}}>{f.variance?'$'+f.variance:'—'}</td>
+              <td style={{fontSize:11}}>{f.vendor}</td>
+              <td><Badge s={f.status}/></td>
+              <td style={{fontSize:11}}>{f.dueDate}</td>
+              <td style={{color:f.paid==='Yes'?'var(--ok)':''}}>{f.paid}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{f.notes}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...f});setModal('facility');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,facilityMove:d.facilityMove.filter((_,j)=>j!==i)}))}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+{modal==='emp'&&<Modal title={data.employees.find(e=>e.id===form.id)?'Edit Employee':'Add Employee'} onClose={()=>setModal(null)}>
         <div className="grid2"><Field label="Full Name"><input value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></Field>
         <Field label="Role"><input value={form.role||''} onChange={e=>setForm(f=>({...f,role:e.target.value}))}/></Field></div>
         <div className="grid2"><Field label="Department"><input value={form.dept||''} onChange={e=>setForm(f=>({...f,dept:e.target.value}))}/></Field>
@@ -19237,6 +32810,59 @@ const People = ({data,setData,user}) => {
         <Field label="Issued By"><input value={form.issuedBy||''} onChange={e=>setForm(f=>({...f,issuedBy:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={saveDisc}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
       </Modal>}
+      {modal==='efficiency'&&<Modal title="Log Efficiency Entry" onClose={()=>setModal(null)}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Week Ending"><input type="date" value={form.weekEnding||''} onChange={e=>setForm(f=>({...f,weekEnding:e.target.value}))}/></Field>
+          <Field label="Station"><input value={form.station||''} onChange={e=>setForm(f=>({...f,station:e.target.value}))}/></Field>
+          <Field label="Units Completed"><input type="number" value={form.unitsCompleted||''} onChange={e=>setForm(f=>({...f,unitsCompleted:Number(e.target.value)}))}/></Field>
+          <Field label="Hours Worked"><input type="number" step="0.1" value={form.hoursWorked||''} onChange={e=>setForm(f=>({...f,hoursWorked:Number(e.target.value),unitsPerHour:form.unitsCompleted&&e.target.value?+(form.unitsCompleted/e.target.value).toFixed(2):0}))}/></Field>
+          <Field label="FPQ %"><input type="number" step="0.1" min="0" max="100" value={form.fpqPct||''} onChange={e=>setForm(f=>({...f,fpqPct:Number(e.target.value)}))}/></Field>
+          <Field label="Rework Units"><input type="number" value={form.reworkUnits||''} onChange={e=>setForm(f=>({...f,reworkUnits:Number(e.target.value)}))}/></Field>
+          <Field label="Days Present"><input type="number" value={form.daysPresent||''} onChange={e=>setForm(f=>({...f,daysPresent:Number(e.target.value)}))}/></Field>
+          <Field label="Days Late"><input type="number" value={form.daysLate||''} onChange={e=>setForm(f=>({...f,daysLate:Number(e.target.value)}))}/></Field>
+          <Field label="OT Hours"><input type="number" step="0.1" value={form.otHours||''} onChange={e=>setForm(f=>({...f,otHours:Number(e.target.value)}))}/></Field>
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{setData(d=>({...d,employeeEfficiency:[...(d.employeeEfficiency||[]),form]}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+      {modal==='equipment'&&<Modal title="Equipment Entry" onClose={()=>setModal(null)}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Equipment Name *"><input value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></Field>
+          <Field label="Manufacturer"><input value={form.mfr||''} onChange={e=>setForm(f=>({...f,mfr:e.target.value}))}/></Field>
+          <Field label="Model"><input value={form.model||''} onChange={e=>setForm(f=>({...f,model:e.target.value}))}/></Field>
+          <Field label="Serial #"><input value={form.serial||''} onChange={e=>setForm(f=>({...f,serial:e.target.value}))}/></Field>
+          <Field label="Date Acquired"><input type="date" value={form.acquired||''} onChange={e=>setForm(f=>({...f,acquired:e.target.value}))}/></Field>
+          <Field label="Purchase Cost ($)"><input type="number" value={form.cost||''} onChange={e=>setForm(f=>({...f,cost:Number(e.target.value)}))}/></Field>
+          <Field label="Location"><input value={form.location||''} onChange={e=>setForm(f=>({...f,location:e.target.value}))}/></Field>
+          <Field label="Condition (1-5)"><input type="number" min="1" max="5" value={form.condition||''} onChange={e=>setForm(f=>({...f,condition:Number(e.target.value)}))}/></Field>
+          <Field label="Next PM Due"><input type="date" value={form.nextPM||''} onChange={e=>setForm(f=>({...f,nextPM:e.target.value}))}/></Field>
+          <Field label="Notes"><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{const eq={...form};if(!data.equipmentLog.find(x=>x.id===eq.id))setData(d=>({...d,equipmentLog:[...(d.equipmentLog||[]),eq]}));else setData(d=>({...d,equipmentLog:(d.equipmentLog||[]).map(x=>x.id===eq.id?eq:x)}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+      {modal==='facility'&&<Modal title="Facility Move Item" onClose={()=>setModal(null)}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Category"><input value={form.category||''} onChange={e=>setForm(f=>({...f,category:e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Planned'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Planned','In Progress','Complete','On Hold','Cancelled'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Est. Cost ($)"><input type="number" value={form.estCost||''} onChange={e=>setForm(f=>({...f,estCost:Number(e.target.value)}))}/></Field>
+          <Field label="Actual Cost ($)"><input type="number" value={form.actualCost||''} onChange={e=>setForm(f=>({...f,actualCost:Number(e.target.value),variance:Number(e.target.value)-(form.estCost||0)}))}/></Field>
+          <Field label="Vendor / Contractor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field>
+          <Field label="Due Date"><input type="date" value={form.dueDate||''} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></Field>
+          <Field label="Paid?"><select value={form.paid||'No'} onChange={e=>setForm(f=>({...f,paid:e.target.value}))}><option>No</option><option>Yes</option></select></Field>
+        </div>
+        <Field label="Description"><input value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <Field label="Notes"><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{const it={...form};if(!( data.facilityMove||[]).find(x=>x.description===it.description))setData(d=>({...d,facilityMove:[...(d.facilityMove||[]),it]}));else setData(d=>({...d,facilityMove:(d.facilityMove||[]).map(x=>x.description===it.description?it:x)}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+
     </div>
   );
 };
@@ -19722,7 +33348,113 @@ const AIPanel = ({data,open,onClose}) => {
 
 
 // ─── KPI DASHBOARD ─────────────────────────────────────────────────────────────
-const KPIDashboard = ({data}) => {
+const KPIDashboard = ({data,setData}) => {
+  const {useState} = React;
+  const [tab,setTab] = useState('weekly');
+  const [form,setForm] = useState({});
+  const [modal,setModal] = useState(null);
+  const targets = data.kpiTargets||[];
+  const weekly = data.kpiWeekly||[];
+  const monthly = data.kpiMonthly||[];
+  const station = data.costPerStation||[];
+  const saveWeekly = () => {
+    const rec = {...form,onTimeDeliveryPct:Number(form.onTimeDeliveryPct||0),firstPassYieldPct:Number(form.firstPassYieldPct||0),avgLeadTimeDays:Number(form.avgLeadTimeDays||0),wipCount:Number(form.wipCount||0),scrapWasteDollar:Number(form.scrapWasteDollar||0),safetyIncidents:Number(form.safetyIncidents||0),avgDailyOutput:Number(form.avgDailyOutput||0),reworkHours:Number(form.reworkHours||0),statusScore:Number(form.statusScore||0)};
+    if(!data.kpiWeekly.find(w=>w.weekEnding===rec.weekEnding)) setData(d=>({...d,kpiWeekly:[...d.kpiWeekly,rec]}));
+    else setData(d=>({...d,kpiWeekly:d.kpiWeekly.map(w=>w.weekEnding===rec.weekEnding?rec:w)}));
+    setModal(null);
+  };
+  const delWeekly = w => setData(d=>({...d,kpiWeekly:d.kpiWeekly.filter(x=>x.weekEnding!==w)}));
+  const pctColor = (val,metric) => {
+    const t = targets.find(t=>t.metric===metric);
+    if(!t||!val) return 'var(--muted)';
+    const v = Number(val);
+    if(v>=(t.green*100)) return 'var(--ok)';
+    if(v>=(t.yellow*100)) return 'var(--warn)';
+    return 'var(--err)';
+  };
+  const latest = weekly.filter(w=>w.onTimeDeliveryPct||w.wipCount||w.scrapWasteDollar).slice(-1)[0]||{};
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>KPI Dashboard</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{weekly.length} weeks logged</span><span className="chip">{targets.length} targets</span></div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <PrintBtn onClick={()=>printKPIReport(data)} label="KPI Report"/>
+          {tab==='weekly'&&<button className="btn btn-p" onClick={()=>{setForm({weekEnding:now()});setModal('weekly');}}>+ Log Week</button>}
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+        {[{l:'On-Time Delivery',v:latest.onTimeDeliveryPct,u:'%',m:'On-Time Delivery Rate'},{l:'First Pass Yield',v:latest.firstPassYieldPct,u:'%',m:'First-Pass Yield'},{l:'Avg Lead Time',v:latest.avgLeadTimeDays,u:' days'},{l:'WIP Count',v:latest.wipCount,u:' pcs'},{l:'Scrap (Week)',v:latest.scrapWasteDollar,u:'',pre:'$'},{l:'Safety Incidents',v:latest.safetyIncidents,u:''},{l:'Daily Output',v:latest.avgDailyOutput,u:' pcs/day'},{l:'Status Score',v:latest.statusScore,u:'/10'}].map((k,i)=>(
+          <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 16px'}}>
+            <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{k.l}</div>
+            <div style={{fontSize:24,fontFamily:'Barlow Condensed',fontWeight:700,color:k.v?pctColor(k.v,k.m||k.l):'var(--muted)'}}>{k.v!==undefined&&k.v!==''&&k.v!==0?(k.pre||'')+Number(k.v).toFixed(1)+k.u:'—'}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['weekly','monthly','targets','stations'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='stations'?'Station Output':t}</button>)}
+      </div>
+      {tab==='weekly'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th><th>Status Score</th><th/></tr></thead>
+          <tbody>{weekly.length===0&&<tr><td colSpan={11}><Empty msg="No weekly data — click + Log Week"/></td></tr>}
+          {weekly.map((w,i)=>(
+            <tr key={i}>
+              <td style={{fontWeight:600}}>{w.weekEnding}</td>
+              <td style={{color:pctColor(w.onTimeDeliveryPct,'On-Time Delivery Rate')}}>{w.onTimeDeliveryPct||'—'}</td>
+              <td style={{color:pctColor(w.firstPassYieldPct,'First-Pass Yield')}}>{w.firstPassYieldPct||'—'}</td>
+              <td>{w.avgLeadTimeDays||'—'}</td><td>{w.wipCount||'—'}</td>
+              <td style={{color:w.scrapWasteDollar>200?'var(--err)':''}}>{w.scrapWasteDollar?'$'+w.scrapWasteDollar:'—'}</td>
+              <td style={{color:w.safetyIncidents>0?'var(--err)':'',fontWeight:w.safetyIncidents>0?700:400}}>{w.safetyIncidents||'0'}</td>
+              <td>{w.avgDailyOutput||'—'}</td><td>{w.reworkHours||'—'}</td><td>{w.statusScore||'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...w});setModal('weekly');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>delWeekly(w.weekEnding)}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {tab==='monthly'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>Month</th><th>Avg On-Time %</th><th>Avg FPY %</th><th>Avg Lead Time</th><th>Avg WIP</th><th>Total Scrap $</th><th>Total Safety</th><th>Avg Daily Output</th><th>Total Rework Hrs</th></tr></thead>
+          <tbody>{monthly.length===0&&<tr><td colSpan={9}><Empty msg="No monthly data yet"/></td></tr>}
+          {monthly.map((m,i)=><tr key={i}><td style={{fontWeight:600}}>{m.month}</td><td>{m.avgOnTimePct||'—'}</td><td>{m.avgFpyPct||'—'}</td><td>{m.avgLeadTime||'—'}</td><td>{m.avgWip||'—'}</td><td>{m.totalScrap?'$'+m.totalScrap:'—'}</td><td>{m.totalSafety||'—'}</td><td>{m.avgDailyOutput||'—'}</td><td>{m.totalReworkHrs||'—'}</td></tr>)}
+          </tbody>
+        </table>
+      </div>}
+      {tab==='targets'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>KPI Metric</th><th>Green Target</th><th>Yellow</th><th>Red</th><th>Unit</th><th>Notes</th></tr></thead>
+          <tbody>{targets.map((t,i)=><tr key={i}><td style={{fontWeight:600}}>{t.metric}</td><td style={{color:'var(--ok)',fontWeight:700}}>{(t.green*100).toFixed(0)}</td><td style={{color:'var(--warn)'}}>{(t.yellow*100).toFixed(0)}</td><td style={{color:'var(--err)'}}>{(t.red*100).toFixed(0)}</td><td style={{color:'var(--muted)'}}>{t.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td></tr>)}
+          </tbody>
+        </table>
+      </div>}
+      {tab==='stations'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Hr</th><th>Sections/Day</th><th>Labor $/Day</th><th>Consumable $/Day</th><th>Total $/Day</th><th>Notes</th></tr></thead>
+          <tbody>{station.map((s,i)=><tr key={i}><td style={{fontWeight:600}}>{s.station}</td><td>{s.timePerSectionMin?(+s.timePerSectionMin).toFixed(2):'—'}</td><td>{s.sectionsPerHour?(+s.sectionsPerHour).toFixed(1):'—'}</td><td style={{fontWeight:600,color:'var(--acc)'}}>{s.sectionsPerDay?(+s.sectionsPerDay).toFixed(0):'—'}</td><td>${s.laborDollarDay?(+s.laborDollarDay).toFixed(0):'—'}</td><td>${s.consumableDollarDay?(+s.consumableDollarDay).toFixed(2):'—'}</td><td style={{fontWeight:700}}>${s.totalProcessDollarDay?(+s.totalProcessDollarDay).toFixed(0):'—'}</td><td style={{fontSize:10,color:'var(--muted)'}}>{s.notes}</td></tr>)}
+          </tbody>
+        </table>
+      </div>}
+      {modal==='weekly'&&<Modal title="Log KPI Week" onClose={()=>setModal(null)}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Week Ending *"><input type="date" value={form.weekEnding||''} onChange={e=>setForm(f=>({...f,weekEnding:e.target.value}))}/></Field>
+          <Field label="On-Time Delivery %"><input type="number" step="0.1" value={form.onTimeDeliveryPct||''} onChange={e=>setForm(f=>({...f,onTimeDeliveryPct:e.target.value}))}/></Field>
+          <Field label="First-Pass Yield %"><input type="number" step="0.1" value={form.firstPassYieldPct||''} onChange={e=>setForm(f=>({...f,firstPassYieldPct:e.target.value}))}/></Field>
+          <Field label="Avg Lead Time (days)"><input type="number" step="0.1" value={form.avgLeadTimeDays||''} onChange={e=>setForm(f=>({...f,avgLeadTimeDays:e.target.value}))}/></Field>
+          <Field label="WIP Count"><input type="number" value={form.wipCount||''} onChange={e=>setForm(f=>({...f,wipCount:e.target.value}))}/></Field>
+          <Field label="Scrap / Waste ($)"><input type="number" step="0.01" value={form.scrapWasteDollar||''} onChange={e=>setForm(f=>({...f,scrapWasteDollar:e.target.value}))}/></Field>
+          <Field label="Safety Incidents"><input type="number" value={form.safetyIncidents||''} onChange={e=>setForm(f=>({...f,safetyIncidents:e.target.value}))}/></Field>
+          <Field label="Daily Output (avg pcs)"><input type="number" step="0.1" value={form.avgDailyOutput||''} onChange={e=>setForm(f=>({...f,avgDailyOutput:e.target.value}))}/></Field>
+          <Field label="Rework Hours"><input type="number" step="0.1" value={form.reworkHours||''} onChange={e=>setForm(f=>({...f,reworkHours:e.target.value}))}/></Field>
+          <Field label="Status Score (1-10)"><input type="number" step="0.1" min="1" max="10" value={form.statusScore||''} onChange={e=>setForm(f=>({...f,statusScore:e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={saveWeekly}>Save</button>
+        </div>
+      </Modal>}
+    </div>
+  );
+};) => {
   const targets = data.kpiTargets||[];
   const weekly = (data.kpiWeekly||[]).filter(w=>w.onTimeDeliveryPct||w.firstPassYieldPct||w.wipCount||w.scrapWasteDollar);
   const latest = weekly[weekly.length-1]||{};
@@ -19769,7 +33501,96 @@ const KPIDashboard = ({data}) => {
 };
 
 // ─── SRS CATALOG ───────────────────────────────────────────────────────────────
-const SRSCatalog = ({data}) => {
+const SRSCatalog = ({data,setData}) => {
+  const {useState} = React;
+  const [search,setSearch] = useState('');
+  const [catFilter,setCatFilter] = useState('All');
+  const [modal,setModal] = useState(null);
+  const [form,setForm] = useState({});
+  const [tab,setTab] = useState('catalog');
+  const catalog = data.srsCatalog||[];
+  const dims = data.srsDims||[];
+  const cats = ['All',...new Set(catalog.map(s=>s.category).filter(Boolean))];
+  const filtered = catalog.filter(s=>{
+    const matchCat = catFilter==='All'||s.category===catFilter;
+    const matchSearch = !search||(s.sku||'').toLowerCase().includes(search.toLowerCase())||(s.commonName||'').toLowerCase().includes(search.toLowerCase())||(s.techDesc||'').toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
+  });
+  const save = () => {
+    if(!data.srsCatalog.find(x=>x.sku===form.sku)) setData(d=>({...d,srsCatalog:[...d.srsCatalog,form]}));
+    else setData(d=>({...d,srsCatalog:d.srsCatalog.map(x=>x.sku===form.sku?form:x)}));
+    setModal(null);
+  };
+  const del = sku => setData(d=>({...d,srsCatalog:d.srsCatalog.filter(x=>x.sku!==sku)}));
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>SRS Catalog</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{catalog.length} SKUs</span><span className="chip">{cats.length-1} categories</span></div>
+        </div>
+        <button className="btn btn-p" onClick={()=>{setForm({category:'',sku:'',techDesc:'',commonName:'',srsStock:0,gtin:'',gtin12:'',weightLb:0,length:0});setModal('sku');}}>+ Add SKU</button>
+      </div>
+      <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'8px 14px',marginBottom:14,fontSize:12,color:'var(--warn)'}}>
+        SRS Customer Catalog — from co-worker AM. Separate from Maisy production SKUs. Includes full GTIN/UPC barcodes.
+      </div>
+      <div style={{display:'flex',gap:6,marginBottom:12}}>{['catalog','dims'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='dims'?'Dimensions (Sheet1)':'Full Catalog (Sheet2)'}</button>)}</div>
+      {tab==='catalog'&&<>
+        <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+          <input className="search" placeholder="Search SKU, name or description…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:200}}/>
+          <select value={catFilter} onChange={e=>setCatFilter(e.target.value)}>{cats.map(c=><option key={c}>{c}</option>)}</select>
+          <span className="chip">{filtered.length} results</span>
+        </div>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table><thead><tr><th>Category</th><th>SKU</th><th>Common Name</th><th>Technical Description</th><th>SRS Stock</th><th>GS1 Prefix</th><th>GTIN</th><th>UPC (GTIN-12)</th><th>Weight (lb)</th><th>Length</th><th/></tr></thead>
+            <tbody>{filtered.length===0&&<tr><td colSpan={11}><Empty msg="No SKUs match"/></td></tr>}
+            {filtered.map((s,i)=>(
+              <tr key={i}>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{s.category}</td>
+                <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
+                <td style={{fontWeight:500}}>{s.commonName}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.techDesc}>{s.techDesc}</td>
+                <td style={{textAlign:'center',fontWeight:600}}>{s.srsStock||'—'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10}}>{s.gs1Prefix}</td>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{s.gtin}</td>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{s.gtin12}</td>
+                <td style={{textAlign:'center'}}>{s.weightLb||'—'}</td>
+                <td style={{textAlign:'center'}}>{s.length||'—'}</td>
+                <td><div style={{display:'flex',gap:4}}>
+                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s});setModal('sku');}}>Edit</button>
+                  <button className="btn btn-d btn-sm" onClick={()=>del(s.sku)}>Del</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </>}
+      {tab==='dims'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>Common Name</th><th>Weight (lb)</th><th>Length</th><th>Width</th><th>Height</th></tr></thead>
+          <tbody>{dims.length===0&&<tr><td colSpan={5}><Empty msg="No dimension data loaded"/></td></tr>}
+          {dims.map((d,i)=><tr key={i}><td>{d.commonName}</td><td>{d.weightLb||'—'}</td><td>{d.length||'—'}</td><td>{d.width||'—'}</td><td>{d.height||'—'}</td></tr>)}
+          </tbody>
+        </table>
+      </div>}
+      {modal==='sku'&&<Modal title={form.sku&&data.srsCatalog.find(x=>x.sku===form.sku)?'Edit SKU':'Add SKU'} onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Category"><input value={form.category||''} onChange={e=>setForm(f=>({...f,category:e.target.value}))}/></Field>
+          <Field label="SKU *"><input value={form.sku||''} onChange={e=>setForm(f=>({...f,sku:e.target.value}))}/></Field>
+          <Field label="Common Name"><input value={form.commonName||''} onChange={e=>setForm(f=>({...f,commonName:e.target.value}))}/></Field>
+          <Field label="SRS Stock"><input type="number" value={form.srsStock||''} onChange={e=>setForm(f=>({...f,srsStock:Number(e.target.value)}))}/></Field>
+          <Field label="GTIN"><input value={form.gtin||''} onChange={e=>setForm(f=>({...f,gtin:e.target.value}))}/></Field>
+          <Field label="UPC (GTIN-12)"><input value={form.gtin12||''} onChange={e=>setForm(f=>({...f,gtin12:e.target.value}))}/></Field>
+          <Field label="Weight (lb)"><input type="number" step="0.01" value={form.weightLb||''} onChange={e=>setForm(f=>({...f,weightLb:Number(e.target.value)}))}/></Field>
+          <Field label="Length"><input type="number" step="0.01" value={form.length||''} onChange={e=>setForm(f=>({...f,length:Number(e.target.value)}))}/></Field>
+        </div>
+        <Field label="Technical Description"><textarea rows={2} value={form.techDesc||''} onChange={e=>setForm(f=>({...f,techDesc:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={save} disabled={!form.sku}>Save</button>
+        </div>
+      </Modal>}
+    </div>
+  );
+};) => {
   const [search,setSearch] = React.useState('');
   const [catFilter,setCatFilter] = React.useState('All');
   const catalog = data.srsCatalog||[];
@@ -19777,7 +33598,7 @@ const SRSCatalog = ({data}) => {
   const cats = ['All',...new Set(catalog.map(s=>s.category).filter(Boolean))];
   const filtered = catalog.filter(s=>{
     const matchCat = catFilter==='All'||s.category===catFilter;
-    const matchSearch = !search||s.sku.toLowerCase().includes(search.toLowerCase())||s.commonName.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search||(s.sku||'').toLowerCase().includes(search.toLowerCase())||(s.commonName||'').toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
   return (
@@ -19809,14 +33630,100 @@ const SRSCatalog = ({data}) => {
 };
 
 // ─── LEGACY ORDERS ─────────────────────────────────────────────────────────────
-const LegacyOrders = ({data}) => {
+const LegacyOrders = ({data,setData}) => {
+  const {useState} = React;
+  const [search,setSearch] = useState('');
+  const [typeFilter,setTypeFilter] = useState('All');
+  const [modal,setModal] = useState(null);
+  const [form,setForm] = useState({});
+  const orders = data.legacyOrders||[];
+  const types = ['All',...new Set(orders.map(o=>o.productType))];
+  const filtered = orders.filter(o=>{
+    const matchType = typeFilter==='All'||o.productType===typeFilter;
+    const matchSearch = !search||(o.customer||'').toLowerCase().includes(search.toLowerCase())||(o.shipTo||'').toLowerCase().includes(search.toLowerCase());
+    return matchType && matchSearch;
+  });
+  const byType = {};
+  orders.forEach(o=>{byType[o.productType]=(byType[o.productType]||0)+1;});
+  const save = () => {
+    const rec = {...form};
+    if(!data.legacyOrders.find(x=>x.id===rec.id)) setData(d=>({...d,legacyOrders:[...d.legacyOrders,rec]}));
+    else setData(d=>({...d,legacyOrders:d.legacyOrders.map(x=>x.id===rec.id?rec:x)}));
+    setModal(null);
+  };
+  const del = id => setData(d=>({...d,legacyOrders:d.legacyOrders.filter(x=>x.id!==id)}));
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Legacy Orders (Pre-2026)</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{orders.length} orders</span><span className="chip">{Object.keys(byType).length} product types</span></div>
+        </div>
+        <button className="btn btn-p" onClick={()=>{setForm({id:'LEG-'+Math.random().toString(36).slice(2,8).toUpperCase(),customer:'',date:new Date().toISOString().slice(0,10),shipTo:'',productType:'',qty1:0,qty2:0,qty3:0});setModal('order');}}>+ Add Entry</button>
+      </div>
+      <div style={{background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.3)',borderRadius:6,padding:'8px 14px',marginBottom:14,fontSize:12,color:'#818cf8'}}>
+        Historical orders from pre-2026 ERP system. {orders.length} orders across {Object.keys(byType).length} product lines. Reference only.
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+        {Object.entries(byType).slice(0,8).map(([type,count])=>(
+          <div key={type} onClick={()=>setTypeFilter(type===typeFilter?'All':type)}
+            style={{background:typeFilter===type?'rgba(99,102,241,.15)':'var(--s1)',border:'1px solid '+(typeFilter===type?'rgba(99,102,241,.5)':'var(--bdr)'),borderRadius:6,padding:'10px 12px',cursor:'pointer'}}>
+            <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{type}</div>
+            <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,color:'#818cf8'}}>{count}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:'flex',gap:8,marginBottom:12}}>
+        <input className="search" placeholder="Search customer or ship-to…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1}}/>
+        <span className="chip">{filtered.length} results</span>
+        {typeFilter!=='All'&&<button className="btn btn-xs" onClick={()=>setTypeFilter('All')}>Clear Filter</button>}
+      </div>
+      <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>ID</th><th>Customer</th><th>Product Type</th><th>Date</th><th>Ship To</th><th>Line Qty</th><th>Stair Qty</th><th>Corner Qty</th><th/></tr></thead>
+          <tbody>{filtered.length===0&&<tr><td colSpan={9}><Empty msg="No orders match"/></td></tr>}
+          {filtered.slice(0,300).map(o=>(
+            <tr key={o.id}>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{o.id}</td>
+              <td style={{fontWeight:500}}>{o.customer}</td>
+              <td style={{fontSize:10,color:'var(--acc)'}}>{o.productType}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{o.date}</td>
+              <td style={{fontSize:11}}>{o.shipTo}</td>
+              <td style={{textAlign:'center'}}>{o.qty1||'—'}</td>
+              <td style={{textAlign:'center'}}>{o.qty2||'—'}</td>
+              <td style={{textAlign:'center'}}>{o.qty3||'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...o});setModal('order');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>del(o.id)}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+        {filtered.length>300&&<div style={{textAlign:'center',padding:12,fontSize:12,color:'var(--muted)'}}>Showing 300 of {filtered.length} — search to narrow</div>}
+      </div>
+      {modal==='order'&&<Modal title="Legacy Order Entry" onClose={()=>setModal(null)}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Product Type"><input value={form.productType||''} onChange={e=>setForm(f=>({...f,productType:e.target.value}))}/></Field>
+          <Field label="Ship To"><input value={form.shipTo||''} onChange={e=>setForm(f=>({...f,shipTo:e.target.value}))}/></Field>
+          <Field label="Line Post Qty"><input type="number" value={form.qty1||''} onChange={e=>setForm(f=>({...f,qty1:Number(e.target.value)}))}/></Field>
+          <Field label="Stair Post Qty"><input type="number" value={form.qty2||''} onChange={e=>setForm(f=>({...f,qty2:Number(e.target.value)}))}/></Field>
+          <Field label="Corner Post Qty"><input type="number" value={form.qty3||''} onChange={e=>setForm(f=>({...f,qty3:Number(e.target.value)}))}/></Field>
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={save}>Save</button>
+        </div>
+      </Modal>}
+    </div>
+  );
+};) => {
   const [search,setSearch] = React.useState('');
   const [typeFilter,setTypeFilter] = React.useState('All');
   const orders = data.legacyOrders||[];
   const types = ['All',...new Set(orders.map(o=>o.productType))];
   const filtered = orders.filter(o=>{
     const matchType = typeFilter==='All'||o.productType===typeFilter;
-    const matchSearch = !search||o.customer.toLowerCase().includes(search.toLowerCase())||o.shipTo.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search||(o.customer||'').toLowerCase().includes(search.toLowerCase())||(o.shipTo||'').toLowerCase().includes(search.toLowerCase());
     return matchType && matchSearch;
   });
   const byType = {};
@@ -19955,6 +33862,26 @@ const normalizeData = (d) => {
   if (!d.bom) d.bom = [];
   if (!d.adjustmentLog) d.adjustmentLog = [];
   if (!d.costPerStation) d.costPerStation = [];
+  if (!d.productCatalog) d.productCatalog = [];
+  if (!d.productSkuMaster) d.productSkuMaster = [];
+  if (!d.customerIssues) d.customerIssues = [];
+  if (!d.equipmentLog) d.equipmentLog = [];
+  if (!d.facilityMove) d.facilityMove = [];
+  if (!d.employeeEfficiency) d.employeeEfficiency = [];
+  if (!d.shiftHandoff) d.shiftHandoff = [];
+  if (!d.materialsDB) d.materialsDB = [];
+  if (!d.skuReference) d.skuReference = [];
+  if (!d.monthlyPL) d.monthlyPL = [];
+  if (!d.shippingAnalysis) d.shippingAnalysis = [];
+  if (!d.shipMonthlySummary) d.shipMonthlySummary = [];
+  if (!d.vendorScorecard) d.vendorScorecard = [];
+  if (!d.fastenerGuide) d.fastenerGuide = [];
+  if (!d.materialProperties) d.materialProperties = [];
+  if (!d.weldingFab) d.weldingFab = [];
+  if (!d.productReference) d.productReference = [];
+  if (!d.kpiMonthly) d.kpiMonthly = [];
+  if (!d.defectLog) d.defectLog = [];
+  if (!d.srsDims) d.srsDims = [];
   return d;
 };
 
