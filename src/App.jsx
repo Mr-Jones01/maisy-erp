@@ -189,7 +189,8 @@ const PRINT_CSS = `
 
 const printHTML = (title, bodyHTML) => {
   const w = window.open('','_blank','width=900,height=750');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} — Maisy Railing</title><style>${PRINT_CSS}</style></head><body>${bodyHTML}<div class="watermark">Maisy Railing · Printed ${new Date().toLocaleDateString()} · Confidential</div><script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  const scriptTag = '<scr'+'ipt>window.onload=()=>{window.print();}</scr'+'ipt>';
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} — Maisy Railing</title><style>${PRINT_CSS}</style></head><body>${bodyHTML}<div class="watermark">Maisy Railing · Printed ${new Date().toLocaleDateString()} · Confidential</div>${scriptTag}</body></html>`);
   w.document.close();
 };
 
@@ -540,6 +541,7 @@ const printTrainingMatrix = (data) => {
 };
 
 
+const Badge = ({s}) => { const c=BADGE[s]||'#4a5070'; return <span className="badge" style={{background:`${c}1a`,color:c,border:`1px solid ${c}33`}}>{s}</span>; };
 const Spinner = () => <div className="spin" style={{width:12,height:12,border:'2px solid var(--bdr)',borderTopColor:'var(--acc)',borderRadius:'50%'}}/>;
 const Empty = ({msg='No records'}) => <div style={{textAlign:'center',padding:'40px 0',color:'var(--muted)',fontSize:12.5}}><div style={{fontSize:24,marginBottom:8,opacity:.3}}>◫</div>{msg}</div>;
 
