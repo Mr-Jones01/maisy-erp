@@ -13256,7 +13256,72 @@ const INIT = {
     "height": 0.0
   }
 ],
-  kpiTargets: [],
+  kpiTargets: [
+  {
+    "metric": "On-Time Delivery Rate",
+    "green": 0.95,
+    "yellow": 0.85,
+    "red": 0.85,
+    "unit": "%",
+    "notes": "\u226595% green, 85-94% yellow, <85% red"
+  },
+  {
+    "metric": "First-Pass Yield",
+    "green": 0.9,
+    "yellow": 0.8,
+    "red": 0.8,
+    "unit": "%",
+    "notes": "\u226590% green, 80-89% yellow, <80% red"
+  },
+  {
+    "metric": "Average Lead Time (business days)",
+    "green": 5.0,
+    "yellow": 8.0,
+    "red": 8.0,
+    "unit": "Days",
+    "notes": "\u22645 green, 6-8 yellow, >8 red"
+  },
+  {
+    "metric": "WIP Count (active jobs on floor)",
+    "green": 15.0,
+    "yellow": 25.0,
+    "red": 25.0,
+    "unit": "Jobs",
+    "notes": "\u226415 green, 16-25 yellow, >25 red"
+  },
+  {
+    "metric": "Scrap/Waste ($)",
+    "green": 200.0,
+    "yellow": 500.0,
+    "red": 500.0,
+    "unit": "$",
+    "notes": "\u2264$200 green, $201-500 yellow, >$500 red"
+  },
+  {
+    "metric": "Safety Incidents",
+    "green": 0,
+    "yellow": 1.0,
+    "red": 1.0,
+    "unit": "Count",
+    "notes": "0 = green, 1 = yellow, \u22652 = red"
+  },
+  {
+    "metric": "Daily Production Output (avg units)",
+    "green": 20.0,
+    "yellow": 18.0,
+    "red": 18.0,
+    "unit": "Units",
+    "notes": "\u226520 green, 18-19 yellow, <18 red"
+  },
+  {
+    "metric": "Rework Hours",
+    "green": 5.0,
+    "yellow": 10.0,
+    "red": 10.0,
+    "unit": "Hours",
+    "notes": "\u22645 green, 6-10 yellow, >10 red"
+  }
+],
   kpiWeekly: [],
   kpiMonthly: [],
   materialsDB: [
@@ -24011,7 +24076,9 @@ const Sidebar = ({page,setPage,data,user}) => {
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────────
 const Dashboard = ({data,setPage}) => {
-  const rev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
+  const salesRev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
+  const jobRev=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
+  const rev=salesRev>0?salesRev:jobRev;
   const jobRev=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
   const displayRev=rev>0?rev:jobRev;
   const totalFreight=(data.shipCostLog||[]).reduce((a,b)=>a+(b.totalCost||0),0);
@@ -25443,7 +25510,7 @@ const Shipping = ({data, setData}) => {
       })()}
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Shipping & Fulfillment</div>
-          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.shipments.filter(s=>['Shipped','In Transit'].includes(s.status)).length} in transit</span><span className="chip">{data.shipments.filter(s=>s.status==='Delivered').length} delivered</span></div></div>
+          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{(data.shipments||[]).filter(s=>['Shipped','In Transit'].includes(s.status)).length} in transit</span><span className="chip">{(data.shipments||[]).filter(s=>s.status==='Delivered').length} delivered</span></div></div>
         <button className="btn btn-p" onClick={()=>open()}>+ New Shipment</button>
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
@@ -25452,8 +25519,8 @@ const Shipping = ({data, setData}) => {
       {shipTab==='log'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <table><thead><tr><th>Shipment #</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Delivered</th><th/></tr></thead>
           <tbody>
-            {data.shipments.length===0&&<tr><td colSpan={9}><Empty msg="No shipments"/></td></tr>}
-            {data.shipments.map(s=>(
+            {(data.shipments||[]).length===0&&<tr><td colSpan={9}><Empty msg="No shipments"/></td></tr>}
+            {(data.shipments||[]).map(s=>(
               <tr key={s.id}>
                 <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{s.id}</td>
                 <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{s.orderId}</td>
@@ -25756,7 +25823,9 @@ const AutoPO = ({data, setData}) => {
 const Reports = ({data}) => {
   const [loading,setLoading]=useState(false);
   const [report,setReport]=useState('');
-  const rev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
+  const salesRev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
+  const jobRevRpt=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
+  const rev=salesRev>0?salesRev:jobRevRpt;
   const cost=data.workOrders.reduce((a,b)=>a+(b.matCost+(b.laborHrs*b.laborRate)),0);
   const owed=data.invoices.filter(i=>i.status!=='Paid'&&i.status!=='Cancelled').reduce((a,b)=>a+b.amount,0);
   const topCus=[...data.customers].sort((a,b)=>b.ytd-a.ytd).slice(0,5);
@@ -25767,7 +25836,7 @@ const Reports = ({data}) => {
       const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,
           system:'You are a manufacturing operations analyst. Write a concise 3-section executive report for Daniel Jones, Director of Operations at Maisy Railing. Sections: 1) Financial Health 2) Operational Highlights & Risks 3) Top 3 Action Items (bullet points). Be specific with numbers. Be direct and professional.',
-          messages:[{role:'user',content:`Revenue: ${fmt$(rev)} | COGS: ${fmt$(cost)} | Margin: ${rev>0?((rev-cost)/rev*100).toFixed(1):'N/A'}% | A/R Owed: ${fmt$(owed)} | Low Stock: ${data.inventory.filter(i=>i.qty<=i.reorder).length} | Overdue Invoices: ${data.invoices.filter(i=>i.status==='Overdue').length} | Active WOs: ${data.workOrders.filter(w=>w.status==='In Progress').length} | Top Customer: ${topCus[0]?.name} (${fmt$(topCus[0]?.ytd)})`}]})});
+          messages:[{role:'user',content:`Revenue: ${fmt$(rev)}${salesRev===0?' (from '+(data.jobHistory||[]).length+' historical jobs)':''} | COGS: ${fmt$(cost)} | Margin: ${rev>0?((rev-cost)/rev*100).toFixed(1):'N/A'}% | A/R Owed: ${fmt$(owed)} | Low Stock: ${data.inventory.filter(i=>i.qty<=i.reorder).length} | Overdue Invoices: ${data.invoices.filter(i=>i.status==='Overdue').length} | Active WOs: ${data.workOrders.filter(w=>w.status==='In Progress').length} | Top Customer: ${topCus[0]?.name} (${fmt$(topCus[0]?.ytd)})`}]})});
       const d=await res.json();setReport(d.content?.[0]?.text||'Error.');
     }catch(e){setReport('Connection error.');}
     setLoading(false);
@@ -25782,6 +25851,10 @@ const Reports = ({data}) => {
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Reports & Analytics</div></div>
         <div style={{display:'flex',gap:8}}>
+          <button className="btn" style={{border:'1px solid var(--err)',color:'var(--err)',fontSize:11}} 
+            onClick={()=>{if(window.confirm('Clear browser data and reload with fresh INIT data?')){window.storage&&window.storage.delete('maisy_erp_v4').then(()=>window.location.reload()).catch(()=>{localStorage.removeItem('maisy_erp_v4');window.location.reload()});}}}>
+            🔄 Reset Data
+          </button>
           <button className="btn btn-v" onClick={genReport} disabled={loading}>{loading?<><Spinner/> Analyzing…</>:'◈ AI Executive Report'}</button>
           <button className="btn btn-g" onClick={exportCSV}>↓ Export CSV</button>
         </div>
@@ -25794,7 +25867,7 @@ const Reports = ({data}) => {
         {report.split('\n').map((l,i)=><div key={i} style={{fontSize:13,lineHeight:1.75,minHeight:4}}>{l}</div>)}
       </div>}
       <div className="grid4" style={{marginBottom:16}}>
-        {[{l:'Revenue',v:fmt$(rev),c:'var(--acc)'},{l:'COGS',v:fmt$(cost),c:'var(--err)'},{l:'Gross Margin',v:rev>0?((rev-cost)/rev*100).toFixed(1)+'%':'N/A',c:'var(--ok)'},{l:'A/R Outstanding',v:fmt$(owed),c:'var(--warn)'}].map(k=>(
+        {[{l:salesRev>0?'Revenue YTD':'Historical Revenue',v:fmt$(rev),c:rev>0?'var(--ok)':'var(--muted)'},{l:'COGS',v:fmt$(cost),c:'var(--err)'},{l:'Gross Margin',v:rev>0?((rev-cost)/rev*100).toFixed(1)+'%':'N/A',c:'var(--ok)'},{l:'A/R Outstanding',v:fmt$(owed),c:'var(--warn)'}].map(k=>(
           <div className="stat-card" key={k.l}><div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--muted)',marginBottom:6}}>{k.l}</div><div className="mono hd" style={{fontSize:22,color:k.c}}>{k.v}</div></div>
         ))}
       </div>
@@ -25848,7 +25921,7 @@ const Reports = ({data}) => {
                 <td>{j.materialCost?fmt$(j.materialCost):'—'}</td>
                 <td>{j.laborCost?fmt$(j.laborCost):'—'}</td>
                 <td style={{color:'var(--ok)',fontWeight:600}}>{j.grossProfit?fmt$(j.grossProfit):'—'}</td>
-                <td style={{color:j.grossMarginPct>=35?'var(--ok)':j.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{j.grossMarginPct?j.grossMarginPct.toFixed(1)+'%':'—'}</td>
+                <td style={{color:j.grossMarginPct>=35?'var(--ok)':j.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{j.grossMarginPct?(+j.grossMarginPct).toFixed(1)+'%':'—'}</td>
                 <td style={{fontSize:11}}>{j.leadTimeDays?j.leadTimeDays+' days':'—'}</td>
               </tr>
             ))}</tbody>
@@ -25876,7 +25949,7 @@ const Finance = ({data,setData}) => {
     setModal(null);
   };
   const saveLR=()=>{
-    if(!data.laborRates.find(r=>r.id===form.id))setData(d=>({...d,laborRates:[...d.laborRates,{...form,rateHr:Number(form.rateHr),overtime:Number(form.overtime),burden:Number(form.burden)}]}));
+    if(!(data.laborRates||[]).find(r=>r.id===form.id))setData(d=>({...d,laborRates:[...d.laborRates,{...form,rateHr:Number(form.rateHr),overtime:Number(form.overtime),burden:Number(form.burden)}]}));
     else setData(d=>({...d,laborRates:d.laborRates.map(r=>r.id===form.id?{...form,rateHr:Number(form.rateHr),overtime:Number(form.overtime),burden:Number(form.burden)}:r)}));
     setModal(null);
   };
@@ -27204,7 +27277,7 @@ const KPIDashboard = ({data,setData}) => {
       </div>}
       {tab==='targets'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <table><thead><tr><th>KPI Metric</th><th>Green Target</th><th>Yellow</th><th>Red</th><th>Unit</th><th>Notes</th></tr></thead>
-          <tbody>{targets.map((t,i)=><tr key={i}><td style={{fontWeight:600}}>{t.metric}</td><td style={{color:'var(--ok)',fontWeight:700}}>{(t.green*100).toFixed(0)}</td><td style={{color:'var(--warn)'}}>{(t.yellow*100).toFixed(0)}</td><td style={{color:'var(--err)'}}>{(t.red*100).toFixed(0)}</td><td style={{color:'var(--muted)'}}>{t.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td></tr>)}
+          <tbody>{targets.map((t,i)=><tr key={i}><td style={{fontWeight:600}}>{t.metric}</td><td style={{color:'var(--ok)',fontWeight:700}}>{t.green?(+t.green*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--warn)'}}>{t.yellow?(+t.yellow*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--err)'}}>{t.red?(+t.red*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--muted)'}}>{t.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td></tr>)}
           </tbody>
         </table>
       </div>}
@@ -27476,6 +27549,25 @@ const TITLES = {
   shopref:'Shop Reference', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
 };
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.error('Page crash:', error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:40,textAlign:'center'}}>
+          <div style={{fontSize:48,marginBottom:16}}>⚠️</div>
+          <div style={{fontFamily:'Barlow Condensed',fontSize:24,fontWeight:700,color:'var(--err)',marginBottom:8}}>Page Error</div>
+          <div style={{color:'var(--muted)',fontSize:13,marginBottom:24,maxWidth:400,margin:'0 auto 24px'}}>{this.state.error?.message || 'Something went wrong rendering this page.'}</div>
+          <button className="btn btn-p" onClick={()=>this.setState({hasError:false,error:null})}>← Go Back</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function MaisyERP() {
   const [user,  setUser]  = useState(null);
   const [page,  setPage]  = useState('dashboard');
@@ -27527,7 +27619,7 @@ export default function MaisyERP() {
             <button onClick={handleLogout} style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',borderRadius:5,padding:'5px 10px',cursor:'pointer',fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',transition:'all .15s'}} onMouseOver={e=>e.target.style.color='var(--err)'} onMouseOut={e=>e.target.style.color='var(--muted)'}>Sign Out</button>
           </div>
           <div className="content">
-            <PageComp data={data} setData={setData} user={user} setPage={setPage}/>
+            <ErrorBoundary key={page}><PageComp data={data} setData={setData} user={user} setPage={setPage}/></ErrorBoundary>
           </div>
         </div>
         <AIPanel data={data} open={aiOpen} onClose={()=>setAiOpen(false)}/>
