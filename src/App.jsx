@@ -109,17 +109,17 @@ const G = () => (
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 const DEMO_USERS = [
-  { email:'admin@maisyrailing.com',  password:'Maisy2026!',  role:'admin',  name:'Daniel Jones',    title:'Director of Operations' },
-  { email:'rocky@maisyrailing.com',  password:'Rocky2026!',  role:'owner',  name:'Rocky',           title:'Owner' },
-  { email:'office@maisyrailing.com', password:'Office2026!', role:'office', name:'Office Staff',     title:'Office' },
-  { email:'shop@maisyrailing.com',   password:'Shop2026!',   role:'shop',   name:'Shop Floor',       title:'Production' },
+  { email:'admin@maisyrailing.com',  password:'Maisy2026$',  role:'admin',  name:'Daniel Jones',    title:'Director of Operations' },
+  { email:'rocky@maisyrailing.com',  password:'Maisy2026$',  role:'owner',  name:'Rocky',           title:'Owner' },
+  { email:'office@maisyrailing.com', password:'Maisy2026$',  role:'office', name:'Office Staff',     title:'Office' },
+  { email:'shop@maisyrailing.com',   password:'Maisy2026$',  role:'shop',   name:'Shop Floor',       title:'Production' },
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','shopref','automation','sister','finance','reports'],
-  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people'],
-  office: ['dashboard','todo','sales','invoicing','shipping','customers'],
-  shop:   ['dashboard','todo','production','shopref'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
+  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter'],
+  office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
+  shop:   ['dashboard','todo','production','shopref','printcenter'],
 };
 
 const BADGE = {
@@ -141,7 +141,405 @@ const now   = () => new Date().toISOString().slice(0,10);
 const ts    = () => new Date().toLocaleString();
 const deg2rad = d => d * Math.PI / 180;
 
-const Badge = ({s}) => { const c=BADGE[s]||'#4a5070'; return <span className="badge" style={{background:`${c}1a`,color:c,border:`1px solid ${c}33`}}>{s}</span>; };
+const fmtD  = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+const fmtDs = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+const uid   = () => Math.random().toString(36).slice(2,8).toUpperCase();
+const now   = () => new Date().toISOString().slice(0,10);
+const ts    = () => new Date().toLocaleString();
+const deg2rad = d => d * Math.PI / 180;
+
+// ─── PRINT ENGINE ─────────────────────────────────────────────────────────────
+const PRINT_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a2e;background:#fff;padding:0}
+  .page{width:100%;max-width:800px;margin:0 auto;padding:28px 32px}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a1a2e;padding-bottom:12px;margin-bottom:18px}
+  .logo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+  .logo span{color:#00e5ff}
+  .doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .doc-meta{font-size:10px;color:#6b7280;letter-spacing:.06em;text-transform:uppercase}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .box{border:1px solid #e5e7eb;border-radius:6px;padding:12px 14px}
+  .box-label{font-size:9px;color:#9ca3af;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .box-val{font-size:15px;font-weight:600;font-family:'Barlow Condensed',sans-serif}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin:16px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}
+  th{background:#f3f4f6;text-align:left;padding:6px 8px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #d1d5db}
+  td{padding:6px 8px;border-bottom:1px solid #f3f4f6}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .badge-ok{background:#d1fae5;color:#065f46}
+  .badge-warn{background:#fef3c7;color:#92400e}
+  .badge-err{background:#fee2e2;color:#991b1b}
+  .badge-blue{background:#dbeafe;color:#1e40af}
+  .badge-gray{background:#f3f4f6;color:#6b7280}
+  .sig-line{border-top:1px solid #1a1a2e;margin-top:32px;padding-top:4px;font-size:10px;color:#6b7280;display:flex;justify-content:space-between}
+  .write-line{border-bottom:1px solid #d1d5db;height:22px;margin-bottom:8px}
+  .write-label{font-size:9px;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px}
+  .checkbox{width:14px;height:14px;border:1.5px solid #9ca3af;border-radius:2px;flex-shrink:0}
+  .acct-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;font-size:11px}
+  .acct-total{font-weight:700;font-size:12px;border-top:2px solid #1a1a2e;padding-top:6px;margin-top:4px}
+  .watermark{position:fixed;bottom:18px;right:24px;font-size:9px;color:#d1d5db;letter-spacing:.06em;text-transform:uppercase}
+  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.no-print{display:none}@page{margin:14mm 12mm}}
+`;
+
+const printHTML = (title, bodyHTML) => {
+  const w = window.open('','_blank','width=900,height=750');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} — Maisy Railing</title><style>${PRINT_CSS}</style></head><body>${bodyHTML}<div class="watermark">Maisy Railing · Printed ${new Date().toLocaleDateString()} · Confidential</div><script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  w.document.close();
+};
+
+const PrintBtn = ({onClick,label='Print',small}) => (
+  <button onClick={onClick} className={`btn${small?' btn-xs':''}`} style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',display:'flex',alignItems:'center',gap:5,fontFamily:'Barlow Condensed',fontSize:small?10:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}} title="Print">
+    🖨 {label}
+  </button>
+);
+
+const printWorkOrder = (wo) => {
+  const jc = (wo.matCost||0) + ((wo.laborHrs||0)*(wo.laborRate||28));
+  printHTML(`Work Order ${wo.id}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Work Order Traveler</div></div>
+        <div style="text-align:right"><div class="doc-title">${wo.id}</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4">
+        <div class="box"><div class="box-label">Order Ref</div><div class="box-val">${wo.orderId||'—'}</div></div>
+        <div class="box"><div class="box-label">Station</div><div class="box-val">${wo.station}</div></div>
+        <div class="box"><div class="box-label">Qty</div><div class="box-val">${wo.qty} pcs</div></div>
+        <div class="box"><div class="box-label">Due Date</div><div class="box-val" style="font-size:13px">${wo.due||'—'}</div></div>
+      </div>
+      <div class="section-title">Product</div>
+      <div class="box" style="font-size:14px;font-weight:600;margin-bottom:16px">${wo.product}</div>
+      <div class="section-title">Job Cost Summary</div>
+      <div class="grid-3">
+        <div class="box"><div class="box-label">Material Cost</div><div class="box-val">$${(wo.matCost||0).toFixed(2)}</div></div>
+        <div class="box"><div class="box-label">Labor (${wo.laborHrs||0} hrs × $${wo.laborRate||0}/hr)</div><div class="box-val">$${((wo.laborHrs||0)*(wo.laborRate||0)).toFixed(2)}</div></div>
+        <div class="box" style="background:#f0fdf4"><div class="box-label">Total Job Cost</div><div class="box-val" style="color:#065f46">$${jc.toFixed(2)}</div></div>
+      </div>
+      <div class="section-title">Production Checklist</div>
+      <table>
+        <thead><tr><th>Station</th><th>Task</th><th>Operator</th><th>Time</th><th>Sign-off</th></tr></thead>
+        <tbody>
+          ${['Material Pull & Verify','CNC Setup & Cut','Drill / Punch','TIG Weld','Grind & Finish','Powder Coat Prep','Powder Coat','Assembly & Hardware','QC Inspection','Packaging'].map(t=>`<tr><td></td><td>${t}</td><td style="min-width:90px"> </td><td style="min-width:70px"> </td><td style="min-width:80px"> </td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="section-title">Notes / Special Instructions</div>
+      <div class="write-line"/><div class="write-line"/><div class="write-line"/>
+      <div class="sig-line"><span>Assigned: ${wo.assigned||'__________________'}</span><span>Supervisor: __________________</span><span>QC Sign-off: __________________</span></div>
+    </div>`);
+};
+
+const printInvoice = (inv) => {
+  printHTML(`Invoice ${inv.id}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">2150 E Glenrose Dr, Hayden, ID 83835 · (208) 603-8149</div></div>
+        <div style="text-align:right"><div class="doc-title">INVOICE</div><div class="doc-meta" style="font-size:14px;font-weight:700;color:#1a1a2e">${inv.id}</div></div>
+      </div>
+      <div class="grid-2">
+        <div><div class="section-title">Bill To</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${inv.customer}</div>
+          <div class="doc-meta">Order Ref: ${inv.orderId||'—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="box" style="display:inline-block;min-width:200px">
+            <div class="acct-row"><span>Invoice Date:</span><span>${inv.issued||'—'}</span></div>
+            <div class="acct-row"><span>Due Date:</span><span style="font-weight:600;color:${inv.status==='Overdue'?'#991b1b':'#1a1a2e'}">${inv.due||'—'}</span></div>
+            <div class="acct-row"><span>Status:</span><span><span class="badge badge-${inv.status==='Paid'?'ok':inv.status==='Overdue'?'err':'warn'}">${inv.status}</span></span></div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>Railing Systems — ${inv.orderId||'Custom Order'}</td><td style="text-align:right">$${(inv.amount||0).toFixed(2)}</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
+        <div style="min-width:240px">
+          <div class="acct-row"><span>Subtotal</span><span>$${(inv.amount||0).toFixed(2)}</span></div>
+          <div class="acct-row"><span>Tax (0%)</span><span>$0.00</span></div>
+          <div class="acct-total acct-row"><span>TOTAL DUE</span><span>$${(inv.amount||0).toFixed(2)}</span></div>
+          ${inv.paid?`<div class="acct-row" style="color:#065f46"><span>Paid ${inv.paid}</span><span>-$${(inv.amount||0).toFixed(2)}</span></div>`:''}
+        </div>
+      </div>
+      <div class="section-title">Payment Instructions</div>
+      <div style="font-size:11px;line-height:1.7;color:#374151">
+        <b>Check:</b> Payable to Maisy Railing LLC &nbsp;|&nbsp; <b>ACH/Wire:</b> Contact daniel@maisyrailing.com for banking details<br>
+        Net 15 — Late payments subject to 1.5% monthly finance charge.
+      </div>
+      <div class="sig-line"><span>Maisy Railing LLC · Hayden, Idaho</span><span>Questions? daniel@maisyrailing.com · (208) 603-8149</span></div>
+    </div>`);
+};
+
+const printPO = (po) => {
+  const items = po.items||[];
+  const total = items.reduce((a,b)=>a+(b.qty*b.cost),0)||po.total||0;
+  printHTML(`PO ${po.id}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">2150 E Glenrose Dr, Hayden, ID 83835</div></div>
+        <div style="text-align:right"><div class="doc-title">PURCHASE ORDER</div><div class="doc-meta" style="font-size:14px;font-weight:700;color:#1a1a2e">${po.id}</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:20px">
+        <div><div class="section-title">Vendor</div>
+          <div style="font-size:13px;font-weight:600">${po.vendor||'—'}</div>
+          ${po.vendorId?`<div class="doc-meta">Vendor ID: ${po.vendorId}</div>`:''}
+        </div>
+        <div>
+          <div class="box">
+            <div class="acct-row"><span>PO Date:</span><span>${po.ordered||now()}</span></div>
+            <div class="acct-row"><span>Expected:</span><span>${po.expected||'—'}</span></div>
+            <div class="acct-row"><span>Status:</span><span><span class="badge badge-blue">${po.status||'Draft'}</span></span></div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Item / Description</th><th style="text-align:center">Qty</th><th>Unit</th><th style="text-align:right">Unit Cost</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>
+          ${items.length>0?items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.name||it.inventoryId||'—'}</td><td style="text-align:center">${it.qty}</td><td>${it.unit||''}</td><td style="text-align:right">$${(it.cost||0).toFixed(2)}</td><td style="text-align:right">$${((it.qty||0)*(it.cost||0)).toFixed(2)}</td></tr>`).join(''):`<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">See notes below</td></tr>`}
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+        <div style="min-width:220px">
+          <div class="acct-total acct-row"><span>PO TOTAL</span><span>$${total.toFixed(2)}</span></div>
+        </div>
+      </div>
+      <div class="section-title">Notes / Special Instructions</div>
+      <div class="write-line"/><div class="write-line"/>
+      <div class="section-title">Authorized By</div>
+      <div class="sig-line"><span>Approved: Daniel Jones, Director of Operations</span><span>Date: __________________</span></div>
+    </div>`);
+};
+
+const printPackingSlip = (shipment) => {
+  printHTML(`Packing Slip ${shipment.id||''}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">2150 E Glenrose Dr · Hayden, ID 83835 · (208) 603-8149</div></div>
+        <div style="text-align:right"><div class="doc-title">PACKING SLIP</div><div class="doc-meta">${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-2">
+        <div><div class="section-title">Ship From</div>
+          <div style="font-size:11px;line-height:1.8">Maisy Railing LLC<br>2150 E Glenrose Dr<br>Hayden, ID 83835</div>
+        </div>
+        <div><div class="section-title">Ship To</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${shipment.customer||shipment.destCity||'—'}</div>
+          <div style="font-size:11px;line-height:1.8">${shipment.destCity||''}${shipment.destState?', '+shipment.destState:''}</div>
+        </div>
+      </div>
+      <div class="grid-4">
+        <div class="box"><div class="box-label">Carrier</div><div class="box-val" style="font-size:12px">${shipment.carrier||'—'}</div></div>
+        <div class="box"><div class="box-label">Service</div><div class="box-val" style="font-size:12px">${shipment.service||'—'}</div></div>
+        <div class="box"><div class="box-label">Weight</div><div class="box-val">${shipment.weight||'—'} lbs</div></div>
+        <div class="box"><div class="box-label">Tracking</div><div class="box-val" style="font-size:10px;word-break:break-all">${shipment.tracking||'—'}</div></div>
+      </div>
+      <div class="section-title">Contents</div>
+      <table>
+        <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Condition</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Aluminum Railing System — ${shipment.customer||''}</td><td> </td><td><span class="badge badge-ok">New</span></td><td></td></tr>
+          <tr><td>2</td><td>Hardware Kit</td><td> </td><td><span class="badge badge-ok">New</span></td><td></td></tr>
+          <tr><td>3</td><td>Installation Instructions</td><td>1</td><td><span class="badge badge-ok">New</span></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">Condition on Departure</div>
+      ${['Inspected by QC','All hardware included','No visible damage','Photos taken'].map(t=>`<div class="checkbox-row"><div class="checkbox"></div><span>${t}</span></div>`).join('')}
+      <div class="sig-line"><span>Packed by: __________________</span><span>Inspected by: __________________</span><span>Date: __________________</span></div>
+    </div>`);
+};
+
+const printHuddleBoard = (date) => {
+  const d = date||new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  printHTML('Daily Huddle Board', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Daily Production Standup</div></div>
+        <div style="text-align:right"><div class="doc-title">HUDDLE BOARD</div><div class="doc-meta">${d}</div></div>
+      </div>
+      <div class="section-title">Team Updates</div>
+      <table>
+        <thead><tr><th style="width:18%">Team Member</th><th>Completed Yesterday</th><th>Working On Today</th><th style="width:22%">Blockers / Needs</th></tr></thead>
+        <tbody>
+          ${['Amber','Jace','Nick','Michael',''].map(n=>`<tr style="height:44px"><td style="font-weight:600">${n}</td><td></td><td></td><td></td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="grid-2">
+        <div>
+          <div class="section-title">🔥 Today's Priorities (Top 3)</div>
+          ${[1,2,3].map(n=>`<div class="checkbox-row"><div class="checkbox"></div><div style="flex:1;border-bottom:1px solid #e5e7eb;height:22px"></div></div>`).join('')}
+          <div class="section-title">⚠️ Safety / Quality Alerts</div>
+          <div class="write-line"/><div class="write-line"/>
+        </div>
+        <div>
+          <div class="section-title">📦 Orders Shipping Today</div>
+          <div class="write-line"/><div class="write-line"/><div class="write-line"/>
+          <div class="section-title">📊 Yesterday's Output vs Goal</div>
+          <table>
+            <thead><tr><th>Station</th><th>Goal</th><th>Actual</th><th>Δ</th></tr></thead>
+            <tbody>${['Cutting','CNC','Welding','Powder Coat','Assembly'].map(s=>`<tr style="height:26px"><td>${s}</td><td></td><td></td><td></td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section-title">💡 Improvement Ideas / Notes</div>
+      <div class="write-line"/><div class="write-line"/>
+      <div class="sig-line"><span>Facilitator: __________________</span><span>Start Time: ______</span><span>End Time: ______</span><span>Attendees: ______ of ______</span></div>
+    </div>`);
+};
+
+const printKPIReport = (data) => {
+  const weekly = (data.kpiWeekly||[]).filter(w=>w.onTimeDeliveryPct||w.wipCount||w.scrapWasteDollar).slice(-8);
+  const targets = data.kpiTargets||[];
+  printHTML('KPI Report', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Operations KPI Report</div></div>
+        <div style="text-align:right"><div class="doc-title">KPI REPORT</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="section-title">KPI Targets</div>
+      <table>
+        <thead><tr><th>Metric</th><th>🟢 Green Target</th><th>🟡 Yellow</th><th>Unit</th></tr></thead>
+        <tbody>${targets.map(t=>`<tr><td>${t.metric}</td><td style="color:#065f46;font-weight:600">${(t.green*100).toFixed(0)}</td><td style="color:#92400e">${(t.yellow*100).toFixed(0)}</td><td style="color:#6b7280">${t.unit}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="section-title">Weekly KPI Trend (Last 8 Weeks)</div>
+      <table>
+        <thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th></tr></thead>
+        <tbody>${weekly.length>0?weekly.map(w=>`<tr><td>${w.weekEnding}</td><td style="${w.onTimeDeliveryPct>=95?'color:#065f46':w.onTimeDeliveryPct>=85?'color:#92400e':'color:#991b1b'}">${w.onTimeDeliveryPct||'—'}</td><td>${w.firstPassYieldPct||'—'}</td><td>${w.avgLeadTimeDays||'—'}</td><td>${w.wipCount||'—'}</td><td>${w.scrapWasteDollar?'$'+w.scrapWasteDollar:'—'}</td><td style="${w.safetyIncidents>0?'color:#991b1b;font-weight:700':''}">${w.safetyIncidents||'0'}</td></tr>`).join(''):`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">No weekly data entered yet — use KPI Dashboard to log weekly metrics</td></tr>`}</tbody>
+      </table>
+      <div class="section-title">Station Output (Process Cost Analysis)</div>
+      <table>
+        <thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Day</th><th>Labor $/Day</th><th>Total $/Day</th></tr></thead>
+        <tbody>${(data.costPerStation||[]).slice(0,10).map(s=>`<tr><td>${s.station}</td><td>${s.timePerSectionMin?.toFixed(1)||'—'}</td><td>${s.sectionsPerDay?.toFixed(0)||'—'}</td><td>$${s.laborDollarDay?.toFixed(0)||'—'}</td><td>$${s.totalProcessDollarDay?.toFixed(0)||'—'}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="sig-line"><span>Report by: Daniel Jones, Director of Operations</span><span>Maisy Railing · ${new Date().toLocaleDateString()}</span></div>
+    </div>`);
+};
+
+const printInventoryReport = (data) => {
+  const inv = data.inventory||[];
+  const critical = inv.filter(i=>i.status==='CRITICAL'||i.qty<=i.reorder);
+  printHTML('Inventory Report', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Inventory Status Report</div></div>
+        <div style="text-align:right"><div class="doc-title">INVENTORY</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="box"><div class="box-label">Total Items</div><div class="box-val">${inv.length}</div></div>
+        <div class="box"><div class="box-label">Critical / Low</div><div class="box-val" style="color:#991b1b">${critical.length}</div></div>
+        <div class="box"><div class="box-label">Raw Materials</div><div class="box-val">${(data.rawMaterials||[]).length}</div></div>
+        <div class="box"><div class="box-label">Assembly Items</div><div class="box-val">${(data.assemblyItems||[]).length}</div></div>
+      </div>
+      <div class="section-title">🔴 Critical / Low Stock — Reorder Required</div>
+      <table>
+        <thead><tr><th>ID</th><th>Description</th><th>On Hand</th><th>Reorder Point</th><th>Unit</th><th>Vendor</th><th>Status</th></tr></thead>
+        <tbody>${critical.map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td>${i.name}</td><td style="font-weight:700;color:#991b1b">${i.qty}</td><td>${i.reorder||i.minOnHand||'—'}</td><td>${i.unit}</td><td style="font-size:10px">${i.vendor||'—'}</td><td><span class="badge badge-err">${i.status}</span></td></tr>`).join('')}</tbody>
+      </table>
+      <div class="section-title">Full Inventory — Raw Materials</div>
+      <table>
+        <thead><tr><th>ID</th><th>Description</th><th>Qty On Hand</th><th>Unit</th><th>Cost</th><th>Value</th><th>Status</th></tr></thead>
+        <tbody>${(data.rawMaterials||[]).map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td style="font-size:10px">${i.name}</td><td style="${i.status==='CRITICAL'?'color:#991b1b;font-weight:700':''}">${i.qty}</td><td>${i.unit}</td><td>$${i.cost||'—'}</td><td>$${i.value||((i.qty||0)*(i.cost||0)).toFixed(2)}</td><td><span class="badge badge-${i.status==='OK'?'ok':i.status==='CRITICAL'?'err':'warn'}">${i.status||'—'}</span></td></tr>`).join('')}</tbody>
+      </table>
+      <div class="sig-line"><span>Cycle Count by: __________________</span><span>Date: __________________</span><span>Verified by: __________________</span></div>
+    </div>`);
+};
+
+const printSafetyLog = (data) => {
+  const log = data.safetyLog||[];
+  printHTML('Safety Log', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Safety Incident Log · OSHA Recordkeeping</div></div>
+        <div style="text-align:right"><div class="doc-title">SAFETY LOG</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="box"><div class="box-label">Total Incidents</div><div class="box-val">${log.length}</div></div>
+        <div class="box"><div class="box-label">Open</div><div class="box-val" style="color:#991b1b">${log.filter(l=>l.status&&l.status.toLowerCase().includes('open')).length}</div></div>
+        <div class="box"><div class="box-label">Injuries</div><div class="box-val" style="color:#d97706">${log.filter(l=>l.type&&l.type.toLowerCase().includes('injury')).length}</div></div>
+        <div class="box"><div class="box-label">Near Misses</div><div class="box-val">${log.filter(l=>l.type&&l.type.toLowerCase().includes('near')).length}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Location</th><th>Involved</th><th>Description</th><th>Corrective Action</th><th>Status</th></tr></thead>
+        <tbody>${log.map(l=>`<tr><td style="white-space:nowrap">${l.date||'—'}</td><td><span class="badge badge-${l.type&&l.type.toLowerCase().includes('injury')?'err':l.type&&l.type.toLowerCase().includes('near')?'warn':'gray'}">${l.type||'—'}</span></td><td style="font-size:10px">${l.location||'—'}</td><td style="font-size:10px">${l.involved||'—'}</td><td style="font-size:10px;max-width:150px">${l.description||'—'}</td><td style="font-size:10px;max-width:120px">${l.corrAction||'—'}</td><td><span class="badge badge-${l.status&&l.status.toLowerCase().includes('closed')?'ok':'err'}">${l.status||'—'}</span></td></tr>`).join('')}
+        ${log.length===0?'<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:20px">No incidents recorded</td></tr>':''}</tbody>
+      </table>
+      <div class="section-title">Blank Incident Report</div>
+      <div class="grid-2">
+        <div><div class="write-label">Date / Time</div><div class="write-line"/>
+        <div class="write-label">Location / Station</div><div class="write-line"/>
+        <div class="write-label">Employee(s) Involved</div><div class="write-line"/></div>
+        <div><div class="write-label">Incident Type</div><div class="write-line"/>
+        <div class="write-label">Reported By</div><div class="write-line"/>
+        <div class="write-label">Supervisor Notified</div><div class="write-line"/></div>
+      </div>
+      <div class="write-label">Description of Incident</div><div class="write-line"/><div class="write-line"/>
+      <div class="write-label">Root Cause</div><div class="write-line"/>
+      <div class="write-label">Corrective Action Taken</div><div class="write-line"/><div class="write-line"/>
+      <div class="sig-line"><span>Employee Signature: __________________</span><span>Supervisor: __________________</span><span>Date: __________</span></div>
+    </div>`);
+};
+
+const printImprovementLog = (data) => {
+  const log = data.improvementLog||[];
+  const totalSavings = log.reduce((a,b)=>a+(b.estSavings||0),0);
+  printHTML('Improvement Log', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Kaizen / Continuous Improvement Log</div></div>
+        <div style="text-align:right"><div class="doc-title">IMPROVEMENT LOG</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="box"><div class="box-label">Total Ideas</div><div class="box-val">${log.length}</div></div>
+        <div class="box"><div class="box-label">Complete</div><div class="box-val" style="color:#065f46">${log.filter(l=>l.status==='Complete').length}</div></div>
+        <div class="box"><div class="box-label">In Progress</div><div class="box-val" style="color:#1e40af">${log.filter(l=>l.status==='In Progress').length}</div></div>
+        <div class="box" style="background:#f0fdf4"><div class="box-label">Est. Annual Savings</div><div class="box-val" style="color:#065f46">$${totalSavings.toLocaleString()}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Area</th><th>Description</th><th>By</th><th>Est $/yr</th><th>Cost</th><th>Status</th></tr></thead>
+        <tbody>${log.map(l=>`<tr><td style="font-family:monospace;font-size:10px">${l.id}</td><td style="font-size:10px">${l.area||'—'}</td><td style="font-size:10px;max-width:200px">${l.description||'—'}</td><td style="font-size:10px">${l.submittedBy||'—'}</td><td style="color:#065f46;font-weight:600">$${(l.estSavings||0).toLocaleString()}</td><td style="color:#6b7280">$${(l.implCost||0).toLocaleString()}</td><td><span class="badge badge-${l.status==='Complete'?'ok':l.status==='In Progress'?'blue':'gray'}">${l.status||'—'}</span></td></tr>`).join('')}</tbody>
+      </table>
+      <div class="section-title">Submit a New Improvement Idea</div>
+      <div class="grid-2">
+        <div><div class="write-label">Submitted By</div><div class="write-line"/>
+        <div class="write-label">Station / Area</div><div class="write-line"/>
+        <div class="write-label">Est. Annual Savings</div><div class="write-line"/></div>
+        <div><div class="write-label">Date</div><div class="write-line"/>
+        <div class="write-label">Priority (1–5)</div><div class="write-line"/>
+        <div class="write-label">Est. Implementation Cost</div><div class="write-line"/></div>
+      </div>
+      <div class="write-label">Description of Improvement</div><div class="write-line"/><div class="write-line"/>
+      <div class="write-label">Expected Benefit / Outcome</div><div class="write-line"/>
+      <div class="sig-line"><span>Submitted: __________________</span><span>Reviewed by: Daniel Jones</span><span>Date: __________</span></div>
+    </div>`);
+};
+
+const printTrainingMatrix = (data) => {
+  const matrix = data.trainingMatrix||[];
+  const employees = [...new Set(matrix.map(m=>m.empName))];
+  const skills = [...new Set(matrix.map(m=>m.skill))];
+  const lookup = {};
+  matrix.forEach(m=>{ lookup[`${m.empName}|${m.skill}`] = m.raw; });
+  printHTML('Training Matrix', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Cross-Training Skills Matrix</div></div>
+        <div style="text-align:right"><div class="doc-title">TRAINING MATRIX</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-bottom:10px">Legend: <b style="color:#065f46">✓</b> = Certified &nbsp;|&nbsp; <b style="color:#1e40af">IP</b> = In Progress &nbsp;|&nbsp; <b style="color:#9ca3af">—</b> = Not Trained</div>
+      <table>
+        <thead><tr><th>Skill / Certification</th>${employees.map(e=>`<th style="text-align:center">${e}</th>`).join('')}</tr></thead>
+        <tbody>${skills.map(skill=>`<tr><td style="font-size:10px">${skill}</td>${employees.map(e=>{const v=lookup[`${e}|${skill}`]||'—';return`<td style="text-align:center;font-size:11px;font-weight:700;color:${v==='✓'?'#065f46':v==='IP'?'#1e40af':'#d1d5db'}">${v}</td>`;}).join('')}</tr>`).join('')}</tbody>
+      </table>
+      <div class="sig-line"><span>HR Review: __________________</span><span>Date: __________________</span><span>Next Review: __________________</span></div>
+    </div>`);
+};
+
+
 const Spinner = () => <div className="spin" style={{width:12,height:12,border:'2px solid var(--bdr)',borderTopColor:'var(--acc)',borderRadius:'50%'}}/>;
 const Empty = ({msg='No records'}) => <div style={{textAlign:'center',padding:'40px 0',color:'var(--muted)',fontSize:12.5}}><div style={{fontSize:24,marginBottom:8,opacity:.3}}>◫</div>{msg}</div>;
 
@@ -6002,7 +6400,8386 @@ const INIT = {
     {id:'APR-004',itemId:'PSC-016',itemName:'Filler Rod #4043 3/32 Alum',vendor:'American Welding Supply',triggerQty:2,orderQty:10,unitCost:0,unit:'LB',enabled:true},
   ],
 
-  // ─── Backward-compatible keys (v4 components reference these — do NOT remove) ──
+
+  // ─── NEW DATA — v5.1 ────────────────────────────────────────────────────────
+
+  // ERP.xlsx — Post MFG Lengths (24 part numbers with CNC cut lengths in inches)
+  postsMfgList: [
+    {
+        "partNo": "P-CBL-FM-LINE-42",
+        "desc": "Post | Cable | Fascia Mount | Line - 42\"",
+        "mfgLength": 47.75,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-FM-STR-42",
+        "desc": "Post | Cable | Fascia Mount | Stair - 42\"",
+        "mfgLength": 47.62,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-FM-CRN-42",
+        "desc": "Post | Cable | Fascia Mount | Corner - 42\"",
+        "mfgLength": 47.75,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-FM-LINE-42",
+        "desc": "Post | Glass | Fascia Mount | Line - 42\"",
+        "mfgLength": 47.75,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-FM-STR-42",
+        "desc": "Post | Glass | Fascia Mount | Stair - 42\"",
+        "mfgLength": 47.62,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-FM-CRN-42",
+        "desc": "Post | Glass | Fascia Mount | Corner - 42\"",
+        "mfgLength": 47.75,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-SM-LINE-42",
+        "desc": "Post | Cable | Surface Mount | Line - 42\"",
+        "mfgLength": 41.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-SM-STR-42",
+        "desc": "Post | Cable | Surface Mount | Stair - 42\"",
+        "mfgLength": 40.88,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-SM-CRN-42",
+        "desc": "Post | Cable | Surface Mount | Corner - 42\"",
+        "mfgLength": 41.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-SM-LINE-42",
+        "desc": "Post | Glass | Surface Mount | Line - 42\"",
+        "mfgLength": 41.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-SM-STR-42",
+        "desc": "Post | Glass | Surface Mount | Stair - 42\"",
+        "mfgLength": 40.88,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-SM-CRN-42",
+        "desc": "Post | Glass | Surface Mouint | Corner - 42\"",
+        "mfgLength": 41.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-FM-LINE-36",
+        "desc": "Post | Cable | Fascia Mount | Line - 36\"",
+        "mfgLength": 43.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-FM-STR-36",
+        "desc": "Post | Cable | Fascia Mount | Stair - 36\"",
+        "mfgLength": 42.88,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-FM-CRN-36",
+        "desc": "Post | Cable | Fascia Mount | Corner - 36\"",
+        "mfgLength": 43.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-FM-LINE-36",
+        "desc": "Post | Glass | Fascia Mount | Line - 36\"",
+        "mfgLength": 43.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-FM-STR-36",
+        "desc": "Post | Glass | Fascia Mount | Stair - 36\"",
+        "mfgLength": 42.88,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-FM-CRN-36",
+        "desc": "Post | Glass | Fascia Mount | Corner - 36\"",
+        "mfgLength": 43.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-SM-LINE-36",
+        "desc": "Post | Cable | Surface Mount | Line - 36\"",
+        "mfgLength": 35.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-SM-STR-36",
+        "desc": "Post | Cable | Surface Mount | Stair - 36\"",
+        "mfgLength": 34.88,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-CBL-SM-CRN-36",
+        "desc": "Post | Cable | Surface Mount | Corner - 36\"",
+        "mfgLength": 35.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-SM-LINE-36",
+        "desc": "Post | Glass | Surface Mount | Line - 36\"",
+        "mfgLength": 35.0,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-SM-STR-36",
+        "desc": "Post | Glass | Surface Mount | Stair - 36\"",
+        "mfgLength": 34.88,
+        "unit": "in"
+    },
+    {
+        "partNo": "P-GLS-SM-CRN-36",
+        "desc": "Post | Glass | Surface Mount | Corner - 36\"",
+        "mfgLength": 35.0,
+        "unit": "in"
+    }
+],
+
+  // ERP.xlsx (pre-2026) — 387 historical customer orders Nov 2024-Feb 2025
+  legacyOrders: [
+    {
+        "id": "LEG-0001",
+        "customer": "Marshon Smith Kempf",
+        "date": "2025-11-20",
+        "shipTo": "Local Pickup",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            30.0,
+            16.0,
+            16.0,
+            6.0,
+            26.0,
+            338.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0002",
+        "customer": "Ford Perry",
+        "date": "2025-11-20",
+        "shipTo": "Local Install 3bd",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            63.0,
+            29.0,
+            29.0,
+            18.0,
+            50.0,
+            650.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0003",
+        "customer": "Stan Thornton",
+        "date": "2025-11-20",
+        "shipTo": "Local Install 3bd",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            26.0,
+            12.0,
+            12.0,
+            5.0,
+            20.0,
+            260.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0004",
+        "customer": "Ben Hall (dads job)",
+        "date": "2025-11-20",
+        "shipTo": "Shipping",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            3.0,
+            18.0,
+            104.0,
+            30.0,
+            60.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0005",
+        "customer": "Paul Beagle",
+        "date": "2025-11-20",
+        "shipTo": "Shipping",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            13.0,
+            10.0,
+            10.0,
+            4.0,
+            12.0,
+            156.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0006",
+        "customer": "Carol Oliver & Elliav",
+        "date": "2025-11-21",
+        "shipTo": "3bd w/side install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            59.0,
+            8.0,
+            8.0,
+            10.0,
+            50.0,
+            650.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0007",
+        "customer": "Jrscates LLC James Scate",
+        "date": "2025-11-25",
+        "shipTo": "Shipping",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            16.0,
+            14.0,
+            14.0,
+            4.0,
+            14.0,
+            182.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0008",
+        "customer": "Ac Wool",
+        "date": "2025-11-26",
+        "shipTo": "Local Install 3bd",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            27.0,
+            6.0,
+            6.0,
+            6.0,
+            22.0,
+            286.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0009",
+        "customer": "Patrick McMullen",
+        "date": "2025-12-02",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            6.0,
+            1.0,
+            4.0,
+            52.0,
+            300.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0010",
+        "customer": "Nathan Oines",
+        "date": "2025-11-12",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            34.0,
+            8.0,
+            8.0,
+            7.0,
+            22.0,
+            286.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0011",
+        "customer": "3bd - Inventory",
+        "date": "2025-11-12",
+        "shipTo": "Bellevue",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            100.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0012",
+        "customer": "Kristen Jepsen",
+        "date": "2025-11-12",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            6.0,
+            6.0,
+            4.0,
+            18.0,
+            240.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0013",
+        "customer": "Amy Talarico",
+        "date": "2025-11-10",
+        "shipTo": "California Ship",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            6.0,
+            6.0,
+            2.0,
+            12.0,
+            156.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0014",
+        "customer": "Lisa Brown",
+        "date": "2025-11-10",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            8.0,
+            2.0,
+            4.0,
+            52.0,
+            300.0,
+            32.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0015",
+        "customer": "Kim Sloat",
+        "date": "2025-11-10",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            40.0,
+            8.0,
+            8.0,
+            10.0,
+            24.0,
+            312.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0016",
+        "customer": "Cary Jones",
+        "date": "2025-11-10",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            23.0,
+            2.0,
+            2.0,
+            5.0,
+            14.0,
+            182.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0017",
+        "customer": "Joe Christman",
+        "date": "2025-11-06",
+        "shipTo": "Ship to: Denver",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            45.0,
+            9.0,
+            20.0,
+            260.0,
+            1900.0,
+            90.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0018",
+        "customer": "Judd & Ellie Mathiason",
+        "date": "2025-11-05",
+        "shipTo": "Local Pickup",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            47.0,
+            6.0,
+            6.0,
+            10.0,
+            24.0,
+            312.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0019",
+        "customer": "BRAD Lewandowski",
+        "date": "2025-11-05",
+        "shipTo": "Local Install 3bd",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            18.0,
+            4.0,
+            4.0,
+            4.0,
+            10.0,
+            156.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0020",
+        "customer": "Keith Robertson",
+        "date": "2025-11-03",
+        "shipTo": "Local Install 3bd",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            26.0,
+            4.0,
+            2.0,
+            5.0,
+            14.0,
+            182.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0021",
+        "customer": "Dean Brotzman",
+        "date": "2025-11-03",
+        "shipTo": "Local Pickup",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            2.0,
+            4.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0022",
+        "customer": "Rick Taylor",
+        "date": "2025-10-24",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            38.0,
+            8.0,
+            8.0,
+            9.0,
+            22.0,
+            300.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0023",
+        "customer": "Rob Motts",
+        "date": "2025-10-30",
+        "shipTo": "Local Install 3bd",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            4.0,
+            4.0,
+            4.0,
+            12.0,
+            180.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0024",
+        "customer": "Barry McLane (CUSTOM COLOR)",
+        "date": "2025-10-23",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            34.0,
+            8.0,
+            8.0,
+            8.0,
+            20.0,
+            260.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0025",
+        "customer": "David Jumpa",
+        "date": "2024-12-30",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            7.0,
+            7.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0026",
+        "customer": "Zhuang",
+        "date": "2024-12-30",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            14.0,
+            14.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0027",
+        "customer": "Blake Carson",
+        "date": "2025-01-03",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            25.0,
+            25.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0028",
+        "customer": "Merwin Storage",
+        "date": "2025-01-03",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            16.0,
+            16.0,
+            3.0,
+            3.0,
+            8.0,
+            120.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0029",
+        "customer": "JC",
+        "date": "2024-12-27",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            5.0,
+            5.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0030",
+        "customer": "Lisa Addy / Rock Ext",
+        "date": "2025-01-10",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0031",
+        "customer": "Cheryl Johnson",
+        "date": "2025-01-06",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            7.0,
+            7.0,
+            16.0,
+            220.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0032",
+        "customer": "Chris Campbell",
+        "date": "2025-01-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            27.0,
+            27.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0033",
+        "customer": "David Johnson (WHITE!)",
+        "date": "2025-01-23",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            29.0,
+            29.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0034",
+        "customer": "Lillian Colbert",
+        "date": "2025-02-04",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0035",
+        "customer": "Ryan Rauschert",
+        "date": "2025-01-17",
+        "shipTo": "Oregon (Mail)",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            800.0,
+            800.0,
+            60.0,
+            60.0,
+            150.0,
+            150.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0036",
+        "customer": "Tami Neumann (Rework 2)",
+        "date": "2025-02-11",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0037",
+        "customer": "Justin Whitman",
+        "date": "2025-01-29",
+        "shipTo": "Montana",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            5.0,
+            5.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0038",
+        "customer": "3BD - Matt Kimmerly",
+        "date": "2025-01-29",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            39.0,
+            39.0,
+            18.0,
+            18.0,
+            18.0,
+            18.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0039",
+        "customer": "Zach Yamagishi",
+        "date": "2025-02-04",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            8.0,
+            8.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0040",
+        "customer": "3BD - Daniel Phillips",
+        "date": "2025-01-29",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            16.0,
+            16.0,
+            16.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0041",
+        "customer": "3BD - Craig Feldman",
+        "date": "2025-01-30",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            16.0,
+            16.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0042",
+        "customer": "Garret Jacobs",
+        "date": "2025-01-29",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0043",
+        "customer": "3BD - Chris Helgeson",
+        "date": "2025-02-27",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            47.0,
+            47.0,
+            14.0,
+            14.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0044",
+        "customer": "3BD - Juan Morales",
+        "date": "2025-02-27",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            50.0,
+            50.0,
+            16.0,
+            16.0,
+            16.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0045",
+        "customer": "Ben Murphy - Monica",
+        "date": "2025-02-19",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            11.0,
+            11.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0046",
+        "customer": "Ben Murphy - Eric",
+        "date": "2025-02-19",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            14.0,
+            14.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0047",
+        "customer": "Ben Murphy - Clifton",
+        "date": "2025-02-13",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            9.0,
+            9.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0048",
+        "customer": "Cheri Douglas",
+        "date": "2025-02-17",
+        "shipTo": "Wisconsin",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            24.0,
+            24.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0049",
+        "customer": "Terry Walker",
+        "date": "2025-02-27",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            6.0,
+            6.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0050",
+        "customer": "Alan / Vicky / Kathren",
+        "date": "2025-02-20",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            16.0,
+            16.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0051",
+        "customer": "John Barnwell",
+        "date": "2025-03-20",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0,
+            4.0,
+            4.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0052",
+        "customer": "3BD - Todd Dunlap",
+        "date": "2025-02-27",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0053",
+        "customer": "Andrew Luccock",
+        "date": "2025-03-11",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            17.0,
+            17.0,
+            2.5,
+            2.5,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0054",
+        "customer": "3BD - Matt Kimmberly - REWORK 3",
+        "date": "2025-03-11",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0055",
+        "customer": "Isaiah Banfro",
+        "date": "2025-03-17",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            24.0,
+            24.0,
+            20.0,
+            20.0,
+            20.0,
+            20.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0056",
+        "customer": "Heather Wilson",
+        "date": "2025-03-14",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            24.0,
+            24.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0057",
+        "customer": "Erin Hope",
+        "date": "2025-03-14",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            5.0,
+            5.0,
+            1.0,
+            1.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0058",
+        "customer": "Sage Decks - Dave Holma",
+        "date": "2025-03-18",
+        "shipTo": "Montana",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            34.0,
+            34.0,
+            16.0,
+            16.0,
+            16.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0059",
+        "customer": "Coeur Builders - Cochran",
+        "date": "2025-03-21",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            29.0,
+            29.0,
+            6.0,
+            6.0,
+            16.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0060",
+        "customer": "Junity - Lot 5",
+        "date": "2025-03-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            20.0,
+            20.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0061",
+        "customer": "Junity - Lot 6",
+        "date": "2025-03-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0062",
+        "customer": "Claudia Scruzr",
+        "date": "2025-03-24",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0063",
+        "customer": "3BD - Gulstrom",
+        "date": "2025-03-24",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            17.0,
+            17.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0064",
+        "customer": "3BD - JoLynn Garrett",
+        "date": "2025-03-24",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            37.0,
+            37.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0065",
+        "customer": "3BD - Traci Grant",
+        "date": "2025-04-01",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0066",
+        "customer": "Curtis Kiepprien",
+        "date": "2025-03-31",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            8.0,
+            8.0,
+            3.0,
+            3.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0067",
+        "customer": "3BD - Kristine Marshall",
+        "date": "2025-04-01",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            26.0,
+            26.0,
+            8.0,
+            8.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0068",
+        "customer": "Sarah Rodriguez",
+        "date": "2025-04-01",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            29.0,
+            29.0,
+            1.0,
+            1.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0069",
+        "customer": "SkyPro Remodeling",
+        "date": "2025-03-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            11.0,
+            11.0,
+            15.0,
+            15.0,
+            15.0,
+            15.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0070",
+        "customer": "3BD - Greg Appert",
+        "date": "2025-03-30",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            37.0,
+            37.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0071",
+        "customer": "Bryan Cooley",
+        "date": "2025-03-30",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            35.0,
+            35.0,
+            17.0,
+            17.0,
+            17.0,
+            17.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0072",
+        "customer": "Nicole Hawkins",
+        "date": "2025-04-11",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            32.0,
+            32.0,
+            6.0,
+            6.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0073",
+        "customer": "Ruvim Dragomir",
+        "date": "2025-04-11",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            22.0,
+            22.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0074",
+        "customer": "Clearwater Construction",
+        "date": "2025-04-09",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            8.0,
+            8.0,
+            18.0,
+            18.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0075",
+        "customer": "Lynne O'Callaghan",
+        "date": "2025-04-11",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            11.0,
+            11.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0076",
+        "customer": "Rich Boyer",
+        "date": "2025-04-04",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            35.0,
+            35.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0077",
+        "customer": "Matthew Siegel",
+        "date": "2025-04-07",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            30.0,
+            30.0,
+            5.0,
+            5.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0078",
+        "customer": "Myles Magnuson",
+        "date": "2025-04-22",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0079",
+        "customer": "Claudia Scruzr - Rework",
+        "date": "2025-04-21",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0080",
+        "customer": "3BD - Paul Mathews",
+        "date": "2025-04-07",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            38.0,
+            38.0,
+            22.0,
+            22.0,
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0081",
+        "customer": "Dale Bernardson",
+        "date": "2025-04-07",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            45.0,
+            45.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0082",
+        "customer": "Javier Rodriguez - Echo Hallow",
+        "date": "2025-04-16",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0083",
+        "customer": "3BD  - Will Green",
+        "date": "2025-05-12",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            9.0,
+            9.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0084",
+        "customer": "JEM Builders - Vincent Valesquez",
+        "date": "2025-04-07",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            132.0,
+            132.0,
+            14.0,
+            14.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0085",
+        "customer": "Cathie Haas",
+        "date": "2025-04-09",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0086",
+        "customer": "3BD - Dave Peters",
+        "date": "2025-04-22",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0087",
+        "customer": "3BD - Pascucci Posts / Gate",
+        "date": "2025-05-16",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            11.0,
+            11.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0088",
+        "customer": "3BD - Pham Custom Posts",
+        "date": "2025-05-16",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0089",
+        "customer": "Jason - Everett - New Posts",
+        "date": "2025-05-12",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            22.0,
+            22.0,
+            30.0,
+            30.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0090",
+        "customer": "Jesse Farrat",
+        "date": "2025-05-12",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            50.0,
+            50.0,
+            13.0,
+            13.0,
+            13.0,
+            13.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0091",
+        "customer": "Chelsea Mae",
+        "date": "2025-04-22",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            32.0,
+            32.0,
+            7.0,
+            7.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0092",
+        "customer": "NWBNR - Scott Peterson",
+        "date": "2025-04-16",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            11.0,
+            11.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0093",
+        "customer": "3BD - Wilder Heath / Custom",
+        "date": "2025-05-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            22.0,
+            22.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0094",
+        "customer": "Coeur Builders - Juliet Rail",
+        "date": "2025-05-12",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            3.0,
+            3.0,
+            0.5,
+            0.5,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0095",
+        "customer": "3BD - Tom Fink",
+        "date": "2025-05-27",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            7.0,
+            7.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0096",
+        "customer": "3BD - Ken Kolbe",
+        "date": "2025-05-28",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0,
+            3.0,
+            3.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0097",
+        "customer": "Koinonia Construction",
+        "date": "2025-04-23",
+        "shipTo": "Nevada",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            5.0,
+            5.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0098",
+        "customer": "Peterson Const. - Bruce Peterson",
+        "date": "2025-05-07",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            20.0,
+            20.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0099",
+        "customer": "Bar Rozner",
+        "date": "2025-06-13",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            3.0,
+            3.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0100",
+        "customer": "Linda & Tom Dabbs",
+        "date": "2025-05-30",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            27.0,
+            27.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0101",
+        "customer": "3BD - Mark Anderson",
+        "date": "2025-05-09",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            48.0,
+            48.0,
+            41.0,
+            41.0,
+            41.0,
+            41.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0102",
+        "customer": "3BD - Robyn Borders",
+        "date": "2025-07-01",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0103",
+        "customer": "3BD - Tom Fink / Order 2",
+        "date": "2025-07-01",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            18.0,
+            18.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0104",
+        "customer": "Jack Rosemary",
+        "date": "2025-06-24",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0105",
+        "customer": "Brittney Lissner",
+        "date": "2025-06-24",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            48.0,
+            48.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0106",
+        "customer": "Brady Frandsen - Constitutional",
+        "date": "2025-06-24",
+        "shipTo": "Utah",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0107",
+        "customer": "JDM Customs",
+        "date": "2025-07-01",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            11.0,
+            11.0,
+            26.0,
+            26.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0108",
+        "customer": "Sarah Cichosz - Columbia Pools",
+        "date": "2025-05-16",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            36.0,
+            36.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0109",
+        "customer": "Paul Harrington",
+        "date": "2025-05-29",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            2.0,
+            2.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0110",
+        "customer": "Tom Kelly",
+        "date": "2025-05-30",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            18.0,
+            18.0,
+            3.0,
+            3.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0111",
+        "customer": "Louise Conroy",
+        "date": "2025-06-04",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0112",
+        "customer": "Kenneth Nguyen",
+        "date": "2025-06-11",
+        "shipTo": "Pennsylvania",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            24.0,
+            24.0,
+            6.0,
+            6.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0113",
+        "customer": "Kevin Hungate",
+        "date": "2025-06-25",
+        "shipTo": "Idaho",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            8.0,
+            8.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0114",
+        "customer": "Bar Rozner - Bloch Street",
+        "date": "2025-07-03",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            3.0,
+            3.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0115",
+        "customer": "Ben Murphy - Spirit Lake",
+        "date": "2025-07-14",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            13.0,
+            13.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0116",
+        "customer": "Keith Moses",
+        "date": "2025-07-02",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0117",
+        "customer": "Maravilla Projects - Scouts Overlook",
+        "date": "2025-07-02",
+        "shipTo": "Georgia",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            28.0,
+            28.0,
+            8.0,
+            8.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0118",
+        "customer": "Todd Bassen",
+        "date": "2025-07-09",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            22.0,
+            22.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0119",
+        "customer": "Brad Anderson",
+        "date": "2025-07-14",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            7.0,
+            7.0,
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0120",
+        "customer": "Menno Vanderlist",
+        "date": "2025-06-20",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            29.0,
+            29.0,
+            9.0,
+            9.0,
+            9.0,
+            9.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0121",
+        "customer": "Daniel Jaimes",
+        "date": "2025-07-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            18.0,
+            18.0,
+            8.0,
+            8.0,
+            8.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0122",
+        "customer": "Greg Mixon",
+        "date": "2025-07-02",
+        "shipTo": "Montana",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            16.0,
+            16.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0123",
+        "customer": "Glenn Boarman",
+        "date": "2025-06-04",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            17.0,
+            17.0,
+            16.0,
+            16.0,
+            16.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0124",
+        "customer": "Mike Cortinas",
+        "date": "2025-07-18",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            20.0,
+            20.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0125",
+        "customer": "Eyo Ekpo",
+        "date": "2025-07-18",
+        "shipTo": "Minnesota",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            3.0,
+            3.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0126",
+        "customer": "Alyssa Shaw",
+        "date": "2025-07-18",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            20.0,
+            20.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0127",
+        "customer": "James Forsyth",
+        "date": "2025-07-28",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0128",
+        "customer": "Sherri Meck",
+        "date": "2025-08-04",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            13.0,
+            13.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0129",
+        "customer": "Aaron Egger",
+        "date": "2025-08-08",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            7.0,
+            7.0,
+            22.0,
+            22.0,
+            320.0,
+            320.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0130",
+        "customer": "3BD Inventory - Week of 08.11",
+        "date": "2025-08-11",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            100.0,
+            100.0,
+            50.0,
+            50.0,
+            50.0,
+            50.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0131",
+        "customer": "Ben Murphy - Spirit Lake 2",
+        "date": "2025-08-04",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            11.0,
+            11.0,
+            7.0,
+            7.0,
+            20.0,
+            20.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0132",
+        "customer": "Viking Construction - Harold Hopkins",
+        "date": "2025-08-04",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0133",
+        "customer": "Tennaile Timbrook",
+        "date": "2025-08-06",
+        "shipTo": "Ohio",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            26.0,
+            26.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0134",
+        "customer": "3BD Inventory - Week of 08.18",
+        "date": "2025-08-18",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            200.0,
+            200.0,
+            30.0,
+            30.0,
+            50.0,
+            50.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0135",
+        "customer": "Duane Klinge",
+        "date": "2025-08-12",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            29.0,
+            29.0,
+            14.0,
+            14.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0136",
+        "customer": "KingBuilt LLC",
+        "date": "2025-08-12",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            36.0,
+            36.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0137",
+        "customer": "Dan Kozak",
+        "date": "2025-08-18",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            33.0,
+            33.0,
+            7.0,
+            7.0,
+            16.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0138",
+        "customer": "River A Construction",
+        "date": "2025-08-20",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            14.0,
+            14.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0139",
+        "customer": "Debi Ferguson",
+        "date": "2025-08-25",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            30.0,
+            30.0,
+            6.0,
+            6.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0140",
+        "customer": "3BD Inventory - Week of 08.25",
+        "date": "2025-08-15",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            200.0,
+            200.0,
+            30.0,
+            30.0,
+            50.0,
+            50.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0141",
+        "customer": "Cecil Roby, Jr.",
+        "date": "2025-08-11",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            43.0,
+            43.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0142",
+        "customer": "3BD - Graham Johnson",
+        "date": "2025-09-02",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0143",
+        "customer": "Renan Morals",
+        "date": "2025-08-18",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            25.0,
+            25.0,
+            12.0,
+            12.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0144",
+        "customer": "3BD Inventory - Week of Sept 01",
+        "date": "2025-08-25",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            200.0,
+            200.0,
+            60.0,
+            60.0,
+            60.0,
+            60.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0145",
+        "customer": "Blake Carson - Nelson Project",
+        "date": "2025-09-04",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            21.0,
+            21.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0146",
+        "customer": "3BD - McKenzie Construstion",
+        "date": "2025-09-02",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0147",
+        "customer": "David Victor",
+        "date": "2025-08-28",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0148",
+        "customer": "Chirs McCartney",
+        "date": "2025-09-03",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0149",
+        "customer": "Rocky Fresh",
+        "date": "2025-08-29",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            13.0,
+            13.0,
+            7.0,
+            7.0,
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0150",
+        "customer": "Bonified Wood - Nick Lazzaretto",
+        "date": "2025-09-10",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            34.0,
+            34.0,
+            9.0,
+            9.0,
+            9.0,
+            9.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0151",
+        "customer": "Glenn Boarman",
+        "date": "2025-08-29",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            2.0,
+            2.0,
+            10.0,
+            10.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0152",
+        "customer": "3BD Inventory - Week of Sept 08",
+        "date": "2025-09-01",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            200.0,
+            200.0,
+            60.0,
+            60.0,
+            50.0,
+            50.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0153",
+        "customer": "Kelly Crandell",
+        "date": "2025-08-29",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            7.0,
+            7.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0154",
+        "customer": "Kambell & Jarvis Excavating",
+        "date": "2025-09-11",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            14.0,
+            14.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0155",
+        "customer": "Seattle Style - Luis",
+        "date": "2025-09-12",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0,
+            15.0,
+            15.0,
+            15.0,
+            15.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0156",
+        "customer": "Revolutionary Construction",
+        "date": "2025-08-28",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            46.0,
+            46.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0157",
+        "customer": "Missy Borgen",
+        "date": "2025-08-29",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            9.0,
+            9.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0158",
+        "customer": "Natalia Krasnova",
+        "date": "2025-09-04",
+        "shipTo": "Nevada",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            45.0,
+            45.0,
+            17.0,
+            17.0,
+            17.0,
+            17.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0159",
+        "customer": "Chris McCartney",
+        "date": "2025-09-17",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            4.0,
+            4.0,
+            1.0,
+            1.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0160",
+        "customer": "Mark Anderson",
+        "date": "2025-09-22",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            4.0,
+            4.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0161",
+        "customer": "Matt Snodgrass",
+        "date": "2025-09-12",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            25.0,
+            25.0,
+            5.0,
+            5.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0162",
+        "customer": "Sean Slaughter",
+        "date": "2025-08-29",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0163",
+        "customer": "Scott Venera",
+        "date": "2025-09-22",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            24.0,
+            24.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0164",
+        "customer": "Lisa Aslanzadeh",
+        "date": "2025-09-26",
+        "shipTo": "Local Deliver",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            11.0,
+            11.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0165",
+        "customer": "3BD - Courtney Gifford",
+        "date": "2025-10-09",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            4.0,
+            4.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0166",
+        "customer": "Jerry Vosberg",
+        "date": "2025-09-25",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            26.0,
+            26.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0167",
+        "customer": "Dean Brotzman",
+        "date": "2025-10-02",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0168",
+        "customer": "Nick Upton",
+        "date": "2025-10-03",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            25.0,
+            25.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0169",
+        "customer": "Chris Saliture",
+        "date": "2025-10-07",
+        "shipTo": "Minnesota",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            200.0,
+            200.0,
+            1500.0,
+            1500.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0170",
+        "customer": "John Hofland (CUSTOM COLOR WH120)",
+        "date": "2025-09-22",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0171",
+        "customer": "Benjamin Pugh",
+        "date": "2025-10-07",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            13.0,
+            13.0,
+            2.0,
+            2.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0172",
+        "customer": "Bill Fargher",
+        "date": "2025-10-07",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            20.0,
+            20.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0173",
+        "customer": "3BD - Christopher Lee (TED)",
+        "date": "2025-10-07",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            49.0,
+            49.0,
+            3.0,
+            3.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0174",
+        "customer": "Melissa Ramis",
+        "date": "2025-10-14",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            4.0,
+            4.0,
+            18.0,
+            18.0,
+            18.0,
+            18.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0175",
+        "customer": "Matt Dover",
+        "date": "2025-10-03",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            22.0,
+            22.0,
+            22.0,
+            22.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0176",
+        "customer": "Heigi Gudnason (CUSTOM COLOR WH120)",
+        "date": "2025-09-29",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            8.0,
+            8.0,
+            2.0,
+            2.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0177",
+        "customer": "Tenalle Timbrook - EXTRA",
+        "date": "2025-10-17",
+        "shipTo": "Ohio",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0178",
+        "customer": "Kathryn Jarboe",
+        "date": "2025-09-22",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            10.0,
+            10.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0179",
+        "customer": "Preston Scott",
+        "date": "2025-10-21",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            14.0,
+            14.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0180",
+        "customer": "Shari Pierson",
+        "date": "2025-08-06",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            39.0,
+            39.0,
+            7.0,
+            7.0,
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0181",
+        "customer": "Josh Rasmason",
+        "date": "2025-10-22",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            25.0,
+            25.0,
+            5.0,
+            5.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0182",
+        "customer": "3BD - Chris Lee (extra)",
+        "date": "2025-10-31",
+        "shipTo": "Local Install 3bd",
+        "productType": "42\u201d Cable - Fascia",
+        "quantities": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            25.0,
+            25.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0183",
+        "customer": "Lee Shalett",
+        "date": "2025-11-10",
+        "shipTo": "Florida",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            14.0,
+            4.0,
+            8.0,
+            104.0,
+            600.0,
+            56.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0184",
+        "customer": "Gian Simsuangco",
+        "date": "2025-11-25",
+        "shipTo": "LaVerne CA Shipping",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            5.0,
+            2.0,
+            2.0,
+            1.0,
+            6.0,
+            78.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0185",
+        "customer": "Luke Welch",
+        "date": "2025-12-02",
+        "shipTo": "Lebanon OR",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            4.0,
+            1.0,
+            2.0,
+            26.0,
+            200.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0186",
+        "customer": "Ser Avendeyenko",
+        "date": "2025-10-30",
+        "shipTo": "3bd Truck",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            8.0,
+            2.0,
+            2.0,
+            2.0,
+            6.0,
+            80.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0187",
+        "customer": "Michael Minka",
+        "date": "2025-10-30",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            1.0,
+            4.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0188",
+        "customer": "Rob Motts",
+        "date": "2025-10-30",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            2.0,
+            2.0,
+            4.0,
+            2.0,
+            40.0,
+            40.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0189",
+        "customer": "Rick Taylor",
+        "date": "2025-10-24",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            73.0,
+            12.0,
+            24.0,
+            320.0,
+            3000.0,
+            292.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0190",
+        "customer": "Jerry Vossberg - 10.23",
+        "date": "2025-10-23",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            26.0,
+            3.0,
+            3.0,
+            6.0,
+            14.0,
+            200.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0191",
+        "customer": "James Hamilton",
+        "date": "2025-01-02",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            23.0,
+            23.0,
+            4.0,
+            4.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0192",
+        "customer": "Shawn Ho",
+        "date": "2024-12-26",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            4.0,
+            4.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0193",
+        "customer": "Kirk McElroy",
+        "date": "2025-01-07",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            9.0,
+            9.0,
+            4.0,
+            4.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0194",
+        "customer": "Jeff Pool",
+        "date": "2025-01-03",
+        "shipTo": "Burley, ID",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            2.0,
+            2.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0195",
+        "customer": "Michaela Loebel",
+        "date": "2025-01-03",
+        "shipTo": "Nebraska",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            2.0,
+            2.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0196",
+        "customer": "Russ Ellersick",
+        "date": "2025-01-21",
+        "shipTo": "Washiington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            10.0,
+            10.0,
+            7.0,
+            7.0,
+            5.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0197",
+        "customer": "John Sebring",
+        "date": "2024-12-30",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            14.0,
+            14.0,
+            8.0,
+            8.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0198",
+        "customer": "Javier Rodriguez",
+        "date": "2025-01-21",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            16.0,
+            16.0,
+            6.0,
+            6.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0199",
+        "customer": "Ben Hall",
+        "date": "2025-01-21",
+        "shipTo": "Missouri",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            40.0,
+            40.0,
+            11.0,
+            11.0,
+            11.0,
+            11.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0200",
+        "customer": "Zach Yamagishi",
+        "date": "2025-02-04",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            16.0,
+            16.0,
+            64.0,
+            64.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0201",
+        "customer": "Paul Carpenter",
+        "date": "2025-02-04",
+        "shipTo": "Worley, ID",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            31.0,
+            31.0,
+            10.0,
+            10.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0202",
+        "customer": "Finish Line Cons.",
+        "date": "2025-01-21",
+        "shipTo": "Hayden",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            51.0,
+            51.0,
+            4.0,
+            4.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0203",
+        "customer": "Eddie - NWBNR",
+        "date": "2025-02-13",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            1.0,
+            1.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0204",
+        "customer": "Ryan Rauscart",
+        "date": "2025-02-21",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            4.0,
+            4.0,
+            300.0,
+            300.0,
+            30.0,
+            30.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0205",
+        "customer": "Cathy Reynolds",
+        "date": "2025-02-20",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            5.0,
+            5.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0206",
+        "customer": "John Barnwell",
+        "date": "2025-03-20",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            5.0,
+            5.0,
+            2.0,
+            2.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0207",
+        "customer": "Javier Rodriguez",
+        "date": "2025-03-13",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            10.0,
+            10.0,
+            2.5,
+            2.5,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0208",
+        "customer": "Tom Peterson",
+        "date": "2025-02-20",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            31.0,
+            31.0,
+            8.0,
+            8.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0209",
+        "customer": "Caleb Barlow",
+        "date": "2025-02-26",
+        "shipTo": "Utah",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            20.0,
+            20.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0210",
+        "customer": "Steve Johnson",
+        "date": "2025-03-04",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            14.0,
+            14.0,
+            2.0,
+            2.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0211",
+        "customer": "Zach Yamaghishi - Extra Stuff",
+        "date": "2025-03-18",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            4.0,
+            4.0,
+            0.5,
+            0.5
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0212",
+        "customer": "Alex Dudrov",
+        "date": "2025-03-28",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            16.0,
+            16.0,
+            4.0,
+            4.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0213",
+        "customer": "Mike Cloke",
+        "date": "2025-03-26",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            15.0,
+            15.0,
+            4.0,
+            4.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0214",
+        "customer": "SkyPro Remodeling - Adam Elbaz",
+        "date": "2025-03-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            12.0,
+            12.0,
+            10.0,
+            10.0,
+            140.0,
+            140.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0215",
+        "customer": "Clearwater Construction",
+        "date": "2025-04-09",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            14.0,
+            14.0,
+            14.0,
+            14.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0216",
+        "customer": "Robert Gregg",
+        "date": "2025-04-10",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            24.0,
+            24.0,
+            4.0,
+            4.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0217",
+        "customer": "Brittany Venner",
+        "date": "2025-04-10",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            15.0,
+            15.0,
+            3.0,
+            3.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0218",
+        "customer": "John Frack",
+        "date": "2025-03-21",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            8.0,
+            8.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0219",
+        "customer": "Rich Boyer",
+        "date": "2025-04-04",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            2.0,
+            2.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0220",
+        "customer": "Scott Andreason",
+        "date": "2025-04-07",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            34.0,
+            34.0,
+            3.0,
+            3.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0221",
+        "customer": "Pike Sowie",
+        "date": "2025-03-08",
+        "shipTo": "Utah",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            38.0,
+            38.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0222",
+        "customer": "Sage Decks - Ryan Bennet",
+        "date": "2025-04-07",
+        "shipTo": "Montana",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            32.0,
+            32.0,
+            12.0,
+            12.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0223",
+        "customer": "Travis Berends",
+        "date": "2025-04-07",
+        "shipTo": "Minnesota",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            17.0,
+            17.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0224",
+        "customer": "Mel Everes",
+        "date": "2025-04-07",
+        "shipTo": "Louisiana",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            22.0,
+            22.0,
+            14.0,
+            14.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0225",
+        "customer": "Angus McLean",
+        "date": "2025-04-09",
+        "shipTo": "Tennessee",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            8.0,
+            8.0,
+            16.0,
+            16.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0226",
+        "customer": "Scott Andreason - Corners",
+        "date": "2025-05-12",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            5.0,
+            5.0,
+            20.0,
+            20.0,
+            40.0,
+            40.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0227",
+        "customer": "Alex Dudrov - Stairs",
+        "date": "2025-05-12",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            8.0,
+            8.0,
+            8.0,
+            8.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0228",
+        "customer": "3BD - Kristie Keene",
+        "date": "2025-05-16",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0229",
+        "customer": "Keith Kriegh",
+        "date": "2025-04-28",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            4.0,
+            4.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0230",
+        "customer": "Mike Stephenson",
+        "date": "2025-05-01",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            37.0,
+            37.0,
+            7.0,
+            7.0,
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0231",
+        "customer": "HD - Patrick Targete",
+        "date": "2025-05-28",
+        "shipTo": "Massachusetts",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            3.0,
+            3.0,
+            1.0,
+            1.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0232",
+        "customer": "Coeur Builders - Echo Canyon",
+        "date": "2025-05-15",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            36.0,
+            36.0,
+            6.0,
+            6.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0233",
+        "customer": "Cynthia Knox Guenther",
+        "date": "2025-04-25",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            43.0,
+            43.0,
+            9.0,
+            9.0,
+            9.0,
+            9.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0234",
+        "customer": "Bob Burgnaler",
+        "date": "2025-04-30",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0235",
+        "customer": "Mark Anderson",
+        "date": "2025-05-09",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            6.0,
+            6.0,
+            4.0,
+            4.0,
+            60.0,
+            60.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0236",
+        "customer": "Randy Pratt",
+        "date": "2025-05-12",
+        "shipTo": "North Carolina",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            37.0,
+            37.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0237",
+        "customer": "Revolutionary Construction",
+        "date": "2025-05-20",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            18.0,
+            18.0,
+            11.0,
+            11.0,
+            11.0,
+            11.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0238",
+        "customer": "Bob Burgnaier",
+        "date": "2025-04-15",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            6.0,
+            6.0,
+            1.0,
+            2.0,
+            2.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0239",
+        "customer": "Jon Frack",
+        "date": "2025-05-09",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            22.0,
+            22.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0240",
+        "customer": "Jon Altman",
+        "date": "2025-06-27",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            13.0,
+            13.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0241",
+        "customer": "Jack Rosemary",
+        "date": "2025-06-23",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            5.0,
+            5.0,
+            1.0,
+            1.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0242",
+        "customer": "Cathie Haas - Remake",
+        "date": "2025-06-05",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            12.0,
+            12.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0243",
+        "customer": "Jerry / Kathy Vosberg",
+        "date": "2025-05-13",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            22.0,
+            22.0,
+            4.0,
+            4.0,
+            20.0,
+            20.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0244",
+        "customer": "Craig Johnson - Extra",
+        "date": "2025-07-02",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0245",
+        "customer": "3BD - Jeanne Foss",
+        "date": "2025-07-01",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            9.0,
+            9.0,
+            5.0,
+            5.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0246",
+        "customer": "Ziggys - Collen Ewasko",
+        "date": "2025-06-19",
+        "shipTo": "Local",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            22.0,
+            22.0,
+            4.0,
+            4.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0247",
+        "customer": "Menno Vanderlist",
+        "date": "2025-06-19",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            6.0,
+            6.0,
+            4.0,
+            4.0,
+            60.0,
+            60.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0248",
+        "customer": "Alison West",
+        "date": "2025-06-19",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            4.0,
+            4.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0249",
+        "customer": "3BD - Reid Redinger",
+        "date": "2025-07-28",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            34.0,
+            34.0,
+            3.0,
+            3.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0250",
+        "customer": "Sarah Olney",
+        "date": "2025-07-23",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            24.0,
+            24.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0251",
+        "customer": "Craig Charbonneau",
+        "date": "2025-08-04",
+        "shipTo": "Washington",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            12.0,
+            12.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0252",
+        "customer": "Greg Hart",
+        "date": "2025-07-30",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            35.0,
+            35.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0253",
+        "customer": "Lisa & Ryan Carpenter",
+        "date": "2025-08-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            35.0,
+            35.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0254",
+        "customer": "Duane Klinge",
+        "date": "2025-08-12",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            3.0,
+            3.0,
+            2.0,
+            2.0,
+            40.0,
+            40.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0255",
+        "customer": "River A Construction",
+        "date": "2025-08-20",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            20.0,
+            20.0,
+            4.0,
+            4.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0256",
+        "customer": "Sheila",
+        "date": "2025-08-13",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            7.0,
+            7.0,
+            7.0,
+            7.0,
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0257",
+        "customer": "Cecil Roby, Jr.",
+        "date": "2025-08-11",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            5.0,
+            5.0,
+            5.0,
+            5.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0258",
+        "customer": "Nick Haughn",
+        "date": "2025-08-29",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            6.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0259",
+        "customer": "Ziggy's - Collen Ewasko",
+        "date": "2025-09-11",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            15.0,
+            15.0,
+            15.0,
+            15.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0260",
+        "customer": "Todd Folsom",
+        "date": "2025-09-08",
+        "shipTo": "Local Pick-Up",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0261",
+        "customer": "Mercado Brothers Fencing",
+        "date": "2025-08-25",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            29.0,
+            29.0,
+            5.0,
+            5.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0262",
+        "customer": "Maria Miller",
+        "date": "2025-08-28",
+        "shipTo": "Oregon",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            6.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0263",
+        "customer": "Glenn Boarman - Extra",
+        "date": "2025-08-20",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0264",
+        "customer": "Kelly Crandell",
+        "date": "2025-08-29",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            16.0,
+            16.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0265",
+        "customer": "Justin Ryan",
+        "date": "2025-09-08",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            24.0,
+            24.0,
+            7.0,
+            7.0,
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0266",
+        "customer": "Sean Slaughter",
+        "date": "2025-08-29",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            16.0,
+            16.0,
+            4.0,
+            4.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0267",
+        "customer": "Richard Weatherman",
+        "date": "2025-09-24",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            27.0,
+            27.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0268",
+        "customer": "Mike Ellison",
+        "date": "2025-09-22",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            2.0,
+            2.0,
+            4.0,
+            4.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0269",
+        "customer": "Chris Saliture",
+        "date": "2025-10-07",
+        "shipTo": "Minnesota",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            8.0,
+            8.0,
+            8.0,
+            8.0,
+            60.0,
+            60.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0270",
+        "customer": "Josh Rasmuson",
+        "date": "2025-10-22",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            2.0,
+            2.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0271",
+        "customer": "Patricia Mather",
+        "date": "2025-10-22",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            29.0,
+            29.0,
+            7.0,
+            7.0,
+            24.0,
+            24.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0272",
+        "customer": "David Maffetore",
+        "date": "2025-10-20",
+        "shipTo": "California",
+        "productType": "42\u201d Cable - Surface",
+        "quantities": [
+            10.0,
+            10.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0273",
+        "customer": "Dave Miller",
+        "date": "2025-11-21",
+        "shipTo": "Delaware",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            12.0,
+            2.0,
+            4.0,
+            36.0,
+            24.0,
+            40.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0274",
+        "customer": "Cass Monroe",
+        "date": "2025-01-21",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            13.0,
+            13.0,
+            2.0,
+            2.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0275",
+        "customer": "3BD - Larry McNutt",
+        "date": "2025-01-29",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            30.0,
+            30.0,
+            24.0,
+            24.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0276",
+        "customer": "3BD - Gilbo",
+        "date": "2025-02-09",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            16.0,
+            16.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0277",
+        "customer": "3BD - Larry McNutt (extra posts)",
+        "date": "2025-02-28",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0278",
+        "customer": "Lillian Xiong - REWORK",
+        "date": "2025-03-24",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            25.0,
+            25.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0279",
+        "customer": "Johnathan Moeller",
+        "date": "2025-03-18",
+        "shipTo": "Colorado",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            20.0,
+            20.0,
+            76.0,
+            76.0,
+            80.0,
+            80.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0280",
+        "customer": "Troy Hoerner",
+        "date": "2025-06-09",
+        "shipTo": "Local",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            7.0,
+            7.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0281",
+        "customer": "Phil Virgil",
+        "date": "2025-05-07",
+        "shipTo": "Wyoming",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            23.0,
+            23.0,
+            5.0,
+            5.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0282",
+        "customer": "Kurt Mueller",
+        "date": "2025-06-12",
+        "shipTo": "North Carolina",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            14.0,
+            14.0,
+            6.0,
+            6.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0283",
+        "customer": "3BD - Lillian Xiong",
+        "date": "2025-07-29",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            27.0,
+            27.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0284",
+        "customer": "3BD - Graham Johnson",
+        "date": "2025-09-03",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            11.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0285",
+        "customer": "3BD - Chris Lee (extra)",
+        "date": "2025-10-31",
+        "shipTo": "Local Install",
+        "productType": "42\u201d Glass - Fascia",
+        "quantities": [
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0286",
+        "customer": "Finish Line Cons",
+        "date": "2025-01-29",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            24.0,
+            24.0,
+            18.0,
+            18.0,
+            92.0,
+            92.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0287",
+        "customer": "3BD - Lillian Xiong",
+        "date": "2025-01-21",
+        "shipTo": "Hayden",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            10.0,
+            10.0,
+            3.0,
+            3.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0288",
+        "customer": "Finish Line Const - Missing Posts",
+        "date": "2025-02-27",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            22.0,
+            22.0,
+            6.0,
+            6.0,
+            9.0,
+            9.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0289",
+        "customer": "3BD - Sam Riedeman (CUSTOM)",
+        "date": "2025-03-11",
+        "shipTo": "Local",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0290",
+        "customer": "???",
+        "date": "2025-03-27",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            10.0,
+            10.0,
+            3.0,
+            3.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0291",
+        "customer": "Kurt Mueller",
+        "date": "2025-06-12",
+        "shipTo": "North Carolina",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            21.0,
+            21.0,
+            2.0,
+            2.0,
+            16.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0292",
+        "customer": "Ziggy's - Megan Dietz",
+        "date": "2025-07-23",
+        "shipTo": "Local Delivery",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            13.0,
+            13.0,
+            3.0,
+            3.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0293",
+        "customer": "3BD - Serren Wrap",
+        "date": "2025-08-11",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            12.0,
+            12.0,
+            18.0,
+            18.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0294",
+        "customer": "Tessa Dover",
+        "date": "2025-08-20",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            6.0,
+            6.0,
+            1.0,
+            1.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0295",
+        "customer": "3BD - Lillian Xiong Interior",
+        "date": "2025-10-17",
+        "shipTo": "Seattle",
+        "productType": "42\u201d Glass - Surface",
+        "quantities": [
+            5.0,
+            5.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0296",
+        "customer": "Jax (GFY Homes)",
+        "date": "2025-11-03",
+        "shipTo": "Bellevue P/U",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            17.0,
+            4.0,
+            4.0,
+            5.0,
+            12.0,
+            156.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0297",
+        "customer": "Doug Dodson",
+        "date": "2025-11-12",
+        "shipTo": "Local Install",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            21.0,
+            2.0,
+            12.0,
+            156.0,
+            800.0,
+            42.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0298",
+        "customer": "Maureen Ramirez",
+        "date": "2025-11-12",
+        "shipTo": "Local Install",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            8.0,
+            8.0,
+            5.0,
+            22.0,
+            286.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0299",
+        "customer": "Josh Taylor",
+        "date": "2025-11-20",
+        "shipTo": "Local Pickup",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            17.0,
+            3.0,
+            8.0,
+            104.0,
+            700.0,
+            34.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0300",
+        "customer": "Sarah Stone",
+        "date": "2025-11-25",
+        "shipTo": "Deliver to Freeland",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            20.0,
+            4.0,
+            10.0,
+            130.0,
+            800.0,
+            40.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0301",
+        "customer": "Tami Neumann",
+        "date": "2024-12-27",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            6.0,
+            6.0,
+            16.0,
+            220.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0302",
+        "customer": "Tami Neumann (Rework)",
+        "date": "2024-12-27",
+        "shipTo": "Oregon",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0303",
+        "customer": "Jason Everett",
+        "date": "2025-01-21",
+        "shipTo": "Oregon",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            31.0,
+            31.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0304",
+        "customer": "Chris Gonzalez",
+        "date": "2025-03-13",
+        "shipTo": "California",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            22.0,
+            22.0,
+            4.0,
+            4.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0305",
+        "customer": "Jonathan Callans",
+        "date": "2025-03-11",
+        "shipTo": "Texas",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            38.0,
+            38.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0306",
+        "customer": "Trevor Nowak",
+        "date": "2025-03-11",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            5.0,
+            5.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0307",
+        "customer": "Ruben Lutat",
+        "date": "2025-03-01",
+        "shipTo": "Portland",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0308",
+        "customer": "Steve Anderson",
+        "date": "2025-04-01",
+        "shipTo": "Seatle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            34.0,
+            34.0,
+            5.0,
+            5.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0309",
+        "customer": "3BD - Ralph Mundell",
+        "date": "2025-04-02",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            21.0,
+            21.0,
+            5.0,
+            5.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0310",
+        "customer": "Greg Metzgar",
+        "date": "2025-04-18",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            21.0,
+            21.0,
+            4.0,
+            4.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0311",
+        "customer": "Legacy Decking - Dave Deyman",
+        "date": "2025-04-18",
+        "shipTo": "Local p/iu",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            23.0,
+            23.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0312",
+        "customer": "Abby Thostenson",
+        "date": "2025-05-15",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            24.0,
+            24.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0313",
+        "customer": "Stephanie Queen",
+        "date": "2025-05-16",
+        "shipTo": "Michigan",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            17.0,
+            17.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0314",
+        "customer": "Simon Lystad",
+        "date": "2025-05-21",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            2.0,
+            2.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0315",
+        "customer": "Ben Murphy - Spirt Lake 2",
+        "date": "2025-06-27",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            21.0,
+            21.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0316",
+        "customer": "Deni Liechty",
+        "date": "2025-08-04",
+        "shipTo": "Local Pick-up",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0317",
+        "customer": "Matt Reichert - Smith",
+        "date": "2025-08-15",
+        "shipTo": "Arizona",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            24.0,
+            24.0,
+            10.0,
+            10.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0318",
+        "customer": "Curtis Kiepprien",
+        "date": "2025-08-12",
+        "shipTo": "Local Delivery",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0319",
+        "customer": "McMorris Decks and Structures",
+        "date": "2025-08-21",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            45.0,
+            45.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0320",
+        "customer": "Nicholas Bincewski",
+        "date": "2025-08-25",
+        "shipTo": "Utah",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            4.0,
+            4.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0321",
+        "customer": "Matthew Siegel",
+        "date": "2025-08-20",
+        "shipTo": "Local Delivery",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            32.0,
+            32.0,
+            20.0,
+            20.0,
+            20.0,
+            20.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0322",
+        "customer": "3BD - Graham Johnson REWORK",
+        "date": "2025-09-05",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            26.0,
+            26.0,
+            5.0,
+            5.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0323",
+        "customer": "David Pelton",
+        "date": "2025-09-10",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            7.0,
+            7.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0324",
+        "customer": "3BD - Carolyne Michels (CUSTOM COLOR)",
+        "date": "2025-09-16",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            15.0,
+            15.0,
+            12.0,
+            12.0,
+            12.0,
+            15.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0325",
+        "customer": "Cole Ferguson",
+        "date": "2025-09-24",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            62.0,
+            62.0,
+            20.0,
+            20.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0326",
+        "customer": "Rick Taylor",
+        "date": "2025-09-30",
+        "shipTo": "Local Pick-up",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            50.0,
+            50.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0327",
+        "customer": "Karen Weber",
+        "date": "2025-10-16",
+        "shipTo": "Local Delivery",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            5.0,
+            5.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0328",
+        "customer": "James Thomas, Jr",
+        "date": "2025-10-16",
+        "shipTo": "Bellevue P/U",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            9.0,
+            9.0,
+            2.0,
+            2.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0329",
+        "customer": "Alex Avdeyev",
+        "date": "2025-10-15",
+        "shipTo": "Arizona",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            19.0,
+            19.0,
+            3.0,
+            3.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0330",
+        "customer": "Linda Carpenter",
+        "date": "2025-10-20",
+        "shipTo": "Local Delivery",
+        "productType": "36\u201d Cable - Fascia",
+        "quantities": [
+            41.0,
+            41.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0331",
+        "customer": "Bellevue Inventory - Week of 11.03",
+        "date": "2025-11-03",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            30.0,
+            20.0,
+            10.0,
+            20.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0332",
+        "customer": "Jared Mehany",
+        "date": "2025-10-29",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            13.0,
+            2.0,
+            4.0,
+            8.0,
+            120.0,
+            1000.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0333",
+        "customer": "Harold Gambini",
+        "date": "2025-01-23",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            31.0,
+            31.0,
+            124.0,
+            124.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0334",
+        "customer": "Landon McMorris",
+        "date": "2025-02-17",
+        "shipTo": "Utah",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            4.0,
+            4.0,
+            1.0,
+            1.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0335",
+        "customer": "Cheri Douglas",
+        "date": "2025-02-17",
+        "shipTo": "Wisconsin",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            4.0,
+            4.0,
+            1.0,
+            1.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0336",
+        "customer": "Todd Hodgen (CUSTOM)",
+        "date": "2025-02-17",
+        "shipTo": "Nevada",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            6.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0337",
+        "customer": "Ruban Hipolito",
+        "date": "2025-03-14",
+        "shipTo": "Montana",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            28.0,
+            28.0,
+            12.0,
+            12.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0338",
+        "customer": "Buildsphere - Mike Ujano",
+        "date": "2025-02-21",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            14.0,
+            14.0,
+            3.0,
+            3.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0339",
+        "customer": "Steve Anderson",
+        "date": "2025-04-02",
+        "shipTo": "Seatlle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            4.0,
+            4.0,
+            35.0,
+            35.0,
+            35.0,
+            35.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0340",
+        "customer": "Claudia Scruzr",
+        "date": "2025-04-21",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0341",
+        "customer": "Bridget Findley",
+        "date": "2025-04-30",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            9.0,
+            9.0,
+            2.0,
+            2.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0342",
+        "customer": "Doug Smith",
+        "date": "2025-04-16",
+        "shipTo": "Local",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            35.0,
+            35.0,
+            8.0,
+            8.0,
+            9.0,
+            9.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0343",
+        "customer": "Carolyn Neblett",
+        "date": "2025-04-22",
+        "shipTo": "Idaho",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            2.0,
+            2.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0344",
+        "customer": "Cami Fleming",
+        "date": "2025-05-07",
+        "shipTo": "Utah",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            28.0,
+            28.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0345",
+        "customer": "Brady Frandsen",
+        "date": "2025-05-14",
+        "shipTo": "Utah",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            26.0,
+            26.0,
+            18.0,
+            18.0,
+            18.0,
+            18.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0346",
+        "customer": "Craig Johnson",
+        "date": "2025-05-29",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            20.0,
+            20.0,
+            5.0,
+            5.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0347",
+        "customer": "Gibson Fence and Deck",
+        "date": "2025-05-22",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            23.0,
+            23.0,
+            5.0,
+            5.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0348",
+        "customer": "Sarah Cichosz - Columbia Pools",
+        "date": "2025-05-29",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            9.0,
+            9.0,
+            6.0,
+            6.0,
+            80.0,
+            80.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0349",
+        "customer": "Blue Sky Decks - Patrick",
+        "date": "2025-06-03",
+        "shipTo": "Local Pick-UP",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            13.0,
+            13.0,
+            2.0,
+            2.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0350",
+        "customer": "Vitaly Semenyuk",
+        "date": "2025-06-23",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            18.0,
+            18.0,
+            4.0,
+            4.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0351",
+        "customer": "SkyPro - RUSH",
+        "date": "2025-05-28",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            9.0,
+            9.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0352",
+        "customer": "Tessa Fitzgerald",
+        "date": "2025-06-11",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            13.0,
+            13.0,
+            2.0,
+            2.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0353",
+        "customer": "Craig Johnson",
+        "date": "2025-07-21",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            11.0,
+            11.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0354",
+        "customer": "Nate Lew",
+        "date": "2025-07-25",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            19.0,
+            19.0,
+            3.0,
+            3.0,
+            1.0,
+            1.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0355",
+        "customer": "Lynn Bull",
+        "date": "2025-08-19",
+        "shipTo": "Local Delivery",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            11.0,
+            11.0,
+            3.0,
+            3.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0356",
+        "customer": "Kirk Johnson",
+        "date": "2025-08-04",
+        "shipTo": "Colorado",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            4.0,
+            4.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0357",
+        "customer": "3BD Inventory - Week of 08.18",
+        "date": "2025-08-18",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            30.0,
+            30.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0358",
+        "customer": "Robert Gregg - Exchange",
+        "date": "2025-08-06",
+        "shipTo": "Oregon",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            20.0,
+            20.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0359",
+        "customer": "Jeremy Falls",
+        "date": "2025-08-14",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            21.0,
+            21.0,
+            8.0,
+            8.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0360",
+        "customer": "Deni Liechty",
+        "date": "2025-08-15",
+        "shipTo": "Arizona",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            13.0,
+            13.0,
+            16.0,
+            16.0,
+            220.0,
+            220.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0361",
+        "customer": "3BD Inventory - Week of 08.25",
+        "date": "2025-08-15",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            30.0,
+            30.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0362",
+        "customer": "Pike Sowie - Replacement",
+        "date": "2025-08-15",
+        "shipTo": "Utah",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            32.0,
+            32.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0363",
+        "customer": "Samantha Buckley Huggessen",
+        "date": "2025-08-15",
+        "shipTo": "California",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            51.0,
+            51.0,
+            12.0,
+            12.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0364",
+        "customer": "Deni Liechty",
+        "date": "2025-08-15",
+        "shipTo": "Arizona",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            14.0,
+            14.0,
+            400.0,
+            400.0,
+            100.0,
+            100.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0365",
+        "customer": "Matt Reichert - Park",
+        "date": "2025-08-15",
+        "shipTo": "Local Delivery",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            16.0,
+            16.0,
+            14.0,
+            14.0,
+            14.0,
+            14.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0366",
+        "customer": "Cory Michaels",
+        "date": "2025-08-22",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            13.0,
+            13.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0367",
+        "customer": "Karen Gorzela",
+        "date": "2025-08-13",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            6.0,
+            6.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0368",
+        "customer": "Curtis Kiepprien",
+        "date": "2025-08-21",
+        "shipTo": "Washington",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            4.0,
+            4.0,
+            1.0,
+            1.0,
+            40.0,
+            40.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0369",
+        "customer": "3BD Inventory - Week of Setp 01",
+        "date": "2025-08-25",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            30.0,
+            30.0,
+            10.0,
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0370",
+        "customer": "Todd Folsom",
+        "date": "2025-09-15",
+        "shipTo": "Local Pick-Up",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            3.0,
+            3.0,
+            3.0,
+            3.0,
+            12.0,
+            12.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0371",
+        "customer": "Pike Sowie - Swap",
+        "date": "2025-09-09",
+        "shipTo": "Utah",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            32.0,
+            32.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0372",
+        "customer": "3BD Inventory - Week of Sept 08",
+        "date": "2025-09-01",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            10.0,
+            10.0,
+            10.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0373",
+        "customer": "Cami Fleming",
+        "date": "2010-09-09",
+        "shipTo": "Utah",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            21.0,
+            21.0,
+            86.0,
+            86.0,
+            86.0,
+            86.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0374",
+        "customer": "Steve Dow",
+        "date": "2025-09-25",
+        "shipTo": "Local Pick-Up",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            37.0,
+            37.0,
+            8.0,
+            8.0,
+            18.0,
+            18.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0375",
+        "customer": "Trevor Engman",
+        "date": "2025-09-22",
+        "shipTo": "Idaho",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            4.0,
+            4.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0376",
+        "customer": "Doug Geltz",
+        "date": "2025-09-29",
+        "shipTo": "Oregon",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            27.0,
+            27.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0377",
+        "customer": "Ron Erickson - CUSTOM COLOR",
+        "date": "2025-09-22",
+        "shipTo": "Local Pick-Up",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            36.0,
+            36.0,
+            2.0,
+            2.0,
+            6.0,
+            6.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0378",
+        "customer": "Debie Phillips",
+        "date": "2025-10-07",
+        "shipTo": "Local Delivery",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            9.0,
+            9.0,
+            4.0,
+            4.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0379",
+        "customer": "Jesse Farrar - Dragoon Dr - CUSTOM COLOR",
+        "date": "2025-10-10",
+        "shipTo": "Local Pick-Up",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            27.0,
+            27.0,
+            6.0,
+            6.0,
+            18.0,
+            18.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0380",
+        "customer": "Kelly Crandell - Extra",
+        "date": "2025-10-17",
+        "shipTo": "California",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            7.0,
+            7.0,
+            7.0,
+            7.0,
+            5.0,
+            5.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0381",
+        "customer": "John Frack",
+        "date": "2025-10-22",
+        "shipTo": "Local Pick-up",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            8.0,
+            8.0,
+            3.0,
+            3.0,
+            3.0,
+            3.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0382",
+        "customer": "MSHS Construction - John Ashline",
+        "date": "2025-10-23",
+        "shipTo": "Local Pick-Up",
+        "productType": "36\u201d Cable - Suface",
+        "quantities": [
+            13.0,
+            13.0,
+            8.0,
+            8.0,
+            8.0,
+            8.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0383",
+        "customer": "Curtis Kiepprien",
+        "date": "2025-08-21",
+        "shipTo": "Washington",
+        "productType": "36\u201d Glass - Fascia",
+        "quantities": [
+            6.0,
+            6.0,
+            20.0,
+            20.0,
+            24.0,
+            24.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0384",
+        "customer": "3BD - Graham Johnson REWORK",
+        "date": "2025-09-11",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Glass - Fascia",
+        "quantities": [
+            12.0,
+            12.0,
+            2.0,
+            2.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0385",
+        "customer": "Shauny Jang",
+        "date": "2025-11-26",
+        "shipTo": "Bellevue Pickup",
+        "productType": "36\u201d Glass - Surface",
+        "quantities": [
+            3.0,
+            1.0,
+            2.0,
+            8.0,
+            12.0,
+            16.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0386",
+        "customer": "Steve Anderson",
+        "date": "2025-04-02",
+        "shipTo": "Seattle",
+        "productType": "36\u201d Glass - Surface",
+        "quantities": [
+            5.0,
+            5.0,
+            2.0,
+            2.0,
+            4.0,
+            4.0
+        ],
+        "source": "Pre-2026 ERP"
+    },
+    {
+        "id": "LEG-0387",
+        "customer": "Stephanie Burgess",
+        "date": "2025-09-22",
+        "shipTo": "Washington",
+        "productType": "Frameless Glass - Fascia",
+        "quantities": [
+            42.0,
+            42.0,
+            54.0,
+            54.0,
+            84.0,
+            84.0
+        ],
+        "source": "Pre-2026 ERP"
+    }
+],
+
+  // ERP.xlsx (pre-2026) — Legacy raw stock (different ID convention, historical baseline)
+  legacyRawStock: [
+    {
+        "id": "TB-SQ-6160AL 2 x 2 x 0.125 x 240",
+        "desc": "Tube | Square | Aluminum | 2 x 2 x 1/8 x 20 ft",
+        "stdLenFt": 20.0,
+        "qtyOH": 19.0,
+        "totalFt": 380.0,
+        "usedFor": "Posts"
+    },
+    {
+        "id": "TB-SQ-6160AL 0.75 x 0.75 x 240",
+        "desc": "Tube | Square | Aluminum | 3/4 x 3/4 x 1/8 x 20 ft",
+        "stdLenFt": 240.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Pickets"
+    },
+    {
+        "id": "TB-SQ-6160AL 1 x 1 x 0.125 x 240",
+        "desc": "Tube | Square | Aluminum | 1 x 1 x 1/8 x 20 ft",
+        "stdLenFt": 20.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Pickets"
+    },
+    {
+        "id": "TB-SQ-6160AL 1 x 1 x 0.125 x 72",
+        "desc": "Tube | Square | Aluminum | 1 x 1 x 1/8 x 6 ft",
+        "stdLenFt": 6.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Pickets"
+    },
+    {
+        "id": "TB-RECT-6160AL 1 x 3 x 0.125 x 240",
+        "desc": "Tube | Square | Aluminum | 1 x 3 x 1/8 x 20 ft",
+        "stdLenFt": 20.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Rails, Top and Stair"
+    },
+    {
+        "id": "TB-RECT-6160AL 1 x 2 x 0.125 x 240",
+        "desc": "Tube | Square | Aluminum | 1 x 2 x 1/8 x 20 ft",
+        "stdLenFt": 20.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Handrail"
+    },
+    {
+        "id": "L-6160AL 1.5 x 1.5 x 0.125 x 192",
+        "desc": "Angle | 90 | Aluminum | 1.5 x 1.5 x 1/8 x 24 ft",
+        "stdLenFt": 24.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Top Plates / Corner Posts"
+    },
+    {
+        "id": "L-6160AL 4 x 2 x 0.125 x 192",
+        "desc": "Angle | 90 | Aluminum | 4 x 2 x 1/8 x 16 ft",
+        "stdLenFt": 16.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "FM Plates / Bottom / Corner Posts'"
+    },
+    {
+        "id": "L-6160AL 4 x 2 x 0.250 x 240",
+        "desc": "Angle | 90 | Aluminum | 4 x 2 x 1/4 x 20 ft",
+        "stdLenFt": 20.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Posts / Fascia Mount / Corner"
+    },
+    {
+        "id": "FB-6160AL 2 x 0.125 x 120",
+        "desc": "Flat Bar | Aluminum | 2 x 1/8 x 10 ft",
+        "stdLenFt": 10.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Plate, Top"
+    },
+    {
+        "id": "FB-6160AL 4 x 0.250 x 120",
+        "desc": "Flat Bar | Aluminum | 4 x 1/4 x 12 ft",
+        "stdLenFt": 12.0,
+        "qtyOH": 0,
+        "totalFt": 0.0,
+        "usedFor": "Plate, Surface Mount"
+    }
+],
+
+  // Process_Cost_Analysis_v9 — Per-station cost + daily output (was empty [])
+  costPerStation: [
+    {
+        "station": "1. Material Cutting",
+        "timePerSectionMin": 7.08,
+        "sectionsPerHour": 8.47,
+        "sectionsPerDay": 2.0,
+        "laborDollarDay": 7.33,
+        "consumableDollarDay": 0.49,
+        "totalProcessDollarDay": 7.91,
+        "notes": ""
+    },
+    {
+        "station": "1B. Manual Drilling (Drill Press)",
+        "timePerSectionMin": 12.0,
+        "sectionsPerHour": 5.0,
+        "sectionsPerDay": 1.0,
+        "laborDollarDay": 6.21,
+        "consumableDollarDay": 0.01,
+        "totalProcessDollarDay": 0.0,
+        "notes": ""
+    },
+    {
+        "station": "2. CNC Machining",
+        "timePerSectionMin": 37.0,
+        "sectionsPerHour": 5.0,
+        "sectionsPerDay": 1.0,
+        "laborDollarDay": 21.65,
+        "consumableDollarDay": 1.64,
+        "totalProcessDollarDay": 54.94,
+        "notes": ""
+    },
+    {
+        "station": "3. Welding & Fabrication",
+        "timePerSectionMin": 5.5,
+        "sectionsPerHour": 1.62,
+        "sectionsPerDay": 0.0,
+        "laborDollarDay": 2.97,
+        "consumableDollarDay": 1.59,
+        "totalProcessDollarDay": 4.71,
+        "notes": ""
+    },
+    {
+        "station": "4. Powder Coat Prep",
+        "timePerSectionMin": 41.5,
+        "sectionsPerHour": 10.91,
+        "sectionsPerDay": 3.0,
+        "laborDollarDay": 0.0,
+        "consumableDollarDay": 0.0,
+        "totalProcessDollarDay": 0.0,
+        "notes": ""
+    },
+    {
+        "station": "5. Powder Coating",
+        "timePerSectionMin": 7.25,
+        "sectionsPerHour": 1.45,
+        "sectionsPerDay": 0.0,
+        "laborDollarDay": 11.26,
+        "consumableDollarDay": 3.69,
+        "totalProcessDollarDay": 15.66,
+        "notes": ""
+    },
+    {
+        "station": "6. Assembly",
+        "timePerSectionMin": 39.0,
+        "sectionsPerHour": 8.27,
+        "sectionsPerDay": 2.0,
+        "laborDollarDay": 0.0,
+        "consumableDollarDay": 0.0,
+        "totalProcessDollarDay": 0.0,
+        "notes": ""
+    },
+    {
+        "station": "7. Quality Control",
+        "timePerSectionMin": 25.0,
+        "sectionsPerHour": 1.54,
+        "sectionsPerDay": 0.0,
+        "laborDollarDay": 29.25,
+        "consumableDollarDay": 1.98,
+        "totalProcessDollarDay": 32.93,
+        "notes": ""
+    },
+    {
+        "station": "8. Packaging & Shipping",
+        "timePerSectionMin": 54.0,
+        "sectionsPerHour": 2.4,
+        "sectionsPerDay": 0.0,
+        "laborDollarDay": 0.0,
+        "consumableDollarDay": 0.0,
+        "totalProcessDollarDay": 0.0,
+        "notes": ""
+    },
+    {
+        "station": "BOTTLENECK STATION:",
+        "timePerSectionMin": 0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "BOTTLENECK STATION:",
+        "timePerSectionMin": 0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "SYSTEM DAILY OUTPUT (Bottleneck Limited):",
+        "timePerSectionMin": 0.0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "MULTI-WORKER SCENARIO MODELING",
+        "timePerSectionMin": 0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "Adjust workers per station below (yellow cells) to model throughput:",
+        "timePerSectionMin": 0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "1. Material Cutting",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "1B. Manual Drilling",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 12.0,
+        "sectionsPerDay": 1.0,
+        "laborDollarDay": 10.87,
+        "consumableDollarDay": 0.0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "2. CNC Machining",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 37.0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "3. Welding & Fabrication",
+        "timePerSectionMin": 2.0,
+        "sectionsPerHour": 5.5,
+        "sectionsPerDay": 1.0,
+        "laborDollarDay": 2.97,
+        "consumableDollarDay": 4.71,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "4. Powder Coat Prep",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 41.5,
+        "sectionsPerDay": 0.0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "5. Powder Coating",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 3.63,
+        "sectionsPerDay": 3.0,
+        "laborDollarDay": 7.51,
+        "consumableDollarDay": 5.22,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "6. Assembly",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 39.0,
+        "sectionsPerDay": 0.0,
+        "laborDollarDay": 0.0,
+        "consumableDollarDay": 0.0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "7. Quality Control",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 25.0,
+        "sectionsPerDay": 5.0,
+        "laborDollarDay": 43.88,
+        "consumableDollarDay": 49.4,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "8. Packaging & Shipping",
+        "timePerSectionMin": 1.0,
+        "sectionsPerHour": 54.0,
+        "sectionsPerDay": 0.0,
+        "laborDollarDay": 0.0,
+        "consumableDollarDay": 0.0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "BALANCED SYSTEM OUTPUT:",
+        "timePerSectionMin": 0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "TOTAL WORKERS REQUIRED:",
+        "timePerSectionMin": 8.0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "BALANCED SYSTEM OUTPUT:",
+        "timePerSectionMin": 0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    },
+    {
+        "station": "TOTAL WORKERS REQUIRED:",
+        "timePerSectionMin": 10.0,
+        "sectionsPerHour": 0,
+        "sectionsPerDay": 0,
+        "laborDollarDay": 0,
+        "consumableDollarDay": 0,
+        "totalProcessDollarDay": 0,
+        "notes": ""
+    }
+],
+
+  // KPI_Dashboard — KPI targets (green/yellow/red thresholds)
+  kpiTargets: [
+    {
+        "metric": "On-Time Delivery Rate",
+        "green": 0.95,
+        "yellow": 0.85,
+        "red": 0.85,
+        "unit": "%",
+        "notes": "\u226595% green, 85-94% yellow, <85% red"
+    },
+    {
+        "metric": "First-Pass Yield",
+        "green": 0.9,
+        "yellow": 0.8,
+        "red": 0.8,
+        "unit": "%",
+        "notes": "\u226590% green, 80-89% yellow, <80% red"
+    },
+    {
+        "metric": "Average Lead Time (business days)",
+        "green": 5.0,
+        "yellow": 8.0,
+        "red": 8.0,
+        "unit": "Days",
+        "notes": "\u22645 green, 6-8 yellow, >8 red"
+    },
+    {
+        "metric": "WIP Count (active jobs on floor)",
+        "green": 15.0,
+        "yellow": 25.0,
+        "red": 25.0,
+        "unit": "Jobs",
+        "notes": "\u226415 green, 16-25 yellow, >25 red"
+    },
+    {
+        "metric": "Scrap/Waste ($)",
+        "green": 200.0,
+        "yellow": 500.0,
+        "red": 500.0,
+        "unit": "$",
+        "notes": "\u2264$200 green, $201-500 yellow, >$500 red"
+    },
+    {
+        "metric": "Safety Incidents",
+        "green": 0.0,
+        "yellow": 1.0,
+        "red": 1.0,
+        "unit": "Count",
+        "notes": "0 = green, 1 = yellow, \u22652 = red"
+    },
+    {
+        "metric": "Daily Production Output (avg units)",
+        "green": 20.0,
+        "yellow": 18.0,
+        "red": 18.0,
+        "unit": "Units",
+        "notes": "\u226520 green, 18-19 yellow, <18 red"
+    },
+    {
+        "metric": "Rework Hours",
+        "green": 5.0,
+        "yellow": 10.0,
+        "red": 10.0,
+        "unit": "Hours",
+        "notes": "\u22645 green, 6-10 yellow, >10 red"
+    }
+],
+
+  // KPI_Dashboard — Weekly KPI tracking (27 weeks, data entry ongoing)
+  kpiWeekly: [
+    {
+        "weekEnding": "Week Endin",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-03-06",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-03-13",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-03-20",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-03-27",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-04-03",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-04-10",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-04-17",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-04-24",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-05-01",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-05-08",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-05-15",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-05-22",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-05-29",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-06-05",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-06-12",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-06-19",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-06-26",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-07-03",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-07-10",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-07-17",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-07-24",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-07-31",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-08-07",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-08-14",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-08-21",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    },
+    {
+        "weekEnding": "2026-08-28",
+        "onTimeDeliveryPct": 0,
+        "firstPassYieldPct": 0,
+        "avgLeadTimeDays": 0,
+        "wipCount": 0,
+        "scrapWasteDollar": 0,
+        "safetyIncidents": 0,
+        "laborUtilizationPct": 0,
+        "customerComplaints": 0,
+        "orderFulfillmentPct": 0
+    }
+],
+
+  // PRODUCT_SKU_MASTER_AM — SRS customer catalog (93 SKUs + GTINs, isolated from Maisy production)
+  srsCatalog: [
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-STR-42-BLK",
+        "techDesc": "Post | Cable | Fascia Mount | Stair - 42\" | Black",
+        "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Black",
+        "srsStock": 72.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137020"
+    },
+    {
+        "category": "Hardware",
+        "sku": "CBL-SS-POL-500",
+        "techDesc": "Cable | Stainless Steel | Polished Finish | 500' Roll",
+        "commonName": "1/4\" Stainless Cable - Polished (500' Roll)",
+        "srsStock": 80.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137099"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-STR-36-BLK",
+        "techDesc": "Post | Cable | Surface Mount | Stair - 36\" | Black",
+        "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Black",
+        "srsStock": 90.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137068"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-CRN-36-BLK",
+        "techDesc": "Post | Cable | Surface Mount | Corner - 36\" | Black",
+        "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Black",
+        "srsStock": 105.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137075"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-20-BLK",
+        "techDesc": "Top Rail | 20' length | Black",
+        "commonName": "20' - 1\" x 3\" Toprail - Black",
+        "srsStock": 137.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137051"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-LINE-36-BLK",
+        "techDesc": "Post | Cable | Surface Mount | Line - 36\" | Black",
+        "commonName": "36\" Cable Railing - Line Post -  Surface Mount -  Black",
+        "srsStock": 275.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137037"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-LINE-42-BLK",
+        "techDesc": "Post | Cable | Fascia Mount | Line - 42\" | Black",
+        "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Black",
+        "srsStock": 325.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137006"
+    },
+    {
+        "category": "Hardware",
+        "sku": "TR-END-BLK",
+        "techDesc": "Top Rail | End Cap | Black",
+        "commonName": "Top Rail End Cap",
+        "srsStock": 600.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137013"
+    },
+    {
+        "category": "Hardware",
+        "sku": "LAGWSR-FM-SS-POL",
+        "techDesc": "Fascia Mount | Stainless Steel | Post Lag w/Washer| Polished Finish",
+        "commonName": "3/8\" x 5\" Stainless Lag Bolt w/ Flat Washer",
+        "srsStock": 800.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137082"
+    },
+    {
+        "category": "Hardware",
+        "sku": "WSR-ANG-SS",
+        "techDesc": "Stainless Steel | Angle Washer",
+        "commonName": "Angle Washer - Stainless - Polished",
+        "srsStock": 1000.0,
+        "gs1Prefix": "08600143964",
+        "gtin": "00860014396465"
+    },
+    {
+        "category": "Hardware",
+        "sku": "PS-SM-SS-BLK",
+        "techDesc": "Surface Mount | Stainless Steel | Post Screws | Black Finish",
+        "commonName": "Surface Mount Post Screws - Stainless - Black Finish",
+        "srsStock": 1900.0,
+        "gs1Prefix": "08600143964",
+        "gtin": "00860014396496"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SCR-ST-SS-BLK",
+        "techDesc": "Stainless Steel | Self-Tap Screws | Black Finish",
+        "commonName": "Self-Tap Screws Stainless Steel -  Black Finish-",
+        "srsStock": 3400.0,
+        "gs1Prefix": "0850084137",
+        "gtin": "00850084137044"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SWG-CBL-SS-POL",
+        "techDesc": "Swage | Stainless Steel |Polished Finish",
+        "commonName": "1/4\" Threaded Cable Stainless Swage - Polished",
+        "srsStock": 7200.0,
+        "gs1Prefix": "08600143964",
+        "gtin": "00860014396441"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SPG-FM-BSHD",
+        "techDesc": "Spigot | Fascia Mount | Brushed Finish",
+        "commonName": "Fascia Mount Spigot -  Brushed Finish",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SPG-FM-COL",
+        "techDesc": "Spigot | Fascia Mount | Color",
+        "commonName": "Fascia Mount Spigot -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SCR-ST-SS-POL",
+        "techDesc": "Stainless Steel | Self-Tap Screws | Polished Finish",
+        "commonName": "Self-Tap Screws Stainless Steel -  Polished Finish-",
+        "srsStock": 0,
+        "gs1Prefix": "08600143964",
+        "gtin": "00860014396458"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SPG-SM-BSHD",
+        "techDesc": "Spigot | Surface Mount | Brushed Finish",
+        "commonName": "Surface Mount Spigot -  Brushed Finish",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SPG-SM-COL",
+        "techDesc": "Spigot | Surface Mount | Color",
+        "commonName": "Surface Mount Spigot -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-CUT-FT-BLK",
+        "techDesc": "Top Rail |Cut | Per Ft",
+        "commonName": "1\" x 3\" Toprail - Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "CBL-SS-BLK-500",
+        "techDesc": "Cable | Stainless Steel | Black Finish | 500' Roll",
+        "commonName": "1/4\" Stainless Cable - Black (500' Roll)",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "CBL-SS-BLK",
+        "techDesc": "Cable | Stainless Steel | Black Finish",
+        "commonName": "1/4\" Stainless Cable - Black (Per Foot)",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "CBL-SS-POL",
+        "techDesc": "Cable | Stainless Steel | Polished Finish",
+        "commonName": "1/4\" Stainless Cable - Polished (Per Foot)",
+        "srsStock": 0,
+        "gs1Prefix": "08600143964",
+        "gtin": "00860014396434"
+    },
+    {
+        "category": "Hardware",
+        "sku": "SWG-CBL-SS-BLK",
+        "techDesc": "Swage | Stainless Steel |Black Finish",
+        "commonName": "1/4\" Threaded Cable Stainless Swage - Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-12-BLK",
+        "techDesc": "Top Rail | 12' length | Black",
+        "commonName": "12' - 1\" x 3\" Toprail - Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-12-CLR",
+        "techDesc": "Top Rail | 12' length | Custom Color",
+        "commonName": "12' - 1\" x 3\" Toprail - Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-16-BLK",
+        "techDesc": "Top Rail | 16' length | Black",
+        "commonName": "16' - 1\" x 3\" Toprail - Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-16-CLR",
+        "techDesc": "Top Rail | 16' length | Custom Color",
+        "commonName": "16' - 1\" x 3\" Toprail - Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-20-CLR",
+        "techDesc": "Top Rail | 20' length | Custom Color",
+        "commonName": "20' - 1\" x 3\" Toprail - Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "LAG-FM-SS-WSR-BLK",
+        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Washer | Black Finish",
+        "commonName": "3/8\" Flat Washer - Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "LAG-FM-SS-WSR-POL",
+        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Washer | Polished Finish",
+        "commonName": "3/8\" Flat Washer - Polished",
+        "srsStock": 0,
+        "gs1Prefix": "08600143964",
+        "gtin": "00860014396489"
+    },
+    {
+        "category": "Hardware",
+        "sku": "LAG-FM-SS-BLK",
+        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Black Finish",
+        "commonName": "3/8\" x 5\" Stainless Lag Bolt - Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "LAG-FM-SS-POL",
+        "techDesc": "Fascia Mount | Stainless Steel | Post Lags | Polished Finish",
+        "commonName": "3/8\" x 5\" Stainless Lag Bolt - Polished",
+        "srsStock": 0,
+        "gs1Prefix": "08600143964",
+        "gtin": "00860014396472"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-CRN-36-BLK",
+        "techDesc": "Post | Cable | Fascia Mount | Corner - 36\" | Black",
+        "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-CRN-36-CLR",
+        "techDesc": "Post | Cable | Fascia Mount | Corner - 36\" | Custom Color",
+        "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-CRN-36-CLR",
+        "techDesc": "Post | Cable | Surface Mount | Corner - 36\" | Custom Color",
+        "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-LINE-36-BLK",
+        "techDesc": "Post | Cable | Fascia Mount | Line - 36\" | Black",
+        "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-LINE-36-CLR",
+        "techDesc": "Post | Cable | Fascia Mount | Line - 36\" | Custom Color",
+        "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-LINE-36-CLR",
+        "techDesc": "Post | Cable | Surface Mount| Line - 36\" | Custom Color",
+        "commonName": "36\" Cable Railing - Line Post -  Surface Mount-  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-STR-36-BLK",
+        "techDesc": "Post | Cable | Fascia Mount | Stair - 36\" | Black",
+        "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-STR-36-CLR",
+        "techDesc": "Post | Cable | Fascia Mount | Stair - 36\" | Custom Color",
+        "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-STR-36-CLR",
+        "techDesc": "Post | Cable | Surface Mount | Stair - 36\" | Custom Color",
+        "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-CRN-36-BLK",
+        "techDesc": "Post | Glass | Fascia Mount | Corner - 36\" | Black",
+        "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-CRN-36-CLR",
+        "techDesc": "Post | Glass | Fascia Mount | Corner - 36\" | Custom Color",
+        "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-CRN-36-BLK",
+        "techDesc": "Post | Glass | Surface | Corner - 36\" | Black",
+        "commonName": "36\" Glass Railing - Corner Post -  Surface -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-CRN-36-CLR",
+        "techDesc": "Post | Glass | Surface | Corner - 36\" | Custom Color",
+        "commonName": "36\" Glass Railing - Corner Post -  Surface -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-LINE-36-BLK",
+        "techDesc": "Post | Glass | Fascia Mount | Line - 36\" | Black",
+        "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-LINE-36-CLR",
+        "techDesc": "Post | Glass | Fascia Mount | Line - 36\" | Custom Color",
+        "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-LINE-36-BLK",
+        "techDesc": "Post | Glass | Surface | Line - 36\" | Black",
+        "commonName": "36\" Glass Railing - Line Post -  Surface -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-LINE-36-CLR",
+        "techDesc": "Post | Glass | Surface | Line - 36\" | Custom Color",
+        "commonName": "36\" Glass Railing - Line Post -  Surface -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-STR-36-BLK",
+        "techDesc": "Post | Glass | Fascia Mount | Stair - 36\" | Black",
+        "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-STR-36-CLR",
+        "techDesc": "Post | Glass | Fascia Mount | Stair - 36\" | Custom Color",
+        "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-STR-36-BLK",
+        "techDesc": "Post | Glass | Surface | Stair - 36\" | Black",
+        "commonName": "36\" Glass Railing - Stair Post -  Surface -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-STR-36-CLR",
+        "techDesc": "Post | Glass | Surface | Stair - 36\" | Custom Color",
+        "commonName": "36\" Glass Railing - Stair Post -  Surface -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-4-BLK",
+        "techDesc": "Top Rail | 4' length | Black",
+        "commonName": "4' - 1\" x 3\" Toprail - Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-4-CLR",
+        "techDesc": "Top Rail | 4' length | Custom Color",
+        "commonName": "4' - 1\" x 3\" Toprail - Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-CRN-42-BLK",
+        "techDesc": "Post | Cable | Fascia Mount | Corner - 42\" | Black",
+        "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-CRN-42-CLR",
+        "techDesc": "Post | Cable | Fascia Mount | Corner - 42\" | Custom Color",
+        "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-CRN-42-BLK",
+        "techDesc": "Post | Cable | Surface Mount | Corner - 42\" | Black",
+        "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-CRN-42-CLR",
+        "techDesc": "Post | Cable | Surface Mount | Corner - 42\" | Custom Color",
+        "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-LINE-42-CLR",
+        "techDesc": "Post | Cable | Fascia Mount | Line - 42\" | Custom Color",
+        "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-LINE-42-BLK",
+        "techDesc": "Post | Cable | Surface Mount | Line - 42\" | Black",
+        "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-LINE-42-CLR",
+        "techDesc": "Post | Cable | Surface Mount | Line - 42\" | Custom Color",
+        "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-FM-STR-42-CLR",
+        "techDesc": "Post | Cable | Fascia Mount | Stair - 42\" | Custom Color",
+        "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-STR-42-BLK",
+        "techDesc": "Post | Cable | Surface Mount | Stair - 42\" | Black",
+        "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Cable Post",
+        "sku": "P-CBL-SM-STR-42-CLR",
+        "techDesc": "Post | Cable | Surface Mount | Stair - 42\" | Custom Color",
+        "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-CRN-42-BLK",
+        "techDesc": "Post | Glass | Fascia Mount | Corner - 42\" | Black",
+        "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-CRN-42-CLR",
+        "techDesc": "Post | Glass | Fascia Mount | Corner - 42\" | Custom Color",
+        "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-CRN-42-BLK",
+        "techDesc": "Post | Glass | Surface Mount | Corner - 42\" | Black",
+        "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-CRN-42-CLR",
+        "techDesc": "Post | Glass | Surface Mount | Corner - 42\" | Custom Color",
+        "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-LINE-42-BLK",
+        "techDesc": "Post | Glass | Fascia Mount | Line - 42\" | Black",
+        "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-LINE-42-CLR",
+        "techDesc": "Post | Glass | Fascia Mount | Line - 42\" | Custom Color",
+        "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-LINE-42-BLK",
+        "techDesc": "Post | Glass | Surface Mount | Line - 42\" | Black",
+        "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-LINE-42-CLR",
+        "techDesc": "Post | Glass | Surface Mount | Line - 42\" | Custom Color",
+        "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-STR-42-BLK",
+        "techDesc": "Post | Glass | Fascia Mount | Stair - 42\" | Black",
+        "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-FM-STR-42-CLR",
+        "techDesc": "Post | Glass | Fascia Mount | Stair - 42\" | Custom Color",
+        "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-STR-42-BLK",
+        "techDesc": "Post | Glass | Surface Mount | Stair - 42\" | Black",
+        "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Framed Glass Railing",
+        "sku": "P-GLS-SM-STR-42-CLR",
+        "techDesc": "Post | Glass | Surface Mount | Stair - 42\" | Custom Color",
+        "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-8-BLK",
+        "techDesc": "Top Rail | 8' length | Black",
+        "commonName": "8' - 1\" x 3\" Toprail - Black",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Top Rail",
+        "sku": "TR-8-CLR",
+        "techDesc": "Top Rail | 8' length | Custom Color",
+        "commonName": "8' - 1\" x 3\" Toprail - Custom Color",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Plates / Tabs",
+        "sku": "PLT-SM",
+        "techDesc": "Plate| Surface Mount",
+        "commonName": "Component - Post Surface Mount Plate",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Plates / Tabs",
+        "sku": "PLT-TOP",
+        "techDesc": "Plate| Top Rail",
+        "commonName": "Component - Post Top Rail Plate",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Hardware",
+        "sku": "ANG-TOP",
+        "techDesc": "Angle | Top | Bracket",
+        "commonName": "Stair Post Toprail Angle Bracket",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-FM-L-BLK-20x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK |  20 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093655"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-SM-L-BLK-20x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK |  20 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093693"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-FM-L-BLK-12x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 12 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093631"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-SM-L-BLK-12x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 12 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093679"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-FM-L-BLK-16x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 16 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093648"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-SM-L-BLK-16x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 16 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093686"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-FM-L-BLK-4x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 4 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093600"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-SM-L-BLK-4x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 4 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093617"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-FM-L-BLK-8x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 8 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093624"
+    },
+    {
+        "category": "Kit",
+        "sku": "MR-KIT-CABLE-SM-L-BLK-8x42",
+        "techDesc": "KIT | CABLE | MOUNT | LINE ,CORNER, STAIR | BLACK | 8 ft x 42\u201d",
+        "commonName": "#N/A",
+        "srsStock": 0,
+        "gs1Prefix": "08600130936",
+        "gtin": "00860013093662"
+    },
+    {
+        "category": "Plates / Tabs",
+        "sku": "ANG-BOT",
+        "techDesc": "Angle| Bottom",
+        "commonName": "",
+        "srsStock": 0,
+        "gs1Prefix": "#N/A",
+        "gtin": "#N/A"
+    }
+],
+
+  // PRODUCT_SKU_MASTER_AM — SRS item dimensions (weight/length/width/height)
+  srsDims: [
+    {
+        "commonName": "Fascia Mount Spigot -  Brushed Finish",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Fascia Mount Spigot -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Self-Tap Screws Stainless Steel -  Black Finish-",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Self-Tap Screws Stainless Steel -  Polished Finish-",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Surface Mount Spigot -  Brushed Finish",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Surface Mount Spigot -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "1\" x 3\" Toprail - Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "1/4\" Stainless Cable - Black (500' Roll)",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "1/4\" Stainless Cable - Black (Per Foot)",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "1/4\" Stainless Cable - Polished (500' Roll)",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "1/4\" Stainless Cable - Polished (Per Foot)",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "1/4\" Threaded Cable Stainless Swage - Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "1/4\" Threaded Cable Stainless Swage - Polished",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "12' - 1\" x 3\" Toprail - Black",
+        "weightLb": 0,
+        "length": 144.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "12' - 1\" x 3\" Toprail - Custom Color",
+        "weightLb": 0,
+        "length": 144.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "16' - 1\" x 3\" Toprail - Black",
+        "weightLb": 0,
+        "length": 192.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "16' - 1\" x 3\" Toprail - Custom Color",
+        "weightLb": 0,
+        "length": 192.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "20' - 1\" x 3\" Toprail - Black",
+        "weightLb": 0,
+        "length": 240.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "20' - 1\" x 3\" Toprail - Custom Color",
+        "weightLb": 0,
+        "length": 240.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "3/8\" Flat Washer - Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "3/8\" Flat Washer - Polished",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "3/8\" x 5\" Stainless Lag Bolt - Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "3/8\" x 5\" Stainless Lag Bolt - Polished",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "3/8\" x 5\" Stainless Lag Bolt w/ Flat Washer",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Black",
+        "weightLb": 5.2,
+        "length": 6.0,
+        "width": 6.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "weightLb": 5.2,
+        "length": 6.0,
+        "width": 6.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Black",
+        "weightLb": 4.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
+        "weightLb": 4.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Line Post -  Surface Mount -  Black",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 35.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Line Post -  Surface Mount-  Custom Color",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 35.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Black",
+        "weightLb": 4.0,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "weightLb": 4.0,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Black",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 35.0
+    },
+    {
+        "commonName": "36\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 35.0
+    },
+    {
+        "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Black",
+        "weightLb": 5.0,
+        "length": 6.0,
+        "width": 6.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "weightLb": 5.0,
+        "length": 6.0,
+        "width": 6.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Glass Railing - Corner Post -  Surface -  Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Glass Railing - Corner Post -  Surface -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Black",
+        "weightLb": 4.0,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
+        "weightLb": 4.0,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 43.0
+    },
+    {
+        "commonName": "36\" Glass Railing - Line Post -  Surface -  Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Glass Railing - Line Post -  Surface -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Glass Railing - Stair Post -  Surface -  Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "36\" Glass Railing - Stair Post -  Surface -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "4' - 1\" x 3\" Toprail - Black",
+        "weightLb": 0,
+        "length": 48.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "4' - 1\" x 3\" Toprail - Custom Color",
+        "weightLb": 0,
+        "length": 48.0,
+        "width": 3.0,
+        "height": 1.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Black",
+        "weightLb": 5.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "weightLb": 5.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Black",
+        "weightLb": 4.2,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Corner Post -  Surface Mount -  Custom Color",
+        "weightLb": 4.2,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Black",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Line Post -  Fascia Mount -  Custom Color",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Black",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Line Post -  Surface Mount -  Custom Color",
+        "weightLb": 0,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Black",
+        "weightLb": 4.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "weightLb": 4.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Black",
+        "weightLb": 4.0,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Cable Railing - Stair Post -  Surface Mount -  Custom Color",
+        "weightLb": 4.0,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Black",
+        "weightLb": 5.2,
+        "length": 6.0,
+        "width": 6.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Corner Post -  Fascia Mount -  Custom Color",
+        "weightLb": 5.2,
+        "length": 6.0,
+        "width": 6.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Black",
+        "weightLb": 4.2,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Corner Post -  Surface Mount -  Custom Color",
+        "weightLb": 4.2,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Black",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Line Post -  Fascia Mount -  Custom Color",
+        "weightLb": 4.6,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Black",
+        "weightLb": 4.2,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Line Post -  Surface Mount -  Custom Color",
+        "weightLb": 4.2,
+        "length": 4.0,
+        "width": 4.0,
+        "height": 41.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Black",
+        "weightLb": 4.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Stair Post -  Fascia Mount -  Custom Color",
+        "weightLb": 4.2,
+        "length": 2.0,
+        "width": 2.0,
+        "height": 48.0
+    },
+    {
+        "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "42\" Glass Railing - Stair Post -  Surface Mount -  Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "8' - 1\" x 3\" Toprail - Black",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "8' - 1\" x 3\" Toprail - Custom Color",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Angle Washer - Stainless - Polished",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Component - Post Surface Mount Plate",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Component - Post Top Rail Plate",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Stair Post Toprail Angle Bracket",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Surface Mount Post Screws - Stainless - Black Finish",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    },
+    {
+        "commonName": "Top Rail End Cap",
+        "weightLb": 0,
+        "length": 0,
+        "width": 0,
+        "height": 0
+    }
+],
+
+  // Daily Huddle Board — standup entries (structure ready, data entry per shift)
+  huddleBoard: [],
+
+    // ─── Backward-compatible keys (v4 components reference these — do NOT remove) ──
   // inventory: merged view of rawMaterials + assemblyItems + shopConsumables
   inventory: [
     {
@@ -8842,7 +17619,7 @@ const Login = ({ onLogin }) => {
         <div style={{marginBottom:14}}><label>Email Address</label><input className="login-input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="you@maisyrailing.com" autoFocus/></div>
         <div style={{marginBottom:20}}><label>Password</label><div style={{position:'relative'}}><input className="login-input" type={show?'text':'password'} value={pass} onChange={e=>{setPass(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="••••••••••"/><button onClick={()=>setShow(s=>!s)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em'}}>{show?'HIDE':'SHOW'}</button></div></div>
         {err&&<div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',borderRadius:5,padding:'8px 12px',fontSize:12,color:'var(--err)',marginBottom:14}}>{err}</div>}
-        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onMouseDown={e=>{e.preventDefault();submit();}}>Sign In →</button>
+        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onClick={()=>submit()}>Sign In →</button>
         <div className="divider" style={{margin:'20px 0 14px'}}/>
         <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Demo Credentials</div>
         {DEMO_USERS.map(u=>(
@@ -8878,8 +17655,12 @@ const NAVS = [
   {section:'People & Quality'},
   {id:'people',icon:'◍',label:'People & HR'},
   {id:'automation',icon:'⊞',label:'Automation Roadmap'},
+  {id:'kpi',icon:'◈',label:'KPI Dashboard'},
   {section:'Reference'},
   {id:'shopref',icon:'⊟',label:'Shop Reference'},
+  {id:'srscatalog',icon:'⊛',label:'SRS Catalog'},
+  {id:'legacyorders',icon:'◫',label:'Legacy Orders'},
+  {id:'printcenter',icon:'🖨',label:'Print Center'},
   {id:'reports',icon:'◪',label:'Reports'},
 ];
 
@@ -8895,7 +17676,7 @@ const Sidebar = ({page,setPage,data,user}) => {
           <div style={{width:28,height:28,background:'linear-gradient(135deg,var(--acc),var(--acc2))',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <span style={{color:'#000',fontSize:13,fontWeight:900,fontFamily:'Barlow Condensed'}}>M</span>
           </div>
-          <div><div className="hd" style={{fontSize:15}}>MAISY ERP</div><div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase'}}>v4.0 · All Modules</div></div>
+          <div><div className="hd" style={{fontSize:15}}>MAISY ERP</div><div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase'}}>v5.1 · All Modules</div></div>
         </div>
       </div>
       <div style={{flex:1,overflowY:'auto',padding:'5px 0'}}>
@@ -9566,7 +18347,7 @@ const Production = ({data, setData, user}) => {
                 </td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(w.due)}</td>
                 <td className="mono" style={{fontSize:11,color:'var(--ok)',fontWeight:600}}>{fmt$(jc)}</td>
-                <td>{canEdit&&<div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(w)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(w.id)}>Del</button></div>}</td>
+                <td><div style={{display:'flex',gap:4}}>{canEdit&&<><button className="btn btn-g btn-sm" onClick={()=>open(w)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(w.id)}>Del</button></>}<PrintBtn small onClick={()=>printWorkOrder(w)} label="WO"/></div></td>
               </tr>
             );})}
           </tbody>
@@ -9668,7 +18449,7 @@ const Purchasing = ({data, setData}) => {
               <td><div style={{display:'flex',gap:4}}>
                 {!p.received&&['Ordered','In Transit'].includes(p.status)&&<button className="btn btn-ok btn-sm" onClick={()=>startReceiving(p)}>Receive</button>}
                 <button className="btn btn-g btn-sm" onClick={()=>openPO(p)}>Edit</button>
-                <button className="btn btn-d btn-sm" onClick={()=>del(p.id)}>Del</button>
+                <button className="btn btn-d btn-sm" onClick={()=>del(p.id)}>Del</button><PrintBtn small onClick={()=>printPO(p)} label="PO"/>
               </div></td>
             </tr>
           ))}</tbody>
@@ -9772,7 +18553,7 @@ const Invoicing = ({data, setData}) => {
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(i.issued)}</td>
               <td style={{fontSize:11,color:i.status==='Overdue'?'var(--err)':'var(--muted)'}}>{fmtD(i.due)}</td>
               <td style={{fontSize:11,color:'var(--ok)'}}>{i.paid?fmtD(i.paid):'—'}</td>
-              <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(i)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(i.id)}>Del</button></div></td>
+              <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(i)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(i.id)}>Del</button><PrintBtn small onClick={()=>printInvoice(i)} label="INV"/></div></td>
             </tr>
           ))}</tbody>
         </table>
@@ -9822,7 +18603,7 @@ const Shipping = ({data, setData}) => {
                 <td><Badge s={s.status}/></td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(s.shipped)}</td>
                 <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)'}}>{fmtD(s.delivered)}</td>
-                <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
+                <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button><PrintBtn small onClick={()=>printPackingSlip(s)} label="Slip"/></div></td>
               </tr>
             ))}
           </tbody>
@@ -10944,6 +19725,211 @@ const AIPanel = ({data,open,onClose}) => {
   );
 };
 
+
+// ─── KPI DASHBOARD ─────────────────────────────────────────────────────────────
+const KPIDashboard = ({data}) => {
+  const targets = data.kpiTargets||[];
+  const weekly = (data.kpiWeekly||[]).filter(w=>w.onTimeDeliveryPct||w.firstPassYieldPct||w.wipCount||w.scrapWasteDollar);
+  const latest = weekly[weekly.length-1]||{};
+  const pctColor = (val, metric) => {
+    const t = targets.find(t=>t.metric===metric);
+    if(!t||!val) return 'var(--muted)';
+    if(val>=t.green*100) return 'var(--ok)';
+    if(val>=t.yellow*100) return 'var(--warn)';
+    return 'var(--err)';
+  };
+  return (
+    <div style={{padding:'20px 24px'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:20}}>
+        {[
+          {label:'On-Time Delivery',val:latest.onTimeDeliveryPct,unit:'%',metric:'On-Time Delivery Rate'},
+          {label:'First-Pass Yield',val:latest.firstPassYieldPct,unit:'%',metric:'First-Pass Yield'},
+          {label:'Avg Lead Time',val:latest.avgLeadTimeDays,unit:' days',metric:'Avg Lead Time (Days)'},
+          {label:'Open WIP',val:latest.wipCount,unit:' pcs',metric:'WIP Count'},
+          {label:'Scrap This Week',val:latest.scrapWasteDollar,unit:'',metric:'Scrap/Waste ($)',fmt:'$'},
+          {label:'Safety Incidents',val:latest.safetyIncidents,unit:'',metric:'Safety Incidents'},
+          {label:'Labor Utilization',val:latest.laborUtilizationPct,unit:'%',metric:'Labor Utilization %'},
+          {label:'Order Fulfillment',val:latest.orderFulfillmentPct,unit:'%',metric:'Order Fulfillment %'},
+        ].map((k,i)=>(
+          <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'14px 18px'}}>
+            <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>{k.label}</div>
+            <div style={{fontSize:26,fontFamily:'Barlow Condensed',fontWeight:700,color:k.val?pctColor(k.val,k.metric):'var(--muted)'}}>{k.val?(k.fmt||'')+k.val.toFixed(1)+k.unit:'—'}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:16}}>
+          <div style={{fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:12}}>KPI Targets</div>
+          <table className="tbl"><thead><tr><th>Metric</th><th>Green</th><th>Yellow</th><th>Unit</th></tr></thead>
+          <tbody>{targets.map((t,i)=><tr key={i}><td>{t.metric}</td><td style={{color:'var(--ok)'}}>{(t.green*100).toFixed(0)}</td><td style={{color:'var(--warn)'}}>{(t.yellow*100).toFixed(0)}</td><td style={{color:'var(--muted)'}}>{t.unit}</td></tr>)}</tbody></table>
+        </div>
+        <div style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:16}}>
+          <div style={{fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:12}}>Station Output (Process Cost Analysis)</div>
+          <table className="tbl"><thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Day</th><th>Labor $/Day</th></tr></thead>
+          <tbody>{(data.costPerStation||[]).slice(0,12).map((s,i)=><tr key={i}><td style={{fontSize:11}}>{s.station}</td><td>{s.timePerSectionMin?.toFixed(1)}</td><td>{s.sectionsPerDay?.toFixed(0)}</td><td style={{color:'var(--acc)'}}>${s.laborDollarDay?.toFixed(0)}</td></tr>)}</tbody></table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── SRS CATALOG ───────────────────────────────────────────────────────────────
+const SRSCatalog = ({data}) => {
+  const [search,setSearch] = React.useState('');
+  const [catFilter,setCatFilter] = React.useState('All');
+  const catalog = data.srsCatalog||[];
+  const dims = data.srsDims||[];
+  const cats = ['All',...new Set(catalog.map(s=>s.category).filter(Boolean))];
+  const filtered = catalog.filter(s=>{
+    const matchCat = catFilter==='All'||s.category===catFilter;
+    const matchSearch = !search||s.sku.toLowerCase().includes(search.toLowerCase())||s.commonName.toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
+  });
+  return (
+    <div style={{padding:'20px 24px'}}>
+      <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'8px 14px',marginBottom:16,fontSize:12,color:'var(--warn)'}}>
+        ⚠️ SRS Customer Catalog — sourced from co-worker. Separate from Maisy production SKUs. {catalog.length} SKUs with GTINs.
+      </div>
+      <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+        <input placeholder="Search SKU or name…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:200}}/>
+        <select value={catFilter} onChange={e=>setCatFilter(e.target.value)} style={{minWidth:140}}>
+          {cats.map(c=><option key={c}>{c}</option>)}
+        </select>
+        <span className="chip">{filtered.length} SKUs</span>
+      </div>
+      <div style={{overflowX:'auto'}}>
+        <table className="tbl"><thead><tr><th>Category</th><th>SKU</th><th>Common Name</th><th>SRS Stock</th><th>GTIN</th></tr></thead>
+        <tbody>{filtered.map((s,i)=>(
+          <tr key={i}>
+            <td style={{fontSize:10,color:'var(--muted)'}}>{s.category}</td>
+            <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)'}}>{s.sku}</td>
+            <td style={{fontSize:12}}>{s.commonName}</td>
+            <td style={{textAlign:'center'}}>{s.srsStock||'—'}</td>
+            <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{s.gtin}</td>
+          </tr>
+        ))}</tbody></table>
+      </div>
+    </div>
+  );
+};
+
+// ─── LEGACY ORDERS ─────────────────────────────────────────────────────────────
+const LegacyOrders = ({data}) => {
+  const [search,setSearch] = React.useState('');
+  const [typeFilter,setTypeFilter] = React.useState('All');
+  const orders = data.legacyOrders||[];
+  const types = ['All',...new Set(orders.map(o=>o.productType))];
+  const filtered = orders.filter(o=>{
+    const matchType = typeFilter==='All'||o.productType===typeFilter;
+    const matchSearch = !search||o.customer.toLowerCase().includes(search.toLowerCase())||o.shipTo.toLowerCase().includes(search.toLowerCase());
+    return matchType && matchSearch;
+  });
+  const byType = {};
+  orders.forEach(o=>{byType[o.productType]=(byType[o.productType]||0)+1;});
+  return (
+    <div style={{padding:'20px 24px'}}>
+      <div style={{background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.3)',borderRadius:6,padding:'8px 14px',marginBottom:16,fontSize:12,color:'#818cf8'}}>
+        📁 Historical orders from pre-2026 ERP system. {orders.length} orders across {Object.keys(byType).length} product lines. Reference only — not active.
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+        {Object.entries(byType).slice(0,8).map(([type,count])=>(
+          <div key={type} onClick={()=>setTypeFilter(type===typeFilter?'All':type)} style={{background:typeFilter===type?'rgba(99,102,241,.15)':'var(--s1)',border:`1px solid ${typeFilter===type?'rgba(99,102,241,.5)':'var(--bdr)'}`,borderRadius:6,padding:'10px 12px',cursor:'pointer'}}>
+            <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:3}}>{type}</div>
+            <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,color:'#818cf8'}}>{count}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:'flex',gap:8,marginBottom:12}}>
+        <input placeholder="Search customer or ship-to…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1}}/>
+        <span className="chip">{filtered.length} orders</span>
+        {typeFilter!=='All'&&<button className="btn btn-xs" onClick={()=>setTypeFilter('All')}>Clear Filter</button>}
+      </div>
+      <div style={{overflowX:'auto'}}>
+        <table className="tbl"><thead><tr><th>ID</th><th>Customer</th><th>Product Type</th><th>Date</th><th>Ship To</th></tr></thead>
+        <tbody>{filtered.slice(0,200).map(o=>(
+          <tr key={o.id}>
+            <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{o.id}</td>
+            <td style={{fontSize:12}}>{o.customer}</td>
+            <td style={{fontSize:10,color:'var(--acc)'}}>{o.productType}</td>
+            <td style={{fontSize:11,color:'var(--muted)'}}>{o.date}</td>
+            <td style={{fontSize:11}}>{o.shipTo}</td>
+          </tr>
+        ))}</tbody></table>
+        {filtered.length>200&&<div style={{textAlign:'center',padding:12,color:'var(--muted)',fontSize:12}}>Showing 200 of {filtered.length} — use search to narrow</div>}
+      </div>
+    </div>
+  );
+};
+
+
+// ─── PRINT CENTER ──────────────────────────────────────────────────────────────
+const PrintCenter = ({data}) => {
+  const docs = [
+    {
+      cat:'Shop Floor',
+      items:[
+        {icon:'📋',title:'Daily Huddle Board',desc:'Standup form — one per shift. Team updates, priorities, output vs goal.',action:()=>printHuddleBoard()},
+        {icon:'🔧',title:'Work Order Travelers',desc:`Print all ${data.workOrders?.length||0} active work orders as shop-floor travelers.`,action:()=>data.workOrders?.forEach(w=>setTimeout(()=>printWorkOrder(w),150))},
+        {icon:'📊',title:'Training Matrix',desc:'Full cross-training skills snapshot for all employees.',action:()=>printTrainingMatrix(data)},
+        {icon:'⚠️',title:'Safety Log + Blank Form',desc:`${data.safetyLog?.length||0} incidents logged. Includes blank incident report form.`,action:()=>printSafetyLog(data)},
+        {icon:'💡',title:'Improvement Log (Kaizen)',desc:`${data.improvementLog?.length||0} ideas. Includes blank submission form.`,action:()=>printImprovementLog(data)},
+      ]
+    },
+    {
+      cat:'Finance & Orders',
+      items:[
+        {icon:'🧾',title:'All Invoices',desc:`Print all ${data.invoices?.length||0} invoices as individual documents.`,action:()=>data.invoices?.forEach(i=>setTimeout(()=>printInvoice(i),150))},
+        {icon:'📦',title:'All Purchase Orders',desc:`Print all ${data.purchaseOrders?.length||0} POs with line items.`,action:()=>data.purchaseOrders?.forEach(p=>setTimeout(()=>printPO(p),150))},
+        {icon:'🚚',title:'All Packing Slips',desc:`Print packing slips for all ${data.shipments?.length||0} shipments.`,action:()=>data.shipments?.forEach(s=>setTimeout(()=>printPackingSlip(s),150))},
+      ]
+    },
+    {
+      cat:'Management Reports',
+      items:[
+        {icon:'📈',title:'KPI Report',desc:'Weekly KPI trend, targets, and station output summary.',action:()=>printKPIReport(data)},
+        {icon:'🏭',title:'Inventory Report',desc:`Full stock report with ${(data.inventory?.filter(i=>i.qty<=i.reorder)||[]).length} critical/low items highlighted.`,action:()=>printInventoryReport(data)},
+        {icon:'🗂️',title:'Scrap & Waste Log',desc:`${data.scrapWaste?.length||0} scrap events, YTD totals by station.`,action:()=>{
+          const log = data.scrapWaste||[];
+          const byStation = {};
+          log.forEach(s=>{byStation[s.station]=(byStation[s.station]||0)+(s.cost||0);});
+          printHTML('Scrap & Waste Log',`<div class="page"><div class="hdr"><div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Scrap & Waste Report</div></div><div style="text-align:right"><div class="doc-title">SCRAP LOG</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div></div><div class="grid-4" style="margin-bottom:16px">${Object.entries(byStation).map(([k,v])=>`<div class="box"><div class="box-label">${k}</div><div class="box-val" style="color:#991b1b">$${v.toFixed(2)}</div></div>`).join('')}</div><table><thead><tr><th>Date</th><th>Station</th><th>SKU</th><th>Qty</th><th>Cost</th><th>Reason</th><th>Corrective Action</th><th>By</th></tr></thead><tbody>${log.map(s=>`<tr><td>${s.date||'—'}</td><td>${s.station||'—'}</td><td style="font-family:monospace;font-size:10px">${s.sku||'—'}</td><td>${s.qty||'—'} ${s.unit||''}</td><td style="color:#991b1b;font-weight:700">$${(s.cost||0).toFixed(2)}</td><td style="font-size:10px">${s.reasonCode||'—'}</td><td style="font-size:10px">${s.corrAction||'—'}</td><td style="font-size:10px">${s.reportedBy||'—'}</td></tr>`).join('')}</tbody></table><div class="sig-line"><span>Report Generated: ${new Date().toLocaleDateString()}</span><span>Daniel Jones, Director of Operations</span></div></div>`);
+        }},
+      ]
+    },
+  ];
+
+  return (
+    <div style={{padding:'20px 24px'}}>
+      <div style={{marginBottom:20}}>
+        <div className="hd" style={{fontSize:22,marginBottom:6}}>Print Center</div>
+        <div style={{fontSize:12,color:'var(--muted)'}}>All printable documents in one place. Each opens a print-ready window and triggers the browser print dialog automatically.</div>
+      </div>
+      {docs.map(cat=>(
+        <div key={cat.cat} style={{marginBottom:24}}>
+          <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>{cat.cat}</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:10}}>
+            {cat.items.map(item=>(
+              <div key={item.title} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'14px 16px',display:'flex',flexDirection:'column',gap:6}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontSize:20}}>{item.icon}</span>
+                  <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,letterSpacing:'.03em'}}>{item.title}</span>
+                </div>
+                <div style={{fontSize:11,color:'var(--muted)',lineHeight:1.5,flex:1}}>{item.desc}</div>
+                <button className="btn btn-p" style={{alignSelf:'flex-start',marginTop:4,gap:6}} onClick={item.action}>
+                  🖨 Print
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div style={{background:'rgba(0,229,255,.04)',border:'1px solid rgba(0,229,255,.12)',borderRadius:8,padding:'12px 16px',fontSize:11,color:'var(--muted)',marginTop:8}}>
+        💡 <strong style={{color:'var(--txt)'}}>Tip:</strong> Individual print buttons (🖨) are also available on each row in Production, Invoicing, Purchasing, and Shipping.
+      </div>
+    </div>
+  );
+};
+
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────────
 // To add a new module: add to PAGES, TITLES, NAVS, ROLE_ACCESS, and INIT. That's it.
 const PAGES = {
@@ -10952,7 +19938,8 @@ const PAGES = {
   invoicing:Invoicing, purchasing:Purchasing, finance:Finance,
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
-  shopref:ShopRef, reports:Reports,
+  kpi:KPIDashboard, shopref:ShopRef, srscatalog:SRSCatalog,
+  legacyorders:LegacyOrders, printcenter:PrintCenter, reports:Reports,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
@@ -10960,7 +19947,8 @@ const TITLES = {
   invoicing:'Invoicing & A/R', purchasing:'Purchasing', finance:'Finance & P&L',
   jobcost:'Job Costing', customers:'Customers', autopo:'Auto Reorder',
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
-  shopref:'Shop Reference', reports:'Reports',
+  kpi:'KPI Dashboard', shopref:'Shop Reference', srscatalog:'SRS Catalog',
+  legacyorders:'Legacy Orders (Pre-2026)', printcenter:'Print Center', reports:'Reports',
 };
 
 const normalizeData = (d) => {
