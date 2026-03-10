@@ -23984,7 +23984,7 @@ const Sidebar = ({page,setPage,data,user}) => {
           <div style={{width:28,height:28,background:'linear-gradient(135deg,var(--acc),var(--acc2))',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <span style={{color:'#000',fontSize:13,fontWeight:900,fontFamily:'Barlow Condensed'}}>M</span>
           </div>
-          <div><div className="hd" style={{fontSize:15}}>MAISY ERP</div><div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase'}}>v4.0 · All Modules</div></div>
+          <div><div className="hd" style={{fontSize:15}}>MAISY ERP</div><div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase'}}>v5.4 · All Modules</div></div>
         </div>
       </div>
       <div style={{flex:1,overflowY:'auto',padding:'5px 0'}}>
@@ -24012,6 +24012,11 @@ const Sidebar = ({page,setPage,data,user}) => {
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────────
 const Dashboard = ({data,setPage}) => {
   const rev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
+  const jobRev=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
+  const displayRev=rev>0?rev:jobRev;
+  const totalFreight=(data.shipCostLog||[]).reduce((a,b)=>a+(b.totalCost||0),0);
+  const miscSpend=(data.miscCharges||[]).reduce((a,b)=>a+(b.amount||0),0);
+  const latestKPI=(data.kpiWeekly||[]).slice(-1)[0]||{};
   const arOwed=data.invoices.filter(i=>i.status!=='Paid'&&i.status!=='Cancelled').reduce((a,b)=>a+b.amount,0);
   const cost=data.workOrders.reduce((a,b)=>a+(b.matCost+(b.laborHrs*b.laborRate)),0);
   const openTodos=data.todos.filter(t=>t.status!=='Done');
@@ -24021,10 +24026,10 @@ const Dashboard = ({data,setPage}) => {
     ...data.invoices.filter(i=>i.status==='Overdue').map(i=>({t:'err',m:`Overdue: ${i.id} · ${i.customer} · ${fmt$(i.amount)}`})),
     ...data.todos.filter(t=>t.priority==='Critical'&&t.status!=='Done').map(t=>({t:'err',m:`Critical task: ${t.title}`})),
   ];
-  const totalBudget=data.automationPhases.reduce((a,b)=>a+b.budget,0);
-  const spent=data.automationPhases.reduce((a,b)=>a+(b.budget*(b.completion/100)),0);
+  const totalBudget=(data.automationPhases||[]).reduce((a,b)=>a+b.budget,0);
+  const spent=(data.automationPhases||[]).reduce((a,b)=>a+(b.budget*(b.completion/100)),0);
   const monthData=data.pnlMonthly;
-  const laborCostTotal=data.laborRates.reduce((a,b)=>a+b.rateHr,0);
+  const laborCostTotal=(data.laborRates||[]).reduce((a,b)=>a+b.rateHr,0);
   return (
     <div className="fade-up">
       <div className="section-hd">
@@ -24033,7 +24038,7 @@ const Dashboard = ({data,setPage}) => {
       </div>
       <div className="grid4" style={{marginBottom:18}}>
         {[
-          {l:'YTD Revenue',v:fmt$(rev),c:'var(--acc)',click:'sales'},
+          {l:'YTD Revenue',v:fmt$(displayRev),c:'var(--ok)',click:'sales'},
           {l:'Open Orders',v:data.salesOrders.filter(o=>['In Production','Pending'].includes(o.status)).length,c:'var(--acc2)',click:'production'},
           {l:'A/R Outstanding',v:fmt$(arOwed),c:'var(--warn)',click:'invoicing'},
           {l:'COGS Tracked',v:fmt$(cost),c:'var(--ok)',click:'jobcost'},
@@ -24049,13 +24054,19 @@ const Dashboard = ({data,setPage}) => {
           {l:'Open Tasks',v:openTodos.length,c:'var(--acc3)',click:'todo'},
           {l:'Hot List Items',v:hotItems.length,c:'var(--err)',click:'todo'},
           {l:'Open Positions',v:data.openPositions.filter(p=>p.status==='Open').length,c:'#a78bfa',click:'people'},
-          {l:'Automation Progress',v:`${Math.round(data.automationPhases.reduce((a,b)=>a+(b.completion*(b.budget/totalBudget)),0))}%`,c:'var(--ok)',click:'automation'},
+          {l:'Automation Progress',v:`${Math.round((data.automationPhases||[]).reduce((a,b)=>a+(b.completion*(b.budget/totalBudget)),0))}%`,c:'var(--ok)',click:'automation'},
         ].map(s=>(
           <div className="stat-card" key={s.l} style={{cursor:'pointer'}} onClick={()=>setPage&&setPage(s.click)}>
             <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--muted)',marginBottom:8}}>{s.l}</div>
             <div className="mono hd" style={{fontSize:22,color:s.c}}>{s.v}</div>
           </div>
         ))}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+        <StatCard label="On-Time Delivery" value={latestKPI.onTimeDeliveryPct?latestKPI.onTimeDeliveryPct+'%':'—'} icon="🎯" color={latestKPI.onTimeDeliveryPct>=95?'var(--ok)':latestKPI.onTimeDeliveryPct>=85?'var(--warn)':'var(--err)'} sub={"Week of "+latestKPI.weekEnding||'No data'}/>
+        <StatCard label="YTD Freight Spend" value={fmt$(totalFreight)} icon="🚚" color="var(--acc)" sub={(data.shipCostLog||[]).length+" shipments"}/>
+        <StatCard label="Misc Charges YTD" value={fmt$(miscSpend)} icon="🧾" color="var(--acc2)" sub={(data.miscCharges||[]).length+" charges"}/>
+        <StatCard label="Scrap Cost YTD" value={fmt$((data.scrapWaste||[]).reduce((a,b)=>a+(b.cost||0),0))} icon="🗑️" color="var(--err)" sub={(data.scrapWaste||[]).length+" events"}/>
       </div>
       <div className="grid2" style={{marginBottom:16}}>
         <div className="card">
@@ -24111,7 +24122,7 @@ const Dashboard = ({data,setPage}) => {
         </div>
         <div className="card">
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:10}}>⚡ Automation Progress</div>
-          {data.automationPhases.map(ph=>(
+          {(data.automationPhases||[]).map(ph=>(
             <div key={ph.id} style={{marginBottom:10}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
                 <span style={{fontSize:11.5,fontWeight:500}}>Phase {ph.phase}: {ph.title}</span>
@@ -25900,7 +25911,7 @@ const Finance = ({data,setData}) => {
         {tab==='labor'&&<button className="btn btn-p" onClick={()=>{setForm({id:`LR-${uid()}`,role:'',level:'',rateHr:0,overtime:0,burden:1.28,notes:''});setModal('lr');}}>+ Add Rate</button>}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['pnl','labor','stations'].map(t=><button key={t} className={`tab${tab===t?' on':''}`} onClick={()=>setTab(t)}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':'Station Costs'}</button>)}
+        {['pnl','labor','stations','misc','profitability'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':t==='stations'?'Station Costs':t==='misc'?'Misc Charges':t==='profitability'?'Profitability':t}</button>)}
       </div>
 
       {tab==='pnl'&&<>
@@ -25945,7 +25956,7 @@ const Finance = ({data,setData}) => {
 
       {tab==='labor'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <table><thead><tr><th>Role</th><th>Level</th><th>Base $/hr</th><th>OT $/hr</th><th>Burden Rate</th><th>Burdened $/hr</th><th>Notes</th><th/></tr></thead>
-          <tbody>{data.laborRates.map(r=>(
+          <tbody>{(data.laborRates||[]).map(r=>(
             <tr key={r.id}>
               <td style={{fontWeight:500}}>{r.role}</td>
               <td><span className="chip">{r.level}</span></td>
@@ -25965,7 +25976,7 @@ const Finance = ({data,setData}) => {
 
       {tab==='stations'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <table><thead><tr><th>Station</th><th>Avg Labor Hrs</th><th>Setup (min)</th><th>Cycle (min)</th><th>Labor Cost/Unit</th><th>Notes</th><th/></tr></thead>
-          <tbody>{data.costPerStation.map(s=>(
+          <tbody>{(data.costPerStation||[]).map(s=>(
             <tr key={s.station}>
               <td style={{fontWeight:600}}>{s.station}</td>
               <td className="mono">{s.laborHrAvg}</td>
@@ -26399,9 +26410,9 @@ const Automation = ({data,setData}) => {
   const [form,setForm]=useState({});
 
   const toggle=id=>setExpanded(e=>({...e,[id]:!e[id]}));
-  const totalBudget=data.automationPhases.reduce((a,b)=>a+b.budget,0);
-  const totalSpent=data.automationPhases.reduce((a,b)=>a+(b.budget*(b.completion/100)),0);
-  const overallPct=Math.round(data.automationPhases.reduce((a,b)=>a+(b.completion*(b.budget/totalBudget)),0));
+  const totalBudget=(data.automationPhases||[]).reduce((a,b)=>a+b.budget,0);
+  const totalSpent=(data.automationPhases||[]).reduce((a,b)=>a+(b.budget*(b.completion/100)),0);
+  const overallPct=Math.round((data.automationPhases||[]).reduce((a,b)=>a+(b.completion*(b.budget/totalBudget)),0));
 
   const updatePhase=(id,field,val)=>{
     setData(d=>({...d,automationPhases:d.automationPhases.map(p=>p.id===id?{...p,[field]:field==='completion'||field==='budget'?Number(val):val}:p)}));
@@ -26440,7 +26451,7 @@ const Automation = ({data,setData}) => {
         </div>
       </div>
 
-      {data.automationPhases.map(ph=>(
+      {(data.automationPhases||[]).map(ph=>(
         <div key={ph.id} style={{background:'var(--s1)',border:`1px solid ${ph.status==='In Progress'?'rgba(0,229,255,.2)':'var(--bdr)'}`,borderRadius:8,marginBottom:12,overflow:'hidden'}}>
           <div style={{padding:'14px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:12}} onClick={()=>toggle(ph.id)}>
             <div style={{width:32,height:32,borderRadius:8,background:`${phaseColor[ph.status]}22`,border:`1px solid ${phaseColor[ph.status]}44`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -26825,7 +26836,7 @@ const ShopRef = ({data}) => {
         <span className="chip">Read-only · Maisy_08_Blueprint</span>
       </div>
       <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:14}}>
-        {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','calculators'].map(t=>(
+        {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','postmfg','materialsdb','skuteference','vendorscores','calculators'].map(t=>(
           <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t}</button>
         ))}
       </div>
@@ -27563,6 +27574,10 @@ export default function MaisyERP() {
     d.trainingMatrix = [];
   }
   if (!d.trainingCerts) d.trainingCerts = [];
+  if (!d.shopConsumables) d.shopConsumables = [];
+  if (!d.automationPhasesRoadmap) d.automationPhasesRoadmap = [];
+  if (!d.postsMfgList) d.postsMfgList = [];
+  if (!d.quoteLog) d.quoteLog = [];
   return d;
 };
 
