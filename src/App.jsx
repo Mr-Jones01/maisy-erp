@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -3242,7 +3242,17 @@ const INIT = {
         "terms": "Credit Card",
         "notes": "emailed receipt to Accounting"
     }
-],
+,
+  {id:'18538062',orderDate:'2026-02-12',vendor:'Ryerson',vendorContact:'Winston Hodgson',item:'6061-T6 Tube 2in SQ x 0.125',category:'Aluminum Tube',qty:500,unit:'LF',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Received',notes:'emailed receipt to Accounting'},
+  {id:'18538070',orderDate:'2025-02-12',vendor:'Ryerson',vendorContact:'Winston Hodgson',item:'6061-T6 Tube 2in SQ x 0.125',category:'Aluminum Tube',qty:660,unit:'LF',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Received',notes:'emailed receipt to Accounting'},
+  {id:'1121370',orderDate:'2026-02-16',vendor:'EMJ',vendorContact:'Justin Czarapate',item:'6061-T6 Top Rail 1" x 3"  x 0.125',category:'Aluminum Tube',qty:940,unit:'LF',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Received',notes:'emailed receipt to Accounting'},
+  {id:'486092',orderDate:'2026-02-17',vendor:'Alcobra',vendorContact:'Ashley Coleman',item:'6061-T6 Flat Bar 1/8" x 2"',category:'Aluminum Flat Stock',qty:120,unit:'LF',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Received',notes:'emailed receipt to Accounting'},
+  {id:'26022500943217-400000',orderDate:'2026-02-25',vendor:'Vevor',vendorContact:'Online Order',item:'T319 1/8" 1x19 SS Cable (1000\')',category:'Cable / Wire',qty:3,unit:'Roll',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Received',notes:'emailed receipt to Accounting'},
+  {id:'486675',orderDate:'2026-02-25',vendor:'Alcobra',vendorContact:'Ashley Coleman',item:'6061-T6 Flat Bar 1/8" x 2"',category:'Aluminum Flat Stock',qty:180,unit:'LF',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Received',notes:'emailed receipt to Accounting'},
+  {id:'18560388',orderDate:'2026-02-25',vendor:'Ryerson',vendorContact:'Winston Hodgson',item:'6061-T6 Tube 2in SQ x 0.125',category:'Aluminum Tube',qty:500,unit:'LF',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Received',notes:'emailed receipt to Accounting'},
+  {id:'PO-008',orderDate:'',vendor:'',vendorContact:'',item:'',category:'',qty:0,unit:'Total Material Cost:',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Ordered',notes:''},
+  {id:'PO-009',orderDate:'',vendor:'',vendorContact:'',item:'',category:'',qty:0,unit:'Total Freight:',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Ordered',notes:''},
+  {id:'PO-010',orderDate:'',vendor:'',vendorContact:'',item:'',category:'',qty:0,unit:'Grand Total Spend:',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Ordered',notes:''}],
 
   // ── Maisy_04_ARSENAL_SUPPLY — Order Requests (5 requests) ─────────────────
   orderRequests: [
@@ -3555,7 +3565,511 @@ const INIT = {
         "invoiceNo": "WN49807812",
         "notes": "emailed receipt to Accounting"
     }
-],
+,
+  {
+    id:'MC-001',
+    date:'2026-02-12',
+    category:'Waste Disposal',
+    description:'Waste Disposal from Shop',
+    vendor:'Ramsey Transfer Station',
+    amount:46.79,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-002',
+    date:'2026-02-12',
+    category:'Waste Disposal',
+    description:'Waste Disposal from Shop',
+    vendor:'Ramsey Transfer Station',
+    amount:21.48,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-003',
+    date:'2026-02-20',
+    category:'Fuel',
+    description:'Bellevue Transfer',
+    vendor:'Sinclair',
+    amount:55.02,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-004',
+    date:'2026-02-20',
+    category:'Fuel',
+    description:'Bellevue Transfer',
+    vendor:'Chevron',
+    amount:65.5,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-005',
+    date:'2026-02-20',
+    category:'Fuel',
+    description:'Bellevue Transfer',
+    vendor:'Shell',
+    amount:104.93,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-006',
+    date:'2026-02-24',
+    category:'Repairs & Maintenance',
+    description:'Pest Control - Hayden',
+    vendor:'Home Depot',
+    amount:72.47,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-007',
+    date:'2026-02-24',
+    category:'Other',
+    description:'Powder Coat - Propane',
+    vendor:'Ace Hardware',
+    amount:75.23,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-008',
+    date:'2026-02-23',
+    category:'Other',
+    description:'Shop Supplies',
+    vendor:'AirGas',
+    amount:185.09,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-009',
+    date:'2026-02-24',
+    category:'Other',
+    description:'Argon',
+    vendor:'AirGas',
+    amount:50.63,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-010',
+    date:'2026-02-23',
+    category:'Other',
+    description:'Spray Paint / 1/2" cold roll',
+    vendor:'Home Depot',
+    amount:34.16,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-011',
+    date:'2026-02-23',
+    category:'Other',
+    description:'DIABLO - 5" sanding pad - 50PK - 80 Grit',
+    vendor:'Home Depot',
+    amount:48.7,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-012',
+    date:'2026-02-12',
+    category:'Other',
+    description:'Air Hammer / Kit',
+    vendor:'Home Depot',
+    amount:83.44,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-013',
+    date:'2026-02-12',
+    category:'Other',
+    description:'DIABLO - 5" sanding pad - 50PK - 80 Grit',
+    vendor:'Home Depot',
+    amount:48.7,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-014',
+    date:'2026-02-16',
+    category:'Other',
+    description:'DIABLO - 10"-84T Saw Blade / Gate Kit',
+    vendor:'Home Depot',
+    amount:196.41,
+    paymentMethod:'Company Card',
+    paidBy:'Rocky',
+    reimbursable:'Yes',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-015',
+    date:'2026-02-24',
+    category:'Other',
+    description:'DIABLO - 5" sanding pad - 50PK - 80 Grit / Hand Sander / Lumber',
+    vendor:'Home Depot',
+    amount:218.02,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-016',
+    date:'2026-02-25',
+    category:'Other',
+    description:'Shop Supplies',
+    vendor:'ULINE',
+    amount:498.06,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-017',
+    date:'2026-02-25',
+    category:'Other',
+    description:'Shop Tool (Swage Crimper)',
+    vendor:'Home Depot',
+    amount:50.25,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-018',
+    date:'2026-02-26',
+    category:'Other',
+    description:'Jace Weld Hood Band',
+    vendor:'Pipeliners Cloud',
+    amount:51.99,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-019',
+    date:'2026-02-27',
+    category:'Fuel',
+    description:'Bellevue Transfer',
+    vendor:'Loves',
+    amount:45.99,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-020',
+    date:'2026-02-27',
+    category:'Fuel',
+    description:'Bellevue Transfer',
+    vendor:'Chevron',
+    amount:28.84,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-021',
+    date:'2026-02-27',
+    category:'Fuel',
+    description:'Bellevue Transfer',
+    vendor:'Chevron',
+    amount:110.02,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-022',
+    date:'2026-03-03',
+    category:'Other',
+    description:'CNC items',
+    vendor:'Fastenal',
+    amount:439.05,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-023',
+    date:'2026-03-05',
+    category:'Other',
+    description:'Assembly item/office supplies',
+    vendor:'Amazon',
+    amount:180.15,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-024',
+    date:'2034-03-01',
+    category:'Other',
+    description:'Shop Supplies',
+    vendor:'Home Depot',
+    amount:116.44,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-025',
+    date:'2026-03-05',
+    category:'Office Supplies',
+    description:'Assembly item/office supplies',
+    vendor:'Amazon',
+    amount:2211.44,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-026',
+    date:'2026-03-05',
+    category:'Office Supplies',
+    description:'Assembly item/office supplies',
+    vendor:'Amazon',
+    amount:586.87,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-027',
+    date:'2026-03-05',
+    category:'Other',
+    description:'Touch-Up paint',
+    vendor:'Home Depot',
+    amount:46.56,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-028',
+    date:'2026-03-05',
+    category:'Fuel',
+    description:'Local Delivery',
+    vendor:'Maverik',
+    amount:80.87,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-029',
+    date:'2026-03-04',
+    category:'Repairs & Maintenance',
+    description:'Drill press Belts',
+    vendor:'NAPA',
+    amount:67.8,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-030',
+    date:'2026-03-04',
+    category:'Office Supplies',
+    description:'Entry Key',
+    vendor:'Ace Hardware',
+    amount:20.92,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-031',
+    date:'2026-03-04',
+    category:'Fuel',
+    description:'Local Delivery',
+    vendor:'Maverik',
+    amount:20.96,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-032',
+    date:'2026-03-04',
+    category:'Office Supplies',
+    description:'HDMI Cable, Power TV cable, Remote',
+    vendor:'Best Buy',
+    amount:132.47,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-033',
+    date:'2026-03-04',
+    category:'Repairs & Maintenance',
+    description:'Power Cable',
+    vendor:'Home Depot',
+    amount:13.76,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-034',
+    date:'2026-03-02',
+    category:'Fuel',
+    description:'Local Delivery',
+    vendor:'Maverik',
+    amount:75.2,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-035',
+    date:'2026-03-03',
+    category:'Repairs & Maintenance',
+    description:'Drill press Belts',
+    vendor:'NAPA',
+    amount:16.95,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-036',
+    date:'2026-03-03',
+    category:'Other',
+    description:'Propane',
+    vendor:'Ace Hardware',
+    amount:53.27,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-037',
+    date:'2026-03-03',
+    category:'Other',
+    description:'Drill Bits',
+    vendor:'AirGas',
+    amount:28.09,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-038',
+    date:'2026-03-03',
+    category:'Office Supplies',
+    description:'Post Screws',
+    vendor:'Fastenal',
+    amount:543.37,
+    paymentMethod:'Company Card',
+    paidBy:'Company',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-039',
+    date:'',
+    category:'',
+    description:'',
+    vendor:'Total Charges (All Time):',
+    amount:6725.89,
+    paymentMethod:'',
+    paidBy:'',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-040',
+    date:'',
+    category:'',
+    description:'',
+    vendor:'Total Charges – MTD:',
+    amount:4517.73,
+    paymentMethod:'',
+    paidBy:'',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-041',
+    date:'',
+    category:'',
+    description:'',
+    vendor:'Total Entries:',
+    amount:38,
+    paymentMethod:'',
+    paidBy:'',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  },
+  {
+    id:'MC-042',
+    date:'',
+    category:'',
+    description:'',
+    vendor:'Reimbursable Pending:',
+    amount:196.41,
+    paymentMethod:'',
+    paidBy:'',
+    reimbursable:'No',
+    approvedBy:'D. Jones'
+  }],
 
   // ── Maisy_02_VELOCITY_SALES — Quote Log (deduped from 02 only) ────────────
   quoteLog: [
@@ -3983,7 +4497,29 @@ const INIT = {
         "totalCost": 54.38,
         "tracking": "1Z68T1Y81397331898"
     }
-],
+,
+  {id:'SHP-1',date:'2026-01-13',month:'Jan 2026',poRef:'147979110',customer:'Wayfair - Vahid M',carrier:'ABF Freight',serviceType:'Freight',weight:22,dimensions:'144x6x6',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Chicago',destState:'IL',baseRate:407.08,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:407.08,tracking:'OMG1129858',notes:'',status:'Delivered'},
+  {id:'SHP-2',date:'2026-01-19',month:'Jan 2026',poRef:'147979141',customer:'Farzaneh Fetdows',carrier:'ABF Freight',serviceType:'Freight',weight:829,dimensions:'144x40x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Woodland Hills',destState:'CA',baseRate:763.85,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:763.85,tracking:'OMG1208013',notes:'',status:'Delivered'},
+  {id:'SHP-3',date:'2026-01-21',month:'Jan 2026',poRef:'147979150',customer:'Dave Miller',carrier:'ABF Freight',serviceType:'Freight',weight:298,dimensions:'144x43x18',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Lewes',destState:'DE',baseRate:681.25,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:681.25,tracking:'OMG1079219',notes:'',status:'Delivered'},
+  {id:'SHP-4',date:'2026-01-21',month:'Jan 2026',poRef:'147979149',customer:'Jrscates LLC',carrier:'ABF Freight',serviceType:'Freight',weight:450,dimensions:'144x44x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Cream Ridge',destState:'NJ',baseRate:737.16,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:737.16,tracking:'OMG3500598',notes:'',status:'Delivered'},
+  {id:'SHP-5',date:'2026-02-04',month:'Feb 2026',poRef:'432627101',customer:'Kristy Mohoney',carrier:'Other',serviceType:'Freight',weight:276,dimensions:'147x43x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Shoreline',destState:'WA',baseRate:703.22,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:703.22,tracking:'310362',notes:'',status:'Delivered'},
+  {id:'SHP-6',date:'2026-02-04',month:'Feb 2026',poRef:'147979217',customer:'Jacob Neal',carrier:'ABF Freight',serviceType:'Freight',weight:133,dimensions:'98x43x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Happy Valley',destState:'OR',baseRate:409.14,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:409.14,tracking:'OMG1679662',notes:'',status:'Delivered'},
+  {id:'SHP-7',date:'2026-02-04',month:'Feb 2026',poRef:'147979216',customer:'KGM Construction',carrier:'ABF Freight',serviceType:'Freight',weight:664,dimensions:'117x43x30',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Templeton',destState:'CA',baseRate:696.88,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:696.88,tracking:'OMG9457768',notes:'',status:'Delivered'},
+  {id:'SHP-8',date:'2026-02-16',month:'Feb 2026',poRef:'147979296',customer:'Gregg Luebbe',carrier:'ABF Freight',serviceType:'Freight',weight:381,dimensions:'144x44x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Portland',destState:'OR',baseRate:409.14,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:409.14,tracking:'OMG1945564',notes:'',status:'Delivered'},
+  {id:'SHP-9',date:'2026-02-17',month:'Feb 2026',poRef:'147979300',customer:'Andrew Lojewski',carrier:'ABF Freight',serviceType:'Freight',weight:248,dimensions:'144x44x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Davis',destState:'CA',baseRate:510.94,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:510.94,tracking:'OMG3833512',notes:'',status:'Delivered'},
+  {id:'SHP-10',date:'2026-02-18',month:'Feb 2026',poRef:'147979314',customer:'Brett Chell',carrier:'ABF Freight',serviceType:'Freight',weight:875,dimensions:'240x44x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Salt Lake City',destState:'UT',baseRate:1779.31,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:1779.31,tracking:'OMG1325998',notes:'',status:'Delivered'},
+  {id:'SHP-11',date:'2026-02-18',month:'Feb 2026',poRef:'147979318',customer:'Shem Hart',carrier:'ABF Freight',serviceType:'Freight',weight:279,dimensions:'144x44x19',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Yacolt',destState:'WA',baseRate:1077.61,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:1077.61,tracking:'OMG2058540',notes:'',status:'Delivered'},
+  {id:'SHP-12',date:'2026-02-20',month:'Feb 2026',poRef:'147979333',customer:'Adam Jensen',carrier:'ABF Freight',serviceType:'Freight',weight:100,dimensions:'144x44x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Tigard',destState:'OR',baseRate:367.26,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:367.26,tracking:'OMG2015962',notes:'',status:'Delivered'},
+  {id:'SHP-13',date:'2026-02-19',month:'Feb 2026',poRef:'N/A',customer:'Jason Jessop',carrier:'UPS',serviceType:'Ground',weight:60,dimensions:'49x13x13',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Victor',destState:'MT',baseRate:79.01,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:79.01,tracking:'1Z5K02DT0332224203',notes:'',status:'Delivered'},
+  {id:'SHP-14',date:'2026-02-19',month:'Feb 2026',poRef:'N/A',customer:'Jason Jessop',carrier:'UPS',serviceType:'Ground',weight:60,dimensions:'49x13x13',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Victor',destState:'MT',baseRate:79.01,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:79.01,tracking:'1Z5K02DT0310144019',notes:'',status:'Delivered'},
+  {id:'SHP-15',date:'2026-02-19',month:'Feb 2026',poRef:'N/A',customer:'Jason Jessop',carrier:'UPS',serviceType:'Ground',weight:59,dimensions:'49x13x13',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Victor',destState:'MT',baseRate:41.98,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:41.98,tracking:'1Z5K02DT0308501342',notes:'',status:'Delivered'},
+  {id:'SHP-16',date:'2026-02-19',month:'Feb 2026',poRef:'N/A',customer:'Jason Jessop',carrier:'UPS',serviceType:'Ground',weight:50,dimensions:'48x12x12',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Victor',destState:'MT',baseRate:41.98,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:41.98,tracking:'1Z5K02DT0301184350',notes:'',status:'Delivered'},
+  {id:'SHP-17',date:'2026-02-23',month:'Feb 2026',poRef:'N/A',customer:'KGM Construction',carrier:'UPS',serviceType:'Ground',weight:12,dimensions:'12x15x15',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Templeton',destState:'CA',baseRate:38,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:38,tracking:'1Z5K02DT0302928189',notes:'',status:'Delivered'},
+  {id:'SHP-18',date:'2026-02-23',month:'Feb 2026',poRef:'N/A',customer:'Joe Hurtt',carrier:'UPS',serviceType:'Ground',weight:12,dimensions:'12x15x15',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Kingston',destState:'CA',baseRate:38,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:38,tracking:'1Z5K02DT0300754398',notes:'',status:'Delivered'},
+  {id:'SHP-19',date:'2026-02-25',month:'Feb 2026',poRef:'N/A',customer:'Joe Christman',carrier:'UPS',serviceType:'Express 2-Day',weight:3,dimensions:'6x6x6',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Denver',destState:'CO',baseRate:69.95,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:69.95,tracking:'1Z5K02DT0137072238',notes:'',status:'Delivered'},
+  {id:'SHP-20',date:'2026-02-26',month:'Feb 2026',poRef:'N/A',customer:'Gregg Luebbe',carrier:'UPS',serviceType:'Express 2-Day',weight:11,dimensions:'48x12x12',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'Portland',destState:'OR',baseRate:60.81,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:60.81,tracking:'1Z5K02DT0335782640',notes:'',status:'Delivered'},
+  {id:'SHP-21',date:'2026-03-02',month:'Mar 2026',poRef:'432685222',customer:'Cedrik Cox',carrier:'Estes Freight',serviceType:'Freight',weight:443,dimensions:'144x48x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'St. Helens',destState:'OR',baseRate:754.53,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:754.53,tracking:'317447',notes:'',status:'Delivered'},
+  {id:'SHP-22',date:'2026-03-06',month:'Mar 2026',poRef:'N/A',customer:'Cedrik Cox',carrier:'UPS',serviceType:'Ground',weight:1,dimensions:'8x8x7',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'St. Helens',destState:'OR',baseRate:26.45,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:26.45,tracking:'1Z5K02DT0320589066',notes:'',status:'Delivered'}],
 
   // ── Maisy_06_DISPATCH_LOGISTICS — Borrowed Labor (11 entries) ─────────────
   borrowedLabor: [
@@ -4119,7 +4655,644 @@ const INIT = {
         "rate": 35.0,
         "billable": 385.0
     }
-],
+,
+  {
+    id:'BL-001',
+    employee:'Jace',
+    date:'2026-02-17',
+    task:'DECK BUILD',
+    location:'HAYDEN',
+    hoursOnSite:7,
+    hoursTransfer:0,
+    totalHours:7,
+    rate:35,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-003',
+    employee:'Michael',
+    date:'2026-02-13',
+    task:'DELIVERY',
+    location:'HAYDEN-BELLEVUE',
+    hoursOnSite:0,
+    hoursTransfer:11,
+    totalHours:11,
+    rate:40,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-004',
+    employee:'Michael',
+    date:'2026-02-06',
+    task:'DELIVERY',
+    location:'HAYDEN-BELLEVUE',
+    hoursOnSite:0,
+    hoursTransfer:11,
+    totalHours:11,
+    rate:40,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-005',
+    employee:'Amber',
+    date:'2026-01-23',
+    task:'DELIVERY',
+    location:'HAYDEN-BELLEVUE',
+    hoursOnSite:0,
+    hoursTransfer:10,
+    totalHours:10,
+    rate:40,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-006',
+    employee:'Jace',
+    date:'2026-02-09',
+    task:'DELIVERY',
+    location:'HAYDEN-BELLEVUE',
+    hoursOnSite:0,
+    hoursTransfer:10,
+    totalHours:10,
+    rate:35,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-007',
+    employee:'Jace',
+    date:'2026-01-26',
+    task:'DECK BUILD',
+    location:'HAYDEN',
+    hoursOnSite:6,
+    hoursTransfer:0,
+    totalHours:6,
+    rate:35,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-008',
+    employee:'Jace',
+    date:'2026-01-27',
+    task:'DECK BUILD',
+    location:'HAYDEN',
+    hoursOnSite:9,
+    hoursTransfer:0,
+    totalHours:9,
+    rate:35,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-009',
+    employee:'Jace',
+    date:'2026-02-18',
+    task:'DECK BUILD',
+    location:'HAYDEN',
+    hoursOnSite:9,
+    hoursTransfer:0,
+    totalHours:9,
+    rate:35,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-010',
+    employee:'Amber',
+    date:'2026-02-20',
+    task:'DELIVERY',
+    location:'HAYDEN-BELLEVUE',
+    hoursOnSite:0,
+    hoursTransfer:11,
+    totalHours:11,
+    rate:40,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-011',
+    employee:'Amber',
+    date:'2026-02-27',
+    task:'DELIVERY',
+    location:'HAYDEN-BELLEVUE',
+    hoursOnSite:0,
+    hoursTransfer:11,
+    totalHours:11,
+    rate:40,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-012',
+    employee:'Jace',
+    date:'2026-03-06',
+    task:'DELIVERY',
+    location:'HAYDEN-BELLEVUE',
+    hoursOnSite:0,
+    hoursTransfer:11,
+    totalHours:11,
+    rate:35,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-013',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-014',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-015',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-016',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-017',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-018',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-019',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-020',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-021',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-022',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-023',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-024',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-025',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-026',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-027',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-028',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-029',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-030',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-031',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-032',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-033',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-034',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-035',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-036',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-037',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-038',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-039',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-040',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-041',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-042',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-043',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-044',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-045',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-046',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-047',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-048',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-049',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  },
+  {
+    id:'BL-050',
+    employee:'',
+    date:'',
+    task:'',
+    location:'',
+    hoursOnSite:0,
+    hoursTransfer:0,
+    totalHours:0,
+    rate:0,
+    totalCost:0,
+    notes:''
+  }],
 
   // ── Maisy_06_DISPATCH_LOGISTICS — Order Fulfillment / Sister Co (17 orders) ─
   orderFulfillment: [
@@ -4276,7 +5449,187 @@ const INIT = {
         "value": 0.0,
         "notes": "NO AMOUNT ON ORDER FORM "
     }
-],
+,
+  {
+    id:'1088',
+    date:'2026-01-01',
+    project:'3BD-DAVE WAH',
+    description:'6 POST/ 1 L BAR',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'1085',
+    date:'2026-01-02',
+    project:'3BD-HANNAH PARK',
+    description:'SURFACE CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'OF-003',
+    date:'2026-01-03',
+    project:'3BD-LISA GILL',
+    description:'FASCIA FRAMED GLASS',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'1059',
+    date:'2026-01-04',
+    project:'3BD-MATHEW PAWLIKOWSKI',
+    description:'FASCIA CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:7534.45,
+    notes:'',
+    status:''
+  },
+  {
+    id:'1073',
+    date:'2026-01-05',
+    project:'3BD-SURYA MAHARJAN',
+    description:'FASCIA CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'1089',
+    date:'2026-01-06',
+    project:'3BD-VARGRA',
+    description:'3 POST',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM / REMAKE',
+    status:''
+  },
+  {
+    id:'1095',
+    date:'2026-02-01',
+    project:'3BD-FABRICE',
+    description:'SURFACE CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:996.22,
+    notes:'',
+    status:''
+  },
+  {
+    id:'1111',
+    date:'2026-02-02',
+    project:'3BD-DAVE WAH',
+    description:'96\' POST',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'1110',
+    date:'2026-02-03',
+    project:'3BD-IRENNE KEARNS',
+    description:'FASCIA CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:4163.67,
+    notes:'',
+    status:''
+  },
+  {
+    id:'1096',
+    date:'2026-02-04',
+    project:'3BD-TODD BEHRBAUM',
+    description:'SURFACE CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:3305.06,
+    notes:'',
+    status:''
+  },
+  {
+    id:'1101',
+    date:'2026-02-05',
+    project:'3BD-TRAVIS ISAACS',
+    description:'7 FM POST',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'1115',
+    date:'2026-02-18',
+    project:'3BD-TRACIE GRANT',
+    description:'FASCIA CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:3900.2,
+    notes:'',
+    status:''
+  },
+  {
+    id:'1123',
+    date:'2026-02-25',
+    project:'3BD-Conrad',
+    description:'FASCIA CABLE',
+    location:'Hayden Local Pick-Up',
+    value:7655.99,
+    notes:'Local Pick-Up 3BD Install',
+    status:''
+  },
+  {
+    id:'1125',
+    date:'2026-02-25',
+    project:'3BD-Noah Borun',
+    description:'SURFACE CABLE',
+    location:'HAYDEN - BELLEVUE',
+    value:5629.57,
+    notes:'',
+    status:''
+  },
+  {
+    id:'1127',
+    date:'2026-02-25',
+    project:'3BD-Hatch',
+    description:'FASCIA CABLE',
+    location:'Hayden Local Pick-Up',
+    value:31340.84,
+    notes:'Local Pick-Up 3BD Install',
+    status:''
+  },
+  {
+    id:'1135',
+    date:'2026-03-05',
+    project:'3BD-Varjra',
+    description:'2x1 (Rail)',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'1136',
+    date:'2026-03-05',
+    project:'3BD - Janet Vanderveen',
+    description:'Top Rail',
+    location:'HAYDEN - BELLEVUE',
+    value:0,
+    notes:'NO AMOUNT ON ORDER FORM',
+    status:''
+  },
+  {
+    id:'TOTALS',
+    date:'',
+    project:'',
+    description:'',
+    location:'',
+    value:64526,
+    notes:'',
+    status:''
+  }],
 
   // ── Maisy_03_FORGE_PRODUCTION — Scrap & Waste (6 entries) ─────────────────
   scrapWaste: [
@@ -4364,66 +5717,258 @@ const INIT = {
         "reportedBy": "Amber",
         "ytdScrap": 195.75
     }
-],
+,
+  {
+    id:'SW-001',
+    date:'2026-01-14',
+    station:'Cutting',
+    materialType:'6063-T5 Tube 2x2',
+    sku:'Cable Post SM 42',
+    qty:3,
+    unit:'pcs',
+    cost:42.5,
+    reason:'CUT',
+    rootCause:'Wrong length — measured from wrong end',
+    corrAction:'Re-trained on measurement SOP',
+    reportedBy:'Jace'
+  },
+  {
+    id:'SW-002',
+    date:'2026-01-21',
+    station:'Welding',
+    materialType:'6063-T5 Tube 2x2',
+    sku:'Cable Post FM 36',
+    qty:2,
+    unit:'pcs',
+    cost:28,
+    reason:'WELD',
+    rootCause:'Burn-through on thin wall',
+    corrAction:'Reduced amperage on TIG',
+    reportedBy:'Jace'
+  },
+  {
+    id:'SW-003',
+    date:'2026-01-29',
+    station:'CNC',
+    materialType:'6063-T5 Bar 1.5x3',
+    sku:'Glass Post FM 42',
+    qty:1,
+    unit:'pcs',
+    cost:35,
+    reason:'CNC',
+    rootCause:'Wrong hole pattern — old program',
+    corrAction:'Updated CNC program library',
+    reportedBy:'Nick'
+  },
+  {
+    id:'SW-004',
+    date:'2026-02-03',
+    station:'Powder Coat',
+    materialType:'Powder Coat (Black)',
+    sku:'Cable Post SM 36',
+    qty:5,
+    unit:'pcs',
+    cost:18.75,
+    reason:'COAT',
+    rootCause:'Orange peel — DFT too high',
+    corrAction:'Calibrated spray gun',
+    reportedBy:'Michael'
+  },
+  {
+    id:'SW-005',
+    date:'2026-02-10',
+    station:'Cutting',
+    materialType:'6063-T5 Tube 2x2',
+    sku:'Top Rail 8ft',
+    qty:4,
+    unit:'pcs',
+    cost:56,
+    reason:'CUT',
+    rootCause:'Blade chatter — dull blade',
+    corrAction:'Replaced cold saw blade',
+    reportedBy:'Amber'
+  },
+  {
+    id:'SW-006',
+    date:'2026-02-21',
+    station:'Assembly',
+    materialType:'Hardware Kit',
+    sku:'Cable Post SM 42',
+    qty:2,
+    unit:'kits',
+    cost:15.5,
+    reason:'HAND',
+    rootCause:'Dropped off workbench',
+    corrAction:'Added bin holders',
+    reportedBy:'Amber'
+  },
+  {
+    id:'SW-007',
+    date:'REASON CODES',
+    station:'',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-008',
+    date:'CUT',
+    station:'Cut error — wrong length/angle',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-009',
+    date:'WELD',
+    station:'Weld defect — burn-through, porosity',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-010',
+    date:'CNC',
+    station:'CNC error — wrong hole pattern/depth',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-011',
+    date:'COAT',
+    station:'Powder coat reject — DFT, orange peel, contamination',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-012',
+    date:'MAT',
+    station:'Material defect — dent, scratch, wrong alloy received',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-013',
+    date:'HAND',
+    station:'Handling damage — drop, crane, forklift',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-014',
+    date:'SETUP',
+    station:'Setup error — wrong fixture, wrong program',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-015',
+    date:'OTHER',
+    station:'Other — see notes',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-016',
+    date:'MONTHLY SCRAP SUMMARY',
+    station:'',
+    materialType:'',
+    sku:'',
+    qty:0,
+    unit:'',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  },
+  {
+    id:'SW-017',
+    date:'Month',
+    station:'Total
+Scrap $',
+    materialType:'Total
+Units',
+    sku:'Top
+Reason',
+    qty:'Top
+Station',
+    unit:'% of
+Material
+Spend',
+    cost:0,
+    reason:'',
+    rootCause:'',
+    corrAction:'',
+    reportedBy:''
+  }],
 
   // ── Maisy_03_FORGE_PRODUCTION — Safety Log (4 incidents) ──────────────────
   safetyLog: [
-    {
-        "date": "2026-01-09",
-        "time": "10:30 AM",
-        "reportedBy": "Daniel",
-        "type": "Near Miss",
-        "location": "Cutting",
-        "description": "Aluminum tube slipped from saw clamp",
-        "involved": "Amber",
-        "injury": "None",
-        "firstAid": "No",
-        "rootCause": "Clamp not fully tightened",
-        "corrAction": "Added clamp check to SOP",
-        "status": "Closed"
-    },
-    {
-        "date": "2026-01-24",
-        "time": "2:15 PM",
-        "reportedBy": "Jace",
-        "type": "Injury",
-        "location": "Welding",
-        "description": "Minor burn on left forearm \u2014 sleeve rode up",
-        "involved": "Jace",
-        "injury": "First-degree burn, 1\" area",
-        "firstAid": "Yes",
-        "rootCause": "PPE not secured",
-        "corrAction": "Issued welding sleeves",
-        "status": "Closed"
-    },
-    {
-        "date": "2026-02-08",
-        "time": "11:00 AM",
-        "reportedBy": "Nick",
-        "type": "Property",
-        "location": "Powder Coat",
-        "description": "Powder gun hose caught on rack",
-        "involved": "N/A",
-        "injury": "N/A",
-        "firstAid": "No",
-        "rootCause": "Hose routing issue",
-        "corrAction": "Rerouted with overhead hooks",
-        "status": "Closed"
-    },
-    {
-        "date": "2026-02-20",
-        "time": "9:45 AM",
-        "reportedBy": "Amber",
-        "type": "Near Miss",
-        "location": "Assembly",
-        "description": "Air hose whipped on disconnect",
-        "involved": "Michael",
-        "injury": "None",
-        "firstAid": "No",
-        "rootCause": "Worn quick-connect",
-        "corrAction": "Replaced all fittings + whip checks",
-        "status": "Open"
-    }
+  {id:'SAF-001',date:'2026-01-09',time:'10:30 AM',reportedBy:'Daniel',type:'Near Miss',location:'Cutting',description:'Aluminum tube slipped from saw clamp',employees:'',injuryDetails:'',firstAid:'No',rootCause:'Clamp not fully tightened',corrAction:'Added clamp check to SOP',status:'Closed',lostTime:''},
+  {id:'SAF-002',date:'2026-01-24',time:'2:15 PM',reportedBy:'Jace',type:'Injury',location:'Welding',description:'Minor burn on left forearm — sleeve rode up',employees:'',injuryDetails:'',firstAid:'Yes',rootCause:'PPE not secured',corrAction:'Issued welding sleeves',status:'Closed',lostTime:''},
+  {id:'SAF-003',date:'2026-02-08',time:'11:00 AM',reportedBy:'Nick',type:'Property',location:'Powder Coat',description:'Powder gun hose caught on rack',employees:'',injuryDetails:'',firstAid:'No',rootCause:'Hose routing issue',corrAction:'Rerouted with overhead hooks',status:'Closed',lostTime:''},
+  {id:'SAF-004',date:'2026-02-20',time:'9:45 AM',reportedBy:'Amber',type:'Near Miss',location:'Assembly',description:'Air hose whipped on disconnect',employees:'',injuryDetails:'',firstAid:'No',rootCause:'Worn quick-connect',corrAction:'Replaced all fittings + whip checks',status:'Open',lostTime:''}
 ],
 
   // ── Maisy_03_FORGE_PRODUCTION — Improvement Log (5 ideas) ────────────────
@@ -4503,7 +6048,147 @@ const INIT = {
         "actualSavings": 0.0,
         "paybackMonths": 0.0
     }
-],
+,
+  {
+    id:'KZ-001',
+    dateSubmitted:'2026-01-14',
+    submittedBy:'Daniel',
+    station:'Welding',
+    description:'Add welding fixture for cable posts',
+    benefit:'Reduce weld time 30%',
+    estSavings:8500,
+    implCost:1200,
+    priority:1,
+    status:'Complete',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'KZ-002',
+    dateSubmitted:'2026-01-21',
+    submittedBy:'Jace',
+    station:'Cutting',
+    description:'Install auto-stop on cold saw',
+    benefit:'Eliminate measuring errors',
+    estSavings:12000,
+    implCost:3500,
+    priority:2,
+    status:'In Progress',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'KZ-003',
+    dateSubmitted:'2026-01-29',
+    submittedBy:'Nick',
+    station:'CNC',
+    description:'Build multi-part fixture — 4 posts/cycle',
+    benefit:'Double CNC throughput',
+    estSavings:18000,
+    implCost:2800,
+    priority:1,
+    status:'In Progress',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'KZ-004',
+    dateSubmitted:'2026-02-08',
+    submittedBy:'Amber',
+    station:'Packaging',
+    description:'Standardize box sizes — reduce waste',
+    benefit:'Save ~$200/mo materials',
+    estSavings:2400,
+    implCost:500,
+    priority:3,
+    status:'Planning',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'KZ-005',
+    dateSubmitted:'2026-02-18',
+    submittedBy:'Daniel',
+    station:'Powder Coat',
+    description:'Batch colors — reduce changeover',
+    benefit:'Save 45 min per change',
+    estSavings:6000,
+    implCost:0,
+    priority:2,
+    status:'Planning',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'IMP-006',
+    dateSubmitted:'Total Ideas Submitted',
+    submittedBy:'',
+    station:5,
+    description:'',
+    benefit:'',
+    estSavings:0,
+    implCost:0,
+    priority:3,
+    status:'Submitted',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'IMP-007',
+    dateSubmitted:'Ideas Implemented',
+    submittedBy:'',
+    station:1,
+    description:'',
+    benefit:'',
+    estSavings:0,
+    implCost:0,
+    priority:3,
+    status:'Submitted',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'IMP-008',
+    dateSubmitted:'Total Est. Annual Savings',
+    submittedBy:'',
+    station:46900,
+    description:'',
+    benefit:'',
+    estSavings:0,
+    implCost:0,
+    priority:3,
+    status:'Submitted',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'IMP-009',
+    dateSubmitted:'Total Implementation Cost',
+    submittedBy:'',
+    station:8000,
+    description:'',
+    benefit:'',
+    estSavings:0,
+    implCost:0,
+    priority:3,
+    status:'Submitted',
+    actualSavings:0,
+    phase:''
+  },
+  {
+    id:'IMP-010',
+    dateSubmitted:'Net Savings',
+    submittedBy:'',
+    station:38900,
+    description:'',
+    benefit:'',
+    estSavings:0,
+    implCost:0,
+    priority:3,
+    status:'Submitted',
+    actualSavings:0,
+    phase:''
+  }],
 
   // ── Maisy_05_MERIDIAN_FINANCE — Labor Processes (26 processes) ────────────
   laborProcesses: [
@@ -6002,7 +7687,217 @@ const INIT = {
         "throughput": "3x+",
         "status": "FUTURE"
     }
-],
+,
+  {
+    id:'AR-001',
+    station:'Cutting',
+    currentProcess:'Manual cold saw',
+    targetAutomation:'Auto-feed CNC saw',
+    equipment:'',
+    estCost:'',
+    laborReduction:'50%',
+    throughputIncrease:'2x',
+    paybackMonths:'',
+    phase:'1',
+    priority:'1',
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-002',
+    station:'CNC',
+    currentProcess:'Laguna Swift',
+    targetAutomation:'Multi-fixture + auto-load',
+    equipment:'',
+    estCost:'',
+    laborReduction:'40%',
+    throughputIncrease:'2x',
+    paybackMonths:'',
+    phase:'1',
+    priority:'2',
+    status:'Planning',
+    notes:'Fusion CAM'
+  },
+  {
+    id:'AR-003',
+    station:'Welding',
+    currentProcess:'Manual TIG (2)',
+    targetAutomation:'Robotic TIG weld cell',
+    equipment:'',
+    estCost:'',
+    laborReduction:'60-75%',
+    throughputIncrease:'3x',
+    paybackMonths:'',
+    phase:'2',
+    priority:'1',
+    status:'Planning',
+    notes:'Biggest ROI'
+  },
+  {
+    id:'AR-004',
+    station:'Grinding',
+    currentProcess:'Manual grinder',
+    targetAutomation:'Robotic grinding cell',
+    equipment:'',
+    estCost:'',
+    laborReduction:'50%',
+    throughputIncrease:'2x',
+    paybackMonths:'',
+    phase:'2',
+    priority:'3',
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-005',
+    station:'Powder Coat',
+    currentProcess:'Manual gun + oven',
+    targetAutomation:'Auto gun + conveyor',
+    equipment:'',
+    estCost:'',
+    laborReduction:'40%',
+    throughputIncrease:'2x',
+    paybackMonths:'',
+    phase:'3',
+    priority:'2',
+    status:'Planning',
+    notes:'Bottleneck #2'
+  },
+  {
+    id:'AR-006',
+    station:'Assembly',
+    currentProcess:'Manual',
+    targetAutomation:'Semi-auto fixtures',
+    equipment:'',
+    estCost:'',
+    laborReduction:'30%',
+    throughputIncrease:'1.5x',
+    paybackMonths:'',
+    phase:'3',
+    priority:'4',
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-007',
+    station:'QC',
+    currentProcess:'Calipers + visual',
+    targetAutomation:'Vision system',
+    equipment:'',
+    estCost:'',
+    laborReduction:'50%',
+    throughputIncrease:'3x',
+    paybackMonths:'',
+    phase:'2',
+    priority:'3',
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-008',
+    station:'Packaging',
+    currentProcess:'Manual wrap',
+    targetAutomation:'Semi-auto stretch wrap',
+    equipment:'',
+    estCost:'',
+    laborReduction:'20%',
+    throughputIncrease:'1.5x',
+    paybackMonths:'',
+    phase:'3',
+    priority:'5',
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-009',
+    station:'Phase',
+    currentProcess:'Timeline',
+    targetAutomation:'Focus',
+    equipment:'Milestones',
+    estCost:'Budget',
+    laborReduction:'Labor Savings',
+    throughputIncrease:'Capacity',
+    paybackMonths:'Status',
+    phase:'1',
+    priority:3,
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-010',
+    station:'Phase 1',
+    currentProcess:'Q1-Q2 2026',
+    targetAutomation:'CNC + Cutting',
+    equipment:'Fusion CAM, auto-feed saw, multi-fixture',
+    estCost:'$25-50K',
+    laborReduction:'20-30%',
+    throughputIncrease:'1.5-2x',
+    paybackMonths:'PLANNING',
+    phase:'1',
+    priority:3,
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-011',
+    station:'Phase 2',
+    currentProcess:'Q3-Q4 2026',
+    targetAutomation:'Welding + QC',
+    equipment:'Robotic weld cell, vision QC',
+    estCost:'$75-150K',
+    laborReduction:'40-50%',
+    throughputIncrease:'2-3x',
+    paybackMonths:'RESEARCH',
+    phase:'1',
+    priority:3,
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-012',
+    station:'Phase 3',
+    currentProcess:'2027',
+    targetAutomation:'Powder + Assembly',
+    equipment:'Conveyor powder line, semi-auto fixtures',
+    estCost:'$50-100K',
+    laborReduction:'55-65%',
+    throughputIncrease:'2-3x',
+    paybackMonths:'FUTURE',
+    phase:'1',
+    priority:3,
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-013',
+    station:'Phase 4',
+    currentProcess:'2027+',
+    targetAutomation:'Full Integration',
+    equipment:'Connected systems, auto-scheduling',
+    estCost:'$25-50K',
+    laborReduction:'60-75%',
+    throughputIncrease:'3x+',
+    paybackMonths:'FUTURE',
+    phase:'1',
+    priority:3,
+    status:'Planning',
+    notes:''
+  },
+  {
+    id:'AR-014',
+    station:'Equipment',
+    currentProcess:'Vendor',
+    targetAutomation:'Model',
+    equipment:'Est. Cost',
+    estCost:'Lead Time',
+    laborReduction:'Station',
+    throughputIncrease:'ROI Done?',
+    paybackMonths:'Quote?',
+    phase:'Approved?',
+    priority:'Order Date',
+    status:'Delivery',
+    notes:'Notes'
+  }],
 
   // ── Maisy_07_NEXUS_PEOPLE — Job History (10 orders) ──────────────────────
   jobHistory: [
@@ -6166,7 +8061,247 @@ const INIT = {
         "leadTimeDays": 8.0,
         "grossProfit": 880.0
     }
-],
+,
+  {
+    id:'MR-2026-0101',
+    customer:'Riverside Homes',
+    project:'Deck Railing',
+    productType:'Cable Post SM 42',
+    mount:'Surface',
+    qty:18,
+    orderTotal:4250,
+    matCost:1680,
+    laborCost:850,
+    grossMarginPct:40.5,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:15,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0105',
+    customer:'Alpine Builders',
+    project:'Stair Rail',
+    productType:'Cable Post FM 36',
+    mount:'Fascia',
+    qty:12,
+    orderTotal:3180,
+    matCost:1200,
+    laborCost:620,
+    grossMarginPct:42.8,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:15,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0112',
+    customer:'Clearwater Design',
+    project:'Balcony',
+    productType:'Glass Post FM 42',
+    mount:'Fascia',
+    qty:8,
+    orderTotal:5600,
+    matCost:2400,
+    laborCost:1100,
+    grossMarginPct:37.5,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:14,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0118',
+    customer:'Home Depot — #3847',
+    project:'Stock Order',
+    productType:'Cable Post SM 36',
+    mount:'Surface',
+    qty:48,
+    orderTotal:8900,
+    matCost:3800,
+    laborCost:1600,
+    grossMarginPct:39.3,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:16,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0122',
+    customer:'Mountain View LLC',
+    project:'Pool Fence',
+    productType:'Glass Post SM 42',
+    mount:'Surface',
+    qty:24,
+    orderTotal:9200,
+    matCost:4100,
+    laborCost:1800,
+    grossMarginPct:35.9,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:12,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0127',
+    customer:'Pinehurst Residence',
+    project:'Front Porch',
+    productType:'Handrail 8ft',
+    mount:'N/A',
+    qty:6,
+    orderTotal:1450,
+    matCost:580,
+    laborCost:290,
+    grossMarginPct:40.0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:10,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0130',
+    customer:'Northwest Fabrication',
+    project:'Sister Co.',
+    productType:'Custom Post',
+    mount:'Surface',
+    qty:32,
+    orderTotal:6400,
+    matCost:2900,
+    laborCost:1400,
+    grossMarginPct:32.8,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:12,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0135',
+    customer:'Sunset Terrace Dev',
+    project:'Rooftop Deck',
+    productType:'Cable Post SM 42',
+    mount:'Surface',
+    qty:40,
+    orderTotal:9800,
+    matCost:4200,
+    laborCost:1900,
+    grossMarginPct:37.8,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:13,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0139',
+    customer:'Baker Construction',
+    project:'ADA Handrail',
+    productType:'Handrail 8ft',
+    mount:'N/A',
+    qty:10,
+    orderTotal:2400,
+    matCost:960,
+    laborCost:480,
+    grossMarginPct:40.0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:10,
+    status:'Shipped'
+  },
+  {
+    id:'MR-2026-0143',
+    customer:'Lakeshore Estates',
+    project:'Entry Gate',
+    productType:'Gate Kit 42',
+    mount:'N/A',
+    qty:4,
+    orderTotal:2200,
+    matCost:880,
+    laborCost:440,
+    grossMarginPct:40.0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:8,
+    status:'Shipped'
+  },
+  {
+    id:'JH-011',
+    customer:'Total Orders',
+    project:11,
+    productType:'',
+    mount:'',
+    qty:0,
+    orderTotal:0,
+    matCost:0,
+    laborCost:0,
+    grossMarginPct:0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:0,
+    status:'Shipped'
+  },
+  {
+    id:'JH-012',
+    customer:'Total Revenue',
+    project:53380,
+    productType:'',
+    mount:'',
+    qty:0,
+    orderTotal:0,
+    matCost:0,
+    laborCost:0,
+    grossMarginPct:0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:0,
+    status:'Shipped'
+  },
+  {
+    id:'JH-013',
+    customer:'Avg Order Value',
+    project:4852.7273,
+    productType:'',
+    mount:'',
+    qty:0,
+    orderTotal:0,
+    matCost:0,
+    laborCost:0,
+    grossMarginPct:0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:0,
+    status:'Shipped'
+  },
+  {
+    id:'JH-014',
+    customer:'Avg Margin',
+    project:0.3865,
+    productType:'',
+    mount:'',
+    qty:0,
+    orderTotal:0,
+    matCost:0,
+    laborCost:0,
+    grossMarginPct:0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:0,
+    status:'Shipped'
+  },
+  {
+    id:'JH-015',
+    customer:'Avg Lead Time',
+    project:12.5,
+    productType:'',
+    mount:'',
+    qty:0,
+    orderTotal:0,
+    matCost:0,
+    laborCost:0,
+    grossMarginPct:0,
+    orderDate:'',
+    shipDate:'',
+    leadTimeDays:0,
+    status:'Shipped'
+  }],
 
   // ── Retained from v4.0 — Sales Orders & Customers (placeholder until CRM sync) ──
   salesOrders:[
@@ -6211,9 +8346,12 @@ const INIT = {
 
   // ── Hot List & Todos ───────────────────────────────────────────────────────
   hotList:[
-    {id:'HOT-001',orderId:'MR-2026-0118',customer:'Home Depot #3847',item:'Cable Post SM 36 × 48',notes:'Stock order — production priority',flag:'HOT',date:'2026-03-01'},
-    {id:'HOT-002',orderId:'MR-2026-0143',customer:'Lakeshore Estates',item:'Gate Kit 42 × 4',notes:'Invoice overdue — follow up',flag:'WATCH',date:'2026-03-05'},
-  ],
+  {id:'HL-001',priority:1,orderId:'MR-2026-0148',customer:'Coastal Living Design',issue:'Rush — customer event deadline',station:'Powder Coat',action:'Prioritize in oven queue',owner:'Daniel',dateFlagged:'2026-02-26',targetResolve:'2026-03-03',status:'In Progress'},
+  {id:'HL-002',priority:2,orderId:'MR-2026-0147',customer:'Henderson Deck Co.',issue:'Welding rework — 3 posts failed QC',station:'Welding',action:'Re-weld posts #4, #7, #12',owner:'Jace',dateFlagged:'2026-02-27',targetResolve:'2026-03-02',status:'Open'},
+  {id:'HL-003',priority:3,orderId:'MR-2026-0152',customer:'Apex Construction',issue:'Material shortage — 6063 tube backorder',station:'Cutting',action:'Source from alt vendor or wait',owner:'Daniel',dateFlagged:'2026-02-25',targetResolve:'2026-03-05',status:'Blocked'},
+  {id:'HL-004',priority:4,orderId:'MR-2026-0153',customer:'Home Depot — #4521',issue:'Large order — needs dedicated run',station:'All',action:'Schedule full-day dedicated run',owner:'Amber',dateFlagged:'2026-02-28',targetResolve:'2026-03-07',status:'Planning'},
+  {id:'HL-005',priority:5,orderId:'MR-2026-0150',customer:'Lakehouse Properties',issue:'Custom color match pending',station:'Powder Coat',action:'Send sample chip to customer',owner:'Nick',dateFlagged:'2026-02-24',targetResolve:'2026-03-01',status:'Open'}
+],
   todos:[
     {id:'TODO-001',title:'Reorder swage assemblies — AI-015/AI-016 critical',cat:'Inventory',priority:'High',status:'Open',due:'2026-03-10',assigned:'Daniel Jones',notes:'REQ-0004 submitted'},
     {id:'TODO-002',title:'Order poly tubing (AI-020/021/022) and air cushion film',cat:'Inventory',priority:'High',status:'Open',due:'2026-03-10',assigned:'Daniel Jones',notes:'ULINE order pending'},
@@ -7689,7 +9827,279 @@ const INIT = {
     "resolution": "",
     "status": ""
   }
-],
+,
+  {
+    id:'CI-001',
+    dateReported:'2026-01-19',
+    customer:'Morrison Deck Co.',
+    orderId:'MR-2026-0098',
+    product:'Cable Post SM 42',
+    issueType:'DAMAGE',
+    description:'Two posts dented — shipping damage',
+    severity:3,
+    rootCause:'Insufficient packaging',
+    resolution:'Reshipped + added foam to SOP',
+    assignedTo:'',
+    status:'Closed',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-002',
+    dateReported:'2026-01-29',
+    customer:'Home Depot — #3847',
+    orderId:'MR-2026-0118',
+    product:'Cable Post SM 36',
+    issueType:'MISSING',
+    description:'4 cable tensioner kits missing',
+    severity:2,
+    rootCause:'Packing error',
+    resolution:'Sent kits overnight',
+    assignedTo:'',
+    status:'Closed',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-003',
+    dateReported:'2026-02-06',
+    customer:'Clearwater Design',
+    orderId:'MR-2026-0112',
+    product:'Glass Post FM 42',
+    issueType:'DEFECT',
+    description:'Powder coat bubbling on 3 posts',
+    severity:4,
+    rootCause:'Surface contamination',
+    resolution:'Re-coated + improved wash',
+    assignedTo:'',
+    status:'Closed',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-004',
+    dateReported:'2026-02-18',
+    customer:'Sunset Terrace Dev',
+    orderId:'MR-2026-0135',
+    product:'Cable Post SM 42',
+    issueType:'FIT',
+    description:'Corner posts don\'t align',
+    severity:3,
+    rootCause:'Incorrect field measurements',
+    resolution:'Sent revised posts',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-005',
+    dateReported:'2026-02-23',
+    customer:'Baker Construction',
+    orderId:'MR-2026-0139',
+    product:'Handrail 8ft',
+    issueType:'WRONG',
+    description:'Received Bronze instead of Matte Black',
+    severity:2,
+    rootCause:'Order entry error',
+    resolution:'Rush replacement',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'DAMAGE',
+    dateReported:'Product arrived damaged',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'DEFECT',
+    dateReported:'Manufacturing defect (weld, coating, machining)',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'MISSING',
+    dateReported:'Missing parts or components',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'WRONG',
+    dateReported:'Wrong product or configuration shipped',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'FIT',
+    dateReported:'Doesn\'t fit as expected / measurement issue',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'WARRANTY',
+    dateReported:'Warranty claim — field failure',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'LATE',
+    dateReported:'Late delivery complaint',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'OTHER',
+    dateReported:'Other — see description',
+    customer:'',
+    orderId:'',
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-014',
+    dateReported:'Total Issues YTD',
+    customer:'',
+    orderId:5,
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-015',
+    dateReported:'Open Issues',
+    customer:'',
+    orderId:2,
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-016',
+    dateReported:'Avg Resolution Time (days)',
+    customer:'',
+    orderId:-3.6,
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  },
+  {
+    id:'CI-017',
+    dateReported:'Total Cost to Resolve',
+    customer:'',
+    orderId:630,
+    product:'',
+    issueType:'',
+    description:'',
+    severity:3,
+    rootCause:'',
+    resolution:'',
+    assignedTo:'',
+    status:'Open',
+    dateClosed:'',
+    satisfaction:''
+  }],
   legacyOrders: [
   {
     "id": "LEG-0001",
@@ -14946,7 +17356,22 @@ const INIT = {
     "notes": "ULINE S-7451. Approx $0.40-0.60 each at qty 50+. Price per individual protector."
   }
 ],
-  vendorScorecard: [],
+  vendorScorecard: [
+  {id:'VS-001',vendor:'Metals Depot',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-002',vendor:'Fastenal',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-003',vendor:'McMaster-Carr',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-004',vendor:'Industrial Metal Supply',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-005',vendor:'Prismatic Powders',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-006',vendor:'Cardinal Powder Coat',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-007',vendor:'Vevor (tooling)',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-008',vendor:'Lincoln Electric',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-009',vendor:'Laguna Tools',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-010',vendor:'PEM Fasteners',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-011',vendor:'Grainger',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-012',vendor:'Uline',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-013',vendor:'Home Depot Supply',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null},
+  {id:'VS-014',vendor:'Amazon Business',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null}
+],
   skuReference: [
   {
     "sku": "36-22-GATE-KIT",
@@ -16261,7 +18686,135 @@ const INIT = {
     "nextPM": "Next Actio",
     "notes": "Notes"
   }
-],
+,
+  {
+    id:'EQ-001',
+    name:'Laguna Swift CNC',
+    manufacturer:'Laguna',
+    model:'Swift',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'CNC Station',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Per checklist',
+    lastPM:'',
+    status:'Active',
+    notes:'Primary CNC'
+  },
+  {
+    id:'EQ-002',
+    name:'Cold Saw (Primary)',
+    manufacturer:'',
+    model:'',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'Cutting',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Weekly',
+    lastPM:'',
+    status:'Active',
+    notes:''
+  },
+  {
+    id:'EQ-003',
+    name:'TIG Welder #1',
+    manufacturer:'',
+    model:'',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'Welding',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Monthly',
+    lastPM:'',
+    status:'Active',
+    notes:''
+  },
+  {
+    id:'EQ-004',
+    name:'TIG Welder #2',
+    manufacturer:'',
+    model:'',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'Welding',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Monthly',
+    lastPM:'',
+    status:'Active',
+    notes:''
+  },
+  {
+    id:'EQ-005',
+    name:'Powder Coat Gun',
+    manufacturer:'',
+    model:'',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'Powder Coat',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Daily clean',
+    lastPM:'',
+    status:'Active',
+    notes:''
+  },
+  {
+    id:'EQ-006',
+    name:'Powder Coat Oven',
+    manufacturer:'',
+    model:'',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'Powder Coat',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Quarterly',
+    lastPM:'',
+    status:'Active',
+    notes:''
+  },
+  {
+    id:'EQ-007',
+    name:'Band Saw',
+    manufacturer:'',
+    model:'',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'Cutting',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Weekly',
+    lastPM:'',
+    status:'Active',
+    notes:''
+  },
+  {
+    id:'EQ-008',
+    name:'Overhead Crane',
+    manufacturer:'',
+    model:'',
+    serialNo:'',
+    dateAcquired:'',
+    purchaseCost:0,
+    location:'Mat\'l Rack',
+    condition:'',
+    nextPM:'',
+    pmInterval:'Annual',
+    lastPM:'',
+    status:'Active',
+    notes:''
+  }],
   facilityMove: [
   {
     "category": "Task",
@@ -16459,7 +19012,72 @@ const INIT = {
     "tomorrowPriorities": "Apex order starts tomorrow \u2014 20 glass posts",
     "notes": "Prepping fixtures"
   }
-],
+,
+  {
+    id:'SH-001',
+    date:'2026-02-24',
+    shiftLead:'Daniel',
+    ordersCompleted:3,
+    ordersInProgress:5,
+    stationsDown:'None',
+    qualityIssues:'None',
+    materialShortages:'None',
+    safetyIssues:'None',
+    tomorrowPriorities:'Finish Henderson, start Coastal Living',
+    notes:'Good production day'
+  },
+  {
+    id:'SH-002',
+    date:'2026-02-25',
+    shiftLead:'Daniel',
+    ordersCompleted:4,
+    ordersInProgress:4,
+    stationsDown:'None',
+    qualityIssues:'1 post failed QC',
+    materialShortages:'None',
+    safetyIssues:'None',
+    tomorrowPriorities:'Coastal rush + Henderson rework',
+    notes:'QC catch saved reship'
+  },
+  {
+    id:'SH-003',
+    date:'2026-02-26',
+    shiftLead:'Amber',
+    ordersCompleted:2,
+    ordersInProgress:6,
+    stationsDown:'CNC — program issue',
+    qualityIssues:'None',
+    materialShortages:'6063 tube running low',
+    safetyIssues:'None',
+    tomorrowPriorities:'Get CNC online, reorder tube',
+    notes:'CNC down 2hrs'
+  },
+  {
+    id:'SH-004',
+    date:'2026-02-27',
+    shiftLead:'Daniel',
+    ordersCompleted:5,
+    ordersInProgress:3,
+    stationsDown:'None',
+    qualityIssues:'None',
+    materialShortages:'Ordered — ETA 3 days',
+    safetyIssues:'None',
+    tomorrowPriorities:'Push HD order, finish Lakehouse color',
+    notes:'CNC back up'
+  },
+  {
+    id:'SH-005',
+    date:'2026-02-28',
+    shiftLead:'Daniel',
+    ordersCompleted:3,
+    ordersInProgress:4,
+    stationsDown:'None',
+    qualityIssues:'Powder coat DFT check',
+    materialShortages:'None',
+    safetyIssues:'None',
+    tomorrowPriorities:'Apex order starts tomorrow — 20 glass posts',
+    notes:'Prepping fixtures'
+  }],
   fastenerGuide: [
   {
     "gauge": "#0",
@@ -24078,9 +26696,7 @@ const Sidebar = ({page,setPage,data,user}) => {
 const Dashboard = ({data,setPage}) => {
   const salesRev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
   const jobRev=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
-  const rev=salesRev>0?salesRev:jobRev;
-  const jobRev=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
-  const displayRev=rev>0?rev:jobRev;
+  const displayRev=salesRev>0?salesRev:jobRev;
   const totalFreight=(data.shipCostLog||[]).reduce((a,b)=>a+(b.totalCost||0),0);
   const miscSpend=(data.miscCharges||[]).reduce((a,b)=>a+(b.amount||0),0);
   const latestKPI=(data.kpiWeekly||[]).slice(-1)[0]||{};
@@ -25622,16 +28238,30 @@ const Shipping = ({data, setData}) => {
 };
 
 // ─── JOB COSTING ────────────────────────────────────────────────────────────────
-const JobCost = ({data}) => {
-  const wos=data.workOrders.map(w=>{
-    const order=data.salesOrders.find(o=>o.id===w.orderId);
-    const labor=w.laborHrs*w.laborRate;const total=labor+w.matCost;
-    const rev=order?order.total/Math.max(1,data.workOrders.filter(x=>x.orderId===w.orderId).length):0;
+const JobCost = ({data,setData}) => {
+  const [modal,setModal]=useState(null);
+  const [form,setForm]=useState({});
+  const [filter,setFilter]=useState('');
+
+  const wos=(data.workOrders||[]).map(w=>{
+    const order=(data.salesOrders||[]).find(o=>o.id===w.orderId);
+    const labor=(w.laborHrs||0)*(w.laborRate||0);
+    const total=labor+(w.matCost||0);
+    const rev=order?order.total/Math.max(1,(data.workOrders||[]).filter(x=>x.orderId===w.orderId).length):0;
     return {...w,labor,total,rev,margin:rev>0?((rev-total)/rev*100):null};
-  });
+  }).filter(w=>!filter||w.product?.toLowerCase().includes(filter.toLowerCase())||w.id?.toLowerCase().includes(filter.toLowerCase()));
+
   const totalRev=wos.reduce((a,b)=>a+(b.rev||0),0);
   const totalCost=wos.reduce((a,b)=>a+b.total,0);
   const margin=totalRev>0?((totalRev-totalCost)/totalRev*100):0;
+
+  const save=()=>{
+    const rec={...form,matCost:+form.matCost||0,laborHrs:+form.laborHrs||0,laborRate:+form.laborRate||0,qty:+form.qty||0,progress:+form.progress||0};
+    if(!(data.workOrders||[]).find(w=>w.id===rec.id))setData(d=>({...d,workOrders:[...(d.workOrders||[]),rec]}));
+    else setData(d=>({...d,workOrders:(d.workOrders||[]).map(w=>w.id===rec.id?rec:w)}));
+    setModal(null);
+  };
+
   return (
     <div className="fade-up">
       <div className="section-hd">
@@ -25640,30 +28270,62 @@ const JobCost = ({data}) => {
             <span className="chip" style={{color:'var(--ok)'}}>{fmt$(totalRev)} revenue</span>
             <span className="chip" style={{color:'var(--err)'}}>{fmt$(totalCost)} cost</span>
             <span className="chip" style={{color:margin>40?'var(--ok)':margin>20?'var(--warn)':'var(--err)'}}>{margin.toFixed(1)}% margin</span>
-          </div></div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <input className="search" placeholder="Search jobs…" value={filter} onChange={e=>setFilter(e.target.value)} style={{width:200}}/>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'WO-'+uid(),orderId:'',product:'',status:'Queued',matCost:0,laborHrs:0,laborRate:28,qty:1,progress:0,notes:''});setModal('woedit');}}>+ Add WO</button>
+        </div>
       </div>
       <div className="card" style={{padding:0,overflow:'hidden'}}>
-        <table><thead><tr><th>WO #</th><th>Product</th><th>Status</th><th>Labor Hrs</th><th>Labor $</th><th>Material $</th><th>Total Cost</th><th>Est. Revenue</th><th>Margin</th></tr></thead>
-          <tbody>{wos.map(w=>(
+        <table><thead><tr><th>WO #</th><th>Product</th><th>Order</th><th>Status</th><th>Labor Hrs</th><th>Labor $</th><th>Material $</th><th>Total Cost</th><th>Est. Revenue</th><th>Margin</th><th/></tr></thead>
+          <tbody>{wos.length===0&&<tr><td colSpan={11}><Empty msg="No work orders — add one to start tracking job costs"/></td></tr>}
+          {wos.map(w=>(
             <tr key={w.id}>
               <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{w.id}</td>
               <td style={{fontWeight:500,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{w.orderId||'—'}</td>
               <td><Badge s={w.status}/></td>
               <td className="mono">{w.laborHrs}h @ ${w.laborRate}</td>
               <td className="mono">{fmt$(w.labor)}</td>
               <td className="mono">{fmt$(w.matCost)}</td>
               <td className="mono" style={{fontWeight:600,color:'var(--err)'}}>{fmt$(w.total)}</td>
-              <td className="mono" style={{fontWeight:600,color:'var(--ok)'}}>{fmt$(w.rev)}</td>
-              <td>{w.margin!==null?<span className="mono" style={{fontWeight:700,fontSize:12,color:w.margin>40?'var(--ok)':w.margin>20?'var(--warn)':'var(--err)'}}>{w.margin.toFixed(1)}%</span>:'—'}</td>
+              <td className="mono" style={{color:'var(--ok)'}}>{w.rev?fmt$(w.rev):'—'}</td>
+              <td className="mono" style={{color:w.margin==null?'var(--muted)':w.margin>40?'var(--ok)':w.margin>20?'var(--warn)':'var(--err)',fontWeight:600}}>{w.margin!=null?w.margin.toFixed(1)+'%':'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...w});setModal('woedit');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,workOrders:(d.workOrders||[]).filter(x=>x.id!==w.id)}))}>Del</button>
+              </div></td>
             </tr>
           ))}</tbody>
         </table>
       </div>
+      {modal==='woedit'&&<Modal title={form.id&&(data.workOrders||[]).find(w=>w.id===form.id)?'Edit Work Order':'New Work Order'} onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Product / Description"><input value={form.product||''} onChange={e=>setForm(f=>({...f,product:e.target.value}))}/></Field>
+          <Field label="Sales Order"><select value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}>
+            <option value="">— No Order —</option>
+            {(data.salesOrders||[]).map(o=><option key={o.id} value={o.id}>{o.id} — {o.customer}</option>)}
+          </select></Field>
+          <Field label="Status"><select value={form.status||'Queued'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+            {['Queued','In Progress','On Hold','Complete'].map(s=><option key={s}>{s}</option>)}
+          </select></Field>
+          <Field label="Qty"><input type="number" value={form.qty||1} onChange={e=>setForm(f=>({...f,qty:+e.target.value}))}/></Field>
+          <Field label="Labor Hours"><input type="number" step="0.25" value={form.laborHrs||0} onChange={e=>setForm(f=>({...f,laborHrs:+e.target.value}))}/></Field>
+          <Field label="Labor Rate ($/hr)"><input type="number" step="0.5" value={form.laborRate||28} onChange={e=>setForm(f=>({...f,laborRate:+e.target.value}))}/></Field>
+          <Field label="Material Cost ($)"><input type="number" step="0.01" value={form.matCost||0} onChange={e=>setForm(f=>({...f,matCost:+e.target.value}))}/></Field>
+          <Field label="Progress (%)"><input type="number" min="0" max="100" value={form.progress||0} onChange={e=>setForm(f=>({...f,progress:+e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes"><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={save}>Save</button>
+        </div>
+      </Modal>}
     </div>
   );
 };
 
-// ─── CUSTOMERS ───────────────────────────────────────────────────────────────────
 const Customers = ({data, setData}) => {
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
@@ -25820,8 +28482,10 @@ const AutoPO = ({data, setData}) => {
 };
 
 // ─── REPORTS ─────────────────────────────────────────────────────────────────────
-const Reports = ({data}) => {
+const Reports = ({data,setData}) => {
   const [loading,setLoading]=useState(false);
+  const [jhModal,setJhModal]=useState(null);
+  const [jhForm,setJhForm]=useState({});
   const [report,setReport]=useState('');
   const salesRev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
   const jobRevRpt=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
@@ -25851,6 +28515,7 @@ const Reports = ({data}) => {
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Reports & Analytics</div></div>
         <div style={{display:'flex',gap:8}}>
+          <button className="btn btn-p btn-sm" onClick={()=>{setJhForm({id:'JH-'+uid(),customer:'',project:'',productType:'',mount:'',qty:0,orderTotal:0,matCost:0,laborCost:0,grossMarginPct:0,orderDate:now(),shipDate:'',leadTimeDays:0,status:'Shipped'});setJhModal('new');}}>+ Add Job History</button>
           <button className="btn" style={{border:'1px solid var(--err)',color:'var(--err)',fontSize:11}} 
             onClick={()=>{if(window.confirm('Clear browser data and reload with fresh INIT data?')){window.storage&&window.storage.delete('maisy_erp_v4').then(()=>window.location.reload()).catch(()=>{localStorage.removeItem('maisy_erp_v4');window.location.reload()});}}}>
             🔄 Reset Data
@@ -25909,7 +28574,7 @@ const Reports = ({data}) => {
           ))}
         </div>
         <div className="card" style={{padding:0,overflow:'hidden'}}>
-          <table><thead><tr><th>Order #</th><th>Customer</th><th>Product</th><th>Qty</th><th>Revenue</th><th>Mat Cost</th><th>Labor</th><th>Gross Profit</th><th>Margin %</th><th>Lead Time</th></tr></thead>
+          <table><thead><tr><th>Order #</th><th>Customer</th><th>Product</th><th>Qty</th><th>Revenue</th><th>Mat Cost</th><th>Labor</th><th>Gross Profit</th><th>Margin %</th><th>Lead Time</th><th/></tr></thead>
             <tbody>{(data.jobHistory||[]).length===0&&<tr><td colSpan={10}><Empty msg="No job history records"/></td></tr>}
             {(data.jobHistory||[]).map((j,i)=>(
               <tr key={i}>
@@ -25923,12 +28588,45 @@ const Reports = ({data}) => {
                 <td style={{color:'var(--ok)',fontWeight:600}}>{j.grossProfit?fmt$(j.grossProfit):'—'}</td>
                 <td style={{color:j.grossMarginPct>=35?'var(--ok)':j.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{j.grossMarginPct?(+j.grossMarginPct).toFixed(1)+'%':'—'}</td>
                 <td style={{fontSize:11}}>{j.leadTimeDays?j.leadTimeDays+' days':'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-xs" onClick={()=>{setJhForm({...j});setJhModal('edit');}}>Edit</button>
+                <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,jobHistory:(d.jobHistory||[]).filter(x=>x.id!==j.id)}))}>Del</button>
+              </div></td>
               </tr>
             ))}</tbody>
           </table>
         </div>
       </div>
     </div>
+
+      {(jhModal==='edit'||jhModal==='new')&&<Modal title={jhModal==='new'?'Add Job History':'Edit Job History'} onClose={()=>setJhModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Order #"><input value={jhForm.id||''} onChange={e=>setJhForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Customer"><input value={jhForm.customer||''} onChange={e=>setJhForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Project"><input value={jhForm.project||''} onChange={e=>setJhForm(f=>({...f,project:e.target.value}))}/></Field>
+          <Field label="Product Type"><input value={jhForm.productType||''} onChange={e=>setJhForm(f=>({...f,productType:e.target.value}))}/></Field>
+          <Field label="Mount"><select value={jhForm.mount||'Surface'} onChange={e=>setJhForm(f=>({...f,mount:e.target.value}))}>
+            {['Surface','Fascia','Core Drill','Other'].map(s=><option key={s}>{s}</option>)}
+          </select></Field>
+          <Field label="Qty"><input type="number" value={jhForm.qty||0} onChange={e=>setJhForm(f=>({...f,qty:+e.target.value}))}/></Field>
+          <Field label="Order Total ($)"><input type="number" step="0.01" value={jhForm.orderTotal||0} onChange={e=>setJhForm(f=>({...f,orderTotal:+e.target.value}))}/></Field>
+          <Field label="Material Cost ($)"><input type="number" step="0.01" value={jhForm.matCost||0} onChange={e=>setJhForm(f=>({...f,matCost:+e.target.value}))}/></Field>
+          <Field label="Labor Cost ($)"><input type="number" step="0.01" value={jhForm.laborCost||0} onChange={e=>setJhForm(f=>({...f,laborCost:+e.target.value}))}/></Field>
+          <Field label="Order Date"><input type="date" value={jhForm.orderDate||''} onChange={e=>setJhForm(f=>({...f,orderDate:e.target.value}))}/></Field>
+          <Field label="Ship Date"><input type="date" value={jhForm.shipDate||''} onChange={e=>setJhForm(f=>({...f,shipDate:e.target.value}))}/></Field>
+          <Field label="Status"><select value={jhForm.status||'Shipped'} onChange={e=>setJhForm(f=>({...f,status:e.target.value}))}>
+            {['Quoted','In Production','Shipped','Completed','Cancelled'].map(s=><option key={s}>{s}</option>)}
+          </select></Field>
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setJhModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{
+            if(jhModal==='new')setData(d=>({...d,jobHistory:[...(d.jobHistory||[]),jhForm]}));
+            else setData(d=>({...d,jobHistory:(d.jobHistory||[]).map(j=>j.id===jhForm.id?jhForm:j)}));
+            setJhModal(null);
+          }}>Save</button>
+        </div>
+      </Modal>}
   );
 };
 
@@ -26481,22 +29179,35 @@ const Automation = ({data,setData}) => {
   const [expanded,setExpanded]=useState({});
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
+  const [tab,setTab]=useState('phases');
 
   const toggle=id=>setExpanded(e=>({...e,[id]:!e[id]}));
   const totalBudget=(data.automationPhases||[]).reduce((a,b)=>a+b.budget,0);
   const totalSpent=(data.automationPhases||[]).reduce((a,b)=>a+(b.budget*(b.completion/100)),0);
-  const overallPct=Math.round((data.automationPhases||[]).reduce((a,b)=>a+(b.completion*(b.budget/totalBudget)),0));
+  const overallPct=totalBudget?Math.round((data.automationPhases||[]).reduce((a,b)=>a+(b.completion*(b.budget/totalBudget)),0)):0;
 
   const updatePhase=(id,field,val)=>{
-    setData(d=>({...d,automationPhases:d.automationPhases.map(p=>p.id===id?{...p,[field]:field==='completion'||field==='budget'?Number(val):val}:p)}));
+    setData(d=>({...d,automationPhases:(d.automationPhases||[]).map(p=>p.id===id?{...p,[field]:field==='completion'||field==='budget'?Number(val):val}:p)}));
   };
   const updateItem=(phaseId,itemId,field,val)=>{
-    setData(d=>({...d,automationPhases:d.automationPhases.map(p=>p.id===phaseId?{...p,items:p.items.map(i=>i.id===itemId?{...i,[field]:field==='cost'?Number(val):val}:i)}:p)}));
+    setData(d=>({...d,automationPhases:(d.automationPhases||[]).map(p=>p.id===phaseId?{...p,items:(p.items||[]).map(i=>i.id===itemId?{...i,[field]:field==='cost'?Number(val):val}:i)}:p)}));
+  };
+  const saveStation=()=>{
+    const rec={...form,id:form.id||'STA-'+uid()};
+    if(!(data.automationStations||[]).find(s=>s.id===rec.id))
+      setData(d=>({...d,automationStations:[...(d.automationStations||[]),rec]}));
+    else setData(d=>({...d,automationStations:(d.automationStations||[]).map(s=>s.id===rec.id?rec:s)}));
+    setModal(null);
+  };
+  const saveRoadmap=()=>{
+    const rec={...form,id:form.id||'AR-'+uid()};
+    if(!(data.automationPhasesRoadmap||[]).find(r=>r.id===rec.id))
+      setData(d=>({...d,automationPhasesRoadmap:[...(d.automationPhasesRoadmap||[]),rec]}));
+    else setData(d=>({...d,automationPhasesRoadmap:(d.automationPhasesRoadmap||[]).map(r=>r.id===rec.id?rec:r)}));
+    setModal(null);
   };
 
-  const phaseColor={
-    'In Progress':'var(--acc)','Planning':'var(--warn)','Not Started':'var(--dim)','Complete':'var(--ok)'
-  };
+  const phaseColor={'In Progress':'var(--acc)','Planning':'var(--warn)','Not Started':'var(--dim)','Complete':'var(--ok)'};
 
   return(
     <div className="fade-up">
@@ -26504,126 +29215,196 @@ const Automation = ({data,setData}) => {
         <div><div className="hd" style={{fontSize:22}}>Automation Roadmap</div>
           <div style={{display:'flex',gap:6,marginTop:5}}>
             <span className="chip">{fmt$(totalBudget)} total budget</span>
-            <span className="chip" style={{color:'var(--ok)'}}>{overallPct}% overall progress</span>
+            <span className="chip" style={{color:'var(--ok)'}}>{overallPct}% overall</span>
+            <span className="chip">{(data.automationPhasesRoadmap||[]).length} station targets</span>
           </div>
         </div>
-      </div>
-
-      <div className="card" style={{marginBottom:16}}>
-        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12}}>5-Phase Progress Overview</div>
-        <div className="progress-bar" style={{height:10,marginBottom:12}}>
-          <div className="progress-fill" style={{width:`${overallPct}%`,background:'linear-gradient(90deg,var(--acc),var(--ok))'}}/>
-        </div>
-        <div className="grid4">
-          {[
-            {l:'Total Budget',v:fmt$(totalBudget),c:'var(--txt)'},
-            {l:'Deployed',v:fmt$(totalSpent),c:'var(--warn)'},
-            {l:'Remaining',v:fmt$(totalBudget-totalSpent),c:'var(--acc)'},
-            {l:'Target',v:'Lights-Out by Month 30',c:'var(--ok)'},
-          ].map(s=><div key={s.l}><div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--muted)',marginBottom:4}}>{s.l}</div><div style={{fontSize:14,fontWeight:700,color:s.c}}>{s.v}</div></div>)}
+        <div style={{display:'flex',gap:8}}>
+          {tab==='stations'&&<button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'STA-'+uid(),station:'',currentSetup:'',goal:'',equipment:'',budget:0,completion:0,status:'Not Started',notes:''});setModal('station');}}>+ Add Station</button>}
+          {tab==='roadmap'&&<button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'AR-'+uid(),station:'',currentProcess:'',targetAutomation:'',equipment:'',estCost:'',laborReduction:'',throughputIncrease:'',paybackMonths:'',phase:'1',priority:3,status:'Planning',notes:''});setModal('roadmap');}}>+ Add Item</button>}
         </div>
       </div>
 
-      {(data.automationPhases||[]).map(ph=>(
-        <div key={ph.id} style={{background:'var(--s1)',border:`1px solid ${ph.status==='In Progress'?'rgba(0,229,255,.2)':'var(--bdr)'}`,borderRadius:8,marginBottom:12,overflow:'hidden'}}>
-          <div style={{padding:'14px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:12}} onClick={()=>toggle(ph.id)}>
-            <div style={{width:32,height:32,borderRadius:8,background:`${phaseColor[ph.status]}22`,border:`1px solid ${phaseColor[ph.status]}44`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-              <span style={{fontFamily:'Barlow Condensed',fontSize:16,fontWeight:900,color:phaseColor[ph.status]}}>{ph.phase}</span>
-            </div>
-            <div style={{flex:1}}>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                <span style={{fontWeight:700,fontSize:14}}>Phase {ph.phase}: {ph.title}</span>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['phases','stations','roadmap'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='phases'?'📋 Phase Plan':t==='stations'?'🏭 Station Details':'🗺️ Station Roadmap'}</button>)}
+      </div>
+
+      {tab==='phases'&&<>
+        <div className="card" style={{marginBottom:16}}>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12}}>5-Phase Progress Overview</div>
+          <div className="progress-bar" style={{height:10,marginBottom:12}}>
+            <div className="progress-fill" style={{width:`${overallPct}%`,background:'linear-gradient(90deg,var(--acc),var(--ok))'}}/>
+          </div>
+          <div className="grid4">
+            {[
+              {l:'Total Budget',v:fmt$(totalBudget),c:'var(--txt)'},
+              {l:'Deployed',v:fmt$(totalSpent),c:'var(--warn)'},
+              {l:'Remaining',v:fmt$(totalBudget-totalSpent),c:'var(--acc)'},
+              {l:'Target',v:'Lights-Out by Month 30',c:'var(--ok)'},
+            ].map(s=><div key={s.l}><div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--muted)',marginBottom:4}}>{s.l}</div><div style={{fontSize:14,fontWeight:700,color:s.c}}>{s.v}</div></div>)}
+          </div>
+        </div>
+        {(data.automationPhases||[]).map(ph=>(
+          <div key={ph.id} style={{background:'var(--s1)',border:`1px solid ${ph.status==='In Progress'?'rgba(0,229,255,.2)':'var(--bdr)'}`,borderRadius:8,marginBottom:12,overflow:'hidden'}}>
+            <div style={{padding:'14px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:12}} onClick={()=>toggle(ph.id)}>
+              <div style={{width:32,height:32,borderRadius:8,background:`${phaseColor[ph.status]}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <span style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:16,color:phaseColor[ph.status]}}>{ph.id}</span>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,marginBottom:2}}>{ph.title}</div>
+                <div style={{fontSize:11,color:'var(--muted)'}}>{ph.description}</div>
+              </div>
+              <div style={{display:'flex',gap:16,alignItems:'center'}}>
+                <input type="range" min="0" max="100" value={ph.completion} style={{width:100}}
+                  onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();updatePhase(ph.id,'completion',e.target.value);}}/>
+                <span style={{fontSize:13,fontWeight:700,color:phaseColor[ph.status],minWidth:36}}>{ph.completion}%</span>
                 <Badge s={ph.status}/>
-                <span style={{fontSize:10,color:'var(--muted)'}}>{ph.months} months</span>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <div className="progress-bar" style={{flex:1,height:4}}>
-                  <div className="progress-fill" style={{width:`${ph.completion}%`,background:phaseColor[ph.status]}}/>
-                </div>
-                <span style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{ph.completion}% · {fmt$(ph.budget)}</span>
+                <select value={ph.status} style={{fontSize:11,background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:4,color:'var(--txt)',padding:'2px 6px'}}
+                  onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();updatePhase(ph.id,'status',e.target.value);}}>
+                  {['Not Started','Planning','In Progress','Complete'].map(s=><option key={s}>{s}</option>)}
+                </select>
+                <span style={{fontSize:12,color:'var(--muted)'}}>{expanded[ph.id]?'▲':'▼'}</span>
               </div>
             </div>
-            <span style={{fontSize:16,color:'var(--muted)',transform:expanded[ph.id]?'rotate(180deg)':'none',transition:'transform .2s'}}>▾</span>
+            {expanded[ph.id]&&<div style={{padding:'0 18px 18px'}}>
+              <div style={{borderTop:'1px solid var(--bdr)',paddingTop:14}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                  <span style={{fontSize:11,color:'var(--muted)'}}>{(ph.items||[]).length} items · Budget: <input type="number" value={ph.budget} style={{width:90,fontSize:11,background:'transparent',border:'none',color:'var(--warn)',fontWeight:700}} onChange={e=>updatePhase(ph.id,'budget',e.target.value)}/></span>
+                  <button className="btn btn-p btn-sm" onClick={()=>{
+                    const newItem={id:`${ph.id}-${uid()}`,title:'New Item',description:'',cost:0,status:'Not Started',weeks:'',vendor:''};
+                    setData(d=>({...d,automationPhases:(d.automationPhases||[]).map(p=>p.id===ph.id?{...p,items:[...(p.items||[]),newItem]}:p)}));
+                  }}>+ Add Item</button>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  {(ph.items||[]).map(item=>(
+                    <div key={item.id} style={{background:'var(--s2)',borderRadius:6,padding:'10px 14px',border:'1px solid var(--bdr)'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                        <input value={item.title} style={{fontWeight:600,fontSize:13,background:'transparent',border:'none',color:'var(--txt)',flex:1}}
+                          onChange={e=>updateItem(ph.id,item.id,'title',e.target.value)}/>
+                        <div style={{display:'flex',gap:4,flexShrink:0}}>
+                          <select value={item.status} style={{fontSize:10,background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)',padding:'2px 4px'}}
+                            onChange={e=>updateItem(ph.id,item.id,'status',e.target.value)}>
+                            {['Not Started','In Progress','Complete','On Hold'].map(s=><option key={s}>{s}</option>)}
+                          </select>
+                          <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,automationPhases:(d.automationPhases||[]).map(p=>p.id===ph.id?{...p,items:(p.items||[]).filter(i=>i.id!==item.id)}:p)}))}>×</button>
+                        </div>
+                      </div>
+                      <div style={{display:'flex',gap:8,marginTop:6,fontSize:11,color:'var(--muted)'}}>
+                        <span>$<input type="number" value={item.cost||0} style={{width:70,fontSize:11,background:'transparent',border:'none',color:'var(--warn)'}} onChange={e=>updateItem(ph.id,item.id,'cost',e.target.value)}/></span>
+                        <input value={item.weeks||''} placeholder="Timeline" style={{flex:1,fontSize:11,background:'transparent',border:'none',color:'var(--muted)'}} onChange={e=>updateItem(ph.id,item.id,'weeks',e.target.value)}/>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>}
           </div>
-          {expanded[ph.id]&&<div style={{borderTop:'1px solid var(--bdr)',padding:'14px 18px'}}>
-            <div className="grid2" style={{marginBottom:14}}>
-              <Field label="Status">
-                <select value={ph.status} onChange={e=>updatePhase(ph.id,'status',e.target.value)}>
-                  {['Planning','In Progress','On Hold','Complete','Not Started'].map(s=><option key={s}>{s}</option>)}
-                </select>
-              </Field>
-              <div>
-                <label>Completion % — {ph.completion}%</label>
-                <input type="range" min={0} max={100} value={ph.completion} onChange={e=>updatePhase(ph.id,'completion',e.target.value)} style={{width:'100%',marginTop:8}}/>
-              </div>
-            </div>
-            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.1em',marginBottom:8,color:'var(--muted)'}}>LINE ITEMS</div>
-            {ph.items.map(item=>(
-              <div key={item.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:'var(--s2)',borderRadius:5,marginBottom:5}}>
-                <span style={{fontSize:11,flex:1}}>{item.task}</span>
-                <span className="mono" style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmt$(item.cost)}</span>
-                <select value={item.status} onChange={e=>updateItem(ph.id,item.id,'status',e.target.value)} style={{width:120,fontSize:11,padding:'3px 6px'}}>
-                  {['Planned','In Progress','Done','On Hold','Cancelled'].map(s=><option key={s}>{s}</option>)}
-                </select>
-              </div>
-            ))}
-          </div>}
-        </div>
-      ))}
-      <div style={{marginTop:24}}>
-        <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:14}}>Station Automation Roadmap (from Excel)</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:12,marginBottom:10}}>
-          {(data.automationStations||[]).map((s,i)=>(
-            <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'14px 16px'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15}}>{s.station}</div>
-                <div style={{display:'flex',gap:4}}>
-                  {s.phase&&<span style={{fontSize:9,padding:'2px 6px',borderRadius:3,background:'rgba(56,189,248,.15)',color:'var(--acc)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.05em'}}>PHASE {s.phase}</span>}
-                  {s.priority&&<span style={{fontSize:9,padding:'2px 6px',borderRadius:3,background:'rgba(129,140,248,.15)',color:'var(--acc2)',fontFamily:'Barlow Condensed',fontWeight:700}}>P{s.priority}</span>}
-                </div>
-              </div>
-              <div style={{fontSize:11,color:'var(--muted)',marginBottom:5}}><span style={{color:'var(--txt)',fontWeight:500}}>Current: </span>{s.currentProcess}</div>
-              <div style={{fontSize:11,color:'var(--muted)',marginBottom:8}}><span style={{color:'var(--acc)',fontWeight:500}}>Target: </span>{s.targetAutomation}</div>
-              <div style={{display:'flex',gap:16,fontSize:10}}>
-                {s.laborReduction&&<span style={{color:'var(--ok)'}}>↓ {s.laborReduction} labor</span>}
-                {s.throughputIncrease&&<span style={{color:'var(--warn)'}}>↑ {s.throughputIncrease} throughput</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+        ))}
+      </>}
 
-        <div style={{marginTop:24}}>
-          <div style={{fontFamily:'Barlow Condensed',fontSize:13,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--muted)',marginBottom:12,borderBottom:'1px solid var(--bdr)',paddingBottom:6}}>
-            Full Station Roadmap — 07_NEXUS Real Data
-          </div>
-          {(data.automationPhasesRoadmap||[]).length===0
-            ? <div style={{padding:20,textAlign:'center',color:'var(--muted)',fontSize:12}}>Clear browser storage and reload to trigger data migration</div>
-            : <div className="card" style={{padding:0,overflow:'hidden'}}>
-                <table><thead><tr><th>Station</th><th>Current Process</th><th>Target Automation</th><th>Equipment</th><th>Est. Cost</th><th>Labor Reduction</th><th>Throughput +</th><th>Payback (mo)</th><th>Phase</th><th>Priority</th></tr></thead>
-                  <tbody>{(data.automationPhasesRoadmap||[]).map((s,i)=>(
-                    <tr key={i}>
-                      <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station}</td>
-                      <td style={{fontSize:11}}>{s.currentProcess}</td>
-                      <td style={{fontSize:11,color:'var(--ok)'}}>{s.targetAutomation}</td>
-                      <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'—'}</td>
-                      <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{s.estCost||'—'}</td>
-                      <td style={{fontFamily:'monospace',color:'var(--ok)'}}>{s.laborReduction||'—'}</td>
-                      <td style={{fontFamily:'monospace'}}>{s.throughputIncrease||'—'}</td>
-                      <td style={{textAlign:'center'}}>{s.paybackMonths||'—'}</td>
-                      <td><span className="chip">Phase {s.phase}</span></td>
-                      <td style={{textAlign:'center',fontWeight:700}}>{s.priority}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </div>
-          }
+      {tab==='stations'&&<>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table><thead><tr><th>Station</th><th>Current Setup</th><th>Goal</th><th>Equipment</th><th>Budget</th><th>Completion</th><th>Status</th><th/></tr></thead>
+            <tbody>{(data.automationStations||[]).length===0&&<tr><td colSpan={8}><Empty msg="No stations added — click + Add Station"/></td></tr>}
+            {(data.automationStations||[]).map((s,i)=>(
+              <tr key={i}>
+                <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station||s.name}</td>
+                <td style={{fontSize:11}}>{s.currentSetup||s.currentProcess||'—'}</td>
+                <td style={{fontSize:11,color:'var(--ok)'}}>{s.goal||s.targetAutomation||'—'}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'—'}</td>
+                <td style={{fontFamily:'monospace'}}>{s.budget?fmt$(s.budget):'—'}</td>
+                <td>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{flex:1,background:'var(--s2)',borderRadius:3,height:6}}>
+                      <div style={{width:`${s.completion||0}%`,background:'var(--acc)',height:6,borderRadius:3}}/>
+                    </div>
+                    <span style={{fontSize:11,fontFamily:'monospace',minWidth:32}}>{s.completion||0}%</span>
+                  </div>
+                </td>
+                <td><Badge s={s.status||'Not Started'}/></td>
+                <td><div style={{display:'flex',gap:4}}>
+                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s});setModal('station');}}>Edit</button>
+                  <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,automationStations:(d.automationStations||[]).filter((_,j)=>j!==i)}))}>Del</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table>
         </div>
+      </>}
+
+      {tab==='roadmap'&&<>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table><thead><tr><th>Station</th><th>Current Process</th><th>Target Automation</th><th>Equipment</th><th>Est. Cost</th><th>Labor ↓</th><th>Throughput ↑</th><th>Payback (mo)</th><th>Phase</th><th>Priority</th><th/></tr></thead>
+            <tbody>{(data.automationPhasesRoadmap||[]).length===0&&<tr><td colSpan={11}><Empty msg="No roadmap items — click + Add Item"/></td></tr>}
+            {(data.automationPhasesRoadmap||[]).map((s,i)=>(
+              <tr key={i}>
+                <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station}</td>
+                <td style={{fontSize:11}}>{s.currentProcess}</td>
+                <td style={{fontSize:11,color:'var(--ok)'}}>{s.targetAutomation}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'—'}</td>
+                <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{s.estCost||'—'}</td>
+                <td style={{color:'var(--ok)',fontFamily:'monospace'}}>{s.laborReduction||'—'}</td>
+                <td style={{fontFamily:'monospace'}}>{s.throughputIncrease||'—'}</td>
+                <td style={{textAlign:'center'}}>{s.paybackMonths||'—'}</td>
+                <td><span className="chip">Phase {s.phase}</span></td>
+                <td style={{textAlign:'center',fontWeight:700}}>{s.priority}</td>
+                <td><div style={{display:'flex',gap:4}}>
+                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s});setModal('roadmap');}}>Edit</button>
+                  <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,automationPhasesRoadmap:(d.automationPhasesRoadmap||[]).filter((_,j)=>j!==i)}))}>Del</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </>}
+
+      {modal==='station'&&<Modal title="Automation Station" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Station Name"><input value={form.station||''} onChange={e=>setForm(f=>({...f,station:e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Not Started'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+            {['Not Started','Planning','In Progress','Complete','On Hold'].map(s=><option key={s}>{s}</option>)}
+          </select></Field>
+          <Field label="Current Setup"><input value={form.currentSetup||''} onChange={e=>setForm(f=>({...f,currentSetup:e.target.value}))}/></Field>
+          <Field label="Automation Goal"><input value={form.goal||''} onChange={e=>setForm(f=>({...f,goal:e.target.value}))}/></Field>
+          <Field label="Equipment Needed"><input value={form.equipment||''} onChange={e=>setForm(f=>({...f,equipment:e.target.value}))}/></Field>
+          <Field label="Budget ($)"><input type="number" value={form.budget||0} onChange={e=>setForm(f=>({...f,budget:+e.target.value}))}/></Field>
+          <Field label="Completion (%)"><input type="number" min="0" max="100" value={form.completion||0} onChange={e=>setForm(f=>({...f,completion:+e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes"><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={saveStation}>Save</button>
+        </div>
+      </Modal>}
+
+      {modal==='roadmap'&&<Modal title="Roadmap Item" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Station"><input value={form.station||''} onChange={e=>setForm(f=>({...f,station:e.target.value}))}/></Field>
+          <Field label="Phase"><select value={form.phase||'1'} onChange={e=>setForm(f=>({...f,phase:e.target.value}))}>
+            {['1','2','3','4','5'].map(p=><option key={p}>Phase {p}</option>)}
+          </select></Field>
+          <Field label="Current Process"><input value={form.currentProcess||''} onChange={e=>setForm(f=>({...f,currentProcess:e.target.value}))}/></Field>
+          <Field label="Target Automation"><input value={form.targetAutomation||''} onChange={e=>setForm(f=>({...f,targetAutomation:e.target.value}))}/></Field>
+          <Field label="Equipment Needed"><input value={form.equipment||''} onChange={e=>setForm(f=>({...f,equipment:e.target.value}))}/></Field>
+          <Field label="Est. Cost"><input value={form.estCost||''} onChange={e=>setForm(f=>({...f,estCost:e.target.value}))}/></Field>
+          <Field label="Labor Reduction"><input value={form.laborReduction||''} placeholder="e.g. 50%" onChange={e=>setForm(f=>({...f,laborReduction:e.target.value}))}/></Field>
+          <Field label="Throughput Increase"><input value={form.throughputIncrease||''} placeholder="e.g. 2x" onChange={e=>setForm(f=>({...f,throughputIncrease:e.target.value}))}/></Field>
+          <Field label="Payback (months)"><input value={form.paybackMonths||''} onChange={e=>setForm(f=>({...f,paybackMonths:e.target.value}))}/></Field>
+          <Field label="Priority (1-5)"><input type="number" min="1" max="5" value={form.priority||3} onChange={e=>setForm(f=>({...f,priority:+e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Planning'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+            {['Planning','Approved','In Progress','Complete','On Hold'].map(s=><option key={s}>{s}</option>)}
+          </select></Field>
+        </div>
+        <Field label="Notes"><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={saveRoadmap}>Save</button>
+        </div>
+      </Modal>}
     </div>
   );
 };
 
-// ─── SISTER COMPANY ───────────────────────────────────────────────────────────────
 const Sister = ({data,setData}) => {
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
@@ -26900,8 +29681,10 @@ const MatCostCalc = () => {
   );
 };
 
-const ShopRef = ({data}) => {
+const ShopRef = ({data,setData}) => {
   const [tab,setTab]=useState('fasteners');
+  const [modal,setModal]=useState(null);
+  const [form,setForm]=useState({});
   return(
     <div className="fade-up">
       <div className="section-hd">
@@ -27066,6 +29849,10 @@ const ShopRef = ({data}) => {
                 <td style={{textAlign:'center',fontSize:11}}>{m.leadTimeDays?m.leadTimeDays+'d':'—'}</td>
                 <td style={{textAlign:'center',fontSize:11}}>{m.minOrderQty||'—'}</td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{m.lastUpdated||'—'}</td>
+              <td><div style={{display:'flex',gap:3}}>
+                <button className="btn btn-g btn-xs" onClick={()=>{setForm({...m,_key:'materialsDB',_idx:i});setModal('refitem');}}>Edit</button>
+                <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,materialsDB:(d.materialsDB||[]).filter((_,j)=>j!==i)}))}>×</button>
+              </div></td>
               </tr>
             ))}</tbody>
           </table>
@@ -27155,6 +29942,24 @@ const ShopRef = ({data}) => {
       </div>}
 
     </div>
+
+      {modal==='refitem'&&<Modal title="Edit Reference Item" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          {Object.entries(form).filter(([k])=>!k.startsWith('_')).slice(0,16).map(([k,v])=>(
+            <Field key={k} label={k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim()}>
+              <input value={v===null||v===undefined?'':String(v)} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}/>
+            </Field>
+          ))}
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{
+            const {_key,_idx,...rec}=form;
+            if(_key&&_idx!==undefined)setData(d=>({...d,[_key]:(d[_key]||[]).map((x,j)=>j===_idx?rec:x)}));
+            setModal(null);
+          }}>Save</button>
+        </div>
+      </Modal>}
   );
 };
 
@@ -27532,6 +30337,54 @@ const PrintCenter = ({data}) => {
 
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────────
 // To add a new module: add to PAGES, TITLES, NAVS, ROLE_ACCESS, and INIT. That's it.
+
+const normalizeData = (d) => {
+  if (!d) return d;
+  if (!d.inventory) d.inventory = [...(d.rawMaterials||[]).map(i=>({...i,sku:i.id,type:'Raw Material'})),...(d.assemblyItems||[]).map(i=>({...i,sku:i.id,type:'Assembly'})),...(d.shopConsumables||[]).map(i=>({...i,sku:i.id,type:'Consumable'}))];
+  if (!d.shipments) d.shipments = (d.shipCostLog||[]).map((s,i)=>({...s,id:s.poRef||s.tracking||`SHP-${i+1}`,status:'Delivered'}));
+  if (!d.laborRates) d.laborRates = d.laborProcesses||[];
+  if (!d.purchaseOrders) d.purchaseOrders = d.purchaseLog||[];
+  if (!d.bom) d.bom = [];
+  if (!d.adjustmentLog) d.adjustmentLog = [];
+  if (!d.costPerStation) d.costPerStation = [];
+  if (!d.productCatalog) d.productCatalog = [];
+  if (!d.productSkuMaster) d.productSkuMaster = [];
+  if (!d.customerIssues) d.customerIssues = [];
+  if (!d.legacyOrders) d.legacyOrders = [];
+  if (!d.srsCatalog) d.srsCatalog = [];
+  if (!d.srsDims) d.srsDims = [];
+  if (!d.equipmentLog) d.equipmentLog = [];
+  if (!d.facilityMove) d.facilityMove = [];
+  if (!d.employeeEfficiency) d.employeeEfficiency = [];
+  if (!d.shiftHandoff) d.shiftHandoff = [];
+  if (!d.materialsDB) d.materialsDB = [];
+  if (!d.skuReference) d.skuReference = [];
+  if (!d.monthlyPL) d.monthlyPL = [];
+  if (!d.shippingAnalysis) d.shippingAnalysis = [];
+  if (!d.shipMonthlySummary) d.shipMonthlySummary = [];
+  if (!d.vendorScorecard) d.vendorScorecard = [];
+  if (!d.fastenerGuide) d.fastenerGuide = [];
+  if (!d.materialProperties) d.materialProperties = [];
+  if (!d.weldingFab) d.weldingFab = [];
+  if (!d.productReference) d.productReference = [];
+  if (!d.kpiMonthly) d.kpiMonthly = [];
+  if (!d.defectLog) d.defectLog = [];
+  if (!d.kpiTargets) d.kpiTargets = [];
+  if (!d.kpiWeekly) d.kpiWeekly = [];
+  if (!d.productProfitability) d.productProfitability = [];
+  if (!d.cycleCount) d.cycleCount = [];
+  if (!d.trainingCerts && d.trainingMatrix && d.trainingMatrix.length > 0 && d.trainingMatrix[0] && d.trainingMatrix[0].skill) {
+    d.trainingCerts = d.trainingMatrix;
+    d.trainingMatrix = [];
+  }
+  if (!d.trainingCerts) d.trainingCerts = [];
+  if (!d.shopConsumables) d.shopConsumables = [];
+  if (!d.automationPhasesRoadmap) d.automationPhasesRoadmap = [];
+  if (!d.postsMfgList) d.postsMfgList = [];
+  if (!d.quoteLog) d.quoteLog = [];
+  return d;
+};
+
 const PAGES = {
   dashboard:Dashboard, todo:Todo,
   sales:Sales, production:Production, inventory:Inventory, shipping:Shipping,
@@ -27548,33 +30401,6 @@ const TITLES = {
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
   shopref:'Shop Reference', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
 };
-
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error, info) {
-    console.error('Page crash:', error, info);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{padding:40,textAlign:'center',background:'var(--bg)',minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-          <div style={{fontSize:48,marginBottom:16}}>⚠️</div>
-          <div style={{fontFamily:'Barlow Condensed',fontSize:24,fontWeight:700,color:'var(--err)',marginBottom:8}}>Page Error</div>
-          <div style={{color:'var(--muted)',fontSize:13,marginBottom:24,maxWidth:400,textAlign:'center'}}>{this.state.error?.message || 'Something went wrong on this page.'}</div>
-          <button className="btn btn-p" onClick={()=>this.setState({hasError:false,error:null})}>← Go Back</button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 
 export default function MaisyERP() {
   const [user,  setUser]  = useState(null);
@@ -27627,58 +30453,13 @@ export default function MaisyERP() {
             <button onClick={handleLogout} style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',borderRadius:5,padding:'5px 10px',cursor:'pointer',fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',transition:'all .15s'}} onMouseOver={e=>e.target.style.color='var(--err)'} onMouseOut={e=>e.target.style.color='var(--muted)'}>Sign Out</button>
           </div>
           <div className="content">
-            <ErrorBoundary key={page}><PageComp data={data} setData={setData} user={user} setPage={setPage}/></ErrorBoundary>
+            <PageComp data={data} setData={setData} user={user} setPage={setPage}/>
           </div>
         </div>
         <AIPanel data={data} open={aiOpen} onClose={()=>setAiOpen(false)}/>
       </div>
     </>
   );
-}const normalizeData = (d) => {
-  if (!d) return d;
-  if (!d.inventory) d.inventory = [...(d.rawMaterials||[]).map(i=>({...i,sku:i.id,type:'Raw Material'})),...(d.assemblyItems||[]).map(i=>({...i,sku:i.id,type:'Assembly'})),...(d.shopConsumables||[]).map(i=>({...i,sku:i.id,type:'Consumable'}))];
-  if (!d.shipments) d.shipments = (d.shipCostLog||[]).map((s,i)=>({...s,id:s.poRef||s.tracking||`SHP-${i+1}`,status:'Delivered'}));
-  if (!d.laborRates) d.laborRates = d.laborProcesses||[];
-  if (!d.purchaseOrders) d.purchaseOrders = d.purchaseLog||[];
-  if (!d.bom) d.bom = [];
-  if (!d.adjustmentLog) d.adjustmentLog = [];
-  if (!d.costPerStation) d.costPerStation = [];
-  if (!d.productCatalog) d.productCatalog = [];
-  if (!d.productSkuMaster) d.productSkuMaster = [];
-  if (!d.customerIssues) d.customerIssues = [];
-  if (!d.legacyOrders) d.legacyOrders = [];
-  if (!d.srsCatalog) d.srsCatalog = [];
-  if (!d.srsDims) d.srsDims = [];
-  if (!d.equipmentLog) d.equipmentLog = [];
-  if (!d.facilityMove) d.facilityMove = [];
-  if (!d.employeeEfficiency) d.employeeEfficiency = [];
-  if (!d.shiftHandoff) d.shiftHandoff = [];
-  if (!d.materialsDB) d.materialsDB = [];
-  if (!d.skuReference) d.skuReference = [];
-  if (!d.monthlyPL) d.monthlyPL = [];
-  if (!d.shippingAnalysis) d.shippingAnalysis = [];
-  if (!d.shipMonthlySummary) d.shipMonthlySummary = [];
-  if (!d.vendorScorecard) d.vendorScorecard = [];
-  if (!d.fastenerGuide) d.fastenerGuide = [];
-  if (!d.materialProperties) d.materialProperties = [];
-  if (!d.weldingFab) d.weldingFab = [];
-  if (!d.productReference) d.productReference = [];
-  if (!d.kpiMonthly) d.kpiMonthly = [];
-  if (!d.defectLog) d.defectLog = [];
-  if (!d.kpiTargets) d.kpiTargets = [];
-  if (!d.kpiWeekly) d.kpiWeekly = [];
-  if (!d.productProfitability) d.productProfitability = [];
-  if (!d.cycleCount) d.cycleCount = [];
-  if (!d.trainingCerts && d.trainingMatrix && d.trainingMatrix.length > 0 && d.trainingMatrix[0] && d.trainingMatrix[0].skill) {
-    d.trainingCerts = d.trainingMatrix;
-    d.trainingMatrix = [];
-  }
-  if (!d.trainingCerts) d.trainingCerts = [];
-  if (!d.shopConsumables) d.shopConsumables = [];
-  if (!d.automationPhasesRoadmap) d.automationPhasesRoadmap = [];
-  if (!d.postsMfgList) d.postsMfgList = [];
-  if (!d.quoteLog) d.quoteLog = [];
-  return d;
-};
+}
 
 
