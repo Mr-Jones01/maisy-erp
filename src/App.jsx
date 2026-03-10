@@ -24366,7 +24366,7 @@ const Sales = ({data, setData}) => {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
       {modal&&<Modal title={modal==='new'?'New Order / Quote':'Edit'} onClose={()=>setModal(null)}>
         <div className="grid2"><Field label="Order ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
         <Field label="Type"><select value={form.type||'order'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}><option value="order">Sales Order</option><option value="quote">Quote</option></select></Field></div>
@@ -24484,7 +24484,7 @@ const Inventory = ({data, setData, user}) => {
       </StatRow>
       {low.length>0&&<div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span><span><strong>Low Stock:</strong> {low.map(i=>`${i.name} (${i.qty} ${i.unit})`).join(' · ')}</span></div>}
       <div style={{display:'flex',gap:6,marginBottom:16}}>
-        {['items','glass','adjustments','bom','import'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t}</button>)}
+        {['items','glass','consumables','cyclecount','adjustments','bom','import'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t}</button>)}
       </div>
 
       {/* ITEMS TAB */}
@@ -24546,6 +24546,50 @@ const Inventory = ({data, setData, user}) => {
       </>}
 
       {/* BOM TAB */}
+      {tab==='consumables'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>SKU</th><th>Item</th><th>Category</th><th>On Hand</th><th>Unit</th><th>Reorder At</th><th>Unit Cost</th><th>Value</th><th>Location</th></tr></thead>
+          <tbody>{(data.shopConsumables||[]).length===0&&<tr><td colSpan={9}><Empty msg="No consumables data"/></td></tr>}
+          {(data.shopConsumables||[]).map((c,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{c.sku||c.id}</td>
+              <td style={{fontWeight:500}}>{c.name}</td>
+              <td><span className="chip">{c.cat}</span></td>
+              <td style={{fontWeight:600,color:(c.qty||0)<=(c.reorder||0)?'var(--warn)':'var(--ok)'}}>{c.qty} {c.unit}{(c.qty||0)<=(c.reorder||0)?' ⚠':''}</td>
+              <td style={{color:'var(--muted)'}}>{c.unit}</td>
+              <td>{c.reorder||'—'}</td>
+              <td style={{fontFamily:'monospace'}}>{c.cost?'$'+c.cost:'—'}</td>
+              <td style={{fontFamily:'monospace'}}>{c.cost&&c.qty?'$'+(c.qty*c.cost).toFixed(2):'—'}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{c.loc||'—'}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {tab==='cyclecount'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.cycleCount||[]).length} count events</span>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({countNo:'CC-'+uid(),date:now(),location:'',category:'',item:'',systemQty:0,actualQty:0,variance:0,variancePct:0,countedBy:'',notes:''});setModal('cycle');}}>+ Log Count</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table><thead><tr><th>Count #</th><th>Date</th><th>Location</th><th>Category</th><th>Item</th><th>System Qty</th><th>Actual Qty</th><th>Variance</th><th>Variance %</th><th>Counted By</th><th/></tr></thead>
+            <tbody>{(data.cycleCount||[]).length===0&&<tr><td colSpan={11}><Empty msg="No cycle counts yet"/></td></tr>}
+            {(data.cycleCount||[]).map((c,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{c.countNo}</td>
+                <td style={{fontSize:11}}>{c.date}</td>
+                <td>{c.location}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{c.category}</td>
+                <td style={{fontWeight:500}}>{c.item}</td>
+                <td style={{textAlign:'center'}}>{c.systemQty}</td>
+                <td style={{textAlign:'center',fontWeight:600,color:c.actualQty!==c.systemQty?'var(--warn)':''}}>{c.actualQty}</td>
+                <td style={{textAlign:'center',fontWeight:700,color:(c.variance||0)>0?'var(--err)':(c.variance||0)<0?'var(--warn)':'var(--ok)'}}>{(c.variance||0)>0?'+':''}{c.variance||0}</td>
+                <td style={{textAlign:'center',color:Math.abs(c.variancePct||0)>5?'var(--err)':'var(--muted)',fontSize:11}}>{c.variancePct?(+c.variancePct).toFixed(1)+'%':'0%'}</td>
+                <td style={{fontSize:11}}>{c.countedBy}</td>
+                <td><button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,cycleCount:(d.cycleCount||[]).filter((_,j)=>j!==i)}))}>x</button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </>}
       {tab==='bom'&&<>
         {data.bom.length===0&&<Empty msg="No Bills of Materials defined"/>}
         {data.bom.map(b=>{
@@ -24668,6 +24712,22 @@ const Inventory = ({data, setData, user}) => {
       {qrItem&&<QRLabel item={qrItem} onClose={()=>setQrItem(null)}/>}
 
       {/* Item Edit Modal */}
+      {modal==='cycle'&&<Modal title="Cycle Count Entry" onClose={()=>setModal(null)}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Location"><input value={form.location||''} onChange={e=>setForm(f=>({...f,location:e.target.value}))}/></Field>
+          <Field label="Category"><input value={form.category||''} onChange={e=>setForm(f=>({...f,category:e.target.value}))}/></Field>
+          <Field label="Item Description"><input value={form.item||''} onChange={e=>setForm(f=>({...f,item:e.target.value}))}/></Field>
+          <Field label="System Qty (ERP)"><input type="number" value={form.systemQty||0} onChange={e=>setForm(f=>({...f,systemQty:+e.target.value,variance:(+form.actualQty||0)-(+e.target.value)}))}/></Field>
+          <Field label="Actual Qty (Physical)"><input type="number" value={form.actualQty||0} onChange={e=>setForm(f=>({...f,actualQty:+e.target.value,variance:(+e.target.value)-(+form.systemQty||0)}))}/></Field>
+          <Field label="Counted By"><input value={form.countedBy||''} onChange={e=>setForm(f=>({...f,countedBy:e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes"><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{setData(d=>({...d,cycleCount:[...(d.cycleCount||[]),{...form}]}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
       {modal==='item'&&<Modal title={form.id&&data.inventory.find(i=>i.id===form.id)?'Edit Item':'Add Item'} onClose={()=>setModal(null)}>
         <div className="grid2"><Field label="SKU"><input value={form.sku||''} onChange={e=>setForm(f=>({...f,sku:e.target.value}))}/></Field>
         <Field label="Category"><select value={form.cat||'Raw Material'} onChange={e=>setForm(f=>({...f,cat:e.target.value}))}>{cats.map(c=><option key={c}>{c}</option>)}</select></Field></div>
@@ -24746,7 +24806,7 @@ const Production = ({data, setData, user}) => {
         {canEdit&&<button className="btn btn-p" onClick={()=>open()}>+ New Work Order</button>}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['wo','scrap','safety','improvements','shifts'].map(t=><button key={t} className={'tab'+(prodTab===t?' on':'')} onClick={()=>setProdTab(t)}>{t==='wo'?'Work Orders':t==='scrap'?'Scrap & Waste':t==='safety'?'Safety Log':t==='improvements'?'Improvements':t==='shifts'?'Shift Handoff':t}</button>)}
+        {['wo','scrap','safety','improvements','shifts','defects'].map(t=><button key={t} className={'tab'+(prodTab===t?' on':'')} onClick={()=>setProdTab(t)}>{t==='wo'?'Work Orders':t==='scrap'?'Scrap & Waste':t==='safety'?'Safety Log':t==='improvements'?'Improvements':t==='shifts'?'Shift Handoff':t==='defects'?'Defect Log':t}</button>)}
       </div>
       {prodTab==='wo'&&<>
       <StatRow>
@@ -24957,6 +25017,56 @@ const Production = ({data, setData, user}) => {
         </div>
       </Modal>}
 
+      {prodTab==='defects'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div><span className="chip">{(data.defectLog||[]).length} defects</span><span className="chip" style={{color:'var(--err)',marginLeft:4}}>{(data.defectLog||[]).filter(d=>d.status==='Open').length} open</span></div>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'DEF-'+uid(),dateFound:now(),station:'',orderId:'',productType:'',defectType:'',description:'',severity:'Minor',disposition:'Rework',rootCause:'',corrAction:'',reportedBy:'',status:'Open',cost:0});setModal('defect');}}>+ Log Defect</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table><thead><tr><th>ID</th><th>Date</th><th>Order</th><th>Station</th><th>Defect Type</th><th>Description</th><th>Severity</th><th>Disposition</th><th>Root Cause</th><th>Status</th><th>Cost</th><th/></tr></thead>
+            <tbody>{(data.defectLog||[]).length===0&&<tr><td colSpan={12}><Empty msg="No defects logged — great!"/></td></tr>}
+            {(data.defectLog||[]).map((d,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{d.id}</td>
+                <td style={{fontSize:11}}>{d.dateFound}</td>
+                <td style={{fontFamily:'monospace',fontSize:10}}>{d.orderId||'—'}</td>
+                <td><span className="chip">{d.station}</span></td>
+                <td style={{fontSize:11}}>{d.defectType}</td>
+                <td style={{fontSize:10,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.description}>{d.description}</td>
+                <td style={{color:d.severity==='Critical'?'var(--err)':d.severity==='Major'?'var(--warn)':'var(--muted)',fontWeight:600,fontSize:11}}>{d.severity}</td>
+                <td style={{fontSize:10}}>{d.disposition}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:100,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.rootCause}</td>
+                <td><Badge s={d.status}/></td>
+                <td style={{color:'var(--err)',fontSize:11}}>{d.cost?'$'+d.cost:'—'}</td>
+                <td><div style={{display:'flex',gap:4}}>
+                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...d});setModal('defect');}}>Edit</button>
+                  <button className="btn btn-d btn-sm" onClick={()=>setData(dt=>({...dt,defectLog:(dt.defectLog||[]).filter((_,j)=>j!==i)}))}>Del</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </>}
+      {modal==='defect'&&<Modal title="Log Defect" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Date Found"><input type="date" value={form.dateFound||''} onChange={e=>setForm(f=>({...f,dateFound:e.target.value}))}/></Field>
+          <Field label="Station"><select value={form.station||stations[0]} onChange={e=>setForm(f=>({...f,station:e.target.value}))}>{stations.map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Order ID"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
+          <Field label="Defect Type"><input value={form.defectType||''} onChange={e=>setForm(f=>({...f,defectType:e.target.value}))} placeholder="Weld crack, Powder drip, Wrong cut…"/></Field>
+          <Field label="Severity"><select value={form.severity||'Minor'} onChange={e=>setForm(f=>({...f,severity:e.target.value}))}>{['Minor','Major','Critical'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Disposition"><select value={form.disposition||'Rework'} onChange={e=>setForm(f=>({...f,disposition:e.target.value}))}>{['Rework','Scrap','Accept As-Is','Return to Vendor'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Reported By"><input value={form.reportedBy||''} onChange={e=>setForm(f=>({...f,reportedBy:e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Open'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Open','In Progress','Closed'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Est. Cost ($)"><input type="number" step="0.01" value={form.cost||''} onChange={e=>setForm(f=>({...f,cost:+e.target.value}))}/></Field>
+        </div>
+        <Field label="Description"><textarea rows={2} value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <Field label="Root Cause"><input value={form.rootCause||''} onChange={e=>setForm(f=>({...f,rootCause:e.target.value}))}/></Field>
+        <Field label="Corrective Action"><input value={form.corrAction||''} onChange={e=>setForm(f=>({...f,corrAction:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{const rec={...form};if(!(data.defectLog||[]).find(x=>x.id===rec.id))setData(d=>({...d,defectLog:[...(d.defectLog||[]),rec]}));else setData(d=>({...d,defectLog:(d.defectLog||[]).map(x=>x.id===rec.id?rec:x)}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
       {modal==='shift'&&<Modal title="Log Shift Handoff" onClose={()=>setModal(null)} lg>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
           <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
@@ -25126,7 +25236,32 @@ const Purchasing = ({data, setData}) => {
         </div>
       </>}
 
-{tab==='vnd'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+{tab==='quotes'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
+          {(data.quoteLog||[]).length} shipping quotes logged
+        </div>
+        <table><thead><tr><th>Quote #</th><th>Date</th><th>Customer</th><th>Ship From</th><th>Ship To</th><th>Carrier</th><th>Service</th><th>Pkgs</th><th>Total Wt (lbs)</th><th>Est. Cost</th><th>Actual Cost</th><th>Variance</th><th>Status</th></tr></thead>
+          <tbody>{(data.quoteLog||[]).length===0&&<tr><td colSpan={13}><Empty msg="No shipping quotes logged yet"/></td></tr>}
+          {(data.quoteLog||[]).map((q,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{q.id}</td>
+              <td style={{fontSize:11}}>{q.date}</td>
+              <td style={{fontWeight:500}}>{q.customer}</td>
+              <td style={{fontSize:11}}>{q.origin}</td>
+              <td style={{fontSize:11}}>{q.dest}</td>
+              <td>{q.carrier}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{q.service}</td>
+              <td style={{textAlign:'center'}}>{q.pieces}</td>
+              <td style={{textAlign:'center'}}>{q.weight}</td>
+              <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{q.estCost?'$'+q.estCost:'—'}</td>
+              <td style={{fontFamily:'monospace',fontWeight:600,color:'var(--ok)'}}>{q.actualCost?'$'+q.actualCost:'—'}</td>
+              <td style={{fontFamily:'monospace',color:q.variance>0?'var(--err)':q.variance<0?'var(--ok)':'var(--muted)'}}>{q.variance?'$'+q.variance:'—'}</td>
+              <td><Badge s={q.status||'Quoted'}/></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {tab==='vnd'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <table><thead><tr><th>Vendor</th><th>Contact</th><th>Category</th><th>Lead Days</th><th>Rating</th><th>YTD Spend</th><th/></tr></thead>
           <tbody>{data.vendors.map(v=>(
             <tr key={v.id}>
@@ -25272,6 +25407,7 @@ const Invoicing = ({data, setData}) => {
 
 // ─── SHIPPING ────────────────────────────────────────────────────────────────────
 const Shipping = ({data, setData}) => {
+  const [shipTab,setShipTab]=useState('log');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   const statuses=['Ready to Ship','Shipped','In Transit','Delivered','Exception'];
@@ -25299,7 +25435,10 @@ const Shipping = ({data, setData}) => {
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.shipments.filter(s=>['Shipped','In Transit'].includes(s.status)).length} in transit</span><span className="chip">{data.shipments.filter(s=>s.status==='Delivered').length} delivered</span></div></div>
         <button className="btn btn-p" onClick={()=>open()}>+ New Shipment</button>
       </div>
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['log','analysis','monthly'].map(t=><button key={t} className={'tab'+(shipTab===t?' on':'')} onClick={()=>setShipTab(t)}>{t==='log'?'Ship Log':t==='analysis'?'Carrier Analysis':'Monthly Summary'}</button>)}
+      </div>
+      {shipTab==='log'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <table><thead><tr><th>Shipment #</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Delivered</th><th/></tr></thead>
           <tbody>
             {data.shipments.length===0&&<tr><td colSpan={9}><Empty msg="No shipments"/></td></tr>}
@@ -25318,7 +25457,39 @@ const Shipping = ({data, setData}) => {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
+      {shipTab==='analysis'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>Carrier</th><th>Total Shipments</th><th>Total Spend</th><th>Avg Cost/Ship</th><th>Avg Transit (days)</th><th>Damage Claims</th><th>On-Time %</th><th>Rating</th><th>Notes</th></tr></thead>
+          <tbody>{(data.shippingAnalysis||[]).length===0&&<tr><td colSpan={9}><Empty msg="No carrier analysis — comes from ship log data"/></td></tr>}
+          {(data.shippingAnalysis||[]).map((c,i)=>(
+            <tr key={i}>
+              <td style={{fontWeight:700}}>{c.carrier}</td>
+              <td style={{textAlign:'center'}}>{c.totalShipments||'—'}</td>
+              <td style={{fontFamily:'monospace',fontWeight:600}}>{c.totalSpend?'$'+c.totalSpend.toLocaleString():'—'}</td>
+              <td style={{fontFamily:'monospace'}}>{c.avgCostPerShipment?'$'+c.avgCostPerShipment:'—'}</td>
+              <td style={{textAlign:'center'}}>{c.avgTransitDays||'—'}</td>
+              <td style={{textAlign:'center',color:(c.damageClaims||0)>0?'var(--err)':''}}>{c.damageClaims||'0'}</td>
+              <td style={{textAlign:'center',color:c.onTimeRate>=0.95?'var(--ok)':c.onTimeRate>=0.85?'var(--warn)':'var(--err)'}}>{c.onTimeRate?Math.round(c.onTimeRate*100)+'%':'—'}</td>
+              <td style={{textAlign:'center',fontWeight:700,color:c.rating>=4?'var(--ok)':c.rating>=3?'var(--warn)':'var(--err)'}}>{c.rating||'—'}/5</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{c.notes}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {shipTab==='monthly'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table><thead><tr><th>Month</th><th>FedEx</th><th>UPS</th><th>ABF</th><th>Estes</th><th>Old Dom</th><th>R+L</th><th>XPO</th><th>Other</th><th>TOTAL</th></tr></thead>
+          <tbody>{(data.shipMonthlySummary||[]).length===0&&<tr><td colSpan={10}><Empty msg="No monthly shipping summary"/></td></tr>}
+          {(data.shipMonthlySummary||[]).map((m,i)=>(
+            <tr key={i}>
+              <td style={{fontWeight:600}}>{m.month}</td>
+              {[m.fedex,m.ups,m.abf,m.estes,m.oldDom,m.rl,m.xpo,m.other].map((v,j)=>(
+                <td key={j} style={{fontFamily:'monospace',color:(v||0)>0?'var(--txt)':'var(--dim)'}}>{(v||0)>0?'$'+v.toLocaleString():'—'}</td>
+              ))}
+              <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--acc)'}}>{m.total?'$'+m.total.toLocaleString():'—'}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
       {modal&&<Modal title={modal==='new'?'New Shipment':'Edit'} onClose={()=>setModal(null)}>
         <div className="grid2"><Field label="Shipment #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
         <Field label="Sales Order #"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field></div>
@@ -26337,6 +26508,33 @@ const Automation = ({data,setData}) => {
           ))}
         </div>
       </div>
+
+        <div style={{marginTop:24}}>
+          <div style={{fontFamily:'Barlow Condensed',fontSize:13,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--muted)',marginBottom:12,borderBottom:'1px solid var(--bdr)',paddingBottom:6}}>
+            Full Station Roadmap — 07_NEXUS Real Data
+          </div>
+          {(data.automationPhasesRoadmap||[]).length===0
+            ? <div style={{padding:20,textAlign:'center',color:'var(--muted)',fontSize:12}}>Clear browser storage and reload to trigger data migration</div>
+            : <div className="card" style={{padding:0,overflow:'hidden'}}>
+                <table><thead><tr><th>Station</th><th>Current Process</th><th>Target Automation</th><th>Equipment</th><th>Est. Cost</th><th>Labor Reduction</th><th>Throughput +</th><th>Payback (mo)</th><th>Phase</th><th>Priority</th></tr></thead>
+                  <tbody>{(data.automationPhasesRoadmap||[]).map((s,i)=>(
+                    <tr key={i}>
+                      <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station}</td>
+                      <td style={{fontSize:11}}>{s.currentProcess}</td>
+                      <td style={{fontSize:11,color:'var(--ok)'}}>{s.targetAutomation}</td>
+                      <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'—'}</td>
+                      <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{s.estCost||'—'}</td>
+                      <td style={{fontFamily:'monospace',color:'var(--ok)'}}>{s.laborReduction||'—'}</td>
+                      <td style={{fontFamily:'monospace'}}>{s.throughputIncrease||'—'}</td>
+                      <td style={{textAlign:'center'}}>{s.paybackMonths||'—'}</td>
+                      <td><span className="chip">Phase {s.phase}</span></td>
+                      <td style={{textAlign:'center',fontWeight:700}}>{s.priority}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+          }
+        </div>
     </div>
   );
 };
@@ -26633,11 +26831,32 @@ const ShopRef = ({data}) => {
       </div>
 
       {tab==='fasteners'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-        <table className="ref-table"><thead><tr><th>Type</th><th>Size</th><th>Diam</th><th>Pitch</th><th>Head</th><th>Drive</th><th>Material</th><th>Use</th></tr></thead>
-          <tbody>{SHOP_DATA.fasteners.map((r,i)=><tr key={i}><td>{r.type}</td><td className="mono" style={{fontWeight:600}}>{r.size}</td><td className="mono">{r.diam}</td><td className="mono">{r.pitch}</td><td>{r.head}</td><td>{r.drive}</td><td><span className="chip">{r.material}</span></td><td style={{fontSize:11,color:'var(--muted)'}}>{r.use}</td></tr>)}</tbody>
+        <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
+          {(data.fastenerGuide||[]).length > 0 ? (data.fastenerGuide||[]).length+' fasteners from Arsenal Supply workbook' : 'Standard fastener reference data'}
+        </div>
+        <table><thead><tr><th>Gauge #</th><th>Major Dia (in)</th><th>Major Dia (mm)</th><th>Minor Dia (in)</th><th>TPI</th><th>Pilot — Soft Metal</th><th>Pilot — Hard Metal</th><th>Pilot — Plastic/Wood</th></tr></thead>
+          <tbody>
+            {(data.fastenerGuide||[]).length > 0
+              ? (data.fastenerGuide||[]).map((r,i)=>(
+                <tr key={i}>
+                  <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--acc)'}}>{r.gauge}</td>
+                  <td style={{fontFamily:'monospace'}}>{r.majorDiaIn}</td>
+                  <td style={{fontFamily:'monospace',color:'var(--muted)'}}>{r.majorDiaMm}</td>
+                  <td style={{fontFamily:'monospace'}}>{r.minorDiaIn}</td>
+                  <td style={{textAlign:'center'}}>{r.tpi}</td>
+                  <td style={{fontFamily:'monospace',fontSize:11}}>{r.pilotSoft}</td>
+                  <td style={{fontFamily:'monospace',fontSize:11}}>{r.pilotHard}</td>
+                  <td style={{fontFamily:'monospace',fontSize:11}}>{r.pilotPlastic}</td>
+                </tr>
+              ))
+              : SHOP_DATA.fasteners.map((r,i)=>(
+                <tr key={i}><td className="mono" style={{fontWeight:600,color:'var(--acc)'}}>{r.size}</td>
+                  <td style={{fontSize:11}}>{r.type}</td><td style={{fontFamily:'monospace',fontSize:11}}>{r.pilot}</td></tr>
+              ))
+            }
+          </tbody>
         </table>
       </div>}
-
       {tab==='drills'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <table className="ref-table"><thead><tr><th>Drill Size</th><th>Decimal</th><th>mm</th><th>Common Use</th></tr></thead>
           <tbody>{SHOP_DATA.drillSizes.map((r,i)=><tr key={i}><td className="mono" style={{fontWeight:700,color:'var(--acc)'}}>{r.size}</td><td className="mono">{r.decimal}</td><td className="mono">{r.mm}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.use}</td></tr>)}</tbody>
@@ -26723,6 +26942,91 @@ const ShopRef = ({data}) => {
         <MatCostCalc/>
       </div>}
 
+      {tab==='postmfg'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
+          Post MFG cut lengths from pre-2026 ERP — {(data.postsMfgList||[]).length} part numbers
+        </div>
+        <table><thead><tr><th>Part Number</th><th>Description</th><th>MFG Cut Length (in)</th><th>Unit</th></tr></thead>
+          <tbody>{(data.postsMfgList||[]).length===0&&<tr><td colSpan={4}><Empty msg="No MFG length data"/></td></tr>}
+          {(data.postsMfgList||[]).map((p,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{p.partNo}</td>
+              <td style={{fontSize:11}}>{p.desc}</td>
+              <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center'}}>{p.mfgLength}"</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{p.unit}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {tab==='materialsdb'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.materialsDB||[]).length} materials from 04_ARSENAL Materials DB</span>
+          <input className="search" placeholder="Search materials…" style={{width:240}} onChange={e=>{
+            const q=e.target.value.toLowerCase();
+            e.target.closest('div').nextSibling.querySelectorAll('tbody tr').forEach(tr=>{
+              tr.style.display=q&&!tr.textContent.toLowerCase().includes(q)?'none':'';
+            });
+          }}/>
+        </div>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table><thead><tr><th>Item ID</th><th>Name / Description</th><th>Category</th><th>Unit</th><th>Unit Cost</th><th>Vendor</th><th>Lead Time</th><th>Min Order</th><th>Last Updated</th></tr></thead>
+            <tbody>{(data.materialsDB||[]).length===0&&<tr><td colSpan={9}><Empty msg="No materials DB data"/></td></tr>}
+            {(data.materialsDB||[]).map((m,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{m.id}</td>
+                <td style={{fontWeight:500}}>{m.name}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{m.category}</td>
+                <td style={{fontSize:11}}>{m.unit}</td>
+                <td style={{fontFamily:'monospace',fontWeight:600}}>{m.unitCost?'$'+m.unitCost:'—'}</td>
+                <td style={{fontSize:11}}>{m.vendor||'—'}</td>
+                <td style={{textAlign:'center',fontSize:11}}>{m.leadTimeDays?m.leadTimeDays+'d':'—'}</td>
+                <td style={{textAlign:'center',fontSize:11}}>{m.minOrderQty||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{m.lastUpdated||'—'}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </>}
+      {tab==='skuteference'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
+          {(data.skuReference||[]).length} SKUs with cut lengths, raw stock, and fixture requirements
+        </div>
+        <table><thead><tr><th>SKU</th><th>Description</th><th>MFG Height</th><th>Cut Length</th><th>Raw Stock</th><th>Parts Required</th><th>Tooling</th><th>Fixtures</th></tr></thead>
+          <tbody>{(data.skuReference||[]).length===0&&<tr><td colSpan={8}><Empty msg="No SKU reference data"/></td></tr>}
+          {(data.skuReference||[]).map((s,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
+              <td style={{fontSize:11}}>{s.desc}</td>
+              <td style={{textAlign:'center'}}>{s.mfgHeight||'—'}"</td>
+              <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center'}}>{s.cutLength||'—'}"</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{s.rawStock||'—'}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{s.partsRequired||'—'}</td>
+              <td style={{fontSize:11}}>{s.tooling||'—'}</td>
+              <td style={{fontSize:11}}>{s.fixtures||'—'}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {tab==='vendorscores'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
+          Vendor scorecards — rated 1–5 on delivery, quality, pricing, service, lead time
+        </div>
+        <table><thead><tr><th>Vendor</th><th>Category</th><th>On-Time</th><th>Quality</th><th>Pricing</th><th>Service</th><th>Lead Time</th><th>Overall Score</th><th>Review Date</th><th>Reviewer</th></tr></thead>
+          <tbody>{(data.vendorScorecard||[]).length===0&&<tr><td colSpan={10}><Empty msg="No vendor scores entered yet — add scores from Purchasing"/></td></tr>}
+          {(data.vendorScorecard||[]).map((v,i)=>(
+            <tr key={i}>
+              <td style={{fontWeight:700}}>{v.vendor}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{v.category}</td>
+              {[v.onTime,v.quality,v.pricing,v.service,v.leadTime].map((score,j)=>(
+                <td key={j} style={{textAlign:'center',fontWeight:700,color:score>=4?'var(--ok)':score>=3?'var(--warn)':'var(--err)'}}>{score||'—'}/5</td>
+              ))}
+              <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700,fontSize:14,color:v.overall>=4?'var(--ok)':v.overall>=3?'var(--warn)':'var(--err)'}}>{v.overall||'—'}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{v.reviewDate||'—'}</td>
+              <td style={{fontSize:11}}>{v.reviewer||'—'}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
       {tab==='borrowed'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.borrowedLabor||[]).length} entries · {(data.borrowedLabor||[]).reduce((a,b)=>a+(b.totalHrs||0),0).toFixed(0)} hrs · {fmt$((data.borrowedLabor||[]).reduce((a,b)=>a+(b.billable||0),0))} billable
