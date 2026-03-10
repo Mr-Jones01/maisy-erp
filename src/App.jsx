@@ -141,13 +141,6 @@ const now   = () => new Date().toISOString().slice(0,10);
 const ts    = () => new Date().toLocaleString();
 const deg2rad = d => d * Math.PI / 180;
 
-const fmtD  = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-const fmtDs = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
-const uid   = () => Math.random().toString(36).slice(2,8).toUpperCase();
-const now   = () => new Date().toISOString().slice(0,10);
-const ts    = () => new Date().toLocaleString();
-const deg2rad = d => d * Math.PI / 180;
-
 // ─── PRINT ENGINE ─────────────────────────────────────────────────────────────
 const PRINT_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
