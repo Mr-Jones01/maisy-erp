@@ -180,6 +180,398 @@ const StatRow = ({children,cols}) => (
 
 
 // ─── INITIAL DATA ────────────────────────────────────────────────────────────────
+const PRINT_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a2e;background:#fff;padding:0}
+  .page{width:100%;max-width:800px;margin:0 auto;padding:28px 32px}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a1a2e;padding-bottom:12px;margin-bottom:18px}
+  .logo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+  .logo span{color:#00e5ff}
+  .doc-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .doc-meta{font-size:10px;color:#6b7280;letter-spacing:.06em;text-transform:uppercase}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .box{border:1px solid #e5e7eb;border-radius:6px;padding:12px 14px}
+  .box-label{font-size:9px;color:#9ca3af;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .box-val{font-size:15px;font-weight:600;font-family:'Barlow Condensed',sans-serif}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin:16px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}
+  th{background:#f3f4f6;text-align:left;padding:6px 8px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #d1d5db}
+  td{padding:6px 8px;border-bottom:1px solid #f3f4f6}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .badge-ok{background:#d1fae5;color:#065f46}
+  .badge-warn{background:#fef3c7;color:#92400e}
+  .badge-err{background:#fee2e2;color:#991b1b}
+  .badge-blue{background:#dbeafe;color:#1e40af}
+  .badge-gray{background:#f3f4f6;color:#6b7280}
+  .sig-line{border-top:1px solid #1a1a2e;margin-top:32px;padding-top:4px;font-size:10px;color:#6b7280;display:flex;justify-content:space-between}
+  .write-line{border-bottom:1px solid #d1d5db;height:22px;margin-bottom:8px}
+  .write-label{font-size:9px;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px}
+  .checkbox{width:14px;height:14px;border:1.5px solid #9ca3af;border-radius:2px;flex-shrink:0}
+  .acct-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;font-size:11px}
+  .acct-total{font-weight:700;font-size:12px;border-top:2px solid #1a1a2e;padding-top:6px;margin-top:4px}
+  .watermark{position:fixed;bottom:18px;right:24px;font-size:9px;color:#d1d5db;letter-spacing:.06em;text-transform:uppercase}
+  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.no-print{display:none}@page{margin:14mm 12mm}}
+`;
+
+const printHTML = (title, bodyHTML) => {
+  const w = window.open('','_blank','width=900,height=750');
+  const scriptTag = '<scr'+'ipt>window.onload=()=>{window.print();}</scr'+'ipt>';
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} — Maisy Railing</title><style>${PRINT_CSS}</style></head><body>${bodyHTML}<div class="watermark">Maisy Railing · Printed ${new Date().toLocaleDateString()} · Confidential</div>${scriptTag}</body></html>`);
+  w.document.close();
+};
+
+const PrintBtn = ({onClick,label='Print',small}) => (
+  <button onClick={onClick} className={`btn${small?' btn-xs':''}`} style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',display:'flex',alignItems:'center',gap:5,fontFamily:'Barlow Condensed',fontSize:small?10:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}} title="Print">
+    🖨 {label}
+  </button>
+);
+
+const printWorkOrder = (wo) => {
+  const jc = (wo.matCost||0) + ((wo.laborHrs||0)*(wo.laborRate||28));
+  printHTML(`Work Order ${wo.id}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Work Order Traveler</div></div>
+        <div style="text-align:right"><div class="doc-title">${wo.id}</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4">
+        <div class="box"><div class="box-label">Order Ref</div><div class="box-val">${wo.orderId||'—'}</div></div>
+        <div class="box"><div class="box-label">Station</div><div class="box-val">${wo.station}</div></div>
+        <div class="box"><div class="box-label">Qty</div><div class="box-val">${wo.qty} pcs</div></div>
+        <div class="box"><div class="box-label">Due Date</div><div class="box-val" style="font-size:13px">${wo.due||'—'}</div></div>
+      </div>
+      <div class="section-title">Product</div>
+      <div class="box" style="font-size:14px;font-weight:600;margin-bottom:16px">${wo.product}</div>
+      <div class="section-title">Job Cost Summary</div>
+      <div class="grid-3">
+        <div class="box"><div class="box-label">Material Cost</div><div class="box-val">$${(wo.matCost||0).toFixed(2)}</div></div>
+        <div class="box"><div class="box-label">Labor (${wo.laborHrs||0} hrs × $${wo.laborRate||0}/hr)</div><div class="box-val">$${((wo.laborHrs||0)*(wo.laborRate||0)).toFixed(2)}</div></div>
+        <div class="box" style="background:#f0fdf4"><div class="box-label">Total Job Cost</div><div class="box-val" style="color:#065f46">$${jc.toFixed(2)}</div></div>
+      </div>
+      <div class="section-title">Production Checklist</div>
+      <table>
+        <thead><tr><th>Station</th><th>Task</th><th>Operator</th><th>Time</th><th>Sign-off</th></tr></thead>
+        <tbody>
+          ${['Material Pull & Verify','CNC Setup & Cut','Drill / Punch','TIG Weld','Grind & Finish','Powder Coat Prep','Powder Coat','Assembly & Hardware','QC Inspection','Packaging'].map(t=>`<tr><td></td><td>${t}</td><td style="min-width:90px"> </td><td style="min-width:70px"> </td><td style="min-width:80px"> </td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="section-title">Notes / Special Instructions</div>
+      <div class="write-line"/><div class="write-line"/><div class="write-line"/>
+      <div class="sig-line"><span>Assigned: ${wo.assigned||'__________________'}</span><span>Supervisor: __________________</span><span>QC Sign-off: __________________</span></div>
+    </div>`);
+};
+
+const printInvoice = (inv) => {
+  printHTML(`Invoice ${inv.id}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">2150 E Glenrose Dr, Hayden, ID 83835 · (208) 603-8149</div></div>
+        <div style="text-align:right"><div class="doc-title">INVOICE</div><div class="doc-meta" style="font-size:14px;font-weight:700;color:#1a1a2e">${inv.id}</div></div>
+      </div>
+      <div class="grid-2">
+        <div><div class="section-title">Bill To</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${inv.customer}</div>
+          <div class="doc-meta">Order Ref: ${inv.orderId||'—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="box" style="display:inline-block;min-width:200px">
+            <div class="acct-row"><span>Invoice Date:</span><span>${inv.issued||'—'}</span></div>
+            <div class="acct-row"><span>Due Date:</span><span style="font-weight:600;color:${inv.status==='Overdue'?'#991b1b':'#1a1a2e'}">${inv.due||'—'}</span></div>
+            <div class="acct-row"><span>Status:</span><span><span class="badge badge-${inv.status==='Paid'?'ok':inv.status==='Overdue'?'err':'warn'}">${inv.status}</span></span></div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>Railing Systems — ${inv.orderId||'Custom Order'}</td><td style="text-align:right">$${(inv.amount||0).toFixed(2)}</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
+        <div style="min-width:240px">
+          <div class="acct-row"><span>Subtotal</span><span>$${(inv.amount||0).toFixed(2)}</span></div>
+          <div class="acct-row"><span>Tax (0%)</span><span>$0.00</span></div>
+          <div class="acct-total acct-row"><span>TOTAL DUE</span><span>$${(inv.amount||0).toFixed(2)}</span></div>
+          ${inv.paid?`<div class="acct-row" style="color:#065f46"><span>Paid ${inv.paid}</span><span>-$${(inv.amount||0).toFixed(2)}</span></div>`:''}
+        </div>
+      </div>
+      <div class="section-title">Payment Instructions</div>
+      <div style="font-size:11px;line-height:1.7;color:#374151">
+        <b>Check:</b> Payable to Maisy Railing LLC &nbsp;|&nbsp; <b>ACH/Wire:</b> Contact daniel@maisyrailing.com for banking details<br>
+        Net 15 — Late payments subject to 1.5% monthly finance charge.
+      </div>
+      <div class="sig-line"><span>Maisy Railing LLC · Hayden, Idaho</span><span>Questions? daniel@maisyrailing.com · (208) 603-8149</span></div>
+    </div>`);
+};
+
+const printPO = (po) => {
+  const items = po.items||[];
+  const total = items.reduce((a,b)=>a+(b.qty*b.cost),0)||po.total||0;
+  printHTML(`PO ${po.id}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">2150 E Glenrose Dr, Hayden, ID 83835</div></div>
+        <div style="text-align:right"><div class="doc-title">PURCHASE ORDER</div><div class="doc-meta" style="font-size:14px;font-weight:700;color:#1a1a2e">${po.id}</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:20px">
+        <div><div class="section-title">Vendor</div>
+          <div style="font-size:13px;font-weight:600">${po.vendor||'—'}</div>
+          ${po.vendorId?`<div class="doc-meta">Vendor ID: ${po.vendorId}</div>`:''}
+        </div>
+        <div>
+          <div class="box">
+            <div class="acct-row"><span>PO Date:</span><span>${po.ordered||now()}</span></div>
+            <div class="acct-row"><span>Expected:</span><span>${po.expected||'—'}</span></div>
+            <div class="acct-row"><span>Status:</span><span><span class="badge badge-blue">${po.status||'Draft'}</span></span></div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Item / Description</th><th style="text-align:center">Qty</th><th>Unit</th><th style="text-align:right">Unit Cost</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>
+          ${items.length>0?items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.name||it.inventoryId||'—'}</td><td style="text-align:center">${it.qty}</td><td>${it.unit||''}</td><td style="text-align:right">$${(it.cost||0).toFixed(2)}</td><td style="text-align:right">$${((it.qty||0)*(it.cost||0)).toFixed(2)}</td></tr>`).join(''):`<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">See notes below</td></tr>`}
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+        <div style="min-width:220px">
+          <div class="acct-total acct-row"><span>PO TOTAL</span><span>$${total.toFixed(2)}</span></div>
+        </div>
+      </div>
+      <div class="section-title">Notes / Special Instructions</div>
+      <div class="write-line"/><div class="write-line"/>
+      <div class="section-title">Authorized By</div>
+      <div class="sig-line"><span>Approved: Daniel Jones, Director of Operations</span><span>Date: __________________</span></div>
+    </div>`);
+};
+
+const printPackingSlip = (shipment) => {
+  printHTML(`Packing Slip ${shipment.id||''}`, `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">2150 E Glenrose Dr · Hayden, ID 83835 · (208) 603-8149</div></div>
+        <div style="text-align:right"><div class="doc-title">PACKING SLIP</div><div class="doc-meta">${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-2">
+        <div><div class="section-title">Ship From</div>
+          <div style="font-size:11px;line-height:1.8">Maisy Railing LLC<br>2150 E Glenrose Dr<br>Hayden, ID 83835</div>
+        </div>
+        <div><div class="section-title">Ship To</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${shipment.customer||shipment.destCity||'—'}</div>
+          <div style="font-size:11px;line-height:1.8">${shipment.destCity||''}${shipment.destState?', '+shipment.destState:''}</div>
+        </div>
+      </div>
+      <div class="grid-4">
+        <div class="box"><div class="box-label">Carrier</div><div class="box-val" style="font-size:12px">${shipment.carrier||'—'}</div></div>
+        <div class="box"><div class="box-label">Service</div><div class="box-val" style="font-size:12px">${shipment.service||'—'}</div></div>
+        <div class="box"><div class="box-label">Weight</div><div class="box-val">${shipment.weight||'—'} lbs</div></div>
+        <div class="box"><div class="box-label">Tracking</div><div class="box-val" style="font-size:10px;word-break:break-all">${shipment.tracking||'—'}</div></div>
+      </div>
+      <div class="section-title">Contents</div>
+      <table>
+        <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Condition</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Aluminum Railing System — ${shipment.customer||''}</td><td> </td><td><span class="badge badge-ok">New</span></td><td></td></tr>
+          <tr><td>2</td><td>Hardware Kit</td><td> </td><td><span class="badge badge-ok">New</span></td><td></td></tr>
+          <tr><td>3</td><td>Installation Instructions</td><td>1</td><td><span class="badge badge-ok">New</span></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="section-title">Condition on Departure</div>
+      ${['Inspected by QC','All hardware included','No visible damage','Photos taken'].map(t=>`<div class="checkbox-row"><div class="checkbox"></div><span>${t}</span></div>`).join('')}
+      <div class="sig-line"><span>Packed by: __________________</span><span>Inspected by: __________________</span><span>Date: __________________</span></div>
+    </div>`);
+};
+
+const printHuddleBoard = (date) => {
+  const d = date||new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  printHTML('Daily Huddle Board', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Daily Production Standup</div></div>
+        <div style="text-align:right"><div class="doc-title">HUDDLE BOARD</div><div class="doc-meta">${d}</div></div>
+      </div>
+      <div class="section-title">Team Updates</div>
+      <table>
+        <thead><tr><th style="width:18%">Team Member</th><th>Completed Yesterday</th><th>Working On Today</th><th style="width:22%">Blockers / Needs</th></tr></thead>
+        <tbody>
+          ${['Amber','Jace','Nick','Michael',''].map(n=>`<tr style="height:44px"><td style="font-weight:600">${n}</td><td></td><td></td><td></td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="grid-2">
+        <div>
+          <div class="section-title">🔥 Today's Priorities (Top 3)</div>
+          ${[1,2,3].map(n=>`<div class="checkbox-row"><div class="checkbox"></div><div style="flex:1;border-bottom:1px solid #e5e7eb;height:22px"></div></div>`).join('')}
+          <div class="section-title">⚠️ Safety / Quality Alerts</div>
+          <div class="write-line"/><div class="write-line"/>
+        </div>
+        <div>
+          <div class="section-title">📦 Orders Shipping Today</div>
+          <div class="write-line"/><div class="write-line"/><div class="write-line"/>
+          <div class="section-title">📊 Yesterday's Output vs Goal</div>
+          <table>
+            <thead><tr><th>Station</th><th>Goal</th><th>Actual</th><th>Δ</th></tr></thead>
+            <tbody>${['Cutting','CNC','Welding','Powder Coat','Assembly'].map(s=>`<tr style="height:26px"><td>${s}</td><td></td><td></td><td></td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section-title">💡 Improvement Ideas / Notes</div>
+      <div class="write-line"/><div class="write-line"/>
+      <div class="sig-line"><span>Facilitator: __________________</span><span>Start Time: ______</span><span>End Time: ______</span><span>Attendees: ______ of ______</span></div>
+    </div>`);
+};
+
+const printKPIReport = (data) => {
+  const weekly = (data.kpiWeekly||[]).filter(w=>w.onTimeDeliveryPct||w.wipCount||w.scrapWasteDollar).slice(-8);
+  const targets = data.kpiTargets||[];
+  printHTML('KPI Report', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Operations KPI Report</div></div>
+        <div style="text-align:right"><div class="doc-title">KPI REPORT</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="section-title">KPI Targets</div>
+      <table>
+        <thead><tr><th>Metric</th><th>🟢 Green Target</th><th>🟡 Yellow</th><th>Unit</th></tr></thead>
+        <tbody>${targets.map(t=>`<tr><td>${t.metric}</td><td style="color:#065f46;font-weight:600">${(t.green*100).toFixed(0)}</td><td style="color:#92400e">${(t.yellow*100).toFixed(0)}</td><td style="color:#6b7280">${t.unit}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="section-title">Weekly KPI Trend (Last 8 Weeks)</div>
+      <table>
+        <thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th></tr></thead>
+        <tbody>${weekly.length>0?weekly.map(w=>`<tr><td>${w.weekEnding}</td><td style="${w.onTimeDeliveryPct>=95?'color:#065f46':w.onTimeDeliveryPct>=85?'color:#92400e':'color:#991b1b'}">${w.onTimeDeliveryPct||'—'}</td><td>${w.firstPassYieldPct||'—'}</td><td>${w.avgLeadTimeDays||'—'}</td><td>${w.wipCount||'—'}</td><td>${w.scrapWasteDollar?'$'+w.scrapWasteDollar:'—'}</td><td style="${w.safetyIncidents>0?'color:#991b1b;font-weight:700':''}">${w.safetyIncidents||'0'}</td></tr>`).join(''):`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">No weekly data entered yet — use KPI Dashboard to log weekly metrics</td></tr>`}</tbody>
+      </table>
+      <div class="section-title">Station Output (Process Cost Analysis)</div>
+      <table>
+        <thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Day</th><th>Labor $/Day</th><th>Total $/Day</th></tr></thead>
+        <tbody>${(data.costPerStation||[]).slice(0,10).map(s=>`<tr><td>${s.station}</td><td>${s.timePerSectionMin?.toFixed(1)||'—'}</td><td>${s.sectionsPerDay?.toFixed(0)||'—'}</td><td>$${s.laborDollarDay?.toFixed(0)||'—'}</td><td>$${s.totalProcessDollarDay?.toFixed(0)||'—'}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="sig-line"><span>Report by: Daniel Jones, Director of Operations</span><span>Maisy Railing · ${new Date().toLocaleDateString()}</span></div>
+    </div>`);
+};
+
+const printInventoryReport = (data) => {
+  const inv = data.inventory||[];
+  const critical = inv.filter(i=>i.status==='CRITICAL'||i.qty<=i.reorder);
+  printHTML('Inventory Report', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Inventory Status Report</div></div>
+        <div style="text-align:right"><div class="doc-title">INVENTORY</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="box"><div class="box-label">Total Items</div><div class="box-val">${inv.length}</div></div>
+        <div class="box"><div class="box-label">Critical / Low</div><div class="box-val" style="color:#991b1b">${critical.length}</div></div>
+        <div class="box"><div class="box-label">Raw Materials</div><div class="box-val">${(data.rawMaterials||[]).length}</div></div>
+        <div class="box"><div class="box-label">Assembly Items</div><div class="box-val">${(data.assemblyItems||[]).length}</div></div>
+      </div>
+      <div class="section-title">🔴 Critical / Low Stock — Reorder Required</div>
+      <table>
+        <thead><tr><th>ID</th><th>Description</th><th>On Hand</th><th>Reorder Point</th><th>Unit</th><th>Vendor</th><th>Status</th></tr></thead>
+        <tbody>${critical.map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td>${i.name}</td><td style="font-weight:700;color:#991b1b">${i.qty}</td><td>${i.reorder||i.minOnHand||'—'}</td><td>${i.unit}</td><td style="font-size:10px">${i.vendor||'—'}</td><td><span class="badge badge-err">${i.status}</span></td></tr>`).join('')}</tbody>
+      </table>
+      <div class="section-title">Full Inventory — Raw Materials</div>
+      <table>
+        <thead><tr><th>ID</th><th>Description</th><th>Qty On Hand</th><th>Unit</th><th>Cost</th><th>Value</th><th>Status</th></tr></thead>
+        <tbody>${(data.rawMaterials||[]).map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td style="font-size:10px">${i.name}</td><td style="${i.status==='CRITICAL'?'color:#991b1b;font-weight:700':''}">${i.qty}</td><td>${i.unit}</td><td>$${i.cost||'—'}</td><td>$${i.value||((i.qty||0)*(i.cost||0)).toFixed(2)}</td><td><span class="badge badge-${i.status==='OK'?'ok':i.status==='CRITICAL'?'err':'warn'}">${i.status||'—'}</span></td></tr>`).join('')}</tbody>
+      </table>
+      <div class="sig-line"><span>Cycle Count by: __________________</span><span>Date: __________________</span><span>Verified by: __________________</span></div>
+    </div>`);
+};
+
+const printSafetyLog = (data) => {
+  const log = data.safetyLog||[];
+  printHTML('Safety Log', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Safety Incident Log · OSHA Recordkeeping</div></div>
+        <div style="text-align:right"><div class="doc-title">SAFETY LOG</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="box"><div class="box-label">Total Incidents</div><div class="box-val">${log.length}</div></div>
+        <div class="box"><div class="box-label">Open</div><div class="box-val" style="color:#991b1b">${log.filter(l=>l.status&&l.status.toLowerCase().includes('open')).length}</div></div>
+        <div class="box"><div class="box-label">Injuries</div><div class="box-val" style="color:#d97706">${log.filter(l=>l.type&&l.type.toLowerCase().includes('injury')).length}</div></div>
+        <div class="box"><div class="box-label">Near Misses</div><div class="box-val">${log.filter(l=>l.type&&l.type.toLowerCase().includes('near')).length}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Location</th><th>Involved</th><th>Description</th><th>Corrective Action</th><th>Status</th></tr></thead>
+        <tbody>${log.map(l=>`<tr><td style="white-space:nowrap">${l.date||'—'}</td><td><span class="badge badge-${l.type&&l.type.toLowerCase().includes('injury')?'err':l.type&&l.type.toLowerCase().includes('near')?'warn':'gray'}">${l.type||'—'}</span></td><td style="font-size:10px">${l.location||'—'}</td><td style="font-size:10px">${l.involved||'—'}</td><td style="font-size:10px;max-width:150px">${l.description||'—'}</td><td style="font-size:10px;max-width:120px">${l.corrAction||'—'}</td><td><span class="badge badge-${l.status&&l.status.toLowerCase().includes('closed')?'ok':'err'}">${l.status||'—'}</span></td></tr>`).join('')}
+        ${log.length===0?'<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:20px">No incidents recorded</td></tr>':''}</tbody>
+      </table>
+      <div class="section-title">Blank Incident Report</div>
+      <div class="grid-2">
+        <div><div class="write-label">Date / Time</div><div class="write-line"/>
+        <div class="write-label">Location / Station</div><div class="write-line"/>
+        <div class="write-label">Employee(s) Involved</div><div class="write-line"/></div>
+        <div><div class="write-label">Incident Type</div><div class="write-line"/>
+        <div class="write-label">Reported By</div><div class="write-line"/>
+        <div class="write-label">Supervisor Notified</div><div class="write-line"/></div>
+      </div>
+      <div class="write-label">Description of Incident</div><div class="write-line"/><div class="write-line"/>
+      <div class="write-label">Root Cause</div><div class="write-line"/>
+      <div class="write-label">Corrective Action Taken</div><div class="write-line"/><div class="write-line"/>
+      <div class="sig-line"><span>Employee Signature: __________________</span><span>Supervisor: __________________</span><span>Date: __________</span></div>
+    </div>`);
+};
+
+const printImprovementLog = (data) => {
+  const log = data.improvementLog||[];
+  const totalSavings = log.reduce((a,b)=>a+(b.estSavings||0),0);
+  printHTML('Improvement Log', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Kaizen / Continuous Improvement Log</div></div>
+        <div style="text-align:right"><div class="doc-title">IMPROVEMENT LOG</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="box"><div class="box-label">Total Ideas</div><div class="box-val">${log.length}</div></div>
+        <div class="box"><div class="box-label">Complete</div><div class="box-val" style="color:#065f46">${log.filter(l=>l.status==='Complete').length}</div></div>
+        <div class="box"><div class="box-label">In Progress</div><div class="box-val" style="color:#1e40af">${log.filter(l=>l.status==='In Progress').length}</div></div>
+        <div class="box" style="background:#f0fdf4"><div class="box-label">Est. Annual Savings</div><div class="box-val" style="color:#065f46">$${totalSavings.toLocaleString()}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Area</th><th>Description</th><th>By</th><th>Est $/yr</th><th>Cost</th><th>Status</th></tr></thead>
+        <tbody>${log.map(l=>`<tr><td style="font-family:monospace;font-size:10px">${l.id}</td><td style="font-size:10px">${l.area||'—'}</td><td style="font-size:10px;max-width:200px">${l.description||'—'}</td><td style="font-size:10px">${l.submittedBy||'—'}</td><td style="color:#065f46;font-weight:600">$${(l.estSavings||0).toLocaleString()}</td><td style="color:#6b7280">$${(l.implCost||0).toLocaleString()}</td><td><span class="badge badge-${l.status==='Complete'?'ok':l.status==='In Progress'?'blue':'gray'}">${l.status||'—'}</span></td></tr>`).join('')}</tbody>
+      </table>
+      <div class="section-title">Submit a New Improvement Idea</div>
+      <div class="grid-2">
+        <div><div class="write-label">Submitted By</div><div class="write-line"/>
+        <div class="write-label">Station / Area</div><div class="write-line"/>
+        <div class="write-label">Est. Annual Savings</div><div class="write-line"/></div>
+        <div><div class="write-label">Date</div><div class="write-line"/>
+        <div class="write-label">Priority (1–5)</div><div class="write-line"/>
+        <div class="write-label">Est. Implementation Cost</div><div class="write-line"/></div>
+      </div>
+      <div class="write-label">Description of Improvement</div><div class="write-line"/><div class="write-line"/>
+      <div class="write-label">Expected Benefit / Outcome</div><div class="write-line"/>
+      <div class="sig-line"><span>Submitted: __________________</span><span>Reviewed by: Daniel Jones</span><span>Date: __________</span></div>
+    </div>`);
+};
+
+const printTrainingMatrix = (data) => {
+  const matrix = data.trainingMatrix||[];
+  const employees = [...new Set(matrix.map(m=>m.empName))];
+  const skills = [...new Set(matrix.map(m=>m.skill))];
+  const lookup = {};
+  matrix.forEach(m=>{ lookup[`${m.empName}|${m.skill}`] = m.raw; });
+  printHTML('Training Matrix', `
+    <div class="page">
+      <div class="hdr">
+        <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Cross-Training Skills Matrix</div></div>
+        <div style="text-align:right"><div class="doc-title">TRAINING MATRIX</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-bottom:10px">Legend: <b style="color:#065f46">✓</b> = Certified &nbsp;|&nbsp; <b style="color:#1e40af">IP</b> = In Progress &nbsp;|&nbsp; <b style="color:#9ca3af">—</b> = Not Trained</div>
+      <table>
+        <thead><tr><th>Skill / Certification</th>${employees.map(e=>`<th style="text-align:center">${e}</th>`).join('')}</tr></thead>
+        <tbody>${skills.map(skill=>`<tr><td style="font-size:10px">${skill}</td>${employees.map(e=>{const v=lookup[`${e}|${skill}`]||'—';return`<td style="text-align:center;font-size:11px;font-weight:700;color:${v==='✓'?'#065f46':v==='IP'?'#1e40af':'#d1d5db'}">${v}</td>`;}).join('')}</tr>`).join('')}</tbody>
+      </table>
+      <div class="sig-line"><span>HR Review: __________________</span><span>Date: __________________</span><span>Next Review: __________________</span></div>
+    </div>`);
+};
+
+
 const INIT = {
   // ── Maisy_04_ARSENAL_SUPPLY — Raw Materials (45 items, deduped source) ─────
   rawMaterials: [
@@ -23535,7 +23927,7 @@ const Login = ({ onLogin }) => {
         <div style={{marginBottom:14}}><label>Email Address</label><input className="login-input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="you@maisyrailing.com" autoFocus/></div>
         <div style={{marginBottom:20}}><label>Password</label><div style={{position:'relative'}}><input className="login-input" type={show?'text':'password'} value={pass} onChange={e=>{setPass(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="••••••••••"/><button onClick={()=>setShow(s=>!s)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em'}}>{show?'HIDE':'SHOW'}</button></div></div>
         {err&&<div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',borderRadius:5,padding:'8px 12px',fontSize:12,color:'var(--err)',marginBottom:14}}>{err}</div>}
-        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onMouseDown={e=>{e.preventDefault();submit();}}>Sign In →</button>
+        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onClick={()=>submit()}>Sign In →</button>
         <div className="divider" style={{margin:'20px 0 14px'}}/>
         <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Demo Credentials</div>
         {DEMO_USERS.map(u=>(
@@ -25281,32 +25673,6 @@ const Reports = ({data}) => {
           </table>
         </div>
       </div>
-
-        <div style={{marginTop:24}}>
-          <div style={{fontFamily:'Barlow Condensed',fontSize:13,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--muted)',marginBottom:12,borderBottom:'1px solid var(--bdr)',paddingBottom:6}}>Job History (Completed Orders)</div>
-          <div className="card" style={{padding:0,overflow:'hidden'}}>
-            <table><thead><tr><th>Order #</th><th>Customer</th><th>Project</th><th>Product Type</th><th>Mount</th><th>Qty</th><th>Order Total</th><th>Material Cost</th><th>Labor Cost</th><th>Gross Margin %</th><th>Date Received</th><th>Date Shipped</th><th>Lead Time</th></tr></thead>
-              <tbody>{(data.jobHistory||[]).length===0&&<tr><td colSpan={13}><Empty msg="No job history data"/></td></tr>}
-              {(data.jobHistory||[]).map((j,i)=>(
-                <tr key={i}>
-                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{j.id}</td>
-                  <td style={{fontWeight:500}}>{j.customer}</td>
-                  <td style={{fontSize:11}}>{j.project}</td>
-                  <td style={{fontSize:10,color:'var(--muted)'}}>{j.productType}</td>
-                  <td style={{fontSize:11}}>{j.mount}</td>
-                  <td style={{textAlign:'center'}}>{j.qty}</td>
-                  <td style={{fontWeight:700,color:'var(--ok)'}}>{fmt$(j.orderTotal)}</td>
-                  <td>{fmt$(j.materialCost)}</td>
-                  <td>{fmt$(j.laborCost)}</td>
-                  <td style={{fontWeight:700,color:j.grossMarginPct>=35?'var(--ok)':j.grossMarginPct>=20?'var(--warn)':'var(--err)'}}>{j.grossMarginPct?j.grossMarginPct.toFixed(1)+'%':'—'}</td>
-                  <td style={{fontSize:11,color:'var(--muted)'}}>{j.dateReceived}</td>
-                  <td style={{fontSize:11,color:'var(--muted)'}}>{j.dateShipped}</td>
-                  <td style={{textAlign:'center'}}>{j.leadTimeDays?j.leadTimeDays+'d':'—'}</td>
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
-        </div>
     </div>
   );
 };
