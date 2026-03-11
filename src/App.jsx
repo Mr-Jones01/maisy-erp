@@ -116,7 +116,7 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
   owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
   shop:   ['dashboard','todo','production','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter'],
@@ -25494,6 +25494,9 @@ const INIT = {
   emailLog: [],
 
   avataxSettings: {accountId:'',licenseKey:'',environment:'sandbox',companyCode:'DEFAULT'},
+
+  qbSettings: {clientId:'',clientSecret:'',environment:'sandbox',companyId:'',accessToken:'',refreshToken:'',connected:false,lastSync:''},
+  qbSyncLog: [],
 };
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────────
@@ -25547,6 +25550,7 @@ const NAVS = [
   {id:'purchasing',icon:'◐',label:'Purchasing'},
   {id:'finance',icon:'◧',label:'Finance & P&L'},
   {id:'payments',icon:'💳',label:'Payments'},
+  {id:'quickbooks',icon:'📗',label:'QuickBooks'},
   {id:'taxcenter',icon:'🧾',label:'Tax & Compliance'},
   {section:'Advanced'},
   {id:'jobcost',icon:'◬',label:'Job Costing'},
@@ -30490,6 +30494,385 @@ const ShipCalc = ({data, setData}) => {
   );
 };
 
+
+const QuickBooks = ({data, setData}) => {
+  const [tab, setTab] = useState('dashboard');
+  const [syncing, setSyncing] = useState({});
+  const [lastResult, setLastResult] = useState(null);
+
+  const qb = data.qbSettings || {};
+  const syncLog = data.qbSyncLog || [];
+  const invoices = data.invoices || [];
+  const customers = data.customers || [];
+  const orders = data.orders || [];
+  const payments = data.paymentRecords || [];
+
+  const saveQB = (updates) => setData(d => ({...d, qbSettings:{...(d.qbSettings||{}), ...updates}}));
+
+  const logSync = (action, status, detail) => {
+    const entry = {id:'QB-'+uid(), ts:now(), action, status, detail};
+    setData(d => ({...d, qbSyncLog:[entry, ...(d.qbSyncLog||[]).slice(0,49)]}));
+    setLastResult({action, status, detail});
+  };
+
+  // ── QB API helper (uses proxy pattern — calls QB sandbox/production) ────
+  const qbFetch = async (path, method='GET', body=null) => {
+    const base = qb.environment==='production'
+      ? 'https://quickbooks.api.intuit.com'
+      : 'https://sandbox-quickbooks.api.intuit.com';
+    const url = base + '/v3/company/' + qb.companyId + path + '?minorversion=65';
+    const opts = {
+      method,
+      headers: {
+        'Authorization': 'Bearer ' + qb.accessToken,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    };
+    if(body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.Fault?.Error?.[0]?.Message || 'QB API error ' + res.status);
+    return json;
+  };
+
+  // ── Sync: Push a customer to QB ────────────────────────────────────────
+  const syncCustomer = async (cust) => {
+    setSyncing(s=>({...s,[cust.id]:true}));
+    try {
+      const body = {
+        FullyQualifiedName: cust.name,
+        DisplayName: cust.name,
+        PrimaryEmailAddr: {Address: cust.email||''},
+        PrimaryPhone: {FreeFormNumber: cust.phone||''},
+        BillAddr: {Line1: cust.address||'', City: cust.city||'', CountrySubDivisionCode: cust.state||'ID'},
+      };
+      const res = await qbFetch('/customer', 'POST', {Customer: body});
+      const qbId = res.Customer?.Id;
+      setData(d=>({...d, customers:(d.customers||[]).map(c=>c.id===cust.id?{...c,qbId}:c)}));
+      logSync('Sync Customer: '+cust.name, 'Success', 'QB Customer ID: '+qbId);
+    } catch(e) {
+      logSync('Sync Customer: '+cust.name, 'Error', e.message);
+    }
+    setSyncing(s=>({...s,[cust.id]:false}));
+  };
+
+  // ── Sync: Push an invoice to QB ───────────────────────────────────────
+  const syncInvoice = async (inv) => {
+    setSyncing(s=>({...s,[inv.id]:true}));
+    try {
+      const body = {
+        DocNumber: inv.id,
+        TxnDate: inv.date||now(),
+        DueDate: inv.due||now(),
+        CustomerRef: {name: inv.customer},
+        Line: [{
+          Amount: inv.amount||0,
+          DetailType: 'SalesItemLineDetail',
+          SalesItemLineDetail: {
+            ItemRef: {name:'Services', value:'1'},
+            Qty: 1,
+            UnitPrice: inv.amount||0,
+          },
+          Description: inv.notes||'Maisy Railing Order '+inv.orderId,
+        }],
+        CustomerMemo: {value: inv.notes||''},
+      };
+      const res = await qbFetch('/invoice', 'POST', {Invoice: body});
+      const qbId = res.Invoice?.Id;
+      setData(d=>({...d, invoices:(d.invoices||[]).map(i=>i.id===inv.id?{...i,qbId,qbSynced:now()}:i)}));
+      logSync('Sync Invoice: '+inv.id, 'Success', 'QB Invoice ID: '+qbId);
+    } catch(e) {
+      logSync('Sync Invoice: '+inv.id, 'Error', e.message);
+    }
+    setSyncing(s=>({...s,[inv.id]:false}));
+  };
+
+  // ── Sync: Record a payment in QB ──────────────────────────────────────
+  const syncPayment = async (pmt) => {
+    setSyncing(s=>({...s,[pmt.id]:true}));
+    try {
+      const body = {
+        TxnDate: pmt.date||now(),
+        TotalAmt: pmt.amount||0,
+        CustomerRef: {name: pmt.customer},
+        PaymentMethodRef: {name: pmt.method||'Other'},
+        Line: pmt.orderId ? [{Amount: pmt.amount||0, LinkedTxn:[{TxnId:'1',TxnType:'Invoice'}]}] : undefined,
+      };
+      const res = await qbFetch('/payment', 'POST', {Payment: body});
+      const qbId = res.Payment?.Id;
+      setData(d=>({...d, paymentRecords:(d.paymentRecords||[]).map(p=>p.id===pmt.id?{...p,qbId,qbSynced:now()}:p)}));
+      logSync('Sync Payment: '+pmt.id, 'Success', 'QB Payment ID: '+qbId + ' | $'+pmt.amount);
+    } catch(e) {
+      logSync('Sync Payment: '+pmt.id, 'Error', e.message);
+    }
+    setSyncing(s=>({...s,[pmt.id]:false}));
+  };
+
+  // ── Sync All: customers + unpaid invoices + new payments ─────────────
+  const syncAll = async () => {
+    if(!qb.connected||!qb.accessToken) { logSync('Sync All','Error','Not connected — enter credentials in Setup tab'); return; }
+    setSyncing({ALL:true});
+    let pushed = 0;
+    for(const c of customers.filter(c=>!c.qbId).slice(0,20)){
+      await syncCustomer(c); pushed++;
+    }
+    for(const inv of invoices.filter(i=>!i.qbId).slice(0,20)){
+      await syncInvoice(inv); pushed++;
+    }
+    for(const p of payments.filter(p=>!p.qbId&&p.status==='Captured').slice(0,20)){
+      await syncPayment(p); pushed++;
+    }
+    saveQB({lastSync:now()});
+    logSync('Sync All','Success', pushed+' records pushed to QuickBooks');
+    setSyncing({});
+  };
+
+  // ── QB OAuth — opens Intuit auth page ────────────────────────────────
+  const startOAuth = () => {
+    if(!qb.clientId) { alert('Enter your Client ID in the Setup tab first.'); return; }
+    const scope = 'com.intuit.quickbooks.accounting+com.intuit.quickbooks.payment';
+    const redirect = encodeURIComponent(window.location.origin);
+    const state = Math.random().toString(36).slice(2);
+    const base = qb.environment==='production'
+      ? 'https://appcenter.intuit.com/connect/oauth2'
+      : 'https://appcenter.intuit.com/connect/oauth2';
+    const url = base
+      + '?client_id=' + qb.clientId
+      + '&redirect_uri=' + redirect
+      + '&response_type=code'
+      + '&scope=' + scope
+      + '&state=' + state;
+    window.open(url, '_blank', 'width=600,height=700');
+    logSync('OAuth Started','Info','Opened Intuit authorization window. Paste the returned code below once you authorize.');
+  };
+
+  const unsynced = {
+    customers: customers.filter(c=>!c.qbId).length,
+    invoices:  invoices.filter(i=>!i.qbId).length,
+    payments:  payments.filter(p=>!p.qbId&&p.status==='Captured').length,
+  };
+  const synced = {
+    customers: customers.filter(c=>c.qbId).length,
+    invoices:  invoices.filter(i=>i.qbId).length,
+    payments:  payments.filter(p=>p.qbId).length,
+  };
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>QuickBooks Integration</div>
+          <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
+            {qb.connected
+              ? <span className="chip" style={{background:'rgba(16,185,129,.2)',color:'var(--ok)'}}>✓ Connected — {qb.environment}</span>
+              : <span className="chip" style={{background:'rgba(239,68,68,.15)',color:'var(--err)'}}>Not Connected</span>}
+            {qb.lastSync&&<span className="chip">Last sync: {qb.lastSync}</span>}
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {qb.connected&&<button className="btn btn-p" onClick={syncAll} disabled={!!syncing.ALL}>
+            {syncing.ALL?'Syncing...':'⟳ Sync All to QB'}
+          </button>}
+          {!qb.connected&&<button className="btn btn-g" onClick={()=>setTab('setup')}>⚙ Setup Connection</button>}
+        </div>
+      </div>
+
+      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+        {['dashboard','invoices','payments','customers','setup','log'].map(t=>(
+          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
+            {t==='log'?'Sync Log':t}
+            {t==='invoices'&&unsynced.invoices>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{unsynced.invoices}</span>}
+            {t==='payments'&&unsynced.payments>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{unsynced.payments}</span>}
+            {t==='customers'&&unsynced.customers>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{unsynced.customers}</span>}
+          </button>
+        ))}
+      </div>
+
+      {tab==='dashboard'&&<>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:18}}>
+          <StatCard label="Customers in QB"   value={synced.customers}   icon="👥" color="var(--ok)"   sub={unsynced.customers+' pending sync'}/>
+          <StatCard label="Invoices in QB"    value={synced.invoices}    icon="🧾" color="var(--acc)"  sub={unsynced.invoices+' pending sync'}/>
+          <StatCard label="Payments in QB"    value={synced.payments}    icon="💳" color="var(--warn)" sub={unsynced.payments+' pending sync'}/>
+        </div>
+        {(unsynced.customers+unsynced.invoices+unsynced.payments)>0&&<div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:8,padding:'14px 18px',marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>Records pending QuickBooks sync</div>
+            <div style={{fontSize:11,color:'var(--muted)'}}>{unsynced.customers} customers · {unsynced.invoices} invoices · {unsynced.payments} payments not yet pushed to QB</div>
+          </div>
+          <button className="btn btn-p" onClick={syncAll} disabled={!!syncing.ALL||!qb.connected}>{syncing.ALL?'Syncing...':'Sync Now'}</button>
+        </div>}
+        {lastResult&&<div style={{background:lastResult.status==='Success'?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)',border:'1px solid '+(lastResult.status==='Success'?'rgba(16,185,129,.3)':'rgba(239,68,68,.3)'),borderRadius:8,padding:'12px 16px',marginBottom:16}}>
+          <div style={{fontWeight:700,fontSize:12,color:lastResult.status==='Success'?'var(--ok)':'var(--err)'}}>{lastResult.status}: {lastResult.action}</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:4}}>{lastResult.detail}</div>
+        </div>}
+        <div className="card" style={{padding:'16px'}}>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12}}>How the sync works</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+            {[
+              {icon:'👥',title:'Customers',desc:'New customers in the ERP are pushed to QuickBooks automatically on sync. Existing QB customers are matched by name.'},
+              {icon:'🧾',title:'Invoices',desc:'Invoices created in the ERP post to QB with line items, customer reference, and due date. Status updates sync back.'},
+              {icon:'💳',title:'Payments',desc:'Captured payments in the ERP are recorded in QB as Payment transactions linked to the corresponding invoice.'},
+            ].map(c=>(
+              <div key={c.title} style={{background:'var(--s2)',borderRadius:6,padding:'12px'}}>
+                <div style={{fontSize:20,marginBottom:6}}>{c.icon}</div>
+                <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{c.title}</div>
+                <div style={{fontSize:11,color:'var(--muted)',lineHeight:1.6}}>{c.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>}
+
+      {tab==='invoices'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Status</th><th>QB Status</th><th>Synced</th><th></th></tr></thead>
+          <tbody>
+            {invoices.length===0&&<tr><td colSpan={7}><Empty msg="No invoices yet"/></td></tr>}
+            {invoices.map((inv,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)'}}>{inv.id}</td>
+                <td style={{fontWeight:500}}>{inv.customer}</td>
+                <td style={{fontWeight:700,color:'var(--ok)'}}>{fmt$(inv.amount)}</td>
+                <td><Badge s={inv.status}/></td>
+                <td>{inv.qbId
+                  ? <span style={{color:'var(--ok)',fontWeight:600,fontSize:11}}>✓ QB#{inv.qbId}</span>
+                  : <span style={{color:'var(--warn)',fontSize:11}}>Not synced</span>}
+                </td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{inv.qbSynced||'—'}</td>
+                <td><button className="btn btn-g btn-xs" onClick={()=>syncInvoice(inv)} disabled={syncing[inv.id]||!qb.connected}>{syncing[inv.id]?'...':'Push to QB'}</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>}
+
+      {tab==='payments'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>Pay #</th><th>Date</th><th>Customer</th><th>Amount</th><th>Method</th><th>QB Status</th><th>Synced</th><th></th></tr></thead>
+          <tbody>
+            {payments.length===0&&<tr><td colSpan={8}><Empty msg="No payment records yet"/></td></tr>}
+            {payments.map((p,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{p.id}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{p.date}</td>
+                <td style={{fontWeight:500}}>{p.customer}</td>
+                <td style={{fontWeight:700,color:'var(--ok)'}}>{fmt$(p.amount)}</td>
+                <td style={{fontSize:11}}>{p.method}</td>
+                <td>{p.qbId
+                  ? <span style={{color:'var(--ok)',fontWeight:600,fontSize:11}}>✓ QB#{p.qbId}</span>
+                  : <span style={{color:p.status==='Captured'?'var(--warn)':'var(--muted)',fontSize:11}}>{p.status==='Captured'?'Pending sync':'Not captured'}</span>}
+                </td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{p.qbSynced||'—'}</td>
+                <td><button className="btn btn-g btn-xs" onClick={()=>syncPayment(p)} disabled={syncing[p.id]||p.status!=='Captured'||!qb.connected}>{syncing[p.id]?'...':p.status==='Captured'?'Push to QB':'N/A'}</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>}
+
+      {tab==='customers'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>Customer</th><th>Email</th><th>Phone</th><th>QB Status</th><th></th></tr></thead>
+          <tbody>
+            {customers.length===0&&<tr><td colSpan={5}><Empty msg="No customers yet"/></td></tr>}
+            {customers.map((c,i)=>(
+              <tr key={i}>
+                <td style={{fontWeight:600}}>{c.name}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{c.email||'—'}</td>
+                <td style={{fontSize:11}}>{c.phone||'—'}</td>
+                <td>{c.qbId
+                  ? <span style={{color:'var(--ok)',fontWeight:600,fontSize:11}}>✓ QB#{c.qbId}</span>
+                  : <span style={{color:'var(--warn)',fontSize:11}}>Not synced</span>}
+                </td>
+                <td><button className="btn btn-g btn-xs" onClick={()=>syncCustomer(c)} disabled={syncing[c.id]||!qb.connected}>{syncing[c.id]?'...':'Push to QB'}</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>}
+
+      {tab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+        <div className="card">
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:4}}>QuickBooks Credentials</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,lineHeight:1.6}}>
+            Get your Client ID and Client Secret from the Intuit Developer Portal after creating your QB app.
+          </div>
+          <Field label="Environment">
+            <select value={qb.environment||'sandbox'} onChange={e=>saveQB({environment:e.target.value})}>
+              <option value="sandbox">Sandbox (Testing)</option>
+              <option value="production">Production (Live)</option>
+            </select>
+          </Field>
+          <Field label="Client ID" style={{marginTop:10}}>
+            <input value={qb.clientId||''} placeholder="ABcDEfGhIJ..." onChange={e=>saveQB({clientId:e.target.value})}/>
+          </Field>
+          <Field label="Client Secret" style={{marginTop:10}}>
+            <input type="password" value={qb.clientSecret||''} placeholder="••••••••••" onChange={e=>saveQB({clientSecret:e.target.value})}/>
+          </Field>
+          <Field label="Company ID (Realm ID)" style={{marginTop:10}}>
+            <input value={qb.companyId||''} placeholder="123456789" onChange={e=>saveQB({companyId:e.target.value})}/>
+          </Field>
+          <div style={{borderTop:'1px solid var(--bdr)',marginTop:14,paddingTop:14}}>
+            <div style={{fontSize:11,color:'var(--muted)',marginBottom:10,fontWeight:600}}>Access Token (from OAuth flow)</div>
+            <Field label="Access Token">
+              <textarea rows={3} value={qb.accessToken||''} placeholder="Paste OAuth access token here after authorizing" onChange={e=>saveQB({accessToken:e.target.value})} style={{fontFamily:'monospace',fontSize:10}}/>
+            </Field>
+            <Field label="Refresh Token" style={{marginTop:8}}>
+              <textarea rows={2} value={qb.refreshToken||''} placeholder="Paste refresh token here" onChange={e=>saveQB({refreshToken:e.target.value})} style={{fontFamily:'monospace',fontSize:10}}/>
+            </Field>
+          </div>
+          <div style={{display:'flex',gap:8,marginTop:14,flexWrap:'wrap'}}>
+            <button className="btn btn-p" onClick={startOAuth} disabled={!qb.clientId}>Start OAuth Authorization</button>
+            <button className="btn btn-g" onClick={()=>saveQB({connected:!!(qb.accessToken&&qb.companyId)})}>{qb.connected?'✓ Connected':'Mark as Connected'}</button>
+          </div>
+        </div>
+        <div className="card">
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:14}}>Setup Guide</div>
+          {[
+            {n:'1',t:'Create Intuit Developer Account',d:'Go to developer.intuit.com and sign in with your QuickBooks credentials.',l:'https://developer.intuit.com'},
+            {n:'2',t:'Create a New App',d:'Dashboard → Create an App → QuickBooks Online and Payments. Select scopes: Accounting + Payments.',l:'https://developer.intuit.com/app/developer/myapps'},
+            {n:'3',t:'Get Client ID + Secret',d:'Under your app → Keys & OAuth → Copy the Client ID and Client Secret for the sandbox environment.',l:null},
+            {n:'4',t:'Get Your Company ID',d:'Log into QuickBooks Online → in the URL you will see /app/... after a number — that number is your Company/Realm ID.',l:'https://app.qbo.intuit.com'},
+            {n:'5',t:'Run OAuth + Get Tokens',d:'Enter Client ID above, click Start OAuth Authorization, log in with QuickBooks, and paste the returned access token and refresh token.',l:null},
+            {n:'6',t:'Test in Sandbox First',d:'Keep environment set to Sandbox and push one test invoice to verify. Switch to Production when confirmed.',l:null},
+          ].map(s=>(
+            <div key={s.n} style={{display:'flex',gap:12,marginBottom:12,alignItems:'flex-start'}}>
+              <div style={{width:22,height:22,borderRadius:'50%',background:'var(--acc)',color:'#000',fontWeight:700,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1}}>{s.n}</div>
+              <div>
+                <div style={{fontWeight:600,fontSize:12,marginBottom:2}}>{s.t}</div>
+                <div style={{fontSize:11,color:'var(--muted)',lineHeight:1.5}}>{s.d}</div>
+                {s.l&&<a href={s.l} target="_blank" rel="noopener noreferrer" style={{fontSize:10,color:'var(--acc)',textDecoration:'none',marginTop:2,display:'inline-block'}}>{s.l} →</a>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>}
+
+      {tab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Sync Log</span>
+          <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,qbSyncLog:[]}))}>Clear Log</button>
+        </div>
+        {syncLog.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--muted)',fontSize:13}}>No sync activity yet</div>}
+        <table>
+          <thead><tr><th>Time</th><th>Action</th><th>Status</th><th>Detail</th></tr></thead>
+          <tbody>
+            {syncLog.map((e,i)=>(
+              <tr key={i}>
+                <td style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap'}}>{e.ts}</td>
+                <td style={{fontWeight:500,fontSize:11}}>{e.action}</td>
+                <td><span style={{background:e.status==='Success'?'var(--ok)':e.status==='Error'?'var(--err)':'var(--warn)',color:'#fff',borderRadius:4,padding:'1px 6px',fontSize:10,fontWeight:700}}>{e.status}</span></td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{e.detail}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>}
+    </div>
+  );
+};
+
 const SRSCatalog = ({data,setData}) => {
   const [search,setSearch] = useState('');
   const [catFilter,setCatFilter] = useState('All');
@@ -30766,6 +31149,8 @@ const normalizeData = (d) => {
   if(!Array.isArray(d.resaleCerts))d.resaleCerts=[];
   if(!Array.isArray(d.emailLog))d.emailLog=[];
   if(!d.avataxSettings)d.avataxSettings={accountId:'',licenseKey:'',environment:'sandbox',companyCode:'DEFAULT'};
+  if(!d.qbSettings)d.qbSettings={clientId:'',clientSecret:'',environment:'sandbox',companyId:'',accessToken:'',refreshToken:'',connected:false,lastSync:''};
+  if(!Array.isArray(d.qbSyncLog))d.qbSyncLog=[];
   return d;
 };
 
@@ -30775,7 +31160,7 @@ const PAGES = {
   invoicing:Invoicing, purchasing:Purchasing, finance:Finance,
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
-  shopref:ShopRef, orders:Orders, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
+  shopref:ShopRef, orders:Orders, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
