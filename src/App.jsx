@@ -29116,7 +29116,7 @@ const ShopRef = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='materialsdb'&&<>
+      {tab==='materialsdb'&&<div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.materialsDB||[]).length} materials from 04_ARSENAL Materials DB</span>
           <input className="search" placeholder="Search materials…" style={{width:240}} onChange={e=>{
@@ -29148,7 +29148,7 @@ const ShopRef = ({data,setData}) => {
             ))}</tbody>
           </table>
         </div>
-      </>}
+      </div>}
       {tab==='skuteference'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.skuReference||[]).length} SKUs with cut lengths, raw stock, and fixture requirements
@@ -29232,8 +29232,6 @@ const ShopRef = ({data,setData}) => {
         </table>
       </div>}
 
-    </div>
-
       {modal==='refitem'&&<Modal title="Edit Reference Item" onClose={()=>setModal(null)} lg>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
           {Object.entries(form).filter(([k])=>!k.startsWith('_')).slice(0,16).map(([k,v])=>(
@@ -29251,6 +29249,8 @@ const ShopRef = ({data,setData}) => {
           }}>Save</button>
         </div>
       </Modal>}
+    </div>
+ 
   );
 };
 
