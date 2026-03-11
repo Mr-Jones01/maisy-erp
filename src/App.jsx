@@ -116,10 +116,10 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
   owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
-  shop:   ['dashboard','todo','production','shopref','printcenter'],
+  shop:   ['dashboard','todo','production','orders','shopref','printcenter'],
 };
 
 const BADGE = {
@@ -25918,6 +25918,7 @@ const NAVS = [
   {id:'dashboard',icon:'▦',label:'Dashboard'},
   {id:'todo',icon:'☑',label:'To-Do / Hot List'},
   {section:'Operations'},
+  {id:'orders',icon:'📋',label:'Orders'},
   {id:'sales',icon:'◈',label:'Sales & Quotes'},
   {id:'production',icon:'◎',label:'Production'},
   {id:'inventory',icon:'◉',label:'Inventory'},
@@ -25955,7 +25956,7 @@ const Sidebar = ({page,setPage,data,user}) => {
           <div style={{width:28,height:28,background:'linear-gradient(135deg,var(--acc),var(--acc2))',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <span style={{color:'#000',fontSize:13,fontWeight:900,fontFamily:'Barlow Condensed'}}>M</span>
           </div>
-          <div><div className="hd" style={{fontSize:15}}>MAISY ERP</div><div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase'}}>v5.4 · All Modules</div></div>
+          <div><div className="hd" style={{fontSize:15}}>MAISY ERP</div><div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase'}}>v5.6 · All Modules</div></div>
         </div>
       </div>
       <div style={{flex:1,overflowY:'auto',padding:'5px 0'}}>
@@ -29864,7 +29865,7 @@ const PAGES = {
   invoicing:Invoicing, purchasing:Purchasing, finance:Finance,
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
-  shopref:ShopRef, srscatalog:SRSCatalog, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
+  shopref:ShopRef, orders:Orders, srscatalog:SRSCatalog, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
@@ -29872,7 +29873,7 @@ const TITLES = {
   invoicing:'Invoicing & A/R', purchasing:'Purchasing', finance:'Finance & P&L',
   jobcost:'Job Costing', customers:'Customers', autopo:'Auto Reorder',
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
-  shopref:'Shop Reference', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
+  shopref:'Shop Reference', orders:'Orders', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
 };
 
 export default function MaisyERP() {
