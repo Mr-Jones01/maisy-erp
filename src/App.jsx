@@ -25492,6 +25492,8 @@ const INIT = {
     {id:'RC-003',customer:'Apex Construction',state:'OR',certNumber:'OR-RC-20250601',issueDate:'2025-06-01',expDate:'2027-06-01',status:'Active',taxExempt:true,notes:'Oregon contractors license on file'},
   ],
   emailLog: [],
+
+  avataxSettings: {accountId:'',licenseKey:'',environment:'sandbox',companyCode:'DEFAULT'},
 };
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────────
@@ -29973,15 +29975,30 @@ const Payments = ({data, setData}) => {
   );
 };
 
+
 const TaxCenter = ({data, setData}) => {
-  const [tab, setTab] = useState('calc');
+  const [tab, setTab] = useState('avatax');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
+  // Static calc state
   const [calcAmt, setCalcAmt] = useState('');
   const [calcState, setCalcState] = useState('ID');
   const [calcResult, setCalcResult] = useState(null);
+  // Avatax state
+  const [avAddr, setAvAddr] = useState({line1:'', city:'', region:'ID', postalCode:'', country:'US'});
+  const [avAmt, setAvAmt] = useState('');
+  const [avLoading, setAvLoading] = useState(false);
+  const [avResult, setAvResult] = useState(null);
+  const [avError, setAvError] = useState('');
+  const [showKey, setShowKey] = useState(false);
 
   const certs = data.resaleCerts||[];
+  const settings = data.avataxSettings||{accountId:'',licenseKey:'',environment:'sandbox',companyCode:'DEFAULT'};
+
+  const saveSettings = (updates) => {
+    setData(d=>({...d, avataxSettings:{...(d.avataxSettings||{}), ...updates}}));
+  };
+
   const stateTaxRates = {
     AL:4,AK:0,AZ:5.6,AR:6.5,CA:7.25,CO:2.9,CT:6.35,DE:0,FL:6,GA:4,
     HI:4,ID:6,IL:6.25,IN:7,IA:6,KS:6.5,KY:6,LA:4.45,ME:5.5,MD:6,
@@ -29990,11 +30007,58 @@ const TaxCenter = ({data, setData}) => {
     SD:4.5,TN:7,TX:6.25,UT:4.85,VT:6,VA:5.3,WA:6.5,WV:6,WI:5,WY:4,DC:6,
   };
 
-  const calcTax = () => {
+  const calcStaticTax = () => {
     const amt = parseFloat(calcAmt)||0;
     const rate = stateTaxRates[calcState]||0;
     const tax = amt * rate / 100;
     setCalcResult({amt, rate, tax, total: amt + tax, state: calcState});
+  };
+
+  const states = Object.keys(stateTaxRates).sort();
+
+  // ── Avatax API call ────────────────────────────────────────────────────────
+  const runAvatax = async () => {
+    const {accountId, licenseKey, environment, companyCode} = settings;
+    if(!accountId || !licenseKey) { setAvError('Enter your Avalara Account ID and License Key in the Setup tab first.'); return; }
+    if(!avAmt || !avAddr.city) { setAvError('Enter amount and at least city + state.'); return; }
+
+    setAvLoading(true); setAvError(''); setAvResult(null);
+
+    const baseUrl = environment === 'production'
+      ? 'https://rest.avatax.com'
+      : 'https://sandbox-rest.avatax.com';
+
+    const credentials = btoa(accountId + ':' + licenseKey);
+    const body = {
+      type: 'SalesInvoice',
+      companyCode: companyCode || 'DEFAULT',
+      date: new Date().toISOString().split('T')[0],
+      customerCode: 'CUSTOMER',
+      addresses: {
+        shipFrom: { line1: '8600 N Hillsdale Dr', city: 'Hayden', region: 'ID', postalCode: '83835', country: 'US' },
+        shipTo: { line1: avAddr.line1||'', city: avAddr.city, region: avAddr.region, postalCode: avAddr.postalCode, country: 'US' }
+      },
+      lines: [{ number: '1', quantity: 1, amount: parseFloat(avAmt)||0, taxCode: 'P0000000', description: 'Aluminum Railing' }],
+      commit: false
+    };
+
+    try {
+      const res = await fetch(baseUrl + '/api/v2/transactions/create', {
+        method: 'POST',
+        headers: { 'Authorization': 'Basic ' + credentials, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      if(!res.ok) {
+        const msg = json.error?.message || (json.messages&&json.messages[0]?.summary) || ('Error ' + res.status);
+        setAvError('Avatax error: ' + msg);
+      } else {
+        setAvResult(json);
+      }
+    } catch(e) {
+      setAvError('Network error: ' + e.message + '. Make sure CORS is not blocking (try from your deployed app, not localhost).');
+    }
+    setAvLoading(false);
   };
 
   const saveCert = () => {
@@ -30004,56 +30068,207 @@ const TaxCenter = ({data, setData}) => {
     setModal(null);
   };
 
+  // Parse Avatax result into a clean breakdown
+  const parseAvResult = (result) => {
+    if(!result||!result.lines) return null;
+    const line = result.lines[0];
+    const details = line.details||[];
+    const breakdown = details.map(d=>({
+      type: d.taxName||d.taxType||'Tax',
+      rate: ((d.rate||0)*100).toFixed(4),
+      amount: d.tax||0,
+      jurisdiction: d.jurisdictionName||d.jurisName||'',
+      jurisdictionType: d.jurisdictionType||d.jurisType||''
+    }));
+    return {
+      subtotal: result.totalAmount||0,
+      totalTax: result.totalTax||0,
+      total: (result.totalAmount||0)+(result.totalTax||0),
+      effectiveRate: result.totalAmount ? ((result.totalTax||0)/result.totalAmount*100).toFixed(4) : '0',
+      breakdown,
+      shipTo: result.addresses&&result.addresses.shipTo ? result.addresses.shipTo : avAddr,
+    };
+  };
+  const parsed = parseAvResult(avResult);
+
   return (
     <div className="fade-up">
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Tax & Compliance</div>
-          <div style={{display:'flex',gap:6,marginTop:5}}>
+          <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
             <span className="chip">{certs.filter(c=>c.status==='Active').length} active certs</span>
             <span className="chip" style={{color:'var(--err)'}}>{certs.filter(c=>c.status==='Expired').length} expired</span>
+            {settings.accountId&&<span className="chip" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}}>✓ Avatax Connected</span>}
           </div>
         </div>
-        <a href="https://developer.avalara.com" target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
-          <button className="btn btn-g">🔗 Avatax API</button>
-        </a>
       </div>
 
-      <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['calc','certs','rates'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='calc'?'Tax Calculator':t==='certs'?'Resale Certs':'State Rates'}</button>)}
+      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+        {['avatax','setup','certs','rates'].map(t=>(
+          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>
+            {t==='avatax'?'Live Tax Lookup':t==='setup'?'Avatax Setup':t==='certs'?'Resale Certs':'State Rates'}
+          </button>
+        ))}
       </div>
 
-      {tab==='calc'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+      {tab==='avatax'&&<div style={{display:'grid',gridTemplateColumns:'380px 1fr',gap:20}}>
+        <div>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:14,color:'var(--acc)'}}>
+              Live Address-Level Tax Lookup
+            </div>
+            {!settings.accountId&&<div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'10px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>
+              ⚠ No API key configured — go to Avatax Setup tab first
+            </div>}
+            <Field label="Street Address (optional)">
+              <input value={avAddr.line1} placeholder="1234 Main St" onChange={e=>setAvAddr(a=>({...a,line1:e.target.value}))}/>
+            </Field>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+              <Field label="City *"><input value={avAddr.city} placeholder="Boise" onChange={e=>setAvAddr(a=>({...a,city:e.target.value}))}/></Field>
+              <Field label="State *">
+                <select value={avAddr.region} onChange={e=>setAvAddr(a=>({...a,region:e.target.value}))}>
+                  {states.map(s=><option key={s}>{s}</option>)}
+                </select>
+              </Field>
+              <Field label="Zip Code"><input value={avAddr.postalCode} placeholder="83701" onChange={e=>setAvAddr(a=>({...a,postalCode:e.target.value}))}/></Field>
+            </div>
+            <Field label="Sale Amount ($)" style={{marginTop:10}}>
+              <input type="number" step="0.01" value={avAmt} placeholder="0.00" onChange={e=>setAvAmt(e.target.value)}/>
+            </Field>
+            <button className="btn btn-p" style={{marginTop:14,width:'100%'}} onClick={runAvatax} disabled={avLoading||!avAmt||!avAddr.city}>
+              {avLoading?'Calculating...':'Get Exact Tax Rate'}
+            </button>
+            {avError&&<div style={{marginTop:10,background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.3)',borderRadius:6,padding:'10px 12px',fontSize:11,color:'var(--err)'}}>{avError}</div>}
+          </div>
+
+          <div className="card" style={{marginTop:12,padding:'12px 14px',background:'rgba(0,229,255,.04)',border:'1px solid rgba(0,229,255,.15)'}}>
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,color:'var(--acc)',letterSpacing:'.1em',marginBottom:6}}>ABOUT AVATAX</div>
+            <div style={{fontSize:11,color:'var(--muted)',lineHeight:1.7}}>
+              Returns exact combined rate including state + county + city + special district taxes for any US address. 
+              Handles nexus, exemptions, and product taxability automatically.
+            </div>
+            <a href="https://developer.avalara.com/avatax/get-started/" target="_blank" rel="noopener noreferrer" style={{display:'block',marginTop:10,textDecoration:'none'}}>
+              <button className="btn btn-g" style={{width:'100%',fontSize:11}}>Open Avalara Developer Docs →</button>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          {!parsed&&!avError&&<div style={{textAlign:'center',padding:'80px 20px',color:'var(--muted)'}}>
+            <div style={{fontSize:40,marginBottom:16}}>🧾</div>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:8}}>Enter an address and amount to get the exact combined tax rate</div>
+            <div style={{fontSize:12}}>Breaks down state · county · city · special district taxes separately</div>
+          </div>}
+
+          {parsed&&<>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
+              <div className="card" style={{textAlign:'center',padding:'14px'}}>
+                <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.1em'}}>Subtotal</div>
+                <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,marginTop:4}}>{fmt$(parsed.subtotal)}</div>
+              </div>
+              <div className="card" style={{textAlign:'center',padding:'14px',borderTop:'3px solid var(--warn)'}}>
+                <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.1em'}}>Total Tax</div>
+                <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,marginTop:4,color:'var(--warn)'}}>{fmt$(parsed.totalTax)}</div>
+                <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>Effective rate: {parsed.effectiveRate}%</div>
+              </div>
+              <div className="card" style={{textAlign:'center',padding:'14px',borderTop:'3px solid var(--ok)'}}>
+                <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.1em'}}>Total Due</div>
+                <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,marginTop:4,color:'var(--ok)'}}>{fmt$(parsed.total)}</div>
+              </div>
+            </div>
+
+            <div className="card" style={{padding:0,overflow:'auto'}}>
+              <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Tax Jurisdiction Breakdown</div>
+                <div style={{fontSize:11,color:'var(--muted)'}}>{avAddr.city}, {avAddr.region} {avAddr.postalCode}</div>
+              </div>
+              <table>
+                <thead><tr>
+                  <th>Jurisdiction</th>
+                  <th>Type</th>
+                  <th style={{textAlign:'right'}}>Rate</th>
+                  <th style={{textAlign:'right'}}>Tax Amount</th>
+                </tr></thead>
+                <tbody>
+                  {parsed.breakdown.length===0&&<tr><td colSpan={4}><Empty msg="No jurisdiction breakdown available"/></td></tr>}
+                  {parsed.breakdown.map((d,i)=>(
+                    <tr key={i}>
+                      <td style={{fontWeight:500}}>{d.jurisdiction||d.type}</td>
+                      <td>
+                        <span style={{
+                          background:d.jurisdictionType==='State'?'rgba(99,102,241,.2)':d.jurisdictionType==='County'?'rgba(245,158,11,.2)':d.jurisdictionType==='City'?'rgba(16,185,129,.2)':'rgba(0,229,255,.15)',
+                          color:d.jurisdictionType==='State'?'#818cf8':d.jurisdictionType==='County'?'#f59e0b':d.jurisdictionType==='City'?'var(--ok)':'var(--acc)',
+                          borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700
+                        }}>{d.jurisdictionType||'Special'}</span>
+                      </td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:600,color:'var(--warn)'}}>{d.rate}%</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--ok)'}}>{fmt$(d.amount)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{borderTop:'2px solid var(--bdr)',background:'var(--s2)'}}>
+                    <td style={{fontWeight:700}} colSpan={2}>TOTAL</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{parsed.effectiveRate}%</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--ok)'}}>{fmt$(parsed.totalTax)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </>}
+        </div>
+      </div>}
+
+      {tab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
         <div className="card">
-          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:14}}>Sales Tax Calculator</div>
-          <Field label="Order Amount ($)"><input type="number" step="0.01" value={calcAmt} onChange={e=>setCalcAmt(e.target.value)} placeholder="0.00"/></Field>
-          <Field label="Destination State" style={{marginTop:10}}>
-            <select value={calcState} onChange={e=>setCalcState(e.target.value)}>
-              {Object.keys(stateTaxRates).sort().map(s=><option key={s} value={s}>{s} — {stateTaxRates[s]}%</option>)}
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:4}}>Avalara Avatax Credentials</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,lineHeight:1.6}}>
+            Get your credentials from the Avalara admin console. Use Sandbox for testing, Production when you go live.
+          </div>
+          <Field label="Environment">
+            <select value={settings.environment||'sandbox'} onChange={e=>saveSettings({environment:e.target.value})}>
+              <option value="sandbox">Sandbox (Testing)</option>
+              <option value="production">Production (Live)</option>
             </select>
           </Field>
-          <button className="btn btn-p" style={{marginTop:14,width:'100%'}} onClick={calcTax}>Calculate Tax</button>
-          {calcResult&&<div style={{marginTop:16,background:'var(--s2)',borderRadius:6,padding:'14px'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)',fontSize:12}}>Subtotal</span><span style={{fontFamily:'monospace',fontWeight:600}}>{fmt$(calcResult.amt)}</span></div>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)',fontSize:12}}>Tax Rate ({calcResult.state})</span><span style={{fontFamily:'monospace',color:'var(--warn)'}}>{calcResult.rate}%</span></div>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)',fontSize:12}}>Tax Amount</span><span style={{fontFamily:'monospace',color:'var(--warn)',fontWeight:700}}>{fmt$(calcResult.tax)}</span></div>
-            <div style={{display:'flex',justifyContent:'space-between',borderTop:'1px solid var(--bdr)',paddingTop:8}}><span style={{fontWeight:700}}>Total</span><span style={{fontFamily:'monospace',fontWeight:700,fontSize:15,color:'var(--ok)'}}>{fmt$(calcResult.total)}</span></div>
+          <Field label="Account ID" style={{marginTop:10}}>
+            <input value={settings.accountId||''} placeholder="123456789" onChange={e=>saveSettings({accountId:e.target.value})}/>
+          </Field>
+          <Field label="License Key" style={{marginTop:10}}>
+            <div style={{display:'flex',gap:6}}>
+              <input type={showKey?'text':'password'} value={settings.licenseKey||''} placeholder="••••••••••••••••" onChange={e=>saveSettings({licenseKey:e.target.value})} style={{flex:1}}/>
+              <button className="btn btn-g btn-sm" onClick={()=>setShowKey(s=>!s)}>{showKey?'Hide':'Show'}</button>
+            </div>
+          </Field>
+          <Field label="Company Code" style={{marginTop:10}}>
+            <input value={settings.companyCode||'DEFAULT'} placeholder="DEFAULT" onChange={e=>saveSettings({companyCode:e.target.value})}/>
+          </Field>
+          <div style={{marginTop:14,padding:'10px 12px',background:'var(--s2)',borderRadius:6,fontSize:11,color:'var(--muted)',lineHeight:1.6}}>
+            <strong style={{color:'var(--txt)'}}>Ship From:</strong> 8600 N Hillsdale Dr, Hayden, ID 83835 (hardcoded as Maisy Railing origin)
+          </div>
+          {settings.accountId&&settings.licenseKey&&<div style={{marginTop:10,display:'flex',alignItems:'center',gap:6,color:'var(--ok)',fontSize:12,fontWeight:600}}>
+            <span>✓</span><span>Credentials saved — go to Live Tax Lookup to test</span>
           </div>}
         </div>
         <div className="card">
-          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:10}}>Avatax Integration</div>
-          <div style={{fontSize:12,color:'var(--muted)',marginBottom:14,lineHeight:1.6}}>Connect Avalara Avatax for automated real-time tax calculation at checkout. Handles nexus, exemptions, and remittance automatically.</div>
-          <div style={{background:'var(--s2)',borderRadius:6,padding:'12px',marginBottom:12}}>
-            <div style={{fontSize:11,color:'var(--muted)',marginBottom:6}}>API Endpoint</div>
-            <div style={{fontFamily:'monospace',fontSize:11}}>https://sandbox-rest.avatax.com</div>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:14}}>Setup Guide</div>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            {[
+              {step:'1', label:'Create Avalara Account', desc:'Go to avalara.com and sign up. Free tier includes 50 transactions/month — more than enough for estimates.', link:'https://www.avalara.com/us/en/get-started.html'},
+              {step:'2', label:'Get API Credentials', desc:'In the Avalara admin console: Settings → License and API Keys → Generate license key. Copy your Account ID and License Key.', link:'https://admin.avalara.com'},
+              {step:'3', label:'Start in Sandbox', desc:'Use the Sandbox environment first to verify the integration works before switching to Production.', link:'https://sandbox-rest.avatax.com'},
+              {step:'4', label:'Enter Credentials Above', desc:'Paste your Account ID and License Key in the form. Then go to Live Tax Lookup and test with a real address.', link:null},
+              {step:'5', label:'Wire into Orders/Invoicing', desc:'Once tested, tax calculations can auto-populate on new orders. Let Daniel know when ready to connect.', link:null},
+            ].map(s=>(
+              <div key={s.step} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+                <div style={{width:24,height:24,borderRadius:'50%',background:'var(--acc)',color:'#000',fontWeight:700,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:2}}>{s.step}</div>
+                <div>
+                  <div style={{fontWeight:600,fontSize:12,marginBottom:2}}>{s.label}</div>
+                  <div style={{fontSize:11,color:'var(--muted)',lineHeight:1.5}}>{s.desc}</div>
+                  {s.link&&<a href={s.link} target="_blank" rel="noopener noreferrer" style={{fontSize:10,color:'var(--acc)',textDecoration:'none',marginTop:3,display:'inline-block'}}>{s.link} →</a>}
+                </div>
+              </div>
+            ))}
           </div>
-          <div style={{background:'var(--s2)',borderRadius:6,padding:'12px',marginBottom:14}}>
-            <div style={{fontSize:11,color:'var(--muted)',marginBottom:6}}>Idaho Tax Info</div>
-            <div style={{fontSize:12}}>State rate: <strong>6%</strong> · Hayden, ID: No additional local tax · Railing/aluminum: generally taxable</div>
-          </div>
-          <a href="https://developer.avalara.com/avatax/get-started/" target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',display:'block'}}>
-            <button className="btn btn-p" style={{width:'100%'}}>Open Avatax Developer Docs →</button>
-          </a>
         </div>
       </div>}
 
@@ -30063,9 +30278,9 @@ const TaxCenter = ({data, setData}) => {
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table>
-            <thead><tr><th>Cert #</th><th>Customer</th><th>State</th><th>Certificate #</th><th>Issued</th><th>Expires</th><th>Status</th><th>Tax Exempt</th><th></th></tr></thead>
+            <thead><tr><th>Cert #</th><th>Customer</th><th>State</th><th>Certificate #</th><th>Issued</th><th>Expires</th><th>Status</th><th>Tax Exempt</th><th>Notes</th><th></th></tr></thead>
             <tbody>
-              {certs.length===0&&<tr><td colSpan={9}><Empty msg="No resale certificates on file"/></td></tr>}
+              {certs.length===0&&<tr><td colSpan={10}><Empty msg="No resale certificates on file — click + Add Certificate"/></td></tr>}
               {certs.map((c,i)=>(
                 <tr key={i}>
                   <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{c.id}</td>
@@ -30073,9 +30288,10 @@ const TaxCenter = ({data, setData}) => {
                   <td style={{fontWeight:600}}>{c.state}</td>
                   <td style={{fontFamily:'monospace',fontSize:11}}>{c.certNumber}</td>
                   <td style={{fontSize:11,color:'var(--muted)'}}>{c.issueDate}</td>
-                  <td style={{fontSize:11,color:c.status==='Expired'?'var(--err)':'var(--txt)'}}>{c.expDate}</td>
+                  <td style={{fontSize:11,color:c.status==='Expired'?'var(--err)':'inherit'}}>{c.expDate}</td>
                   <td><span style={{background:c.status==='Active'?'var(--ok)':c.status==='Expired'?'var(--err)':'var(--warn)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700}}>{c.status}</span></td>
                   <td style={{textAlign:'center'}}>{c.taxExempt?'✅':'—'}</td>
+                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.notes}>{c.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
                     <button className="btn btn-g btn-xs" onClick={()=>{setForm({...c});setModal('cert');}}>Edit</button>
                     <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,resaleCerts:(d.resaleCerts||[]).filter(x=>x.id!==c.id)}))}>×</button>
@@ -30087,33 +30303,58 @@ const TaxCenter = ({data, setData}) => {
         </div>
       </>}
 
-      {tab==='rates'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table style={{minWidth:600}}>
-          <thead><tr><th>State</th><th>Base Rate</th><th>Notes</th></tr></thead>
-          <tbody>{Object.entries(stateTaxRates).sort().map(([s,r])=>(
-            <tr key={s}>
-              <td style={{fontWeight:600}}>{s}</td>
-              <td style={{fontFamily:'monospace',fontWeight:700,color:r===0?'var(--ok)':r>=7?'var(--err)':'var(--warn)'}}>{r}%</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{r===0?'No state sales tax':r>=7?'High tax state':r<=3?'Low tax state':''}</td>
-            </tr>
-          ))}</tbody>
-        </table>
+      {tab==='rates'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div>
+          <div className="card" style={{marginBottom:12,padding:'12px 14px'}}>
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,color:'var(--warn)',marginBottom:6}}>⚠ State Rates Only</div>
+            <div style={{fontSize:11,color:'var(--muted)',lineHeight:1.6}}>These are base state rates only. Actual combined rates include county + city + special district taxes which vary by zip code. Use the Live Tax Lookup tab for exact rates on any address.</div>
+          </div>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,marginBottom:8,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase'}}>No State Tax</div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:14}}>
+            {Object.entries(stateTaxRates).filter(([s,r])=>r===0).map(([s])=>(
+              <span key={s} style={{background:'rgba(16,185,129,.15)',color:'var(--ok)',borderRadius:4,padding:'3px 8px',fontSize:12,fontWeight:700}}>{s}</span>
+            ))}
+          </div>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto',maxHeight:500}}>
+          <table>
+            <thead><tr><th>State</th><th style={{textAlign:'right'}}>State Rate</th><th>Notes</th></tr></thead>
+            <tbody>{Object.entries(stateTaxRates).sort().map(([s,r])=>(
+              <tr key={s}>
+                <td style={{fontWeight:600}}>{s}</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:r===0?'var(--ok)':r>=7?'var(--err)':'var(--warn)'}}>{r}%</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{r===0?'No sales tax':r>=7?'High — verify city rates':r<=3?'Low state rate':''}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
       </div>}
 
       {modal==='cert'&&<Modal title={certs.find(c=>c.id===form.id)?'Edit Certificate':'Add Resale Certificate'} onClose={()=>setModal(null)}>
         <div className="grid2">
           <Field label="Cert ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
           <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
-          <Field label="State"><select value={form.state||''} onChange={e=>setForm(f=>({...f,state:e.target.value}))}><option value="">— Select —</option>{Object.keys(stateTaxRates).sort().map(s=><option key={s}>{s}</option>)}<option value="Multi">Multi-State</option></select></Field>
+          <Field label="State">
+            <select value={form.state||''} onChange={e=>setForm(f=>({...f,state:e.target.value}))}>
+              <option value="">— Select —</option>
+              {states.map(s=><option key={s}>{s}</option>)}
+              <option value="Multi">Multi-State</option>
+            </select>
+          </Field>
           <Field label="Certificate #"><input value={form.certNumber||''} onChange={e=>setForm(f=>({...f,certNumber:e.target.value}))}/></Field>
           <Field label="Issue Date"><input type="date" value={form.issueDate||''} onChange={e=>setForm(f=>({...f,issueDate:e.target.value}))}/></Field>
           <Field label="Expiration Date"><input type="date" value={form.expDate||''} onChange={e=>setForm(f=>({...f,expDate:e.target.value}))}/></Field>
-          <Field label="Status"><select value={form.status||'Active'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Active','Expired','Pending','Revoked'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Status">
+            <select value={form.status||'Active'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+              {['Active','Expired','Pending','Revoked'].map(s=><option key={s}>{s}</option>)}
+            </select>
+          </Field>
         </div>
         <Field label="Notes" style={{marginTop:10}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,marginTop:14}}>
           <button className="btn btn-p" onClick={saveCert}>Save</button>
           <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {certs.find(c=>c.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,resaleCerts:(d.resaleCerts||[]).filter(x=>x.id!==form.id)}));setModal(null);}}>Delete</button>}
         </div>
       </Modal>}
     </div>
@@ -30524,6 +30765,7 @@ const normalizeData = (d) => {
   if(!Array.isArray(d.paymentRecords))d.paymentRecords=[];
   if(!Array.isArray(d.resaleCerts))d.resaleCerts=[];
   if(!Array.isArray(d.emailLog))d.emailLog=[];
+  if(!d.avataxSettings)d.avataxSettings={accountId:'',licenseKey:'',environment:'sandbox',companyCode:'DEFAULT'};
   return d;
 };
 
