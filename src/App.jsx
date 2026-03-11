@@ -28736,18 +28736,32 @@ const ShopRef = ({data,setData}) => {
 
       {tab==='postmfg'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
-          Post MFG cut lengths from pre-2026 ERP — {(data.postsMfgList||[]).length} part numbers
+          Post manufacturing reference — {(data.postsMfgList||[]).length} SKUs · MFG height, cut lengths, raw stock & tooling from GODMODE 📐 SKU Reference
         </div>
-        <table><thead><tr><th>Part Number</th><th>Description</th><th>MFG Cut Length (in)</th><th>Unit</th></tr></thead>
-          <tbody>{(data.postsMfgList||[]).length===0&&<tr><td colSpan={4}><Empty msg="No MFG length data"/></td></tr>}
-          {(data.postsMfgList||[]).map((p,i)=>(
-            <tr key={i}>
-              <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{p.partNo}</td>
-              <td style={{fontSize:11}}>{p.desc}</td>
-              <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center'}}>{p.mfgLength}"</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{p.unit}</td>
-            </tr>
-          ))}</tbody>
+        <table style={{minWidth:900}}>
+          <thead><tr>
+            <th>SKU / Part #</th>
+            <th>Description</th>
+            <th style={{textAlign:'center'}}>MFG Height</th>
+            <th style={{textAlign:'center'}}>Cut Length</th>
+            <th>Raw Stock</th>
+            <th>Parts Required</th>
+            <th>Tooling</th>
+          </tr></thead>
+          <tbody>
+            {(data.postsMfgList||[]).length===0&&<tr><td colSpan={7}><Empty msg="No MFG data"/></td></tr>}
+            {(data.postsMfgList||[]).map((p,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{p.partNo}</td>
+                <td style={{fontSize:11}}>{p.desc}</td>
+                <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center',whiteSpace:'nowrap'}}>{p.mfgHeight||'—'}</td>
+                <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)',textAlign:'center',whiteSpace:'nowrap'}}>{p.cutLength||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap'}}>{p.rawStock||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{p.partsRequired||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.tooling||''}>{p.tooling||'—'}</td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>}
       {tab==='materialsdb'&&<div>
@@ -29481,6 +29495,62 @@ const PrintCenter = ({data}) => {
       ))}
     </div>
   );
+  postsMfgList: [
+    {partNo:'36-22-GATE-KIT',desc:'36in x 22in',mfgHeight:'32',cutLength:'31 3/4',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'42-22-GATE-KIT',desc:'42in x 22in',mfgHeight:'38',cutLength:'37 3/4',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'CUSTOM-POSTS',desc:'Per Order Specification',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'GRASPABLE-HANDRAIL',desc:'Custom Length',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-FM-CRN-36',desc:'36in',mfgHeight:'43',cutLength:'43',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 2x ANG-FM',tooling:'Saw | Drill Press | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-FM-CRN-42',desc:'42in',mfgHeight:'47 3/4',cutLength:'47 3/4',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 2x ANG-FM',tooling:'Saw | Drill Press | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-FM-LINE-36',desc:'36in',mfgHeight:'43',cutLength:'42 7/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-FM-LINE-42',desc:'42in',mfgHeight:'47 3/4',cutLength:'47 3/4',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Drill Press w/ 5/16" & 7/16" bits | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-FM-STR-36',desc:'36in',mfgHeight:'42 7/8',cutLength:'42 7/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-FM-STR-42',desc:'42in',mfgHeight:'47 3/4',cutLength:'47 3/4',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-SM-CRN-36',desc:'36in',mfgHeight:'35',cutLength:'34 3/4',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Saw | Drill Press | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-SM-CRN-42',desc:'42in',mfgHeight:'41',cutLength:'40 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Chop Saw | Drill Press w/ 7/16" bit | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-SM-LINE-36',desc:'36in',mfgHeight:'35',cutLength:'34 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-SM-LINE-42',desc:'42in Surface Mount Cable Line Post',mfgHeight:'41',cutLength:'40 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'',tooling:'Band Saw | Drill Press w/ 5/16" Bit | TIG Welder | Saw Stop Fixture | Cable Hole Template | Weld Fixture — Post | AUTOMATION OPPORTUNITIES | CNC Drilling | CNC Cutting | Robotic Welding | Automated Powder Line | PROJECTED IMPACT | Current Manual Time | Projected Automated Time | Labor Reduction Target',unit:'in'},
+    {partNo:'P-CBL-SM-MINI',desc:'13in',mfgHeight:'13',cutLength:'11 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM | 1x RAIL-MINI',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-SM-STR-36',desc:'36in',mfgHeight:'34 7/8',cutLength:'34 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16" | TIG Welder',unit:'in'},
+    {partNo:'P-CBL-SM-STR-42',desc:'42in',mfgHeight:'40 7/8',cutLength:'40 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
+    {partNo:'P-GLS-FM-CRN-42',desc:'42in',mfgHeight:'48',cutLength:'48',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 2x ANG-BOT',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'P-GLS-FM-LINE-36',desc:'36in',mfgHeight:'43',cutLength:'42 7/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder',unit:'in'},
+    {partNo:'P-GLS-FM-LINE-42',desc:'42in',mfgHeight:'47 3/4',cutLength:'47 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Band Saw | Drill Press w/ 7/16" bit | TIG Welder',unit:'in'},
+    {partNo:'P-GLS-FM-STR-42',desc:'42in',mfgHeight:'47 7/8',cutLength:'47 7/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Chop Saw | Drill Press w/ 7/16" bit',unit:'in'},
+    {partNo:'P-GLS-SM-CRN-42',desc:'42in',mfgHeight:'41',cutLength:'40 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'P-GLS-SM-LINE-36',desc:'36in',mfgHeight:'35',cutLength:'34 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'P-GLS-SM-LINE-42',desc:'42in',mfgHeight:'41',cutLength:'40 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'P-GLS-SM-STR-42',desc:'42in',mfgHeight:'40 7/8',cutLength:'40 5/8',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
+    {partNo:'TOP-RAIL',desc:'20\' Sticks',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder',unit:'in'},
+    {partNo:'Engineering specifications for every manufactured SKU — dimensions, materials, hole patterns, yields',desc:'',mfgHeight:'',cutLength:'',rawStock:'',partsRequired:'',tooling:'',unit:'in'},
+    {partNo:'36-22-GATE-KIT',desc:'36in x 22in',mfgHeight:'36-22-GATE-KIT',cutLength:'32',rawStock:'31 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes specified',unit:'in'},
+    {partNo:'42-22-GATE-KIT',desc:'42in x 22in',mfgHeight:'42-22-GATE-KIT',cutLength:'38',rawStock:'37 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes specified',unit:'in'},
+    {partNo:'CUSTOM-POSTS',desc:'Per Order Specification',mfgHeight:'CUSTOM-POSTS',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Per order specification',unit:'in'},
+    {partNo:'GRASPABLE-HANDRAIL',desc:'Custom Length',mfgHeight:'GRASPABLE-HANDRAIL',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',tooling:'No holes',unit:'in'},
+    {partNo:'P-CBL-FM-CRN-36',desc:'36in',mfgHeight:'P-CBL-FM-CRN-36',cutLength:'43',rawStock:'43"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Field drilled - no factory holes',unit:'in'},
+    {partNo:'P-CBL-FM-CRN-42',desc:'42in',mfgHeight:'P-CBL-FM-CRN-42',cutLength:'47 3/4',rawStock:'47 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Field drilled - no factory holes',unit:'in'},
+    {partNo:'P-CBL-FM-LINE-36',desc:'36in',mfgHeight:'P-CBL-FM-LINE-36',cutLength:'43',rawStock:'42 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'11 cable holes per side (22 total) + 2 lag holes = 24 total',unit:'in'},
+    {partNo:'P-CBL-FM-LINE-42',desc:'42in',mfgHeight:'P-CBL-FM-LINE-42',cutLength:'47 3/4',rawStock:'47 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'13 cable holes per side (26 total) + 2 lag holes = 28 total',unit:'in'},
+    {partNo:'P-CBL-FM-STR-36',desc:'36in',mfgHeight:'P-CBL-FM-STR-36',cutLength:'42 7/8',rawStock:'42 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'10 cable holes + 10 offset stair holes + 2 lag holes = 22 total',unit:'in'},
+    {partNo:'P-CBL-FM-STR-42',desc:'42in',mfgHeight:'P-CBL-FM-STR-42',cutLength:'47 3/4',rawStock:'47 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'12 cable holes + 12 offset stair holes = 24 total',unit:'in'},
+    {partNo:'P-CBL-SM-CRN-36',desc:'36in',mfgHeight:'P-CBL-SM-CRN-36',cutLength:'35',rawStock:'34 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Cable holes per corner configuration',unit:'in'},
+    {partNo:'P-CBL-SM-CRN-42',desc:'42in',mfgHeight:'P-CBL-SM-CRN-42',cutLength:'41',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'13 cable holes + 13 offset holes (1/4" offset) = 26 total',unit:'in'},
+    {partNo:'P-CBL-SM-LINE-36',desc:'36in',mfgHeight:'P-CBL-SM-LINE-36',cutLength:'35',rawStock:'34 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'11 cable holes per side (22 total), 5/16" dia, 3" spacing',unit:'in'},
+    {partNo:'P-CBL-SM-LINE-42',desc:'42in Surface Mount Cable Line Post',mfgHeight:'P-CBL-SM-LINE-42',cutLength:'41 (including top plate and SM plate)',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'',unit:'in'},
+    {partNo:'P-CBL-SM-MINI',desc:'13in',mfgHeight:'P-CBL-SM-MINI',cutLength:'13',rawStock:'11 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'3 cable holes per side (6 total), 5/16" dia, 3" spacing',unit:'in'},
+    {partNo:'P-CBL-SM-STR-36',desc:'36in',mfgHeight:'P-CBL-SM-STR-36',cutLength:'34 7/8',rawStock:'34 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'10 cable holes + 10 offset stair holes = 20 total',unit:'in'},
+    {partNo:'P-CBL-SM-STR-42',desc:'42in',mfgHeight:'P-CBL-SM-STR-42',cutLength:'40 7/8',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'12 cable holes + 12 offset stair holes = 24 total',unit:'in'},
+    {partNo:'P-GLS-FM-CRN-42',desc:'42in',mfgHeight:'P-GLS-FM-CRN-42',cutLength:'48',rawStock:'48"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes - field drilled',unit:'in'},
+    {partNo:'P-GLS-FM-LINE-36',desc:'36in',mfgHeight:'P-GLS-FM-LINE-36',cutLength:'43',rawStock:'42 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'2 lag holes (opposite sides)',unit:'in'},
+    {partNo:'P-GLS-FM-LINE-42',desc:'42in',mfgHeight:'P-GLS-FM-LINE-42',cutLength:'47 3/4',rawStock:'47 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'2 lag holes through both sides',unit:'in'},
+    {partNo:'P-GLS-FM-STR-42',desc:'42in',mfgHeight:'P-GLS-FM-STR-42',cutLength:'47 7/8',rawStock:'47 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'2 fascia mount holes, 2" from bottom, 3" spacing',unit:'in'},
+    {partNo:'P-GLS-SM-CRN-42',desc:'42in',mfgHeight:'P-GLS-SM-CRN-42',cutLength:'41',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes',unit:'in'},
+    {partNo:'P-GLS-SM-LINE-36',desc:'36in',mfgHeight:'P-GLS-SM-LINE-36',cutLength:'35',rawStock:'34 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes drilled',unit:'in'},
+    {partNo:'P-GLS-SM-LINE-42',desc:'42in',mfgHeight:'P-GLS-SM-LINE-42',cutLength:'41',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes drilled',unit:'in'},
+    {partNo:'P-GLS-SM-STR-42',desc:'42in',mfgHeight:'P-GLS-SM-STR-42',cutLength:'40 7/8',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes drilled in post',unit:'in'},
+    {partNo:'TOP-RAIL',desc:'20\' Sticks',mfgHeight:'TOP-RAIL',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',tooling:'No holes',unit:'in'}
+  ],
+
 };
 
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────────
