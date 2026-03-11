@@ -29300,7 +29300,6 @@ const AIPanel = ({data,open,onClose}) => {
 };
 
 const KPIDashboard = ({data,setData}) => {
-  const {useState} = React;
   const [tab,setTab] = useState('weekly');
   const [form,setForm] = useState({});
   const [modal,setModal] = useState(null);
@@ -29406,7 +29405,6 @@ const KPIDashboard = ({data,setData}) => {
 };
 
 const SRSCatalog = ({data,setData}) => {
-  const {useState} = React;
   const [search,setSearch] = useState('');
   const [catFilter,setCatFilter] = useState('All');
   const [modal,setModal] = useState(null);
@@ -29498,7 +29496,6 @@ const SRSCatalog = ({data,setData}) => {
 };
 
 const LegacyOrders = ({data,setData}) => {
-  const {useState} = React;
   const [search,setSearch] = useState('');
   const [typeFilter,setTypeFilter] = useState('All');
   const [modal,setModal] = useState(null);
