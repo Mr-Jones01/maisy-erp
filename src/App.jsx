@@ -25451,6 +25451,47 @@ const INIT = {
     {partNo:'P-GLS-SM-STR-42',desc:'42in',mfgHeight:'P-GLS-SM-STR-42',cutLength:'40 7/8in',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes drilled in post',unit:'in'},
     {partNo:'TOP-RAIL',desc:'20 Sticks',mfgHeight:'TOP-RAIL',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',tooling:'No holes',unit:'in'}
   ],
+
+  salesPipeline: [
+    {id:'PL-001',type:'Proposal',customer:'Sunbelt Contractors',project:'Phoenix Commercial Plaza',amount:13500,stage:'Proposal',probability:60,rep:'Rocky',dateCreated:'2026-02-28',expectedClose:'2026-04-15',productType:'Glass Rail',notes:'Needs eng stamp — waiting on architect approval'},
+    {id:'PL-002',type:'Quote',customer:'Mountain States Builders',project:'Denver Rooftop Terrace',amount:8400,stage:'Qualified',probability:40,rep:'Daniel',dateCreated:'2026-03-01',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Sent quote 3/1 — follow up 3/8'},
+    {id:'PL-003',type:'Estimate',customer:'Pacific Rim Construction',project:'Seattle Mixed-Use Phase 2',amount:22800,stage:'Negotiation',probability:75,rep:'Rocky',dateCreated:'2026-02-15',expectedClose:'2026-03-20',productType:'Glass Rail',notes:'Price-sensitive — offered 5% volume discount'},
+    {id:'PL-004',type:'Proposal',customer:'Desert Sun Homes',project:'Scottsdale New Build',amount:5600,stage:'Lead',probability:20,rep:'Daniel',dateCreated:'2026-03-05',expectedClose:'2026-04-30',productType:'Cable Rail',notes:'Inbound from website — initial contact'},
+    {id:'PL-005',type:'Quote',customer:'Great Lakes Remodeling',project:'Chicago Deck Replacement',amount:3200,stage:'Closed Won',probability:100,rep:'Rocky',dateCreated:'2026-02-10',expectedClose:'2026-03-01',productType:'Cable Rail',notes:'Converted to ORD-0011 — deposit received'},
+    {id:'PL-006',type:'Estimate',customer:'Cascade Custom Homes',project:'Portland Stair Rail',amount:4800,stage:'Closed Lost',probability:0,rep:'Daniel',dateCreated:'2026-01-20',expectedClose:'2026-02-15',productType:'Stair Rail',notes:'Lost to competitor — price 15% under ours'},
+    {id:'PL-007',type:'Proposal',customer:'Frontier Builders',project:'Boise Commercial Office',amount:18500,stage:'Proposal',probability:55,rep:'Rocky',dateCreated:'2026-03-03',expectedClose:'2026-04-10',productType:'Glass Rail',notes:'Following up with architect this week'},
+    {id:'PL-008',type:'Quote',customer:'Summit Properties',project:'Park City Condo Complex',amount:31200,stage:'Negotiation',probability:70,rep:'Daniel',dateCreated:'2026-02-25',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Large job — needs 3 week lead time commitment'},
+  ],
+  commissionRates: [
+    {rep:'Kyle',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'AJ',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'3BD',rate:5.0,active:true,notes:'Channel partner — higher rate'},
+    {rep:'Tony',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Rocky',rate:0,active:true,notes:'Owner — no commission'},
+    {rep:'Beth',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Ryan',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Fien',rate:5.0,active:true,notes:'Senior rep — premium rate'},
+    {rep:'RC',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Daniel',rate:0,active:true,notes:'Operations — no commission'},
+  ],
+  paymentMethods: [
+    {id:'PM-001',label:'Chase Visa - Main',type:'Visa',last4:'4521',expiry:'09/27',customer:'Maisy Railing',default:true,notes:'Primary operating card'},
+    {id:'PM-002',label:'ACH - Operating Account',type:'ACH',last4:'8847',expiry:'',customer:'Maisy Railing',default:false,notes:'Chase checking - bill pay'},
+    {id:'PM-003',label:'Henderson Deck Co. - Visa',type:'Visa',last4:'3391',expiry:'12/26',customer:'Henderson Deck Co.',default:false,notes:'Customer card on file - authorized'},
+  ],
+  paymentRecords: [
+    {id:'PAY-001',date:'2026-01-28',customer:'Henderson Deck Co.',orderId:'ORD-0001',amount:1620,method:'Visa ****3391',type:'Deposit',status:'Captured',ref:'CHG-4521',notes:'50% deposit on order'},
+    {id:'PAY-002',date:'2026-02-10',customer:'Coastal Living Design',orderId:'ORD-0002',amount:2400,method:'ACH',type:'Deposit',status:'Captured',ref:'ACH-289001',notes:''},
+    {id:'PAY-003',date:'2026-02-10',customer:'Coastal Living Design',orderId:'ORD-0002',amount:2400,method:'ACH',type:'Final',status:'Captured',ref:'ACH-289002',notes:'Balance cleared'},
+    {id:'PAY-004',date:'2026-02-18',customer:'Apex Construction',orderId:'ORD-0003',amount:3240,method:'Check',type:'Deposit',status:'Captured',ref:'CHK-10045',notes:'Check #10045'},
+    {id:'PAY-005',date:'2026-03-05',customer:'Clearwater Design Group',orderId:'ORD-0004',amount:1800,method:'Visa ****7712',type:'Deposit',status:'Captured',ref:'CHG-7712',notes:''},
+  ],
+  resaleCerts: [
+    {id:'RC-001',customer:'Henderson Deck Co.',state:'ID',certNumber:'ID-RC-20240115',issueDate:'2024-01-15',expDate:'2026-01-15',status:'Expired',taxExempt:true,notes:'Renewal requested 2/2026'},
+    {id:'RC-002',customer:'Home Depot',state:'Multi',certNumber:'HD-MULTI-2025',issueDate:'2025-01-01',expDate:'2027-01-01',status:'Active',taxExempt:true,notes:'National resale cert — all states'},
+    {id:'RC-003',customer:'Apex Construction',state:'OR',certNumber:'OR-RC-20250601',issueDate:'2025-06-01',expDate:'2027-06-01',status:'Active',taxExempt:true,notes:'Oregon contractors license on file'},
+  ],
+  emailLog: [],
 };
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────────
@@ -30425,48 +30466,6 @@ const PrintCenter = ({data}) => {
       ))}
     </div>
   );
-
-
-  salesPipeline: [
-    {id:'PL-001',type:'Proposal',customer:'Sunbelt Contractors',project:'Phoenix Commercial Plaza',amount:13500,stage:'Proposal',probability:60,rep:'Rocky',dateCreated:'2026-02-28',expectedClose:'2026-04-15',productType:'Glass Rail',notes:'Needs eng stamp — waiting on architect approval'},
-    {id:'PL-002',type:'Quote',customer:'Mountain States Builders',project:'Denver Rooftop Terrace',amount:8400,stage:'Qualified',probability:40,rep:'Daniel',dateCreated:'2026-03-01',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Sent quote 3/1 — follow up 3/8'},
-    {id:'PL-003',type:'Estimate',customer:'Pacific Rim Construction',project:'Seattle Mixed-Use Phase 2',amount:22800,stage:'Negotiation',probability:75,rep:'Rocky',dateCreated:'2026-02-15',expectedClose:'2026-03-20',productType:'Glass Rail',notes:'Price-sensitive — offered 5% volume discount'},
-    {id:'PL-004',type:'Proposal',customer:'Desert Sun Homes',project:'Scottsdale New Build',amount:5600,stage:'Lead',probability:20,rep:'Daniel',dateCreated:'2026-03-05',expectedClose:'2026-04-30',productType:'Cable Rail',notes:'Inbound from website — initial contact'},
-    {id:'PL-005',type:'Quote',customer:'Great Lakes Remodeling',project:'Chicago Deck Replacement',amount:3200,stage:'Closed Won',probability:100,rep:'Rocky',dateCreated:'2026-02-10',expectedClose:'2026-03-01',productType:'Cable Rail',notes:'Converted to ORD-0011 — deposit received'},
-    {id:'PL-006',type:'Estimate',customer:'Cascade Custom Homes',project:'Portland Stair Rail',amount:4800,stage:'Closed Lost',probability:0,rep:'Daniel',dateCreated:'2026-01-20',expectedClose:'2026-02-15',productType:'Stair Rail',notes:'Lost to competitor — price 15% under ours'},
-    {id:'PL-007',type:'Proposal',customer:'Frontier Builders',project:'Boise Commercial Office',amount:18500,stage:'Proposal',probability:55,rep:'Rocky',dateCreated:'2026-03-03',expectedClose:'2026-04-10',productType:'Glass Rail',notes:'Following up with architect this week'},
-    {id:'PL-008',type:'Quote',customer:'Summit Properties',project:'Park City Condo Complex',amount:31200,stage:'Negotiation',probability:70,rep:'Daniel',dateCreated:'2026-02-25',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Large job — needs 3 week lead time commitment'},
-  ],
-  commissionRates: [
-    {rep:'Kyle',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'AJ',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'3BD',rate:5.0,active:true,notes:'Channel partner — higher rate'},
-    {rep:'Tony',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'Rocky',rate:0,active:true,notes:'Owner — no commission'},
-    {rep:'Beth',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'Ryan',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'Fien',rate:5.0,active:true,notes:'Senior rep — premium rate'},
-    {rep:'RC',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'Daniel',rate:0,active:true,notes:'Operations — no commission'},
-  ],
-  paymentMethods: [
-    {id:'PM-001',label:'Chase Visa - Main',type:'Visa',last4:'4521',expiry:'09/27',customer:'Maisy Railing',default:true,notes:'Primary operating card'},
-    {id:'PM-002',label:'ACH - Operating Account',type:'ACH',last4:'8847',expiry:'',customer:'Maisy Railing',default:false,notes:'Chase checking - bill pay'},
-    {id:'PM-003',label:'Henderson Deck Co. - Visa',type:'Visa',last4:'3391',expiry:'12/26',customer:'Henderson Deck Co.',default:false,notes:'Customer card on file - authorized'},
-  ],
-  paymentRecords: [
-    {id:'PAY-001',date:'2026-01-28',customer:'Henderson Deck Co.',orderId:'ORD-0001',amount:1620,method:'Visa ****3391',type:'Deposit',status:'Captured',ref:'CHG-4521',notes:'50% deposit on order'},
-    {id:'PAY-002',date:'2026-02-10',customer:'Coastal Living Design',orderId:'ORD-0002',amount:2400,method:'ACH',type:'Deposit',status:'Captured',ref:'ACH-289001',notes:''},
-    {id:'PAY-003',date:'2026-02-10',customer:'Coastal Living Design',orderId:'ORD-0002',amount:2400,method:'ACH',type:'Final',status:'Captured',ref:'ACH-289002',notes:'Balance cleared'},
-    {id:'PAY-004',date:'2026-02-18',customer:'Apex Construction',orderId:'ORD-0003',amount:3240,method:'Check',type:'Deposit',status:'Captured',ref:'CHK-10045',notes:'Check #10045'},
-    {id:'PAY-005',date:'2026-03-05',customer:'Clearwater Design Group',orderId:'ORD-0004',amount:1800,method:'Visa ****7712',type:'Deposit',status:'Captured',ref:'CHG-7712',notes:''},
-  ],
-  resaleCerts: [
-    {id:'RC-001',customer:'Henderson Deck Co.',state:'ID',certNumber:'ID-RC-20240115',issueDate:'2024-01-15',expDate:'2026-01-15',status:'Expired',taxExempt:true,notes:'Renewal requested 2/2026'},
-    {id:'RC-002',customer:'Home Depot',state:'Multi',certNumber:'HD-MULTI-2025',issueDate:'2025-01-01',expDate:'2027-01-01',status:'Active',taxExempt:true,notes:'National resale cert — all states'},
-    {id:'RC-003',customer:'Apex Construction',state:'OR',certNumber:'OR-RC-20250601',issueDate:'2025-06-01',expDate:'2027-06-01',status:'Active',taxExempt:true,notes:'Oregon contractors license on file'},
-  ],
-  emailLog: [],
 
 };
 
