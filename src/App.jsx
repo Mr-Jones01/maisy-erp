@@ -25815,45 +25815,102 @@ const Todo = ({data,setData,user}) => {
     </div>
   );
 };
+
 const Sales = ({data, setData}) => {
   const [tab,setTab]=useState('all');
   const [search,setSearch]=useState('');
+  const [repFilter,setRepFilter]=useState('All');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   const statuses=['Quoted','Pending','In Production','Shipped','Completed','Cancelled'];
+  const salesReps=['Kyle', 'AJ', '3BD', 'Tony', 'Rocky', 'Beth', 'Ryan', 'Fien', 'RC', 'Other'];
+
   const filtered=data.salesOrders.filter(o=>{
     if(tab==='orders'&&o.type!=='order')return false;
     if(tab==='quotes'&&o.type!=='quote')return false;
+    if(repFilter!=='All'&&o.salesPerson!==repFilter)return false;
     if(search&&!o.customer.toLowerCase().includes(search.toLowerCase())&&!o.id.toLowerCase().includes(search.toLowerCase()))return false;
     return true;
   });
-  const open=(row=null)=>{setForm(row?{...row}:{id:`SO-${uid()}`,type:'order',customer:'',cusId:'',date:now(),total:0,status:'Pending',notes:''});setModal(row?'edit':'new');};
+
+  const open=(row=null)=>{setForm(row?{...row}:{id:`SO-${uid()}`,type:'order',customer:'',cusId:'',date:now(),total:0,status:'Pending',notes:'',salesPerson:'',leadSource:'',po:'',project:'',productType:''});setModal(row?'edit':'new');};
   const save=()=>{const so={...form,total:Number(form.total)};if(modal==='new')setData(d=>({...d,salesOrders:[...d.salesOrders,so]}));else setData(d=>({...d,salesOrders:d.salesOrders.map(o=>o.id===so.id?so:o)}));setModal(null);};
   const del=id=>setData(d=>({...d,salesOrders:d.salesOrders.filter(o=>o.id!==id)}));
+
   const totalOrders=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
   const openOrders=data.salesOrders.filter(o=>!['Completed','Cancelled'].includes(o.status));
+  const completed=data.salesOrders.filter(o=>o.status==='Completed');
   const quotes=data.salesOrders.filter(o=>o.type==='quote'||o.status==='Quoted');
   const avgOrder=data.salesOrders.length?totalOrders/Math.max(data.salesOrders.filter(o=>o.type==='order').length,1):0;
   const shipped=data.salesOrders.filter(o=>o.status==='Shipped'||o.status==='Completed');
+
   return (
     <div className="fade-up">
       <div className="section-hd">
-        <div><div className="hd" style={{fontSize:22}}>Sales Orders & Quoting</div><div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{fmt$(totalOrders)}</span><span className="chip">{data.salesOrders.length} records</span></div></div>
+        <div><div className="hd" style={{fontSize:22}}>Sales Orders & Quoting</div>
+          <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
+            <span className="chip">{data.salesOrders.length} total</span>
+            <span className="chip">{openOrders.length} open</span>
+          </div>
+        </div>
         <button className="btn btn-p" onClick={()=>open()}>+ New</button>
       </div>
+
       <StatRow>
-        <StatCard label="Revenue YTD" value={fmt$(totalOrders)} icon="💰" color="var(--ok)" sub={data.salesOrders.filter(o=>o.type==='order').length+" orders"}/>
-        <StatCard label="Open Orders" value={openOrders.length} icon="📋" color="var(--acc)" sub={fmt$(openOrders.reduce((a,b)=>a+b.total,0))+" in pipeline"}/>
-        <StatCard label="Quotes Outstanding" value={quotes.length} icon="✈️" color="var(--warn)" sub="Awaiting customer decision"/>
-        <StatCard label="Avg Order Value" value={fmt$(avgOrder)} icon="📈" color="var(--acc2)" sub={shipped.length+" shipped / completed"}/>
+        <StatCard label="Revenue YTD"       value={fmt$(totalOrders)}    icon="💰" color="var(--ok)"   sub={data.salesOrders.filter(o=>o.type==='order').length+' orders'}/>
+        <StatCard label="Open Orders"        value={openOrders.length}    icon="📋" color="var(--acc)"  sub={fmt$(openOrders.reduce((a,b)=>a+(b.total||0),0))}/>
+        <StatCard label="Orders Completed"   value={completed.length}     icon="✅" color="var(--ok)"   sub={fmt$(completed.reduce((a,b)=>a+(b.total||0),0))+' closed'}/>
+        <StatCard label="Quotes Outstanding" value={quotes.length}        icon="✈️" color="var(--warn)" sub="Awaiting customer decision"/>
+        <StatCard label="Avg Order Value"    value={fmt$(avgOrder)}       icon="📈" color="var(--acc2)" sub={shipped.length+' shipped'}/>
       </StatRow>
-      <div style={{display:'flex',gap:6,marginBottom:12,alignItems:'center'}}>
-        {['all','orders','quotes','catalog','sku','issues'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='all'?'All':t==='catalog'?'Product Catalog':t==='sku'?'SKU Master':t==='issues'?'Customer Issues':t}</button>)}
-        <input className="search" placeholder="Search…" value={search} onChange={e=>setSearch(e.target.value)} style={{marginLeft:'auto',width:200}}/>
+
+      <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+        {['all','orders','quotes','catalog','sku','issues'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='sku'?'SKU Master':t==='issues'?'Issues':t}</button>)}
       </div>
+
+      {(tab==='all'||tab==='orders'||tab==='quotes')&&<>
+        <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center'}}>
+          <input className="search" placeholder="Search customer, order ID…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:180}}/>
+          <select value={repFilter} onChange={e=>setRepFilter(e.target.value)} style={{minWidth:120}}>
+            <option value="All">All Reps</option>
+            {salesReps.map(r=><option key={r}>{r}</option>)}
+          </select>
+          <span className="chip">{filtered.length} results</span>
+          {(search||repFilter!=='All')&&<button className="btn btn-xs" onClick={()=>{setSearch('');setRepFilter('All');}}>✕ Clear</button>}
+        </div>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table>
+            <thead><tr>
+              <th>ID</th><th>Customer</th><th>Date</th>
+              <th>Total</th><th>Status</th><th>Type</th>
+              <th>Sales Rep</th><th>Project</th><th>Notes</th><th></th>
+            </tr></thead>
+            <tbody>{filtered.length===0&&<tr><td colSpan={10}><Empty/></td></tr>}
+              {filtered.map(o=>(
+                <tr key={o.id}>
+                  <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{o.id}</td>
+                  <td style={{fontWeight:500}}>{o.customer}</td>
+                  <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(o.date)}</td>
+                  <td className="mono" style={{fontWeight:500}}>{fmt$(o.total)}</td>
+                  <td><Badge s={o.status}/></td>
+                  <td><span className="chip" style={{textTransform:'capitalize'}}>{o.type}</span></td>
+                  <td style={{fontSize:11,color:'var(--acc)',fontWeight:600}}>{o.salesPerson||'—'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
+                  <td style={{color:'var(--muted)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{o.notes}</td>
+                  <td><div style={{display:'flex',gap:4}}>
+                    <button className="btn btn-g btn-sm" onClick={()=>open(o)}>Edit</button>
+                    <button className="btn btn-d btn-sm" onClick={()=>del(o.id)}>×</button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
       {(tab==='catalog'||tab==='sku'||tab==='issues')&&<>
         {tab==='catalog'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-          <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--muted)',alignItems:'center'}}>
+          <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--muted)'}}>
             {(data.productCatalog||[]).length} kits in catalog
           </div>
           <table><thead><tr><th>Kit SKU</th><th>Name</th><th>Category</th><th>Mount</th><th>Color</th><th>Size</th><th>COGS</th><th>Wholesale</th><th>Retail</th></tr></thead>
@@ -25871,7 +25928,7 @@ const Sales = ({data, setData}) => {
           </table>
         </div>}
         {tab==='sku'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-          <table><thead><tr><th>SKU</th><th>Description</th><th>Sub-Category</th><th>Family</th><th>Material</th><th>Finish/Color</th><th>SRS Channel</th><th>Online/Direct</th><th>Home Depot</th></tr></thead>
+          <table><thead><tr><th>SKU</th><th>Description</th><th>Sub-Category</th><th>Family</th><th>Material</th><th>Finish</th><th>SRS</th><th>Online</th><th>HD</th></tr></thead>
             <tbody>{(data.productSkuMaster||[]).length===0&&<tr><td colSpan={9}><Empty msg="No SKU master data"/></td></tr>}
             {(data.productSkuMaster||[]).map((s,i)=>(
               <tr key={i}>
@@ -25886,8 +25943,8 @@ const Sales = ({data, setData}) => {
           </table>
         </div>}
         {tab==='issues'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-          <table><thead><tr><th>Issue #</th><th>Date</th><th>Customer</th><th>Order</th><th>Product</th><th>Type</th><th>Severity</th><th>Root Cause</th><th>Resolution</th><th>Status</th></tr></thead>
-            <tbody>{(data.customerIssues||[]).length===0&&<tr><td colSpan={10}><Empty msg="No customer issues logged — great!"/></td></tr>}
+          <table><thead><tr><th>Issue #</th><th>Date</th><th>Customer</th><th>Order</th><th>Product</th><th>Type</th><th>Sev</th><th>Root Cause</th><th>Resolution</th><th>Status</th></tr></thead>
+            <tbody>{(data.customerIssues||[]).length===0&&<tr><td colSpan={10}><Empty msg="No customer issues logged"/></td></tr>}
             {(data.customerIssues||[]).map((iss,i)=>(
               <tr key={i}>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{iss.id}</td>
@@ -25895,7 +25952,7 @@ const Sales = ({data, setData}) => {
                 <td style={{fontWeight:500}}>{iss.customer}</td>
                 <td style={{fontFamily:'monospace',fontSize:10}}>{iss.orderId}</td>
                 <td style={{fontSize:11}}>{iss.product}</td><td style={{fontSize:10}}>{iss.issueType}</td>
-                <td style={{textAlign:'center',color:iss.severity>=4?'var(--err)':iss.severity>=3?'var(--warn)':'var(--ok)',fontWeight:700}}>{iss.severity}/5</td>
+                <td style={{textAlign:'center',color:iss.severity>=4?'var(--err)':iss.severity>=3?'var(--warn)':'var(--ok)',fontWeight:700}}>{iss.severity}</td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{iss.rootCause}</td>
                 <td style={{fontSize:10}}>{iss.resolution}</td>
                 <td><Badge s={iss.status||'Open'}/></td>
@@ -25904,39 +25961,41 @@ const Sales = ({data, setData}) => {
           </table>
         </div>}
       </>}
-      {(tab==='all'||tab==='orders'||tab==='quotes')&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-        <table><thead><tr><th>ID</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Type</th><th>Notes</th><th/></tr></thead>
-          <tbody>{filtered.length===0&&<tr><td colSpan={8}><Empty/></td></tr>}
-            {filtered.map(o=>(
-              <tr key={o.id}>
-                <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{o.id}</td>
-                <td style={{fontWeight:500}}>{o.customer}</td>
-                <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(o.date)}</td>
-                <td className="mono" style={{fontWeight:500}}>{fmt$(o.total)}</td>
-                <td><Badge s={o.status}/></td>
-                <td><span className="chip" style={{textTransform:'capitalize'}}>{o.type}</span></td>
-                <td style={{color:'var(--muted)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{o.notes}</td>
-                <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(o)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(o.id)}>Del</button></div></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>}
-      {modal&&<Modal title={modal==='new'?'New Order / Quote':'Edit'} onClose={()=>setModal(null)}>
-        <div className="grid2"><Field label="Order ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
-        <Field label="Type"><select value={form.type||'order'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}><option value="order">Sales Order</option><option value="quote">Quote</option></select></Field></div>
+
+      {modal&&<Modal title={modal==='new'?'New Order / Quote':'Edit Order / Quote'} onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="Order ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Type"><select value={form.type||'order'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}><option value="order">Order</option><option value="quote">Quote</option></select></Field>
+        </div>
         <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
-        <div className="grid2"><Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
-        <Field label="Total ($)"><input type="number" value={form.total||0} onChange={e=>setForm(f=>({...f,total:e.target.value}))}/></Field></div>
-        <Field label="Status"><select value={form.status||'Pending'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{statuses.map(s=><option key={s}>{s}</option>)}</select></Field>
+        <div className="grid2">
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Total ($)"><input type="number" value={form.total||0} onChange={e=>setForm(f=>({...f,total:e.target.value}))}/></Field>
+        </div>
+        <div className="grid2">
+          <Field label="Status"><select value={form.status||'Pending'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{statuses.map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Sales Person / Lead Source">
+            <select value={salesReps.includes(form.salesPerson)?form.salesPerson:form.salesPerson?'Other':''} onChange={e=>setForm(f=>({...f,salesPerson:e.target.value}))}>
+              <option value="">— Select —</option>
+              {salesReps.map(r=><option key={r}>{r}</option>)}
+            </select>
+          </Field>
+        </div>
+        <div className="grid2">
+          <Field label="Project / Job Name"><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
+          <Field label="Customer PO #"><input value={form.po||''} onChange={e=>setForm(f=>({...f,po:e.target.value}))}/></Field>
+        </div>
         <Field label="Notes"><textarea value={form.notes||''} rows={2} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
-        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+        <div style={{display:'flex',gap:8,marginTop:10}}>
+          <button className="btn btn-p" onClick={save}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {modal==='edit'&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{del(form.id);setModal(null);}}>Delete</button>}
+        </div>
       </Modal>}
     </div>
   );
 };
 
-// ─── INVENTORY (ENHANCED) ────────────────────────────────────────────────────────
 const QRLabel = ({item, onClose}) => {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`SKU:${item.sku}|${item.name}|LOC:${item.loc}`)}&bgcolor=ffffff&color=000000`;
   return (
@@ -29099,7 +29158,7 @@ const Orders = ({data, setData}) => {
   const orderTypes = ['New Order','Re-Work','Warranty','Sample','Rush'];
   const baseProductTypes = ['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'];
   const allProductTypes = [...new Set([...baseProductTypes, ...orders.map(o=>o.productType).filter(Boolean)])];
-  const cardinalColors = ['Matte Black','Satin Black','Gloss Black','White Gloss','White Satin','Bronze','Oil Rubbed Bronze','Satin Silver','Brushed Silver','Clear Anodized','Slate Gray','Champagne','Gold'];
+  const cardinalColors = ['T009-BG01', 'T002-WH08', 'T075-BK211', 'T002-BK08', 'C013-GR08', 'T005-BK78', 'C241-GR305', 'C206-BK266', 'C241-GR07', 'T025-BR01', 'T243-GR301', 'T064-BR24', 'T013-GR185', 'T291-BR251', 'T091-BR47', 'T375-BK26', 'T012-BR161', 'P000-BK247', 'T375-BK07', 'C031-WH120', 'T238-GR2070', 'T209-C101', 'C209-BR358', 'E305-GR533', 'P000-BG631', 'C241-BK303', 'T032-BL04'];
   const allColors = [...new Set([...cardinalColors, ...orders.map(o=>o.color).filter(Boolean)])];
 
   const statusColors = {'New':'var(--acc)','Quoted':'#818cf8','Confirmed':'var(--warn)','In Production':'#f59e0b','Ready to Ship':'#10b981','Shipped':'var(--ok)','Invoiced':'#06b6d4','Completed':'var(--muted)','Cancelled':'var(--err)'};
