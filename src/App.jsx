@@ -25991,7 +25991,7 @@ const Sales = ({data, setData}) => {
           <Field label="Date Reported"><input type="date" value={form.dateReported||''} onChange={e=>setForm(f=>({...f,dateReported:e.target.value}))}/></Field>
           <Field label="Status">
             <select value={form.status||'Open'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
-              {['Open','In Progress','Resolved','Closed','Won't Fix'].map(s=><option key={s}>{s}</option>)}
+              {['Open','In Progress','Resolved','Closed','Won\'t Fix'].map(s=><option key={s}>{s}</option>)}
             </select>
           </Field>
           <Field label="Customer *"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
