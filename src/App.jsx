@@ -27799,6 +27799,7 @@ const Reports = ({data,setData}) => {
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='maisy_sales.csv';a.click();
   };
   return (
+    <>
     <div className="fade-up">
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Reports & Analytics</div></div>
@@ -27915,6 +27916,8 @@ const Reports = ({data,setData}) => {
           }}>Save</button>
         </div>
       </Modal>}
+
+    </>
   );
 };
 
