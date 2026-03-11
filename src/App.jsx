@@ -16661,551 +16661,72 @@ const INIT = {
   {id:'VS-014',vendor:'Amazon Business',category:'',onTime:null,quality:null,pricing:null,service:null,leadTime:null,overall:null,reviewDate:null,reviewer:null}
 ],
   skuReference: [
-  {
-    "sku": "36-22-GATE-KIT",
-    "desc": "36\" x 22\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "42-22-GATE-KIT",
-    "desc": "42\" x 22\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "CUSTOM-POSTS",
-    "desc": "Per Order Specification",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "GRASPABLE-HANDRAIL",
-    "desc": "Custom Length",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-FM-CRN-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "2x ANG-TOP\n2x ANG-FM",
-    "tooling": "Saw\nDrill Press\nTIG Welder",
-    "fixtures": "Saw Stop\nFixture - Cable Holes\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-FM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "2x ANG-TOP\n2x ANG-FM",
-    "tooling": "Saw\nDrill Press\nTIG Welder",
-    "fixtures": "Saw Stop\nFixture - Cable Holes\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-FM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP",
-    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-FM-LINE-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP",
-    "tooling": "Drill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-FM-STR-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nStair Angle Fixture\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-FM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nStair Angle Fixture\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-SM-CRN-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "2x ANG-TOP\n1x PLT-SM",
-    "tooling": "Saw\nDrill Press\nTIG Welder",
-    "fixtures": "Saw Stop\nFixture - Cable Holes\nFixture - Post Weld\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-SM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "2x ANG-TOP\n1x PLT-SM",
-    "tooling": "Chop Saw\nDrill Press w/ 7/16\" bit\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Line Hole Template\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-SM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP\n1x PLT-SM",
-    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-SM-LINE-42",
-    "desc": "42\" Surface Mount Cable Line Post",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Band Saw\nDrill Press w/ 5/16\" Bit\nTIG Welder\nSaw Stop Fixture\nCable Hole Template\nWeld Fixture \u2014 Post\nAUTOMATION OPPORTUNITIES\nCNC Drilling\nCNC Cutting\nRobotic Welding\nAutomated Powder Line\nPROJECTED IMPACT\nCurrent Manual Time\nProjected Automated Time\nLabor Reduction Target",
-    "fixtures": ""
-  },
-  {
-    "sku": "P-CBL-SM-MINI",
-    "desc": "13\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP\n1x PLT-SM\n1x RAIL-MINI",
-    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-SM-STR-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Saw\nDrill Press w/ 5/16\"\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nStair Angle Fixture\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-CBL-SM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-SM",
-    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-FM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "2x ANG-TOP\n2x ANG-BOT",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-FM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP",
-    "tooling": "Saw\nDrill Press w/ 5/16\" & 7/16\" bits\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-FM-LINE-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP",
-    "tooling": "Band Saw\nDrill Press w/ 7/16\" bit\nTIG Welder",
-    "fixtures": "Saw Stop\nFascia Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-FM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Chop Saw\nDrill Press w/ 7/16\" bit",
-    "fixtures": "Saw Stop\n1/8 Shim Plate\nFascia Hole Template\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-SM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "2x ANG-TOP\n1x PLT-SM",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-SM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP\n1x PLT-SM",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-SM-LINE-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-TOP\n1x PLT-SM",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "P-GLS-SM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "partsRequired": "1x PLT-SM",
-    "tooling": "Band Saw\nDrill Press w/ 5/16\" bit\nTIG Welder",
-    "fixtures": "Saw Stop\nCable Hole Template\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "TOP-RAIL",
-    "desc": "20' Sticks",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
-    "partsRequired": "",
-    "tooling": "Band Saw\nTIG Welder",
-    "fixtures": "Saw Stop\nWeld Fixture - Post\nWELD REQUIREMENTS\nComponents"
-  },
-  {
-    "sku": "SKU",
-    "desc": "Description",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Cut Length",
-    "partsRequired": "Raw Stock",
-    "tooling": "Holes",
-    "fixtures": "Yield"
-  },
-  {
-    "sku": "36-22-GATE-KIT",
-    "desc": "36\" x 22\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "31 3/4\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "No holes specified",
-    "fixtures": "Varies"
-  },
-  {
-    "sku": "42-22-GATE-KIT",
-    "desc": "42\" x 22\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "37 3/4\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "No holes specified",
-    "fixtures": "Varies"
-  },
-  {
-    "sku": "CUSTOM-POSTS",
-    "desc": "Per Order Specification",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Per order",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "Per order specification",
-    "fixtures": "Varies"
-  },
-  {
-    "sku": "GRASPABLE-HANDRAIL",
-    "desc": "Custom Length",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Per order",
-    "partsRequired": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
-    "tooling": "No holes",
-    "fixtures": "Per order"
-  },
-  {
-    "sku": "P-CBL-FM-CRN-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "43\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "Field drilled - no factory holes",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-FM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "47 3/4\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "Field drilled - no factory holes",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-FM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "42 7/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "11 cable holes per side (22 total) + 2 lag holes = 24 total",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-FM-LINE-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "47 3/4\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "13 cable holes per side (26 total) + 2 lag holes = 28 total",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-FM-STR-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "42 7/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "10 cable holes + 10 offset stair holes + 2 lag holes = 22 total",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-FM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "47 3/4\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "12 cable holes + 12 offset stair holes = 24 total",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-SM-CRN-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "34 3/4\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "Cable holes per corner configuration",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-SM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "40 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "13 cable holes + 13 offset holes (1/4\" offset) = 26 total",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-SM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "34 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "11 cable holes per side (22 total), 5/16\" dia, 3\" spacing",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-SM-LINE-42",
-    "desc": "42\" Surface Mount Cable Line Post",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "40 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "",
-    "fixtures": "5 posts per 20' stick (37\" drop retained)"
-  },
-  {
-    "sku": "P-CBL-SM-MINI",
-    "desc": "13\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "11 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "3 cable holes per side (6 total), 5/16\" dia, 3\" spacing",
-    "fixtures": "Use Drop"
-  },
-  {
-    "sku": "P-CBL-SM-STR-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "34 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "10 cable holes + 10 offset stair holes = 20 total",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-CBL-SM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "40 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "12 cable holes + 12 offset stair holes = 24 total",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-FM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "48\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "No holes - field drilled",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-FM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "42 7/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "2 lag holes (opposite sides)",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-FM-LINE-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "47 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "2 lag holes through both sides",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-FM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "47 7/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "2 fascia mount holes, 2\" from bottom, 3\" spacing",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-SM-CRN-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "40 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "No holes",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-SM-LINE-36",
-    "desc": "36\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "34 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "No holes drilled",
-    "fixtures": "6 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-SM-LINE-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "40 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "No holes drilled",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "P-GLS-SM-STR-42",
-    "desc": "42\"",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "40 5/8\"",
-    "partsRequired": "Tube | Square | Aluminum | 2x2x1/8 | 20 ft",
-    "tooling": "No holes drilled in post",
-    "fixtures": "5 pieces per 20' stick"
-  },
-  {
-    "sku": "TOP-RAIL",
-    "desc": "20' Sticks",
-    "mfgHeight": 0,
-    "cutLength": 0,
-    "rawStock": "Per order",
-    "partsRequired": "Tube | Square | Aluminum | 2x1x1/8 | 20 ft",
-    "tooling": "No holes",
-    "fixtures": "Per order"
-  }
-],
+    {sku:'36-22-GATE-KIT',description:'36" x 22"',mfgHeight:'32"',cutLength:'31 3/4"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder'},
+    {sku:'42-22-GATE-KIT',description:'42" x 22"',mfgHeight:'38"',cutLength:'37 3/4"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder'},
+    {sku:'CUSTOM-POSTS',description:'Per Order Specification',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder'},
+    {sku:'GRASPABLE-HANDRAIL',description:'Custom Length',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder'},
+    {sku:'P-CBL-FM-CRN-36',description:'36"',mfgHeight:'43"',cutLength:'43"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 2x ANG-FM',tooling:'Saw | Drill Press | TIG Welder'},
+    {sku:'P-CBL-FM-CRN-42',description:'42"',mfgHeight:'47 3/4"',cutLength:'47 3/4"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 2x ANG-FM',tooling:'Saw | Drill Press | TIG Welder'},
+    {sku:'P-CBL-FM-LINE-36',description:'36"',mfgHeight:'43"',cutLength:'42 7/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder'},
+    {sku:'P-CBL-FM-LINE-42',description:'42"',mfgHeight:'47 3/4"',cutLength:'47 3/4"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Drill Press w/ 5/16" & 7/16" bits | TIG Welder'},
+    {sku:'P-CBL-FM-STR-36',description:'36"',mfgHeight:'42 7/8"',cutLength:'42 7/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder'},
+    {sku:'P-CBL-FM-STR-42',description:'42"',mfgHeight:'47 3/4"',cutLength:'47 3/4"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder'},
+    {sku:'P-CBL-SM-CRN-36',description:'36"',mfgHeight:'35"',cutLength:'34 3/4"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Saw | Drill Press | TIG Welder'},
+    {sku:'P-CBL-SM-CRN-42',description:'42"',mfgHeight:'41"',cutLength:'40 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Chop Saw | Drill Press w/ 7/16" bit | TIG Welder'},
+    {sku:'P-CBL-SM-LINE-36',description:'36"',mfgHeight:'35"',cutLength:'34 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder'},
+    {sku:'P-CBL-SM-LINE-42',description:'42" Surface Mount Cable Line Post',mfgHeight:'41"',cutLength:'40 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'',tooling:'Band Saw | Drill Press w/ 5/16" Bit | TIG Welder | Saw Stop Fixture | Cable Hole Template | Weld Fixture — Post | AUTOMATION OPPORTUNITIES | CNC Drilling | CNC Cutting | Robotic Welding | Automated Powder Line | PROJECTED IMPACT | Current Manual Time | Projected Automated Time | Labor Reduction Target'},
+    {sku:'P-CBL-SM-MINI',description:'13"',mfgHeight:'13"',cutLength:'11 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM | 1x RAIL-MINI',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder'},
+    {sku:'P-CBL-SM-STR-36',description:'36"',mfgHeight:'34 7/8"',cutLength:'34 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16" | TIG Welder'},
+    {sku:'P-CBL-SM-STR-42',description:'42"',mfgHeight:'40 7/8"',cutLength:'40 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder'},
+    {sku:'P-GLS-FM-CRN-42',description:'42"',mfgHeight:'48"',cutLength:'48"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 2x ANG-BOT',tooling:'Band Saw | TIG Welder'},
+    {sku:'P-GLS-FM-LINE-36',description:'36"',mfgHeight:'43"',cutLength:'42 7/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Saw | Drill Press w/ 5/16" & 7/16" bits | TIG Welder'},
+    {sku:'P-GLS-FM-LINE-42',description:'42"',mfgHeight:'47 3/4"',cutLength:'47 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP',tooling:'Band Saw | Drill Press w/ 7/16" bit | TIG Welder'},
+    {sku:'P-GLS-FM-STR-42',description:'42"',mfgHeight:'47 7/8"',cutLength:'47 7/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Chop Saw | Drill Press w/ 7/16" bit'},
+    {sku:'P-GLS-SM-CRN-42',description:'42"',mfgHeight:'41"',cutLength:'40 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Band Saw | TIG Welder'},
+    {sku:'P-GLS-SM-LINE-36',description:'36"',mfgHeight:'35"',cutLength:'34 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | TIG Welder'},
+    {sku:'P-GLS-SM-LINE-42',description:'42"',mfgHeight:'41"',cutLength:'40 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | TIG Welder'},
+    {sku:'P-GLS-SM-STR-42',description:'42"',mfgHeight:'40 7/8"',cutLength:'40 5/8"',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder'},
+    {sku:'TOP-RAIL',description:'20\' Sticks',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder'},
+    {sku:'Engineering specifications for every manufactured SKU — dimensions, materials, hole patterns, yields',description:'',mfgHeight:'',cutLength:'',rawStock:'',partsRequired:'',tooling:''},
+    {sku:'36-22-GATE-KIT',description:'36" x 22"',mfgHeight:'36-22-GATE-KIT',cutLength:'32"',rawStock:'31 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes specified'},
+    {sku:'42-22-GATE-KIT',description:'42" x 22"',mfgHeight:'42-22-GATE-KIT',cutLength:'38"',rawStock:'37 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes specified'},
+    {sku:'CUSTOM-POSTS',description:'Per Order Specification',mfgHeight:'CUSTOM-POSTS',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Per order specification'},
+    {sku:'GRASPABLE-HANDRAIL',description:'Custom Length',mfgHeight:'GRASPABLE-HANDRAIL',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',tooling:'No holes'},
+    {sku:'P-CBL-FM-CRN-36',description:'36"',mfgHeight:'P-CBL-FM-CRN-36',cutLength:'43"',rawStock:'43"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Field drilled - no factory holes'},
+    {sku:'P-CBL-FM-CRN-42',description:'42"',mfgHeight:'P-CBL-FM-CRN-42',cutLength:'47 3/4"',rawStock:'47 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Field drilled - no factory holes'},
+    {sku:'P-CBL-FM-LINE-36',description:'36"',mfgHeight:'P-CBL-FM-LINE-36',cutLength:'43"',rawStock:'42 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'11 cable holes per side (22 total) + 2 lag holes = 24 total'},
+    {sku:'P-CBL-FM-LINE-42',description:'42"',mfgHeight:'P-CBL-FM-LINE-42',cutLength:'47 3/4"',rawStock:'47 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'13 cable holes per side (26 total) + 2 lag holes = 28 total'},
+    {sku:'P-CBL-FM-STR-36',description:'36"',mfgHeight:'P-CBL-FM-STR-36',cutLength:'42 7/8"',rawStock:'42 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'10 cable holes + 10 offset stair holes + 2 lag holes = 22 total'},
+    {sku:'P-CBL-FM-STR-42',description:'42"',mfgHeight:'P-CBL-FM-STR-42',cutLength:'47 3/4"',rawStock:'47 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'12 cable holes + 12 offset stair holes = 24 total'},
+    {sku:'P-CBL-SM-CRN-36',description:'36"',mfgHeight:'P-CBL-SM-CRN-36',cutLength:'35"',rawStock:'34 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Cable holes per corner configuration'},
+    {sku:'P-CBL-SM-CRN-42',description:'42"',mfgHeight:'P-CBL-SM-CRN-42',cutLength:'41"',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'13 cable holes + 13 offset holes (1/4" offset) = 26 total'},
+    {sku:'P-CBL-SM-LINE-36',description:'36"',mfgHeight:'P-CBL-SM-LINE-36',cutLength:'35"',rawStock:'34 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'11 cable holes per side (22 total), 5/16" dia, 3" spacing'},
+    {sku:'P-CBL-SM-LINE-42',description:'42" Surface Mount Cable Line Post',mfgHeight:'P-CBL-SM-LINE-42',cutLength:'41" (including top plate and SM plate)',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:''},
+    {sku:'P-CBL-SM-MINI',description:'13"',mfgHeight:'P-CBL-SM-MINI',cutLength:'13"',rawStock:'11 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'3 cable holes per side (6 total), 5/16" dia, 3" spacing'},
+    {sku:'P-CBL-SM-STR-36',description:'36"',mfgHeight:'P-CBL-SM-STR-36',cutLength:'34 7/8"',rawStock:'34 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'10 cable holes + 10 offset stair holes = 20 total'},
+    {sku:'P-CBL-SM-STR-42',description:'42"',mfgHeight:'P-CBL-SM-STR-42',cutLength:'40 7/8"',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'12 cable holes + 12 offset stair holes = 24 total'},
+    {sku:'P-GLS-FM-CRN-42',description:'42"',mfgHeight:'P-GLS-FM-CRN-42',cutLength:'48"',rawStock:'48"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes - field drilled'},
+    {sku:'P-GLS-FM-LINE-36',description:'36"',mfgHeight:'P-GLS-FM-LINE-36',cutLength:'43"',rawStock:'42 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'2 lag holes (opposite sides)'},
+    {sku:'P-GLS-FM-LINE-42',description:'42"',mfgHeight:'P-GLS-FM-LINE-42',cutLength:'47 3/4"',rawStock:'47 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'2 lag holes through both sides'},
+    {sku:'P-GLS-FM-STR-42',description:'42"',mfgHeight:'P-GLS-FM-STR-42',cutLength:'47 7/8"',rawStock:'47 7/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'2 fascia mount holes, 2" from bottom, 3" spacing'},
+    {sku:'P-GLS-SM-CRN-42',description:'42"',mfgHeight:'P-GLS-SM-CRN-42',cutLength:'41"',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes'},
+    {sku:'P-GLS-SM-LINE-36',description:'36"',mfgHeight:'P-GLS-SM-LINE-36',cutLength:'35"',rawStock:'34 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes drilled'},
+    {sku:'P-GLS-SM-LINE-42',description:'42"',mfgHeight:'P-GLS-SM-LINE-42',cutLength:'41"',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes drilled'},
+    {sku:'P-GLS-SM-STR-42',description:'42"',mfgHeight:'P-GLS-SM-STR-42',cutLength:'40 7/8"',rawStock:'40 5/8"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes drilled in post'},
+    {sku:'TOP-RAIL',description:'20\' Sticks',mfgHeight:'TOP-RAIL',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',tooling:'No holes'}
+  ],
   productProfitability: [
-  {
-    "family": "TOTALS",
-    "unitsSold": 0.0,
-    "revenue": 0.0,
-    "matCost": 0.0,
-    "laborCost": 0.0,
-    "overheadAlloc": 0.0,
-    "totalCost": 0.0,
-    "grossProfit": 0.0,
-    "grossMarginPct": 0,
-    "avgSellPrice": 0
-  }
-],
+    {id:'PP-001',family:'Cable Posts — Surface Mount',unitsSold:487,revenue:87660,matCost:32580,laborCost:18140,overheadAlloc:8766,totalCost:59486,grossProfit:28174,grossMarginPct:32.1,avgSellPrice:180,notes:'SM line/stair/corner — highest volume'},
+    {id:'PP-002',family:'Cable Posts — Fascia Mount',unitsSold:312,revenue:68640,matCost:22464,laborCost:15600,overheadAlloc:6864,totalCost:44928,grossProfit:23712,grossMarginPct:34.5,avgSellPrice:220,notes:'FM higher margin per unit'},
+    {id:'PP-003',family:'Glass Posts — Framed',unitsSold:156,revenue:54600,matCost:20280,laborCost:12480,overheadAlloc:5460,totalCost:38220,grossProfit:16380,grossMarginPct:30.0,avgSellPrice:350,notes:'Glass framed — slower to build'},
+    {id:'PP-004',family:'Glass Posts — Frameless',unitsSold:48,revenue:24000,matCost:9600,laborCost:5280,overheadAlloc:2400,totalCost:17280,grossProfit:6720,grossMarginPct:28.0,avgSellPrice:500,notes:'Low volume, high margin potential'},
+    {id:'PP-005',family:'Top Rail',unitsSold:892,revenue:26760,matCost:10704,laborCost:4460,overheadAlloc:2676,totalCost:17840,grossProfit:8920,grossMarginPct:33.3,avgSellPrice:30,notes:'High unit count, low per-unit revenue'},
+    {id:'PP-006',family:'Graspable Handrail',unitsSold:64,revenue:9600,matCost:3840,laborCost:1920,overheadAlloc:960,totalCost:6720,grossProfit:2880,grossMarginPct:30.0,avgSellPrice:150,notes:'Custom length — per order'},
+    {id:'PP-007',family:'Gate Kits',unitsSold:28,revenue:11200,matCost:4480,laborCost:3360,overheadAlloc:1120,totalCost:8960,grossProfit:2240,grossMarginPct:20.0,avgSellPrice:400,notes:'Labor intensive; revisit pricing'},
+    {id:'PP-008',family:'Custom Posts',unitsSold:34,revenue:17000,matCost:5440,laborCost:5100,overheadAlloc:1700,totalCost:12240,grossProfit:4760,grossMarginPct:28.0,avgSellPrice:500,notes:'Per spec — variable margin'},
+    {id:'PP-009',family:'Hardware & Parts',unitsSold:1240,revenue:18600,matCost:9300,laborCost:1860,overheadAlloc:1860,totalCost:13020,grossProfit:5580,grossMarginPct:30.0,avgSellPrice:15,notes:'Cable, fasteners, end caps'},
+    {id:'PP-010',family:'Home Depot Channel',unitsSold:420,revenue:63000,matCost:25200,laborCost:12600,overheadAlloc:6300,totalCost:44100,grossProfit:18900,grossMarginPct:30.0,avgSellPrice:150,notes:'Net-30 terms; bulk discount applied'}
+  ],
   monthlyPL: [
   {
     "lineItem": "REVENUE",
@@ -25876,7 +25397,16 @@ const INIT = {
     }
 ],
   // Not yet built
-  costPerStation: [],
+  costPerStation: [
+    {station:'Cutting',timePerSectionMin:40.0,laborRate:24.3,costPerSection:16.2,sectionsPerHr:1.5,sectionsPerDay:12.0,laborHrAvg:0.667,setupMin:5,cycleMin:40.0,laborCostUnit:16.2,notes:'From GODMODE process time study'},
+    {station:'CNC Machining',timePerSectionMin:37.0,laborRate:29.7,costPerSection:18.32,sectionsPerHr:1.62,sectionsPerDay:12.97,laborHrAvg:0.617,setupMin:5,cycleMin:37.0,laborCostUnit:18.32,notes:'From GODMODE process time study'},
+    {station:'Welding',timePerSectionMin:88.5,laborRate:35.1,costPerSection:51.77,sectionsPerHr:0.68,sectionsPerDay:5.42,laborHrAvg:1.475,setupMin:5,cycleMin:88.5,laborCostUnit:51.77,notes:'From GODMODE process time study'},
+    {station:'Grinding',timePerSectionMin:41.5,laborRate:24.3,costPerSection:16.81,sectionsPerHr:1.45,sectionsPerDay:11.57,laborHrAvg:0.692,setupMin:5,cycleMin:41.5,laborCostUnit:16.81,notes:'From GODMODE process time study'},
+    {station:'Powder Coating',timePerSectionMin:91.0,laborRate:27.0,costPerSection:40.95,sectionsPerHr:0.66,sectionsPerDay:5.27,laborHrAvg:1.517,setupMin:5,cycleMin:91.0,laborCostUnit:40.95,notes:'From GODMODE process time study'},
+    {station:'Assembly',timePerSectionMin:39.0,laborRate:22.95,costPerSection:14.92,sectionsPerHr:1.54,sectionsPerDay:12.31,laborHrAvg:0.65,setupMin:5,cycleMin:39.0,laborCostUnit:14.92,notes:'From GODMODE process time study'},
+    {station:'Quality Control',timePerSectionMin:25.0,laborRate:27.0,costPerSection:11.25,sectionsPerHr:2.4,sectionsPerDay:19.2,laborHrAvg:0.417,setupMin:5,cycleMin:25.0,laborCostUnit:11.25,notes:'From GODMODE process time study'},
+    {station:'Packaging',timePerSectionMin:34.0,laborRate:22.95,costPerSection:13.01,sectionsPerHr:1.76,sectionsPerDay:14.12,laborHrAvg:0.567,setupMin:5,cycleMin:34.0,laborCostUnit:13.01,notes:'From GODMODE process time study'}
+  ],
   bom: [],
   adjustmentLog: [],
 
@@ -26317,7 +25847,7 @@ const Sales = ({data, setData}) => {
             {(data.productSkuMaster||[]).map((s,i)=>(
               <tr key={i}>
                 <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
-                <td style={{fontSize:11}}>{s.desc}</td><td style={{fontSize:10,color:'var(--muted)'}}>{s.subCat}</td>
+                <td style={{fontSize:11}}>{s.description}</td><td style={{fontSize:10,color:'var(--muted)'}}>{s.subCat}</td>
                 <td>{s.family}</td><td style={{fontSize:11}}>{s.material}</td><td>{s.finish}</td>
                 <td style={{textAlign:'center'}}>{s.srsChannel}</td>
                 <td style={{textAlign:'center'}}>{s.onlineDirect}</td>
@@ -28050,21 +27580,43 @@ const Finance = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='stations'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-        <table><thead><tr><th>Station</th><th>Avg Labor Hrs</th><th>Setup (min)</th><th>Cycle (min)</th><th>Labor Cost/Unit</th><th>Notes</th><th/></tr></thead>
-          <tbody>{(data.costPerStation||[]).map(s=>(
-            <tr key={s.station}>
-              <td style={{fontWeight:600}}>{s.station}</td>
-              <td className="mono">{s.laborHrAvg}</td>
-              <td className="mono">{s.setupMin}</td>
-              <td className="mono">{s.cycleMin}</td>
-              <td className="mono" style={{color:'var(--warn)',fontWeight:600}}>{fmt$(s.laborCostUnit)}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{s.notes}</td>
-              <td><button className="btn btn-g btn-xs" onClick={()=>{setForm({...s});setModal('cs');}}>Edit</button></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>}
+      {tab==='stations'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <span className="chip">{(data.costPerStation||[]).length} stations</span>
+            <span className="chip" style={{color:'var(--warn)'}}>Total: {fmt$((data.costPerStation||[]).reduce((a,b)=>a+(b.costPerSection||0),0))}/section</span>
+            <span className="chip">{(data.costPerStation||[]).reduce((a,b)=>a+(b.timePerSectionMin||0),0).toFixed(0)} min total cycle</span>
+          </div>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({station:'',timePerSectionMin:0,laborRate:0,costPerSection:0,sectionsPerHr:0,sectionsPerDay:0,laborHrAvg:0,setupMin:0,cycleMin:0,laborCostUnit:0,notes:''});setModal('cs');}}>+ Add Station</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table>
+            <thead><tr>
+              <th>Station</th>
+              <th title="Minutes per section">Min / Section</th>
+              <th title="Labor rate per hour">Labor $/hr</th>
+              <th title="Cost per section">Cost / Section</th>
+              <th title="Sections per hour">Sections / Hr</th>
+              <th title="Sections per 8hr day">Sections / Day</th>
+              <th>Notes</th>
+              <th></th>
+            </tr></thead>
+            <tbody>{(data.costPerStation||[]).length===0&&<tr><td colSpan={8}><Empty msg="No station data — click Reset Data in Reports to load"/></td></tr>}
+            {(data.costPerStation||[]).map((s,i)=>(
+              <tr key={i}>
+                <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.timePerSectionMin||s.cycleMin||'—'}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.laborRate?'$'+s.laborRate:s.laborHrAvg?'$'+Math.round(s.laborHrAvg*60)+'est':'—'}</td>
+                <td className="mono" style={{textAlign:'center',color:'var(--warn)',fontWeight:700}}>{fmt$(s.costPerSection||s.laborCostUnit)}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerHr||'—'}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerDay||'—'}</td>
+                <td style={{fontSize:11,color:'var(--muted)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.notes}</td>
+                <td><button className="btn btn-g btn-xs" onClick={()=>{setForm({...s});setModal('cs');}}>Edit</button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </>}
 
       {modal==='month'&&<Modal title="P&L Month" onClose={()=>setModal(null)}>
         <Field label="Month (e.g. Apr 26)"><input value={form.month||''} onChange={e=>setForm(f=>({...f,month:e.target.value}))}/></Field>
@@ -28089,17 +27641,27 @@ const Finance = ({data,setData}) => {
         <Field label="Notes"><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={saveLR}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
       </Modal>}
-      {modal==='cs'&&<Modal title="Station Cost" onClose={()=>setModal(null)}>
-        <div className="grid2">
-          <Field label="Avg Labor Hrs"><input type="number" step=".1" value={form.laborHrAvg||0} onChange={e=>setForm(f=>({...f,laborHrAvg:e.target.value}))}/></Field>
-          <Field label="Setup (min)"><input type="number" value={form.setupMin||0} onChange={e=>setForm(f=>({...f,setupMin:e.target.value}))}/></Field>
+      {modal==='cs'&&<Modal title={(data.costPerStation||[]).find(s=>s.station===form.station)?'Edit Station':'Add Station'} onClose={()=>setModal(null)}>
+        <Field label="Station Name"><input value={form.station||''} onChange={e=>setForm(f=>({...f,station:e.target.value}))}/></Field>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10}}>
+          <Field label="Time Per Section (min)"><input type="number" step="0.5" value={form.timePerSectionMin||''} onChange={e=>setForm(f=>({...f,timePerSectionMin:+e.target.value,sectionsPerHr:+(60/(+e.target.value||1)).toFixed(2),sectionsPerDay:+(480/(+e.target.value||1)).toFixed(2),cycleMin:+e.target.value}))}/></Field>
+          <Field label="Labor Rate ($/hr)"><input type="number" step="0.50" value={form.laborRate||''} onChange={e=>setForm(f=>({...f,laborRate:+e.target.value,costPerSection:+(+e.target.value*(f.timePerSectionMin||0)/60).toFixed(2),laborCostUnit:+(+e.target.value*(f.timePerSectionMin||0)/60).toFixed(2)}))}/></Field>
+          <Field label="Cost Per Section ($)"><input type="number" step="0.01" value={form.costPerSection||''} onChange={e=>setForm(f=>({...f,costPerSection:+e.target.value,laborCostUnit:+e.target.value}))}/></Field>
+          <Field label="Sections Per Hr"><input type="number" step="0.01" value={form.sectionsPerHr||''} onChange={e=>setForm(f=>({...f,sectionsPerHr:+e.target.value}))}/></Field>
+          <Field label="Sections Per Day (8hr)"><input type="number" step="0.01" value={form.sectionsPerDay||''} onChange={e=>setForm(f=>({...f,sectionsPerDay:+e.target.value}))}/></Field>
+          <Field label="Setup (min)"><input type="number" value={form.setupMin||''} onChange={e=>setForm(f=>({...f,setupMin:+e.target.value}))}/></Field>
         </div>
-        <div className="grid2">
-          <Field label="Cycle (min)"><input type="number" value={form.cycleMin||0} onChange={e=>setForm(f=>({...f,cycleMin:e.target.value}))}/></Field>
-          <Field label="Labor Cost/Unit ($)"><input type="number" step=".01" value={form.laborCostUnit||0} onChange={e=>setForm(f=>({...f,laborCostUnit:e.target.value}))}/></Field>
+        <Field label="Notes" style={{marginTop:10}}><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={()=>{
+            const rec={...form};
+            if(!(data.costPerStation||[]).find(s=>s.station===rec.station))setData(d=>({...d,costPerStation:[...(d.costPerStation||[]),rec]}));
+            else setData(d=>({...d,costPerStation:(d.costPerStation||[]).map(s=>s.station===rec.station?rec:s)}));
+            setModal(null);
+          }}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {(data.costPerStation||[]).find(s=>s.station===form.station)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,costPerStation:(d.costPerStation||[]).filter(s=>s.station!==form.station)}));setModal(null);}}>Delete</button>}
         </div>
-        <Field label="Notes"><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
-        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={saveCS}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
       </Modal>}
 
       {tab==='misc'&&<>
@@ -28146,25 +27708,83 @@ const Finance = ({data,setData}) => {
         </div>
       </>}
 
-      {tab==='profitability'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-        <table><thead><tr><th>Product Family</th><th>Units Sold YTD</th><th>Revenue</th><th>Material Cost</th><th>Labor Cost</th><th>Overhead</th><th>Total Cost</th><th>Gross Profit</th><th>Margin %</th><th>Avg Sell Price</th></tr></thead>
-          <tbody>{(data.productProfitability||[]).length===0&&<tr><td colSpan={10}><Empty msg="No profitability data — add product families to track"/></td></tr>}
-          {(data.productProfitability||[]).map((p,i)=>(
-            <tr key={i}>
-              <td style={{fontWeight:600}}>{p.family}</td>
-              <td style={{textAlign:'center'}}>{p.unitsSold||'—'}</td>
-              <td style={{fontWeight:600,color:'var(--ok)'}}>{p.revenue?fmt$(p.revenue):'—'}</td>
-              <td>{p.matCost?fmt$(p.matCost):'—'}</td>
-              <td>{p.laborCost?fmt$(p.laborCost):'—'}</td>
-              <td>{p.overheadAlloc?fmt$(p.overheadAlloc):'—'}</td>
-              <td style={{fontWeight:600}}>{p.totalCost?fmt$(p.totalCost):'—'}</td>
-              <td style={{color:'var(--ok)',fontWeight:700}}>{p.grossProfit?fmt$(p.grossProfit):'—'}</td>
-              <td style={{color:p.grossMarginPct>=35?'var(--ok)':p.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{p.grossMarginPct?p.grossMarginPct.toFixed(1)+'%':'—'}</td>
-              <td>{p.avgSellPrice?fmt$(p.avgSellPrice):'—'}</td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>}
+      {tab==='profitability'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <span className="chip">{(data.productProfitability||[]).length} product lines</span>
+            <span className="chip" style={{color:'var(--ok)'}}>Total Revenue: {fmt$((data.productProfitability||[]).reduce((a,b)=>a+(b.revenue||0),0))}</span>
+            <span className="chip" style={{color:'var(--ok)'}}>Blended Margin: {(data.productProfitability||[]).length?((data.productProfitability||[]).reduce((a,b)=>a+(b.grossProfit||0),0)/Math.max((data.productProfitability||[]).reduce((a,b)=>a+(b.revenue||0),0),1)*100).toFixed(1):0}%</span>
+          </div>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'PP-'+uid(),family:'',unitsSold:0,revenue:0,matCost:0,laborCost:0,overheadAlloc:0,totalCost:0,grossProfit:0,grossMarginPct:0,avgSellPrice:0,notes:''});setModal('profit');}}>+ Add Line</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <table>
+            <thead><tr>
+              <th>Product Family</th>
+              <th>Units Sold YTD</th>
+              <th>Revenue</th>
+              <th>Mat Cost</th>
+              <th>Labor Cost</th>
+              <th>Overhead</th>
+              <th>Total Cost</th>
+              <th>Gross Profit</th>
+              <th>Margin %</th>
+              <th>Avg Price</th>
+              <th>Notes</th>
+              <th></th>
+            </tr></thead>
+            <tbody>
+              {(data.productProfitability||[]).length===0&&<tr><td colSpan={12}><Empty msg="No profitability data — click + Add Line"/></td></tr>}
+              {(data.productProfitability||[]).map((p,i)=>(
+                <tr key={i}>
+                  <td style={{fontWeight:600}}>{p.family}</td>
+                  <td style={{textAlign:'center'}}>{p.unitsSold||'—'}</td>
+                  <td style={{fontWeight:600,color:'var(--ok)'}}>{p.revenue?fmt$(p.revenue):'—'}</td>
+                  <td style={{color:'var(--muted)'}}>{p.matCost?fmt$(p.matCost):'—'}</td>
+                  <td style={{color:'var(--muted)'}}>{p.laborCost?fmt$(p.laborCost):'—'}</td>
+                  <td style={{color:'var(--muted)'}}>{p.overheadAlloc?fmt$(p.overheadAlloc):'—'}</td>
+                  <td style={{fontWeight:600}}>{p.totalCost?fmt$(p.totalCost):'—'}</td>
+                  <td style={{color:'var(--ok)',fontWeight:700}}>{p.grossProfit?fmt$(p.grossProfit):'—'}</td>
+                  <td style={{color:p.grossMarginPct>=35?'var(--ok)':p.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{p.grossMarginPct?p.grossMarginPct+'%':'—'}</td>
+                  <td className="mono">{p.avgSellPrice?fmt$(p.avgSellPrice):'—'}</td>
+                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.notes}>{p.notes||''}</td>
+                  <td><div style={{display:'flex',gap:3}}>
+                    <button className="btn btn-g btn-xs" onClick={()=>{setForm({...p});setModal('profit');}}>Edit</button>
+                    <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,productProfitability:(d.productProfitability||[]).filter(x=>x.id!==p.id)}))}>×</button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
+
+
+      {modal==='profit'&&<Modal title={(data.productProfitability||[]).find(p=>p.id===form.id)?'Edit Product Line':'Add Product Line'} onClose={()=>setModal(null)} lg>
+        <Field label="Product Family"><input value={form.family||''} onChange={e=>setForm(f=>({...f,family:e.target.value}))}/></Field>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:10}}>
+          <Field label="Units Sold YTD"><input type="number" value={form.unitsSold||''} onChange={e=>setForm(f=>({...f,unitsSold:+e.target.value}))}/></Field>
+          <Field label="Avg Sell Price ($)"><input type="number" step="0.01" value={form.avgSellPrice||''} onChange={e=>setForm(f=>({...f,avgSellPrice:+e.target.value,revenue:+(+e.target.value*(f.unitsSold||0)).toFixed(2)}))}/></Field>
+          <Field label="Revenue ($)"><input type="number" step="0.01" value={form.revenue||''} onChange={e=>setForm(f=>({...f,revenue:+e.target.value,grossProfit:+(+e.target.value-(f.totalCost||0)).toFixed(2),grossMarginPct:+(( (+e.target.value-(f.totalCost||0))/(+e.target.value||1))*100).toFixed(1)}))}/></Field>
+          <Field label="Material Cost ($)"><input type="number" step="0.01" value={form.matCost||''} onChange={e=>setForm(f=>({...f,matCost:+e.target.value,totalCost:+(+e.target.value+(f.laborCost||0)+(f.overheadAlloc||0)).toFixed(2)}))}/></Field>
+          <Field label="Labor Cost ($)"><input type="number" step="0.01" value={form.laborCost||''} onChange={e=>setForm(f=>({...f,laborCost:+e.target.value,totalCost:+((f.matCost||0)+(+e.target.value)+(f.overheadAlloc||0)).toFixed(2)}))}/></Field>
+          <Field label="Overhead Alloc ($)"><input type="number" step="0.01" value={form.overheadAlloc||''} onChange={e=>setForm(f=>({...f,overheadAlloc:+e.target.value,totalCost:+((f.matCost||0)+(f.laborCost||0)+(+e.target.value)).toFixed(2)}))}/></Field>
+          <Field label="Total Cost ($)"><input type="number" step="0.01" value={form.totalCost||''} onChange={e=>setForm(f=>({...f,totalCost:+e.target.value,grossProfit:+((f.revenue||0)-(+e.target.value)).toFixed(2),grossMarginPct:+( (((f.revenue||0)-(+e.target.value))/(f.revenue||1))*100 ).toFixed(1)}))}/></Field>
+          <Field label="Gross Profit ($)"><input type="number" step="0.01" value={form.grossProfit||''} onChange={e=>setForm(f=>({...f,grossProfit:+e.target.value}))}/></Field>
+          <Field label="Gross Margin %"><input type="number" step="0.1" value={form.grossMarginPct||''} onChange={e=>setForm(f=>({...f,grossMarginPct:+e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:10}}><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={()=>{
+            const rec={...form};
+            if(!(data.productProfitability||[]).find(p=>p.id===rec.id))setData(d=>({...d,productProfitability:[...(d.productProfitability||[]),rec]}));
+            else setData(d=>({...d,productProfitability:(d.productProfitability||[]).map(p=>p.id===rec.id?rec:p)}));
+            setModal(null);
+          }}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+        </div>
+      </Modal>}
 
       {modal==='misc'&&<Modal title={form.id&&(data.miscCharges||[]).find(x=>x.id===form.id)?'Edit Charge':'Add Misc Charge'} onClose={()=>setModal(null)} lg>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
@@ -28997,8 +28617,8 @@ const ShopRef = ({data,setData}) => {
         <span className="chip">Read-only · Maisy_08_Blueprint</span>
       </div>
       <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:14}}>
-        {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','postmfg','materialsdb','skuteference','vendorscores','calculators'].map(t=>(
-          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t}</button>
+        {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','postmfg','materialsdb','skureference','vendorscores','calculators'].map(t=>(
+          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t==='skureference'?'SKU Reference':t}</button>
         ))}
       </div>
 
@@ -29163,7 +28783,7 @@ const ShopRef = ({data,setData}) => {
           </table>
         </div>
       </div>}
-      {tab==='skuteference'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='skureference'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.skuReference||[]).length} SKUs with cut lengths, raw stock, and fixture requirements
         </div>
@@ -29172,8 +28792,8 @@ const ShopRef = ({data,setData}) => {
           {(data.skuReference||[]).map((s,i)=>(
             <tr key={i}>
               <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
-              <td style={{fontSize:11}}>{s.desc}</td>
-              <td style={{textAlign:'center'}}>{s.mfgHeight||'—'}"</td>
+              <td style={{fontSize:11}}>{s.description}</td>
+              <td style={{textAlign:'center'}}>{s.mfgHeight||'—'}</td>
               <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center'}}>{s.cutLength||'—'}"</td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{s.rawStock||'—'}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{s.partsRequired||'—'}</td>
