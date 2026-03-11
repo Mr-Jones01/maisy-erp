@@ -116,10 +116,10 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
   owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
-  shop:   ['dashboard','todo','production','orders','shopref','printcenter'],
+  shop:   ['dashboard','todo','production','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter'],
 };
 
 const BADGE = {
@@ -25495,10 +25495,16 @@ const NAVS = [
   {id:'production',icon:'◎',label:'Production'},
   {id:'inventory',icon:'◉',label:'Inventory'},
   {id:'shipping',icon:'◒',label:'Shipping'},
+  {section:'Sales Ops'},
+  {id:'salespipeline',icon:'📊',label:'Sales Pipeline'},
+  {id:'commissions',icon:'💵',label:'Commissions'},
+  {id:'shipcalc',icon:'🚚',label:'Ship Calculator'},
   {section:'Finance'},
   {id:'invoicing',icon:'◑',label:'Invoicing & A/R'},
   {id:'purchasing',icon:'◐',label:'Purchasing'},
   {id:'finance',icon:'◧',label:'Finance & P&L'},
+  {id:'payments',icon:'💳',label:'Payments'},
+  {id:'taxcenter',icon:'🧾',label:'Tax & Compliance'},
   {section:'Advanced'},
   {id:'jobcost',icon:'◬',label:'Job Costing'},
   {id:'customers',icon:'◫',label:'Customers'},
@@ -29217,6 +29223,8 @@ const Orders = ({data, setData}) => {
   const [sortDir, setSortDir] = useState('desc');
   const [customColor, setCustomColor] = useState('');
   const [customProductType, setCustomProductType] = useState('');
+  const [emailModal, setEmailModal] = useState(null);
+  const [emailForm, setEmailForm] = useState({});
 
   const orders = data.orders||[];
   const statuses = ['New','Quoted','Confirmed','In Production','Ready to Ship','Shipped','Invoiced','Completed','Cancelled'];
@@ -29427,6 +29435,760 @@ const Orders = ({data, setData}) => {
           <button className="btn btn-p" onClick={save} disabled={!form.customer}>Save</button>
         </div>
       </Modal>}
+      {emailModal&&<Modal title={'Send Order Update — '+emailModal} onClose={()=>setEmailModal(null)} lg>
+        <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,padding:'10px 14px',marginBottom:12,fontSize:12,color:'var(--acc)'}}>
+          ✉ Opens your default email client (Outlook, Apple Mail, Gmail, etc.) with this message pre-filled. Update tracking numbers or delivery details before sending.
+        </div>
+        <Field label="To (Customer Email)"><input value={emailForm.to||''} placeholder="customer@email.com" onChange={e=>setEmailForm(f=>({...f,to:e.target.value}))}/></Field>
+        <Field label="Subject" style={{marginTop:10}}><input value={emailForm.subject||''} onChange={e=>setEmailForm(f=>({...f,subject:e.target.value}))}/></Field>
+        <Field label="Message" style={{marginTop:10}}><textarea rows={12} value={emailForm.body||''} onChange={e=>setEmailForm(f=>({...f,body:e.target.value}))} style={{fontFamily:'monospace',fontSize:11,lineHeight:1.6}}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={sendEmail} disabled={!emailForm.to}>Open Email Client & Send</button>
+          <button className="btn" onClick={()=>setEmailModal(null)}>Cancel</button>
+        </div>
+      </Modal>}
+    </div>
+  );
+};
+
+
+const SalesPipeline = ({data, setData}) => {
+  const [tab, setTab] = useState('pipeline');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const [repFilter, setRepFilter] = useState('All');
+  const [stageFilter, setStageFilter] = useState('All');
+
+  const pipeline = data.salesPipeline||[];
+  const salesReps = ['Kyle','AJ','3BD','Tony','Rocky','Beth','Ryan','Fien','RC','Daniel'];
+  const stages = ['Lead','Qualified','Proposal','Negotiation','Closed Won','Closed Lost'];
+  const stageColors = {'Lead':'#818cf8','Qualified':'var(--acc)','Proposal':'var(--warn)','Negotiation':'#f59e0b','Closed Won':'var(--ok)','Closed Lost':'var(--muted)'};
+
+  const filtered = pipeline.filter(d => {
+    if(repFilter!=='All' && d.rep!==repFilter) return false;
+    if(stageFilter!=='All' && d.stage!==stageFilter) return false;
+    return true;
+  });
+
+  const active = pipeline.filter(d=>!['Closed Won','Closed Lost'].includes(d.stage));
+  const won    = pipeline.filter(d=>d.stage==='Closed Won');
+  const lost   = pipeline.filter(d=>d.stage==='Closed Lost');
+  const totalPipeline = active.reduce((s,d)=>s+(d.amount||0),0);
+  const forecast = active.reduce((s,d)=>s+((d.amount||0)*(d.probability||0)/100),0);
+  const winRate = (won.length+lost.length)>0 ? (won.length/(won.length+lost.length)*100).toFixed(0) : 0;
+  const avgDeal = won.length>0 ? (won.reduce((s,d)=>s+(d.amount||0),0)/won.length).toFixed(0) : 0;
+
+  // Funnel data
+  const funnelStages = ['Lead','Qualified','Proposal','Negotiation'];
+  const funnelData = funnelStages.map(s=>({
+    stage:s, count:pipeline.filter(d=>d.stage===s).length,
+    value:pipeline.filter(d=>d.stage===s).reduce((a,b)=>a+(b.amount||0),0)
+  }));
+
+  // Sales orders + orders combined for KPI
+  const allDeals = [...(data.salesOrders||[]).map(o=>({...o,source:'salesOrder'})), ...(data.orders||[]).map(o=>({...o,source:'order',customer:o.customer,amount:o.orderTotal,stage:o.status==='Completed'?'Closed Won':o.status==='Cancelled'?'Closed Lost':'In Progress'}))];
+  const invoiceKPI = (data.invoices||[]);
+
+  const newDeal = () => setForm({id:'PL-'+uid(),type:'Estimate',customer:'',project:'',amount:0,stage:'Lead',probability:20,rep:'',dateCreated:now(),expectedClose:'',productType:'Cable Rail',notes:''});
+  const save = () => {
+    const rec = {...form, amount:Number(form.amount||0), probability:Number(form.probability||0)};
+    if(!pipeline.find(d=>d.id===rec.id)) setData(d=>({...d,salesPipeline:[...(d.salesPipeline||[]),rec]}));
+    else setData(d=>({...d,salesPipeline:(d.salesPipeline||[]).map(p=>p.id===rec.id?rec:p)}));
+    setModal(null);
+  };
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Sales Pipeline</div>
+          <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
+            <span className="chip">{active.length} active deals</span>
+            <span className="chip" style={{color:'var(--ok)'}}>{won.length} won</span>
+            <span className="chip" style={{color:'var(--muted)'}}>{lost.length} lost</span>
+          </div>
+        </div>
+        <button className="btn btn-p" onClick={()=>{newDeal();setModal('deal');}}>+ Add Deal</button>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+        <StatCard label="Total Pipeline"  value={fmt$(totalPipeline)} icon="📊" color="var(--acc)"  sub={active.length+' active deals'}/>
+        <StatCard label="Weighted Forecast" value={fmt$(forecast)}   icon="🎯" color="var(--warn)" sub="probability-adjusted"/>
+        <StatCard label="Win Rate"         value={winRate+'%'}        icon="🏆" color="var(--ok)"   sub={won.length+' deals closed'}/>
+        <StatCard label="Avg Deal Size"    value={fmt$(avgDeal)}      icon="💰" color="#818cf8"     sub="closed won avg"/>
+      </div>
+
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['pipeline','funnel','kpi'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='kpi'?'KPI & Invoices':t}</button>)}
+      </div>
+
+      {tab==='funnel'&&<>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+          {funnelData.map(f=>(
+            <div key={f.stage} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',textAlign:'center',borderTop:`3px solid ${stageColors[f.stage]||'var(--acc)'}`}}>
+              <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>{f.stage}</div>
+              <div style={{fontSize:28,fontFamily:'Barlow Condensed',fontWeight:700,color:stageColors[f.stage]}}>{f.count}</div>
+              <div style={{fontSize:12,color:'var(--ok)',fontWeight:600,marginTop:4}}>{fmt$(f.value)}</div>
+              <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>{f.count>0?(f.value/f.count).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,','):'0'} avg</div>
+            </div>
+          ))}
+        </div>
+        <div className="card" style={{padding:'16px'}}>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:14}}>Pipeline by Rep</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr)',gap:10}}>
+            {salesReps.filter(r=>pipeline.some(d=>d.rep===r)).map(r=>{
+              const repDeals = pipeline.filter(d=>d.rep===r&&!['Closed Won','Closed Lost'].includes(d.stage));
+              const repVal = repDeals.reduce((s,d)=>s+(d.amount||0),0);
+              return(
+                <div key={r} style={{background:'var(--s2)',borderRadius:6,padding:'10px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:13}}>{r}</div>
+                    <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>{repDeals.length} deals</div>
+                  </div>
+                  <div style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',fontSize:13}}>{fmt$(repVal)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </>}
+
+      {tab==='kpi'&&<>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12,color:'var(--acc)'}}>ESTIMATES / QUOTES</div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{fontSize:12,color:'var(--muted)'}}>Open Quotes</span><span style={{fontWeight:700}}>{(data.salesOrders||[]).filter(o=>o.status==='Quoted').length}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{fontSize:12,color:'var(--muted)'}}>Pipeline Estimates</span><span style={{fontWeight:700}}>{pipeline.filter(d=>d.type==='Estimate').length}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span style={{fontSize:12,color:'var(--muted)'}}>Quote Value</span><span style={{fontWeight:700,color:'var(--warn)'}}>{fmt$((data.salesOrders||[]).filter(o=>o.status==='Quoted').reduce((a,b)=>a+(b.total||0),0))}</span></div>
+          </div>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12,color:'var(--ok)'}}>INVOICES</div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{fontSize:12,color:'var(--muted)'}}>Total Invoices</span><span style={{fontWeight:700}}>{invoiceKPI.length}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{fontSize:12,color:'var(--muted)'}}>Overdue</span><span style={{fontWeight:700,color:'var(--err)'}}>{invoiceKPI.filter(i=>i.status==='Overdue').length}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span style={{fontSize:12,color:'var(--muted)'}}>A/R Outstanding</span><span style={{fontWeight:700,color:'var(--warn)'}}>{fmt$(invoiceKPI.filter(i=>i.status!=='Paid').reduce((a,b)=>a+(b.amount||0),0))}</span></div>
+          </div>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12,color:'#f59e0b'}}>PIPELINE HEALTH</div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{fontSize:12,color:'var(--muted)'}}>Deals Stale (&gt;14d)</span><span style={{fontWeight:700,color:'var(--warn)'}}>{pipeline.filter(d=>!['Closed Won','Closed Lost'].includes(d.stage)&&d.dateCreated&&(new Date()-new Date(d.dateCreated))>14*86400000).length}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{fontSize:12,color:'var(--muted)'}}>Closing This Month</span><span style={{fontWeight:700,color:'var(--ok)'}}>{pipeline.filter(d=>d.expectedClose&&d.expectedClose.startsWith('2026-03')).length}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span style={{fontSize:12,color:'var(--muted)'}}>Avg Probability</span><span style={{fontWeight:700}}>{active.length?(active.reduce((s,d)=>s+(d.probability||0),0)/active.length).toFixed(0):0}%</span></div>
+          </div>
+        </div>
+      </>}
+
+      {tab==='pipeline'&&<>
+        <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center'}}>
+          <select value={repFilter} onChange={e=>setRepFilter(e.target.value)}>
+            <option value="All">All Reps</option>
+            {salesReps.map(r=><option key={r}>{r}</option>)}
+          </select>
+          <select value={stageFilter} onChange={e=>setStageFilter(e.target.value)}>
+            <option value="All">All Stages</option>
+            {stages.map(s=><option key={s}>{s}</option>)}
+          </select>
+          <span className="chip">{filtered.length} deals · {fmt$(filtered.reduce((s,d)=>s+(d.amount||0),0))}</span>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table style={{minWidth:900}}>
+            <thead><tr>
+              <th>ID</th><th>Customer</th><th>Project</th><th>Type</th>
+              <th>Amount</th><th>Stage</th><th>Prob%</th><th>Rep</th>
+              <th>Expected Close</th><th>Notes</th><th></th>
+            </tr></thead>
+            <tbody>
+              {filtered.length===0&&<tr><td colSpan={11}><Empty msg="No deals match filters"/></td></tr>}
+              {filtered.map(d=>(
+                <tr key={d.id}>
+                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{d.id}</td>
+                  <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{d.customer}</td>
+                  <td style={{fontSize:11,maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.project}</td>
+                  <td><span className="chip" style={{fontSize:10}}>{d.type}</span></td>
+                  <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{fmt$(d.amount)}</td>
+                  <td><span style={{background:stageColors[d.stage]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{d.stage}</span></td>
+                  <td style={{textAlign:'center',fontWeight:700,color:d.probability>=70?'var(--ok)':d.probability>=40?'var(--warn)':'var(--muted)'}}>{d.probability}%</td>
+                  <td style={{fontSize:11,color:'var(--acc)',fontWeight:600}}>{d.rep}</td>
+                  <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{d.expectedClose||'—'}</td>
+                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.notes}>{d.notes||''}</td>
+                  <td><div style={{display:'flex',gap:3}}>
+                    <button className="btn btn-g btn-xs" onClick={()=>{setForm({...d});setModal('deal');}}>Edit</button>
+                    <button className="btn btn-d btn-xs" onClick={()=>setData(d2=>({...d2,salesPipeline:(d2.salesPipeline||[]).filter(x=>x.id!==d.id)}))}>×</button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
+      {modal==='deal'&&<Modal title={pipeline.find(d=>d.id===form.id)?'Edit Deal':'New Deal'} onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+          <Field label="Deal ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Type"><select value={form.type||'Estimate'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{['Estimate','Quote','Proposal','RFQ'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Stage"><select value={form.stage||'Lead'} onChange={e=>setForm(f=>({...f,stage:e.target.value}))}>{stages.map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Customer *"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Project"><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
+          <Field label="Rep"><select value={form.rep||''} onChange={e=>setForm(f=>({...f,rep:e.target.value}))}><option value="">— Select —</option>{salesReps.map(r=><option key={r}>{r}</option>)}</select></Field>
+          <Field label="Deal Amount ($)"><input type="number" step="0.01" value={form.amount||''} onChange={e=>setForm(f=>({...f,amount:+e.target.value}))}/></Field>
+          <Field label="Probability %"><input type="number" min="0" max="100" value={form.probability||''} onChange={e=>setForm(f=>({...f,probability:+e.target.value}))}/></Field>
+          <Field label="Product Type"><select value={form.productType||'Cable Rail'} onChange={e=>setForm(f=>({...f,productType:e.target.value}))}>{['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Date Created"><input type="date" value={form.dateCreated||''} onChange={e=>setForm(f=>({...f,dateCreated:e.target.value}))}/></Field>
+          <Field label="Expected Close"><input type="date" value={form.expectedClose||''} onChange={e=>setForm(f=>({...f,expectedClose:e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:10}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={save} disabled={!form.customer}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {pipeline.find(d=>d.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,salesPipeline:(d.salesPipeline||[]).filter(x=>x.id!==form.id)}));setModal(null);}}>Delete</button>}
+        </div>
+      </Modal>}
+    </div>
+  );
+};
+
+const Commissions = ({data, setData}) => {
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const [repFilter, setRepFilter] = useState('All');
+
+  const rates = data.commissionRates||[];
+  const allOrders = [...(data.salesOrders||[]).map(o=>({...o,rep:o.salesPerson,amount:o.total})), ...(data.orders||[]).map(o=>({...o,rep:o.salesRep,amount:o.orderTotal}))];
+  const completedOrders = allOrders.filter(o=>['Completed','Shipped','Invoiced'].includes(o.status)&&o.rep);
+  const salesReps = [...new Set(rates.map(r=>r.rep))];
+
+  const getRate = rep => rates.find(r=>r.rep===rep)?.rate||4.5;
+  const getRepStats = rep => {
+    const repOrders = completedOrders.filter(o=>o.rep===rep);
+    const ytdSales = repOrders.reduce((s,o)=>s+(o.amount||0),0);
+    const commission = ytdSales * getRate(rep) / 100;
+    return {rep, ytdSales, commission, deals:repOrders.length, rate:getRate(rep), orders:repOrders};
+  };
+
+  const allStats = salesReps.filter(r=>getRate(r)>0).map(getRepStats).sort((a,b)=>b.ytdSales-a.ytdSales);
+  const totalCommissions = allStats.reduce((s,r)=>s+r.commission,0);
+  const totalSales = allStats.reduce((s,r)=>s+r.ytdSales,0);
+
+  const filtered = repFilter==='All' ? completedOrders : completedOrders.filter(o=>o.rep===repFilter);
+
+  const saveRate = () => {
+    const rec = {...form, rate:Number(form.rate||0)};
+    if(!rates.find(r=>r.rep===rec.rep)) setData(d=>({...d,commissionRates:[...(d.commissionRates||[]),rec]}));
+    else setData(d=>({...d,commissionRates:(d.commissionRates||[]).map(r=>r.rep===rec.rep?rec:r)}));
+    setModal(null);
+  };
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Commissions</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">YTD</span><span className="chip">{allStats.length} active reps</span></div>
+        </div>
+        <button className="btn btn-g" onClick={()=>{setForm({rep:'',rate:4.5,active:true,notes:''});setModal('rate');}}>⚙ Edit Rates</button>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:18}}>
+        <StatCard label="Total Commissionable Sales" value={fmt$(totalSales)} icon="📊" color="var(--acc)" sub={completedOrders.filter(o=>getRate(o.rep)>0).length+' deals'}/>
+        <StatCard label="Total Commissions Owed"     value={fmt$(totalCommissions)} icon="💵" color="var(--warn)" sub="YTD all reps"/>
+        <StatCard label="Avg Commission Rate"         value={allStats.length?(allStats.reduce((s,r)=>s+r.rate,0)/allStats.length).toFixed(1)+'%':'—'} icon="%" color="var(--ok)" sub="across active reps"/>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr)',gap:12,marginBottom:20}}>
+        {allStats.map(r=>(
+          <div key={r.rep} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',cursor:'pointer',borderTop:`3px solid var(--acc)`}} onClick={()=>setRepFilter(repFilter===r.rep?'All':r.rep)}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:15}}>{r.rep}</div>
+                <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>{r.deals} closed deals · {r.rate}% rate</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontFamily:'monospace',fontWeight:700,fontSize:14,color:'var(--ok)'}}>{fmt$(r.commission)}</div>
+                <div style={{fontSize:10,color:'var(--muted)'}}>commission</div>
+              </div>
+            </div>
+            <div style={{background:'var(--s2)',borderRadius:4,padding:'6px 10px',display:'flex',justifyContent:'space-between'}}>
+              <span style={{fontSize:11,color:'var(--muted)'}}>YTD Sales</span>
+              <span style={{fontFamily:'monospace',fontWeight:600,fontSize:11}}>{fmt$(r.ytdSales)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center'}}>
+        <select value={repFilter} onChange={e=>setRepFilter(e.target.value)}>
+          <option value="All">All Reps</option>
+          {salesReps.map(r=><option key={r}>{r}</option>)}
+        </select>
+        <span className="chip">{filtered.length} deals · {fmt$(filtered.reduce((s,o)=>s+(o.amount||0),0))}</span>
+      </div>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>Order/ID</th><th>Date</th><th>Customer</th><th>Rep</th><th>Sale Amount</th><th>Rate</th><th>Commission</th><th>Status</th></tr></thead>
+          <tbody>
+            {filtered.length===0&&<tr><td colSpan={8}><Empty msg="No closed deals found"/></td></tr>}
+            {filtered.map((o,i)=>{
+              const rate=getRate(o.rep); const comm=(o.amount||0)*rate/100;
+              return(
+                <tr key={i}>
+                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{o.id}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{o.date}</td>
+                  <td style={{fontWeight:500}}>{o.customer}</td>
+                  <td style={{fontWeight:600,color:'var(--acc)'}}>{o.rep||'—'}</td>
+                  <td style={{fontWeight:700,color:'var(--ok)'}}>{fmt$(o.amount)}</td>
+                  <td style={{textAlign:'center',color:'var(--muted)'}}>{rate}%</td>
+                  <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(comm)}</td>
+                  <td><Badge s={o.status}/></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {modal==='rate'&&<Modal title="Edit Commission Rates" onClose={()=>setModal(null)}>
+        <div className="card" style={{padding:0,overflow:'auto',marginBottom:14}}>
+          <table><thead><tr><th>Rep</th><th>Rate %</th><th>Active</th><th>Notes</th><th></th></tr></thead>
+            <tbody>{rates.map((r,i)=>(
+              <tr key={i}>
+                <td style={{fontWeight:600}}>{r.rep}</td>
+                <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{r.rate}%</td>
+                <td style={{textAlign:'center'}}>{r.active?'✅':'—'}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{r.notes}</td>
+                <td><button className="btn btn-g btn-xs" onClick={()=>{setForm({...r});setModal('editrate');}}>Edit</button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+        <button className="btn btn-p" onClick={()=>{setForm({rep:'',rate:4.5,active:true,notes:''});setModal('editrate');}}>+ Add Rep</button>
+      </Modal>}
+      {modal==='editrate'&&<Modal title="Edit Rep Rate" onClose={()=>setModal('rate')}>
+        <div className="grid2">
+          <Field label="Rep Name"><input value={form.rep||''} onChange={e=>setForm(f=>({...f,rep:e.target.value}))}/></Field>
+          <Field label="Commission Rate %"><input type="number" step="0.5" min="0" max="25" value={form.rate||''} onChange={e=>setForm(f=>({...f,rate:+e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:10}}><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={saveRate}>Save</button>
+          <button className="btn" onClick={()=>setModal('rate')}>Back</button>
+        </div>
+      </Modal>}
+    </div>
+  );
+};
+
+const Payments = ({data, setData}) => {
+  const [tab, setTab] = useState('records');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+
+  const records = data.paymentRecords||[];
+  const methods = data.paymentMethods||[];
+  const certs = data.resaleCerts||[];
+
+  const totalCaptured = records.filter(r=>r.status==='Captured').reduce((s,r)=>s+(r.amount||0),0);
+  const totalPending = records.filter(r=>r.status==='Pending').reduce((s,r)=>s+(r.amount||0),0);
+  const totalRefunded = records.filter(r=>r.status==='Refunded').reduce((s,r)=>s+(r.amount||0),0);
+
+  const typeColors = {'Deposit':'var(--acc)','Final':'var(--ok)','Partial':'var(--warn)','Refund':'var(--err)'};
+  const statusColors = {'Captured':'var(--ok)','Pending':'var(--warn)','Authorized':'#818cf8','Refunded':'var(--err)','Failed':'var(--err)'};
+
+  const saveRecord = () => {
+    const rec = {...form, amount:Number(form.amount||0)};
+    if(!records.find(r=>r.id===rec.id)) setData(d=>({...d,paymentRecords:[...(d.paymentRecords||[]),rec]}));
+    else setData(d=>({...d,paymentRecords:(d.paymentRecords||[]).map(r=>r.id===rec.id?rec:r)}));
+    setModal(null);
+  };
+  const saveMethod = () => {
+    const rec = {...form};
+    if(!methods.find(m=>m.id===rec.id)) setData(d=>({...d,paymentMethods:[...(d.paymentMethods||[]),rec]}));
+    else setData(d=>({...d,paymentMethods:(d.paymentMethods||[]).map(m=>m.id===rec.id?rec:m)}));
+    setModal(null);
+  };
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Payments</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{records.length} transactions</span></div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {tab==='records'&&<button className="btn btn-p" onClick={()=>{setForm({id:'PAY-'+uid(),date:now(),customer:'',orderId:'',amount:0,method:'',type:'Deposit',status:'Pending',ref:'',notes:''});setModal('record');}}>+ Add Payment</button>}
+          {tab==='vault'&&<button className="btn btn-g" onClick={()=>{setForm({id:'PM-'+uid(),label:'',type:'Visa',last4:'',expiry:'',customer:'',default:false,notes:''});setModal('method');}}>+ Add Method</button>}
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:18}}>
+        <StatCard label="Captured YTD"   value={fmt$(totalCaptured)} icon="✅" color="var(--ok)"   sub={records.filter(r=>r.status==='Captured').length+' transactions'}/>
+        <StatCard label="Pending"         value={fmt$(totalPending)}  icon="⏳" color="var(--warn)" sub={records.filter(r=>r.status==='Pending').length+' awaiting'}/>
+        <StatCard label="Refunded YTD"   value={fmt$(totalRefunded)} icon="↩️" color="var(--err)"  sub={records.filter(r=>r.status==='Refunded').length+' refunds'}/>
+      </div>
+
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['records','vault'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='records'?'Payment Records':'Card Vault'}</button>)}
+      </div>
+
+      {tab==='records'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>Pay #</th><th>Date</th><th>Customer</th><th>Order</th><th>Amount</th><th>Method</th><th>Type</th><th>Status</th><th>Ref #</th><th>Notes</th><th></th></tr></thead>
+          <tbody>
+            {records.length===0&&<tr><td colSpan={11}><Empty msg="No payment records yet"/></td></tr>}
+            {records.map((r,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{r.id}</td>
+                <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{r.date}</td>
+                <td style={{fontWeight:500}}>{r.customer}</td>
+                <td style={{fontFamily:'monospace',fontSize:10}}>{r.orderId||'—'}</td>
+                <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{fmt$(r.amount)}</td>
+                <td style={{fontSize:11}}>{r.method}</td>
+                <td><span style={{background:typeColors[r.type]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700}}>{r.type}</span></td>
+                <td><span style={{background:statusColors[r.status]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700}}>{r.status}</span></td>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{r.ref||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.notes}>{r.notes||''}</td>
+                <td><div style={{display:'flex',gap:3}}>
+                  <button className="btn btn-g btn-xs" onClick={()=>{setForm({...r});setModal('record');}}>Edit</button>
+                  <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,paymentRecords:(d.paymentRecords||[]).filter(x=>x.id!==r.id)}))}>×</button>
+                </div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>}
+
+      {tab==='vault'&&<>
+        <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'10px 14px',marginBottom:14,fontSize:12,color:'var(--warn)'}}>
+          🔒 Card vault stores last 4 digits only — never enter full card numbers. For live processing, connect Stripe or Square via API.
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr)',gap:12}}>
+          {methods.map((m,i)=>(
+            <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',borderLeft:`3px solid ${m.type==='Visa'?'#1a56db':m.type==='ACH'?'var(--ok)':'var(--warn)'}`}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14}}>{m.label}</div>
+                  <div style={{fontSize:11,color:'var(--muted)',marginTop:3}}>{m.type}{m.last4?' •••• '+m.last4:''}{m.expiry?' exp '+m.expiry:''}</div>
+                  <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{m.customer}</div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  {m.default&&<span className="chip" style={{background:'var(--ok)',color:'#fff',fontSize:9}}>DEFAULT</span>}
+                  <button className="btn btn-g btn-xs" onClick={()=>{setForm({...m});setModal('method');}}>Edit</button>
+                </div>
+              </div>
+              {m.notes&&<div style={{marginTop:8,fontSize:10,color:'var(--muted)',borderTop:'1px solid var(--bdr)',paddingTop:6}}>{m.notes}</div>}
+            </div>
+          ))}
+          {methods.length===0&&<div style={{gridColumn:'1/-1',textAlign:'center',padding:40,color:'var(--muted)',fontSize:13}}>No payment methods saved — click + Add Method</div>}
+        </div>
+      </>}
+
+      {modal==='record'&&<Modal title={records.find(r=>r.id===form.id)?'Edit Payment':'Add Payment'} onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="Pay #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Order ID"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
+          <Field label="Amount ($)"><input type="number" step="0.01" value={form.amount||''} onChange={e=>setForm(f=>({...f,amount:+e.target.value}))}/></Field>
+          <Field label="Payment Method"><input value={form.method||''} placeholder="Visa ****1234, ACH, Check..." onChange={e=>setForm(f=>({...f,method:e.target.value}))}/></Field>
+          <Field label="Type"><select value={form.type||'Deposit'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{['Deposit','Partial','Final','Refund','Chargeback'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Status"><select value={form.status||'Pending'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Pending','Authorized','Captured','Refunded','Failed'].map(s=><option key={s}>{s}</option>)}</select></Field>
+        </div>
+        <Field label="Reference #" style={{marginTop:10}}><input value={form.ref||''} onChange={e=>setForm(f=>({...f,ref:e.target.value}))}/></Field>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={saveRecord}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+        </div>
+      </Modal>}
+      {modal==='method'&&<Modal title={methods.find(m=>m.id===form.id)?'Edit Payment Method':'Add Payment Method'} onClose={()=>setModal(null)}>
+        <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>Enter last 4 digits only — never store full card numbers</div>
+        <div className="grid2">
+          <Field label="Label"><input value={form.label||''} placeholder="Chase Visa - Main" onChange={e=>setForm(f=>({...f,label:e.target.value}))}/></Field>
+          <Field label="Type"><select value={form.type||'Visa'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{['Visa','MasterCard','Amex','Discover','ACH','Check','Wire'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Last 4 Digits"><input value={form.last4||''} maxLength={4} placeholder="1234" onChange={e=>setForm(f=>({...f,last4:e.target.value.replace(/\D/,'')}))}/></Field>
+          <Field label="Expiry (MM/YY)"><input value={form.expiry||''} placeholder="09/27" onChange={e=>setForm(f=>({...f,expiry:e.target.value}))}/></Field>
+          <Field label="Customer / Owner"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:10}}><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={saveMethod}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {methods.find(m=>m.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,paymentMethods:(d.paymentMethods||[]).filter(m=>m.id!==form.id)}));setModal(null);}}>Remove</button>}
+        </div>
+      </Modal>}
+    </div>
+  );
+};
+
+const TaxCenter = ({data, setData}) => {
+  const [tab, setTab] = useState('calc');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const [calcAmt, setCalcAmt] = useState('');
+  const [calcState, setCalcState] = useState('ID');
+  const [calcResult, setCalcResult] = useState(null);
+
+  const certs = data.resaleCerts||[];
+  const stateTaxRates = {
+    AL:4,AK:0,AZ:5.6,AR:6.5,CA:7.25,CO:2.9,CT:6.35,DE:0,FL:6,GA:4,
+    HI:4,ID:6,IL:6.25,IN:7,IA:6,KS:6.5,KY:6,LA:4.45,ME:5.5,MD:6,
+    MA:6.25,MI:6,MN:6.875,MS:7,MO:4.225,MT:0,NE:5.5,NV:6.85,NH:0,NJ:6.625,
+    NM:5.125,NY:4,NC:4.75,ND:5,OH:5.75,OK:4.5,OR:0,PA:6,RI:7,SC:6,
+    SD:4.5,TN:7,TX:6.25,UT:4.85,VT:6,VA:5.3,WA:6.5,WV:6,WI:5,WY:4,DC:6,
+  };
+
+  const calcTax = () => {
+    const amt = parseFloat(calcAmt)||0;
+    const rate = stateTaxRates[calcState]||0;
+    const tax = amt * rate / 100;
+    setCalcResult({amt, rate, tax, total: amt + tax, state: calcState});
+  };
+
+  const saveCert = () => {
+    const rec = {...form};
+    if(!certs.find(c=>c.id===rec.id)) setData(d=>({...d,resaleCerts:[...(d.resaleCerts||[]),rec]}));
+    else setData(d=>({...d,resaleCerts:(d.resaleCerts||[]).map(c=>c.id===rec.id?rec:c)}));
+    setModal(null);
+  };
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Tax & Compliance</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}>
+            <span className="chip">{certs.filter(c=>c.status==='Active').length} active certs</span>
+            <span className="chip" style={{color:'var(--err)'}}>{certs.filter(c=>c.status==='Expired').length} expired</span>
+          </div>
+        </div>
+        <a href="https://developer.avalara.com" target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
+          <button className="btn btn-g">🔗 Avatax API</button>
+        </a>
+      </div>
+
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['calc','certs','rates'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='calc'?'Tax Calculator':t==='certs'?'Resale Certs':'State Rates'}</button>)}
+      </div>
+
+      {tab==='calc'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div className="card">
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:14}}>Sales Tax Calculator</div>
+          <Field label="Order Amount ($)"><input type="number" step="0.01" value={calcAmt} onChange={e=>setCalcAmt(e.target.value)} placeholder="0.00"/></Field>
+          <Field label="Destination State" style={{marginTop:10}}>
+            <select value={calcState} onChange={e=>setCalcState(e.target.value)}>
+              {Object.keys(stateTaxRates).sort().map(s=><option key={s} value={s}>{s} — {stateTaxRates[s]}%</option>)}
+            </select>
+          </Field>
+          <button className="btn btn-p" style={{marginTop:14,width:'100%'}} onClick={calcTax}>Calculate Tax</button>
+          {calcResult&&<div style={{marginTop:16,background:'var(--s2)',borderRadius:6,padding:'14px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)',fontSize:12}}>Subtotal</span><span style={{fontFamily:'monospace',fontWeight:600}}>{fmt$(calcResult.amt)}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)',fontSize:12}}>Tax Rate ({calcResult.state})</span><span style={{fontFamily:'monospace',color:'var(--warn)'}}>{calcResult.rate}%</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)',fontSize:12}}>Tax Amount</span><span style={{fontFamily:'monospace',color:'var(--warn)',fontWeight:700}}>{fmt$(calcResult.tax)}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',borderTop:'1px solid var(--bdr)',paddingTop:8}}><span style={{fontWeight:700}}>Total</span><span style={{fontFamily:'monospace',fontWeight:700,fontSize:15,color:'var(--ok)'}}>{fmt$(calcResult.total)}</span></div>
+          </div>}
+        </div>
+        <div className="card">
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:10}}>Avatax Integration</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginBottom:14,lineHeight:1.6}}>Connect Avalara Avatax for automated real-time tax calculation at checkout. Handles nexus, exemptions, and remittance automatically.</div>
+          <div style={{background:'var(--s2)',borderRadius:6,padding:'12px',marginBottom:12}}>
+            <div style={{fontSize:11,color:'var(--muted)',marginBottom:6}}>API Endpoint</div>
+            <div style={{fontFamily:'monospace',fontSize:11}}>https://sandbox-rest.avatax.com</div>
+          </div>
+          <div style={{background:'var(--s2)',borderRadius:6,padding:'12px',marginBottom:14}}>
+            <div style={{fontSize:11,color:'var(--muted)',marginBottom:6}}>Idaho Tax Info</div>
+            <div style={{fontSize:12}}>State rate: <strong>6%</strong> · Hayden, ID: No additional local tax · Railing/aluminum: generally taxable</div>
+          </div>
+          <a href="https://developer.avalara.com/avatax/get-started/" target="_blank" rel="noopener noreferrer" style={{textDecoration:'none',display:'block'}}>
+            <button className="btn btn-p" style={{width:'100%'}}>Open Avatax Developer Docs →</button>
+          </a>
+        </div>
+      </div>}
+
+      {tab==='certs'&&<>
+        <div style={{display:'flex',justifyContent:'flex-end',marginBottom:10}}>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'RC-'+uid(),customer:'',state:'',certNumber:'',issueDate:now(),expDate:'',status:'Active',taxExempt:true,notes:''});setModal('cert');}}>+ Add Certificate</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table>
+            <thead><tr><th>Cert #</th><th>Customer</th><th>State</th><th>Certificate #</th><th>Issued</th><th>Expires</th><th>Status</th><th>Tax Exempt</th><th></th></tr></thead>
+            <tbody>
+              {certs.length===0&&<tr><td colSpan={9}><Empty msg="No resale certificates on file"/></td></tr>}
+              {certs.map((c,i)=>(
+                <tr key={i}>
+                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{c.id}</td>
+                  <td style={{fontWeight:500}}>{c.customer}</td>
+                  <td style={{fontWeight:600}}>{c.state}</td>
+                  <td style={{fontFamily:'monospace',fontSize:11}}>{c.certNumber}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{c.issueDate}</td>
+                  <td style={{fontSize:11,color:c.status==='Expired'?'var(--err)':'var(--txt)'}}>{c.expDate}</td>
+                  <td><span style={{background:c.status==='Active'?'var(--ok)':c.status==='Expired'?'var(--err)':'var(--warn)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700}}>{c.status}</span></td>
+                  <td style={{textAlign:'center'}}>{c.taxExempt?'✅':'—'}</td>
+                  <td><div style={{display:'flex',gap:3}}>
+                    <button className="btn btn-g btn-xs" onClick={()=>{setForm({...c});setModal('cert');}}>Edit</button>
+                    <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,resaleCerts:(d.resaleCerts||[]).filter(x=>x.id!==c.id)}))}>×</button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
+      {tab==='rates'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table style={{minWidth:600}}>
+          <thead><tr><th>State</th><th>Base Rate</th><th>Notes</th></tr></thead>
+          <tbody>{Object.entries(stateTaxRates).sort().map(([s,r])=>(
+            <tr key={s}>
+              <td style={{fontWeight:600}}>{s}</td>
+              <td style={{fontFamily:'monospace',fontWeight:700,color:r===0?'var(--ok)':r>=7?'var(--err)':'var(--warn)'}}>{r}%</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{r===0?'No state sales tax':r>=7?'High tax state':r<=3?'Low tax state':''}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {modal==='cert'&&<Modal title={certs.find(c=>c.id===form.id)?'Edit Certificate':'Add Resale Certificate'} onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="Cert ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="State"><select value={form.state||''} onChange={e=>setForm(f=>({...f,state:e.target.value}))}><option value="">— Select —</option>{Object.keys(stateTaxRates).sort().map(s=><option key={s}>{s}</option>)}<option value="Multi">Multi-State</option></select></Field>
+          <Field label="Certificate #"><input value={form.certNumber||''} onChange={e=>setForm(f=>({...f,certNumber:e.target.value}))}/></Field>
+          <Field label="Issue Date"><input type="date" value={form.issueDate||''} onChange={e=>setForm(f=>({...f,issueDate:e.target.value}))}/></Field>
+          <Field label="Expiration Date"><input type="date" value={form.expDate||''} onChange={e=>setForm(f=>({...f,expDate:e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Active'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Active','Expired','Pending','Revoked'].map(s=><option key={s}>{s}</option>)}</select></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:10}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={saveCert}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+        </div>
+      </Modal>}
+    </div>
+  );
+};
+
+const ShipCalc = ({data, setData}) => {
+  const [weight, setWeight] = useState('');
+  const [pkgs, setPkgs] = useState('1');
+  const [destState, setDestState] = useState('');
+  const [freightClass, setFreightClass] = useState('70');
+  const [dims, setDims] = useState({l:'',w:'',h:''});
+  const [results, setResults] = useState(null);
+  const [history, setHistory] = useState([]);
+
+  const zones = {
+    ID:1, MT:1, WY:1, UT:1, WA:1, OR:1, NV:1,
+    CA:2, CO:2, AZ:2, NM:2, ND:2, SD:2,
+    TX:3, KS:3, NE:3, MN:3, IA:3, MO:3,
+    IL:4, WI:4, MI:4, IN:4, OH:4, KY:4, TN:4, AR:4, LA:4, MS:4, AL:4,
+    FL:5, GA:5, SC:5, NC:5, VA:5, WV:5, PA:5, NY:5, NJ:5, CT:5, MA:5, ME:5, NH:5, VT:5, RI:5, MD:5, DE:5, DC:5,
+  };
+
+  const carriers = [
+    {name:'FedEx Ground',    base:18,   perLb:0.38, minWeight:1,  maxWeight:150, ltl:false, transitDays:{1:2,2:3,3:4,4:5,5:6}},
+    {name:'UPS Ground',      base:19,   perLb:0.40, minWeight:1,  maxWeight:150, ltl:false, transitDays:{1:2,2:3,3:4,4:5,5:6}},
+    {name:'FedEx Freight',   base:85,   perLb:0.22, minWeight:151,maxWeight:2000,ltl:true,  transitDays:{1:2,2:3,3:4,4:5,5:6}},
+    {name:'R+L LTL',         base:72,   perLb:0.20, minWeight:151,maxWeight:5000,ltl:true,  transitDays:{1:1,2:2,3:3,4:4,5:5}},
+    {name:'Old Dominion LTL',base:78,   perLb:0.21, minWeight:151,maxWeight:5000,ltl:true,  transitDays:{1:2,2:3,3:4,4:5,5:5}},
+    {name:'XPO Logistics',   base:68,   perLb:0.19, minWeight:500,maxWeight:9999,ltl:true,  transitDays:{1:2,2:3,3:4,4:5,5:6}},
+  ];
+
+  const calc = () => {
+    const w = parseFloat(weight)||0;
+    const p = parseInt(pkgs)||1;
+    const zone = zones[destState]||3;
+    if(!w||!destState) return;
+
+    const res = carriers
+      .filter(c=>w>=c.minWeight&&w<=c.maxWeight)
+      .map(c=>{
+        const baseRate = c.base + (w * c.perLb);
+        const zoneMult = 1 + (zone-1)*0.08;
+        const pkgSurcharge = c.ltl ? 0 : (p-1)*4.5;
+        const fuel = baseRate * 0.185; // ~18.5% fuel surcharge
+        const total = (baseRate * zoneMult) + pkgSurcharge + fuel;
+        const transit = c.transitDays[zone]||5;
+        return {...c, zone, estimate:Math.round(total*100)/100, fuel:Math.round(fuel*100)/100, transit};
+      })
+      .sort((a,b)=>a.estimate-b.estimate);
+
+    setResults({res, weight:w, pkgs:p, destState, zone});
+    const entry = {id:'SC-'+Date.now(),date:now(),weight:w,pkgs:p,destState,zone,cheapest:res[0]?.name,lowestRate:res[0]?.estimate};
+    setHistory(h=>[entry,...h.slice(0,9)]);
+  };
+
+  const states = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'];
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div className="hd" style={{fontSize:22}}>Shipping Calculator</div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'360px 1fr',gap:20}}>
+        <div>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:14}}>Shipment Details</div>
+            <Field label="Total Weight (lbs)"><input type="number" step="0.1" value={weight} onChange={e=>setWeight(e.target.value)} placeholder="0.0"/></Field>
+            <Field label="Number of Packages" style={{marginTop:10}}><input type="number" min="1" value={pkgs} onChange={e=>setPkgs(e.target.value)}/></Field>
+            <Field label="Destination State" style={{marginTop:10}}>
+              <select value={destState} onChange={e=>setDestState(e.target.value)}>
+                <option value="">— Select State —</option>
+                {states.map(s=><option key={s}>{s}</option>)}
+              </select>
+            </Field>
+            <div style={{marginTop:10,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+              <Field label='Length"'><input type="number" value={dims.l} onChange={e=>setDims(d=>({...d,l:e.target.value}))}/></Field>
+              <Field label='Width"'><input type="number" value={dims.w} onChange={e=>setDims(d=>({...d,w:e.target.value}))}/></Field>
+              <Field label='Height"'><input type="number" value={dims.h} onChange={e=>setDims(d=>({...d,h:e.target.value}))}/></Field>
+            </div>
+            <button className="btn btn-p" style={{marginTop:14,width:'100%'}} onClick={calc} disabled={!weight||!destState}>Get Rates</button>
+            <div style={{marginTop:10,fontSize:10,color:'var(--muted)',textAlign:'center'}}>Rates are estimates only · Origin: Hayden, ID 83835</div>
+          </div>
+          {history.length>0&&<div className="card" style={{marginTop:12,padding:'12px'}}>
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,marginBottom:8}}>RECENT LOOKUPS</div>
+            {history.map((h,i)=>(
+              <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid var(--bdr)',fontSize:11}}>
+                <span>{h.weight}lbs → {h.destState}</span>
+                <span style={{color:'var(--ok)',fontWeight:700}}>{fmt$(h.lowestRate)}</span>
+              </div>
+            ))}
+          </div>}
+        </div>
+        <div>
+          {!results&&<div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
+            <div style={{fontSize:40,marginBottom:16}}>🚚</div>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:8}}>Enter shipment details to get carrier rates</div>
+            <div style={{fontSize:12}}>Covers FedEx, UPS, and LTL freight carriers · Rates include estimated fuel surcharge</div>
+          </div>}
+          {results&&<>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+              <div style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px',textAlign:'center'}}>
+                <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.1em'}}>Weight</div>
+                <div style={{fontSize:20,fontWeight:700,marginTop:4}}>{results.weight} lbs</div>
+              </div>
+              <div style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px',textAlign:'center'}}>
+                <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.1em'}}>Destination</div>
+                <div style={{fontSize:20,fontWeight:700,marginTop:4}}>{results.destState}</div>
+              </div>
+              <div style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px',textAlign:'center'}}>
+                <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.1em'}}>Zone</div>
+                <div style={{fontSize:20,fontWeight:700,marginTop:4,color:'var(--acc)'}}>Zone {results.zone}</div>
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {results.res.map((c,i)=>(
+                <div key={c.name} style={{background:'var(--s1)',border:`1px solid ${i===0?'var(--ok)':'var(--bdr)'}`,borderRadius:8,padding:'16px',display:'flex',justifyContent:'space-between',alignItems:'center',borderLeft:`4px solid ${i===0?'var(--ok)':i===1?'var(--warn)':'var(--bdr)'}`}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:14}}>{c.name}{i===0&&<span style={{marginLeft:8,background:'var(--ok)',color:'#fff',borderRadius:4,padding:'1px 6px',fontSize:10}}>BEST RATE</span>}</div>
+                    <div style={{fontSize:11,color:'var(--muted)',marginTop:4}}>{c.ltl?'LTL Freight':'Parcel'} · Est. {c.transit} business days · Includes {Math.round(c.fuel/c.estimate*100)}% fuel surcharge</div>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontFamily:'monospace',fontSize:22,fontWeight:700,color:i===0?'var(--ok)':'var(--txt)'}}>{fmt$(c.estimate)}</div>
+                    <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>{i===0?'SAVE '+fmt$(results.res[results.res.length-1].estimate-c.estimate)+' vs highest':''}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>}
+        </div>
+      </div>
     </div>
   );
 };
@@ -29650,6 +30412,47 @@ const PrintCenter = ({data}) => {
   );
 
 
+  salesPipeline: [
+    {id:'PL-001',type:'Proposal',customer:'Sunbelt Contractors',project:'Phoenix Commercial Plaza',amount:13500,stage:'Proposal',probability:60,rep:'Rocky',dateCreated:'2026-02-28',expectedClose:'2026-04-15',productType:'Glass Rail',notes:'Needs eng stamp — waiting on architect approval'},
+    {id:'PL-002',type:'Quote',customer:'Mountain States Builders',project:'Denver Rooftop Terrace',amount:8400,stage:'Qualified',probability:40,rep:'Daniel',dateCreated:'2026-03-01',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Sent quote 3/1 — follow up 3/8'},
+    {id:'PL-003',type:'Estimate',customer:'Pacific Rim Construction',project:'Seattle Mixed-Use Phase 2',amount:22800,stage:'Negotiation',probability:75,rep:'Rocky',dateCreated:'2026-02-15',expectedClose:'2026-03-20',productType:'Glass Rail',notes:'Price-sensitive — offered 5% volume discount'},
+    {id:'PL-004',type:'Proposal',customer:'Desert Sun Homes',project:'Scottsdale New Build',amount:5600,stage:'Lead',probability:20,rep:'Daniel',dateCreated:'2026-03-05',expectedClose:'2026-04-30',productType:'Cable Rail',notes:'Inbound from website — initial contact'},
+    {id:'PL-005',type:'Quote',customer:'Great Lakes Remodeling',project:'Chicago Deck Replacement',amount:3200,stage:'Closed Won',probability:100,rep:'Rocky',dateCreated:'2026-02-10',expectedClose:'2026-03-01',productType:'Cable Rail',notes:'Converted to ORD-0011 — deposit received'},
+    {id:'PL-006',type:'Estimate',customer:'Cascade Custom Homes',project:'Portland Stair Rail',amount:4800,stage:'Closed Lost',probability:0,rep:'Daniel',dateCreated:'2026-01-20',expectedClose:'2026-02-15',productType:'Stair Rail',notes:'Lost to competitor — price 15% under ours'},
+    {id:'PL-007',type:'Proposal',customer:'Frontier Builders',project:'Boise Commercial Office',amount:18500,stage:'Proposal',probability:55,rep:'Rocky',dateCreated:'2026-03-03',expectedClose:'2026-04-10',productType:'Glass Rail',notes:'Following up with architect this week'},
+    {id:'PL-008',type:'Quote',customer:'Summit Properties',project:'Park City Condo Complex',amount:31200,stage:'Negotiation',probability:70,rep:'Daniel',dateCreated:'2026-02-25',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Large job — needs 3 week lead time commitment'},
+  ],
+  commissionRates: [
+    {rep:'Kyle',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'AJ',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'3BD',rate:5.0,active:true,notes:'Channel partner — higher rate'},
+    {rep:'Tony',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Rocky',rate:0,active:true,notes:'Owner — no commission'},
+    {rep:'Beth',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Ryan',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Fien',rate:5.0,active:true,notes:'Senior rep — premium rate'},
+    {rep:'RC',rate:4.5,active:true,notes:'Standard rep rate'},
+    {rep:'Daniel',rate:0,active:true,notes:'Operations — no commission'},
+  ],
+  paymentMethods: [
+    {id:'PM-001',label:'Chase Visa - Main',type:'Visa',last4:'4521',expiry:'09/27',customer:'Maisy Railing',default:true,notes:'Primary operating card'},
+    {id:'PM-002',label:'ACH - Operating Account',type:'ACH',last4:'8847',expiry:'',customer:'Maisy Railing',default:false,notes:'Chase checking - bill pay'},
+    {id:'PM-003',label:'Henderson Deck Co. - Visa',type:'Visa',last4:'3391',expiry:'12/26',customer:'Henderson Deck Co.',default:false,notes:'Customer card on file - authorized'},
+  ],
+  paymentRecords: [
+    {id:'PAY-001',date:'2026-01-28',customer:'Henderson Deck Co.',orderId:'ORD-0001',amount:1620,method:'Visa ****3391',type:'Deposit',status:'Captured',ref:'CHG-4521',notes:'50% deposit on order'},
+    {id:'PAY-002',date:'2026-02-10',customer:'Coastal Living Design',orderId:'ORD-0002',amount:2400,method:'ACH',type:'Deposit',status:'Captured',ref:'ACH-289001',notes:''},
+    {id:'PAY-003',date:'2026-02-10',customer:'Coastal Living Design',orderId:'ORD-0002',amount:2400,method:'ACH',type:'Final',status:'Captured',ref:'ACH-289002',notes:'Balance cleared'},
+    {id:'PAY-004',date:'2026-02-18',customer:'Apex Construction',orderId:'ORD-0003',amount:3240,method:'Check',type:'Deposit',status:'Captured',ref:'CHK-10045',notes:'Check #10045'},
+    {id:'PAY-005',date:'2026-03-05',customer:'Clearwater Design Group',orderId:'ORD-0004',amount:1800,method:'Visa ****7712',type:'Deposit',status:'Captured',ref:'CHG-7712',notes:''},
+  ],
+  resaleCerts: [
+    {id:'RC-001',customer:'Henderson Deck Co.',state:'ID',certNumber:'ID-RC-20240115',issueDate:'2024-01-15',expDate:'2026-01-15',status:'Expired',taxExempt:true,notes:'Renewal requested 2/2026'},
+    {id:'RC-002',customer:'Home Depot',state:'Multi',certNumber:'HD-MULTI-2025',issueDate:'2025-01-01',expDate:'2027-01-01',status:'Active',taxExempt:true,notes:'National resale cert — all states'},
+    {id:'RC-003',customer:'Apex Construction',state:'OR',certNumber:'OR-RC-20250601',issueDate:'2025-06-01',expDate:'2027-06-01',status:'Active',taxExempt:true,notes:'Oregon contractors license on file'},
+  ],
+  emailLog: [],
+
 };
 
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────────
@@ -29701,6 +30504,12 @@ const normalizeData = (d) => {
   if (!d.quoteLog) d.quoteLog = [];
   if(!Array.isArray(d.orders))d.orders=[];
   if(!Array.isArray(d.postsMfgList))d.postsMfgList=[];
+  if(!Array.isArray(d.salesPipeline))d.salesPipeline=[];
+  if(!Array.isArray(d.commissionRates))d.commissionRates=[];
+  if(!Array.isArray(d.paymentMethods))d.paymentMethods=[];
+  if(!Array.isArray(d.paymentRecords))d.paymentRecords=[];
+  if(!Array.isArray(d.resaleCerts))d.resaleCerts=[];
+  if(!Array.isArray(d.emailLog))d.emailLog=[];
   return d;
 };
 
@@ -29710,7 +30519,7 @@ const PAGES = {
   invoicing:Invoicing, purchasing:Purchasing, finance:Finance,
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
-  shopref:ShopRef, orders:Orders, srscatalog:SRSCatalog, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
+  shopref:ShopRef, orders:Orders, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
