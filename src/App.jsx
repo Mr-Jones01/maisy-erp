@@ -71,7 +71,7 @@ const G = () => (
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
     .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
-    .card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:18px}
+    .card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:18px;overflow-x:auto}
     .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
     .ai-panel{position:fixed;right:0;top:0;bottom:0;width:370px;background:var(--s1);border-left:1px solid var(--bdr);display:flex;flex-direction:column;z-index:150}
     .ai-msg{padding:10px 12px;border-radius:7px;margin-bottom:6px;font-size:12.5px;line-height:1.55}
@@ -25878,7 +25878,7 @@ const Sales = ({data, setData}) => {
           <span className="chip">{filtered.length} results</span>
           {(search||repFilter!=='All')&&<button className="btn btn-xs" onClick={()=>{setSearch('');setRepFilter('All');}}>✕ Clear</button>}
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table>
             <thead><tr>
               <th>ID</th><th>Customer</th><th>Date</th>
@@ -25895,8 +25895,8 @@ const Sales = ({data, setData}) => {
                   <td><Badge s={o.status}/></td>
                   <td><span className="chip" style={{textTransform:'capitalize'}}>{o.type}</span></td>
                   <td style={{fontSize:11,color:'var(--acc)',fontWeight:600}}>{o.salesPerson||'—'}</td>
-                  <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
-                  <td style={{color:'var(--muted)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{o.notes}</td>
+                  <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
+                  <td style={{color:'var(--muted)',maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{o.notes}</td>
                   <td><div style={{display:'flex',gap:4}}>
                     <button className="btn btn-g btn-sm" onClick={()=>open(o)}>Edit</button>
                     <button className="btn btn-d btn-sm" onClick={()=>del(o.id)}>×</button>
@@ -25909,7 +25909,7 @@ const Sales = ({data, setData}) => {
       </>}
 
       {(tab==='catalog'||tab==='sku'||tab==='issues')&&<>
-        {tab==='catalog'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        {tab==='catalog'&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--muted)'}}>
             {(data.productCatalog||[]).length} kits in catalog
           </div>
@@ -25927,7 +25927,7 @@ const Sales = ({data, setData}) => {
             ))}</tbody>
           </table>
         </div>}
-        {tab==='sku'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        {tab==='sku'&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>SKU</th><th>Description</th><th>Sub-Category</th><th>Family</th><th>Material</th><th>Finish</th><th>SRS</th><th>Online</th><th>HD</th></tr></thead>
             <tbody>{(data.productSkuMaster||[]).length===0&&<tr><td colSpan={9}><Empty msg="No SKU master data"/></td></tr>}
             {(data.productSkuMaster||[]).map((s,i)=>(
@@ -25942,27 +25942,92 @@ const Sales = ({data, setData}) => {
             ))}</tbody>
           </table>
         </div>}
-        {tab==='issues'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
-          <table><thead><tr><th>Issue #</th><th>Date</th><th>Customer</th><th>Order</th><th>Product</th><th>Type</th><th>Sev</th><th>Root Cause</th><th>Resolution</th><th>Status</th></tr></thead>
-            <tbody>{(data.customerIssues||[]).length===0&&<tr><td colSpan={10}><Empty msg="No customer issues logged"/></td></tr>}
-            {(data.customerIssues||[]).map((iss,i)=>(
-              <tr key={i}>
-                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{iss.id}</td>
-                <td style={{fontSize:11}}>{iss.dateReported}</td>
-                <td style={{fontWeight:500}}>{iss.customer}</td>
-                <td style={{fontFamily:'monospace',fontSize:10}}>{iss.orderId}</td>
-                <td style={{fontSize:11}}>{iss.product}</td><td style={{fontSize:10}}>{iss.issueType}</td>
-                <td style={{textAlign:'center',color:iss.severity>=4?'var(--err)':iss.severity>=3?'var(--warn)':'var(--ok)',fontWeight:700}}>{iss.severity}</td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{iss.rootCause}</td>
-                <td style={{fontSize:10}}>{iss.resolution}</td>
-                <td><Badge s={iss.status||'Open'}/></td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>}
+        {tab==='issues'&&<>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              <span className="chip">{(data.customerIssues||[]).length} issues</span>
+              <span className="chip" style={{color:'var(--err)'}}>{(data.customerIssues||[]).filter(x=>x.status==='Open').length} open</span>
+              <span className="chip" style={{color:'var(--ok)'}}>{(data.customerIssues||[]).filter(x=>x.status==='Resolved').length} resolved</span>
+            </div>
+            <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'CI-'+uid(),dateReported:now(),customer:'',orderId:'',product:'',issueType:'',severity:2,rootCause:'',resolution:'',status:'Open',assignedTo:'',notes:''});setModal('ci');}}>+ Log Issue</button>
+          </div>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <table style={{minWidth:1100}}>
+              <thead><tr>
+                <th>Issue #</th><th>Date</th><th>Customer</th><th>Order</th>
+                <th>Product</th><th>Type</th><th>Sev</th><th>Root Cause</th>
+                <th>Resolution</th><th>Assigned To</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody>
+                {(data.customerIssues||[]).length===0&&<tr><td colSpan={12}><Empty msg="No customer issues logged — click + Log Issue"/></td></tr>}
+                {(data.customerIssues||[]).map((iss,i)=>(
+                  <tr key={i}>
+                    <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{iss.id}</td>
+                    <td style={{fontSize:11,whiteSpace:'nowrap'}}>{iss.dateReported}</td>
+                    <td style={{fontWeight:500,whiteSpace:'nowrap'}}>{iss.customer}</td>
+                    <td style={{fontFamily:'monospace',fontSize:10}}>{iss.orderId||'—'}</td>
+                    <td style={{fontSize:11,maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.product}>{iss.product}</td>
+                    <td><span className="chip" style={{fontSize:10}}>{iss.issueType}</span></td>
+                    <td style={{textAlign:'center',color:iss.severity>=4?'var(--err)':iss.severity>=3?'var(--warn)':'var(--ok)',fontWeight:700,fontSize:14}}>{iss.severity}</td>
+                    <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.rootCause}>{iss.rootCause||'—'}</td>
+                    <td style={{fontSize:10,maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.resolution}>{iss.resolution||'—'}</td>
+                    <td style={{fontSize:11}}>{iss.assignedTo||'—'}</td>
+                    <td><Badge s={iss.status||'Open'}/></td>
+                    <td><div style={{display:'flex',gap:3,whiteSpace:'nowrap'}}>
+                      <button className="btn btn-g btn-xs" onClick={()=>{setForm({...iss});setModal('ci');}}>Edit</button>
+                      <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,customerIssues:(d.customerIssues||[]).filter(x=>x.id!==iss.id)}))}>×</button>
+                    </div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>}
       </>}
 
-      {modal&&<Modal title={modal==='new'?'New Order / Quote':'Edit Order / Quote'} onClose={()=>setModal(null)}>
+      {modal==='ci'&&<Modal title={(data.customerIssues||[]).find(x=>x.id===form.id)?'Edit Issue':'Log New Issue'} onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+          <Field label="Issue #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Date Reported"><input type="date" value={form.dateReported||''} onChange={e=>setForm(f=>({...f,dateReported:e.target.value}))}/></Field>
+          <Field label="Status">
+            <select value={form.status||'Open'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+              {['Open','In Progress','Resolved','Closed','Won't Fix'].map(s=><option key={s}>{s}</option>)}
+            </select>
+          </Field>
+          <Field label="Customer *"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Order ID"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
+          <Field label="Assigned To"><input value={form.assignedTo||''} onChange={e=>setForm(f=>({...f,assignedTo:e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10}}>
+          <Field label="Product"><input value={form.product||''} onChange={e=>setForm(f=>({...f,product:e.target.value}))}/></Field>
+          <Field label="Issue Type">
+            <select value={form.issueType||''} onChange={e=>setForm(f=>({...f,issueType:e.target.value}))}>
+              <option value="">— Select —</option>
+              {['Wrong Color','Wrong Size','Missing Parts','Damaged','Defective Weld','Powder Coat Defect','Shipping Damage','Wrong SKU','Measurement Error','Other'].map(t=><option key={t}>{t}</option>)}
+            </select>
+          </Field>
+          <Field label="Severity (1–5)">
+            <select value={form.severity||2} onChange={e=>setForm(f=>({...f,severity:+e.target.value}))}>
+              {[1,2,3,4,5].map(n=><option key={n} value={n}>{n} — {n===1?'Minor':n===2?'Low':n===3?'Moderate':n===4?'High':'Critical'}</option>)}
+            </select>
+          </Field>
+        </div>
+        <Field label="Root Cause" style={{marginTop:10}}><textarea rows={2} value={form.rootCause||''} onChange={e=>setForm(f=>({...f,rootCause:e.target.value}))}/></Field>
+        <Field label="Resolution" style={{marginTop:8}}><textarea rows={2} value={form.resolution||''} placeholder="What was done to resolve this?" onChange={e=>setForm(f=>({...f,resolution:e.target.value}))}/></Field>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={()=>{
+            const rec={...form,severity:Number(form.severity||2)};
+            if(!(data.customerIssues||[]).find(x=>x.id===rec.id))setData(d=>({...d,customerIssues:[...(d.customerIssues||[]),rec]}));
+            else setData(d=>({...d,customerIssues:(d.customerIssues||[]).map(x=>x.id===rec.id?rec:x)}));
+            setModal(null);
+          }}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {(data.customerIssues||[]).find(x=>x.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,customerIssues:(d.customerIssues||[]).filter(x=>x.id!==form.id)}));setModal(null);}}>Delete</button>}
+        </div>
+      </Modal>}
+
+      {(modal==='new'||modal==='edit')&&<Modal title={modal==='new'?'New Order / Quote':'Edit Order / Quote'} onClose={()=>setModal(null)}>
         <div className="grid2">
           <Field label="Order ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
           <Field label="Type"><select value={form.type||'order'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}><option value="order">Order</option><option value="quote">Quote</option></select></Field>
@@ -26104,7 +26169,7 @@ const Inventory = ({data, setData, user}) => {
       {/* ITEMS TAB */}
       {tab==='items'&&<>
         <input className="search" placeholder="Search…" value={search} onChange={e=>setSearch(e.target.value)} style={{marginBottom:12,width:260}}/>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>SKU</th><th>Item</th><th>Cat</th><th>On Hand</th><th>Reorder At</th><th>Unit Cost</th><th>Value</th><th>Location</th><th/></tr></thead>
             <tbody>{filtered.map(i=>{const l=i.qty<=i.reorder;return(
               <tr key={i.id}>
@@ -26143,7 +26208,7 @@ const Inventory = ({data, setData, user}) => {
             </>;
           })()}
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Height</th><th>Width (in)</th><th>Qty</th><th>Status</th><th>Location</th></tr></thead>
             <tbody>{(data.glassInventory||[]).length===0&&<tr><td colSpan={5}><Empty msg="No glass inventory data"/></td></tr>}
             {(data.glassInventory||[]).sort((a,b)=>b.height-a.height||a.width-b.width).map((g,i)=>(
@@ -26160,7 +26225,7 @@ const Inventory = ({data, setData, user}) => {
       </>}
 
       {/* BOM TAB */}
-      {tab==='consumables'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='consumables'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>SKU</th><th>Item</th><th>Category</th><th>On Hand</th><th>Unit</th><th>Reorder At</th><th>Unit Cost</th><th>Value</th><th>Location</th></tr></thead>
           <tbody>{(data.shopConsumables||[]).length===0&&<tr><td colSpan={9}><Empty msg="No consumables data"/></td></tr>}
           {(data.shopConsumables||[]).map((c,i)=>(
@@ -26183,7 +26248,7 @@ const Inventory = ({data, setData, user}) => {
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.cycleCount||[]).length} count events</span>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({countNo:'CC-'+uid(),date:now(),location:'',category:'',item:'',systemQty:0,actualQty:0,variance:0,variancePct:0,countedBy:'',notes:''});setModal('cycle');}}>+ Log Count</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Count #</th><th>Date</th><th>Location</th><th>Category</th><th>Item</th><th>System Qty</th><th>Actual Qty</th><th>Variance</th><th>Variance %</th><th>Counted By</th><th/></tr></thead>
             <tbody>{(data.cycleCount||[]).length===0&&<tr><td colSpan={11}><Empty msg="No cycle counts yet"/></td></tr>}
             {(data.cycleCount||[]).map((c,i)=>(
@@ -26259,7 +26324,7 @@ const Inventory = ({data, setData, user}) => {
           </div>
           <button className="btn btn-p" onClick={applyAdj} disabled={!adjForm.inventoryId||!adjForm.reason}>Apply Adjustment</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--bdr)',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Adjustment History</div>
           <table><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reason</th><th>By</th></tr></thead>
             <tbody>
@@ -26304,7 +26369,7 @@ const Inventory = ({data, setData, user}) => {
             {csvPreview.length>0&&<button className="btn btn-g" onClick={()=>setCsvPreview([])}>Clear</button>}
           </div>
         </div>
-        {csvPreview.length>0&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+        {csvPreview.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <span className="hd" style={{fontSize:13}}>Import Preview — {csvPreview.length} Items</span>
             <span className="chip">{csvPreview.filter(p=>!data.inventory.find(i=>i.sku===p.sku)).length} new · {csvPreview.filter(p=>data.inventory.find(i=>i.sku===p.sku)).length} duplicates (skipped)</span>
@@ -26362,7 +26427,7 @@ const Inventory = ({data, setData, user}) => {
         </div>
         <div className="divider"/>
         <div className="hd" style={{fontSize:13,marginBottom:10}}>Components</div>
-        {bomForm.items.length>0&&<div className="card" style={{padding:0,overflow:'hidden',marginBottom:12}}>
+        {bomForm.items.length>0&&<div className="card" style={{padding:0,overflow:'auto',marginBottom:12}}>
           <table><thead><tr><th>Component</th><th>Qty</th><th>Unit</th><th>Note</th><th/></tr></thead>
             <tbody>{bomForm.items.map((item,i)=>{const inv=data.inventory.find(x=>x.id===item.inventoryId);return(
               <tr key={i}><td>{inv?.name||item.inventoryId}</td><td className="mono">{item.qty}</td><td>{item.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{item.note}</td>
@@ -26429,7 +26494,7 @@ const Production = ({data, setData, user}) => {
         <StatCard label="Avg Progress" value={avgProgress+"%"} icon="📊" color={avgProgress>=75?'var(--ok)':avgProgress>=40?'var(--warn)':'var(--err)'} sub="Across all open WOs"/>
         <StatCard label="Total Job Cost" value={fmt$(totalJobCost)} icon="💵" color="var(--acc2)" sub={"YTD Scrap: "+fmt$(scrapYTD)}/>
       </StatRow>
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>WO #</th><th>Order</th><th>Product</th><th>Station</th><th>Assigned</th><th>Status</th><th>Progress</th><th>Due</th><th>Job Cost</th><th/></tr></thead>
           <tbody>{data.workOrders.map(w=>{
             const jc=w.matCost+(w.laborHrs*w.laborRate);
@@ -26437,7 +26502,7 @@ const Production = ({data, setData, user}) => {
               <tr key={w.id}>
                 <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{w.id}</td>
                 <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{w.orderId}</td>
-                <td style={{fontWeight:500,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
+                <td style={{fontWeight:500,maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
                 <td><span className="chip">{w.station}</span></td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{w.assigned}</td>
                 <td><Badge s={w.status}/></td>
@@ -26465,7 +26530,7 @@ const Production = ({data, setData, user}) => {
           <StatCard label="Avg Cost/Event" value={(data.scrapWaste||[]).length?fmt$(scrapYTD/(data.scrapWaste||[]).length):'—'} icon="📊" color="var(--acc)" sub="Per scrap event"/>
           <StatCard label="Scrap This Month" value={fmt$((data.scrapWaste||[]).filter(s=>s.date&&s.date.slice(0,7)===now().slice(0,7)).reduce((a,b)=>a+(b.cost||0),0))} icon="📅" color="var(--acc2)" sub="Current month"/>
         </StatRow>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Date</th><th>Station</th><th>SKU / Product</th><th>Material</th><th>Qty</th><th>Unit</th><th>Est. Cost</th><th>Reason Code</th><th>Root Cause</th><th>Corrective Action</th><th>By</th></tr></thead>
             <tbody>{(data.scrapWaste||[]).length===0&&<tr><td colSpan={11}><Empty msg="No scrap events logged — great!"/></td></tr>}
             {(data.scrapWaste||[]).map((s,i)=>(
@@ -26478,8 +26543,8 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontSize:11}}>{s.unit}</td>
                 <td style={{fontWeight:700,color:'var(--err)'}}>{fmt$(s.cost)}</td>
                 <td style={{fontSize:11}}>{s.reasonCode}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.rootCause}>{s.rootCause}</td>
-                <td style={{fontSize:10,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.corrAction}>{s.corrAction}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:150,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.rootCause}>{s.rootCause}</td>
+                <td style={{fontSize:10,maxWidth:150,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.corrAction}>{s.corrAction}</td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{s.reportedBy}</td>
               </tr>
             ))}</tbody>
@@ -26501,7 +26566,7 @@ const Production = ({data, setData, user}) => {
             <button className="btn btn-p btn-sm" onClick={()=>{setForm({date:now(),time:'',reportedBy:'',type:'Near Miss',location:'',description:'',involved:'',injury:'',firstAid:'No',rootCause:'',corrAction:'',status:'Open'});setModal('safety');}}>+ Log Incident</button>
           </div>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Location</th><th>Involved</th><th>Description</th><th>Injury</th><th>Root Cause</th><th>Corrective Action</th><th>Status</th><th/></tr></thead>
             <tbody>{(data.safetyLog||[]).length===0&&<tr><td colSpan={11}><Empty msg="No incidents logged"/></td></tr>}
             {(data.safetyLog||[]).map((s,i)=>(
@@ -26511,10 +26576,10 @@ const Production = ({data, setData, user}) => {
                 <td><span className="chip" style={{color:s.type&&s.type.toLowerCase().includes('injury')?'var(--err)':s.type&&s.type.toLowerCase().includes('near')?'var(--warn)':'var(--muted)'}}>{s.type}</span></td>
                 <td style={{fontSize:11}}>{s.location}</td>
                 <td style={{fontSize:11,fontWeight:500}}>{s.involved}</td>
-                <td style={{fontSize:10,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.description}>{s.description}</td>
+                <td style={{fontSize:10,maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.description}>{s.description}</td>
                 <td style={{fontSize:10,color:'var(--err)'}}>{s.injury||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.rootCause}>{s.rootCause}</td>
-                <td style={{fontSize:10,maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.corrAction}>{s.corrAction}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.rootCause}>{s.rootCause}</td>
+                <td style={{fontSize:10,maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.corrAction}>{s.corrAction}</td>
                 <td><Badge s={s.status||'Open'}/></td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s});setModal('safety');}}>Edit</button>
@@ -26540,7 +26605,7 @@ const Production = ({data, setData, user}) => {
             <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'KZ-'+uid(),dateSubmitted:now(),submittedBy:'',area:'',description:'',benefit:'',estSavings:0,implCost:0,priority:3,status:'Submitted',dateCompleted:'',actualSavings:0,paybackMonths:0});setModal('improve');}}>+ Submit Idea</button>
           </div>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>ID</th><th>Submitted</th><th>By</th><th>Area</th><th>Description</th><th>Est $/yr</th><th>Impl Cost</th><th>Priority</th><th>Status</th><th>Actual Savings</th><th>Payback (mo)</th><th/></tr></thead>
             <tbody>{(data.improvementLog||[]).length===0&&<tr><td colSpan={12}><Empty msg="No improvement ideas yet — click + Submit Idea"/></td></tr>}
             {(data.improvementLog||[]).map((imp,i)=>(
@@ -26549,7 +26614,7 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontSize:11,whiteSpace:'nowrap'}}>{imp.dateSubmitted}</td>
                 <td style={{fontSize:11,fontWeight:500}}>{imp.submittedBy}</td>
                 <td><span className="chip">{imp.area}</span></td>
-                <td style={{fontSize:11,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={imp.description}>{imp.description}</td>
+                <td style={{fontSize:11,maxWidth:200,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={imp.description}>{imp.description}</td>
                 <td style={{color:'var(--ok)',fontWeight:700}}>{imp.estSavings?'$'+imp.estSavings.toLocaleString():'—'}</td>
                 <td style={{color:'var(--muted)'}}>{imp.implCost?'$'+imp.implCost.toLocaleString():'—'}</td>
                 <td style={{textAlign:'center'}}>{imp.priority}/5</td>
@@ -26570,7 +26635,7 @@ const Production = ({data, setData, user}) => {
         <div style={{display:'flex',justifyContent:'flex-end',marginBottom:10}}>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({date:now(),lead:'',ordersCompleted:0,ordersInProgress:0,stationsDown:'None',qualityIssues:'None',materialShortages:'None',safetyIssues:'None',tomorrowPriorities:'',notes:''});setModal('shift');}}>+ Log Shift</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Date</th><th>Lead</th><th>Completed</th><th>In Progress</th><th>Stations Down</th><th>Quality Issues</th><th>Material Shortages</th><th>Safety Issues</th><th>Tomorrow's Priorities</th><th/></tr></thead>
             <tbody>{(data.shiftHandoff||[]).length===0&&<tr><td colSpan={10}><Empty msg="No shift handoffs logged yet — click + Log Shift"/></td></tr>}
             {(data.shiftHandoff||[]).map((s,i)=>(
@@ -26636,7 +26701,7 @@ const Production = ({data, setData, user}) => {
           <div><span className="chip">{(data.defectLog||[]).length} defects</span><span className="chip" style={{color:'var(--err)',marginLeft:4}}>{(data.defectLog||[]).filter(d=>d.status==='Open').length} open</span></div>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'DEF-'+uid(),dateFound:now(),station:'',orderId:'',productType:'',defectType:'',description:'',severity:'Minor',disposition:'Rework',rootCause:'',corrAction:'',reportedBy:'',status:'Open',cost:0});setModal('defect');}}>+ Log Defect</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>ID</th><th>Date</th><th>Order</th><th>Station</th><th>Defect Type</th><th>Description</th><th>Severity</th><th>Disposition</th><th>Root Cause</th><th>Status</th><th>Cost</th><th/></tr></thead>
             <tbody>{(data.defectLog||[]).length===0&&<tr><td colSpan={12}><Empty msg="No defects logged — great!"/></td></tr>}
             {(data.defectLog||[]).map((d,i)=>(
@@ -26646,10 +26711,10 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontFamily:'monospace',fontSize:10}}>{d.orderId||'—'}</td>
                 <td><span className="chip">{d.station}</span></td>
                 <td style={{fontSize:11}}>{d.defectType}</td>
-                <td style={{fontSize:10,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.description}>{d.description}</td>
+                <td style={{fontSize:10,maxWidth:150,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.description}>{d.description}</td>
                 <td style={{color:d.severity==='Critical'?'var(--err)':d.severity==='Major'?'var(--warn)':'var(--muted)',fontWeight:600,fontSize:11}}>{d.severity}</td>
                 <td style={{fontSize:10}}>{d.disposition}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:100,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.rootCause}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:100,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.rootCause}</td>
                 <td><Badge s={d.status}/></td>
                 <td style={{color:'var(--err)',fontSize:11}}>{d.cost?'$'+d.cost:'—'}</td>
                 <td><div style={{display:'flex',gap:4}}>
@@ -26791,7 +26856,7 @@ const Purchasing = ({data, setData}) => {
           <button className={'tab'+(tab==='quotes'?' on':'')} onClick={()=>setTab('quotes')}>Quote Log</button>
           <button className={'tab'+(tab==='vnd'?' on':'')} onClick={()=>setTab('vnd')}>Vendors</button></div>
 
-      {tab==='po'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='po'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Expected</th><th/></tr></thead>
           <tbody>{data.purchaseOrders.map(p=>(
             <tr key={p.id}>
@@ -26821,7 +26886,7 @@ const Purchasing = ({data, setData}) => {
           </div>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'REQ-'+uid(),dateReq:now(),dateNeed:'',item:'',dept:'',requester:'',priority:'Medium',approvedBy:'',approvalDate:'',vendor:'',partNo:'',qty:1,unit:'EA',estCost:0,estTotal:0,status:'Requested',notes:''});setModal('req');}}>+ New Request</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Request ID</th><th>Date Req</th><th>Date Needed</th><th>Item</th><th>Dept</th><th>Requester</th><th>Priority</th><th>Vendor</th><th>Part #</th><th>Qty</th><th>Est Cost</th><th>Est Total</th><th>Status</th><th>Notes</th><th/></tr></thead>
             <tbody>{(data.orderRequests||[]).length===0&&<tr><td colSpan={15}><Empty msg="No order requests"/></td></tr>}
             {(data.orderRequests||[]).map((r,i)=>(
@@ -26850,7 +26915,7 @@ const Purchasing = ({data, setData}) => {
         </div>
       </>}
 
-{tab==='quotes'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+{tab==='quotes'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.quoteLog||[]).length} shipping quotes logged
         </div>
@@ -26875,7 +26940,7 @@ const Purchasing = ({data, setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='vnd'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='vnd'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Vendor</th><th>Contact</th><th>Category</th><th>Lead Days</th><th>Rating</th><th>YTD Spend</th><th/></tr></thead>
           <tbody>{data.vendors.map(v=>(
             <tr key={v.id}>
@@ -26987,7 +27052,7 @@ const Invoicing = ({data, setData}) => {
         <StatCard label="Total Invoices" value={data.invoices.length} icon="🧾" color="var(--acc)" sub={"Avg: "+fmt$(data.invoices.length?data.invoices.reduce((a,b)=>a+b.amount,0)/data.invoices.length:0)}/>
       </StatRow>
       {data.invoices.filter(i=>i.status==='Overdue').length>0&&<div className="alert-bar alert-err"><span style={{color:'var(--err)'}}>⚠</span><strong style={{color:'var(--err)'}}>Overdue:</strong>&nbsp;{data.invoices.filter(i=>i.status==='Overdue').map(i=>`${i.id} · ${i.customer} (${fmt$(i.amount)})`).join(' — ')}</div>}
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Invoice #</th><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th><th>Issued</th><th>Due</th><th>Paid</th><th/></tr></thead>
           <tbody>{data.invoices.map(i=>(
             <tr key={i.id}>
@@ -27052,7 +27117,7 @@ const Shipping = ({data, setData}) => {
       <div style={{display:'flex',gap:6,marginBottom:14}}>
         {['log','analysis','monthly'].map(t=><button key={t} className={'tab'+(shipTab===t?' on':'')} onClick={()=>setShipTab(t)}>{t==='log'?'Ship Log':t==='analysis'?'Carrier Analysis':'Monthly Summary'}</button>)}
       </div>
-      {shipTab==='log'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {shipTab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Shipment #</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Delivered</th><th/></tr></thead>
           <tbody>
             {(data.shipments||[]).length===0&&<tr><td colSpan={9}><Empty msg="No shipments"/></td></tr>}
@@ -27072,7 +27137,7 @@ const Shipping = ({data, setData}) => {
           </tbody>
         </table>
       </div>}
-      {shipTab==='analysis'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {shipTab==='analysis'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Carrier</th><th>Total Shipments</th><th>Total Spend</th><th>Avg Cost/Ship</th><th>Avg Transit (days)</th><th>Damage Claims</th><th>On-Time %</th><th>Rating</th><th>Notes</th></tr></thead>
           <tbody>{(data.shippingAnalysis||[]).length===0&&<tr><td colSpan={9}><Empty msg="No carrier analysis — comes from ship log data"/></td></tr>}
           {(data.shippingAnalysis||[]).map((c,i)=>(
@@ -27090,7 +27155,7 @@ const Shipping = ({data, setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {shipTab==='monthly'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {shipTab==='monthly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Month</th><th>FedEx</th><th>UPS</th><th>ABF</th><th>Estes</th><th>Old Dom</th><th>R+L</th><th>XPO</th><th>Other</th><th>TOTAL</th></tr></thead>
           <tbody>{(data.shipMonthlySummary||[]).length===0&&<tr><td colSpan={10}><Empty msg="No monthly shipping summary"/></td></tr>}
           {(data.shipMonthlySummary||[]).map((m,i)=>(
@@ -27118,7 +27183,7 @@ const Shipping = ({data, setData}) => {
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginTop:20}}>
         <div>
           <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>Carrier Performance</div>
-          <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
             <table><thead><tr><th>Carrier</th><th>Shipments</th><th>Spend</th><th>Avg/Ship</th><th>On-Time</th><th>Rating</th></tr></thead>
               <tbody>{(data.shippingAnalysis||[]).length===0&&<tr><td colSpan={6}><Empty msg="No carrier data"/></td></tr>}
               {(data.shippingAnalysis||[]).map((c,i)=>(
@@ -27136,7 +27201,7 @@ const Shipping = ({data, setData}) => {
         </div>
         <div>
           <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>Monthly Freight Spend</div>
-          <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
             <table><thead><tr><th>Month</th><th>ABF</th><th>UPS</th><th>FedEx</th><th>R+L</th><th>Total</th></tr></thead>
               <tbody>{(data.shipMonthlySummary||[]).length===0&&<tr><td colSpan={6}><Empty msg="No monthly data"/></td></tr>}
               {(data.shipMonthlySummary||[]).map((m,i)=>(
@@ -27197,13 +27262,13 @@ const JobCost = ({data,setData}) => {
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'WO-'+uid(),orderId:'',product:'',status:'Queued',matCost:0,laborHrs:0,laborRate:28,qty:1,progress:0,notes:''});setModal('woedit');}}>+ Add WO</button>
         </div>
       </div>
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>WO #</th><th>Product</th><th>Order</th><th>Status</th><th>Labor Hrs</th><th>Labor $</th><th>Material $</th><th>Total Cost</th><th>Est. Revenue</th><th>Margin</th><th/></tr></thead>
           <tbody>{wos.length===0&&<tr><td colSpan={11}><Empty msg="No work orders — add one to start tracking job costs"/></td></tr>}
           {wos.map(w=>(
             <tr key={w.id}>
               <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{w.id}</td>
-              <td style={{fontWeight:500,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
+              <td style={{fontWeight:500,maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{w.orderId||'—'}</td>
               <td><Badge s={w.status}/></td>
               <td className="mono">{w.laborHrs}h @ ${w.laborRate}</td>
@@ -27263,7 +27328,7 @@ const Customers = ({data, setData}) => {
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.customers.length} accounts</span><span className="chip">{fmt$(data.customers.reduce((a,b)=>a+b.ytd,0))} YTD</span></div></div>
         <button className="btn btn-p" onClick={()=>open()}>+ Add Customer</button>
       </div>
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Customer</th><th>Contact</th><th>Type</th><th>City</th><th>YTD Revenue</th><th>Portal</th><th/></tr></thead>
           <tbody>{data.customers.map(c=>(
             <tr key={c.id}>
@@ -27350,7 +27415,7 @@ const AutoPO = ({data, setData}) => {
           </div>
         );})}
       </div>}
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Item</th><th>Vendor</th><th>Trigger At</th><th>Order Qty</th><th>Est. Total</th><th>Enabled</th><th>Stock Now</th><th/></tr></thead>
           <tbody>{data.autoPoRules.map(r=>{const i=data.inventory.find(x=>x.id===r.inventoryId);const trg=i&&i.qty<=r.triggerQty;return(
             <tr key={r.id}>
@@ -27494,7 +27559,7 @@ const Reports = ({data,setData}) => {
             </div>
           ))}
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Order #</th><th>Customer</th><th>Product</th><th>Qty</th><th>Revenue</th><th>Mat Cost</th><th>Labor</th><th>Gross Profit</th><th>Margin %</th><th>Lead Time</th><th/></tr></thead>
             <tbody>{(data.jobHistory||[]).length===0&&<tr><td colSpan={10}><Empty msg="No job history records"/></td></tr>}
             {(data.jobHistory||[]).map((j,i)=>(
@@ -27630,7 +27695,7 @@ const Finance = ({data,setData}) => {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Month</th><th>Revenue</th><th>COGS</th><th>Gross Profit</th><th>Overhead</th><th>EBITDA</th><th>Margin</th><th/></tr></thead>
             <tbody>{data.pnlMonthly.map(m=>(
               <tr key={m.month}>
@@ -27648,7 +27713,7 @@ const Finance = ({data,setData}) => {
         </div>
       </>}
 
-      {tab==='labor'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='labor'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Role</th><th>Level</th><th>Base $/hr</th><th>OT $/hr</th><th>Burden Rate</th><th>Burdened $/hr</th><th>Notes</th><th/></tr></thead>
           <tbody>{(data.laborRates||[]).map(r=>(
             <tr key={r.id}>
@@ -27677,7 +27742,7 @@ const Finance = ({data,setData}) => {
           </div>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({station:'',timePerSectionMin:0,laborRate:0,costPerSection:0,sectionsPerHr:0,sectionsPerDay:0,laborHrAvg:0,setupMin:0,cycleMin:0,laborCostUnit:0,notes:''});setModal('cs');}}>+ Add Station</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table>
             <thead><tr>
               <th>Station</th>
@@ -27698,7 +27763,7 @@ const Finance = ({data,setData}) => {
                 <td className="mono" style={{textAlign:'center',color:'var(--warn)',fontWeight:700}}>{fmt$(s.costPerSection||s.laborCostUnit)}</td>
                 <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerHr||'—'}</td>
                 <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerDay||'—'}</td>
-                <td style={{fontSize:11,color:'var(--muted)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.notes}</td>
+                <td style={{fontSize:11,color:'var(--muted)',maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.notes}</td>
                 <td><button className="btn btn-g btn-xs" onClick={()=>{setForm({...s});setModal('cs');}}>Edit</button></td>
               </tr>
             ))}</tbody>
@@ -27761,7 +27826,7 @@ const Finance = ({data,setData}) => {
           </div>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'MC-'+uid(),date:now(),cat:'',desc:'',vendor:'',amount:0,payMethod:'Company Card',paidBy:'Daniel Jones',reimbursable:'No',approvedBy:'Daniel Jones',invoiceNo:'',notes:''});setModal('misc');}}>+ Add Charge</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Charge #</th><th>Date</th><th>Category</th><th>Description</th><th>Vendor</th><th>Amount</th><th>Payment Method</th><th>Paid By</th><th>Reimbursable?</th><th>Approved By</th><th>Invoice #</th><th>Notes</th><th/></tr></thead>
             <tbody>{(data.miscCharges||[]).length===0&&<tr><td colSpan={13}><Empty msg="No misc charges logged yet — click + Add Charge"/></td></tr>}
             {(data.miscCharges||[]).map((c,i)=>(
@@ -27769,7 +27834,7 @@ const Finance = ({data,setData}) => {
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700}}>{c.id}</td>
                 <td style={{fontSize:11,whiteSpace:'nowrap'}}>{c.date}</td>
                 <td><span className="chip">{c.cat}</span></td>
-                <td style={{fontWeight:500,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.desc}>{c.desc}</td>
+                <td style={{fontWeight:500,maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.desc}>{c.desc}</td>
                 <td style={{fontSize:11}}>{c.vendor}</td>
                 <td style={{fontWeight:700,color:c.amount>100?'var(--warn)':'var(--txt)'}}>{fmt$(c.amount)}</td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{c.payMethod}</td>
@@ -27777,7 +27842,7 @@ const Finance = ({data,setData}) => {
                 <td style={{color:c.reimbursable==='Yes'?'var(--ok)':'var(--muted)',fontWeight:c.reimbursable==='Yes'?700:400,fontSize:11}}>{c.reimbursable}</td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{c.approvedBy}</td>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{c.invoiceNo}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.notes}>{c.notes}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.notes}>{c.notes}</td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...c});setModal('misc');}}>Edit</button>
                   <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,miscCharges:(d.miscCharges||[]).filter((_,j)=>j!==i)}))}>Del</button>
@@ -27805,7 +27870,7 @@ const Finance = ({data,setData}) => {
           </div>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'PP-'+uid(),family:'',unitsSold:0,revenue:0,matCost:0,laborCost:0,overheadAlloc:0,totalCost:0,grossProfit:0,grossMarginPct:0,avgSellPrice:0,notes:''});setModal('profit');}}>+ Add Line</button>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table>
             <thead><tr>
               <th>Product Family</th>
@@ -27835,7 +27900,7 @@ const Finance = ({data,setData}) => {
                   <td style={{color:'var(--ok)',fontWeight:700}}>{p.grossProfit?fmt$(p.grossProfit):'—'}</td>
                   <td style={{color:p.grossMarginPct>=35?'var(--ok)':p.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{p.grossMarginPct?p.grossMarginPct+'%':'—'}</td>
                   <td className="mono">{p.avgSellPrice?fmt$(p.avgSellPrice):'—'}</td>
-                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.notes}>{p.notes||''}</td>
+                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:130,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.notes}>{p.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
                     <button className="btn btn-g btn-xs" onClick={()=>{setForm({...p});setModal('profit');}}>Edit</button>
                     <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,productProfitability:(d.productProfitability||[]).filter(x=>x.id!==p.id)}))}>×</button>
@@ -27966,7 +28031,7 @@ const People = ({data,setData,user}) => {
         {['employees','training','certs','efficiency','equipment','facility','positions','discipline'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='certs'?'Certifications':t==='efficiency'?'Efficiency':t==='equipment'?'Equipment':t==='facility'?'Facility Move':t}</button>)}
       </div>
 
-      {tab==='employees'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='employees'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Name</th><th>Role</th><th>Dept</th><th>Hire Date</th><th>$/hr</th><th>Status</th><th>Contact</th><th/></tr></thead>
           <tbody>{data.employees.map(e=>(
             <tr key={e.id}>
@@ -28015,7 +28080,7 @@ const People = ({data,setData,user}) => {
         </div>
       </div>}
 
-      {tab==='certs'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='certs'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Employee</th><th>Skill / Certification</th><th>Status</th><th>Badge</th></tr></thead>
           <tbody>{(data.trainingCerts||[]).length===0&&<tr><td colSpan={4}><Empty msg="No certification records — will load from Excel training matrix"/></td></tr>}
           {(data.trainingCerts||[]).map((c,i)=>(
@@ -28029,7 +28094,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='efficiency'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='efficiency'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.employeeEfficiency||[]).length} efficiency entries logged</span>
           <button className="btn btn-p btn-sm" onClick={()=>setModal('efficiency')}>+ Log Entry</button>
@@ -28053,7 +28118,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='equipment'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='equipment'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.equipmentLog||[]).length} machines tracked</span>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'EQ-'+uid(),name:'',mfr:'',model:'',serial:'',acquired:now(),cost:0,location:'',condition:3,nextPM:''});setModal('equipment');}}>+ Add Equipment</button>
@@ -28080,7 +28145,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='facility'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='facility'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>Facility move & capital projects</span>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({category:'',description:'',estCost:0,actualCost:0,vendor:'',status:'Planned',dueDate:'',paid:'No',notes:''});setModal('facility');}}>+ Add Item</button>
@@ -28107,7 +28172,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='positions'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='positions'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Position</th><th>Dept</th><th>Priority</th><th>Status</th><th>Posted</th><th>Notes</th><th/></tr></thead>
           <tbody>{data.openPositions.map(p=>(
             <tr key={p.id}>
@@ -28128,7 +28193,7 @@ const People = ({data,setData,user}) => {
 
       {tab==='discipline'&&<div>
         <div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span> Disciplinary records are confidential — admin access only.</div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Employee</th><th>Type</th><th>Date</th><th>Issue</th><th>Action Taken</th><th>Issued By</th><th/></tr></thead>
             <tbody>{data.disciplineLog.length===0&&<tr><td colSpan={7}><Empty/></td></tr>}
               {data.disciplineLog.map(d=>(
@@ -28258,7 +28323,7 @@ const Automation = ({data,setData}) => {
           </div>
         </div>
         {(data.automationPhases||[]).map(ph=>(
-          <div key={ph.id} style={{background:'var(--s1)',border:`1px solid ${ph.status==='In Progress'?'rgba(0,229,255,.2)':'var(--bdr)'}`,borderRadius:8,marginBottom:12,overflow:'hidden'}}>
+          <div key={ph.id} style={{background:'var(--s1)',border:`1px solid ${ph.status==='In Progress'?'rgba(0,229,255,.2)':'var(--bdr)'}`,borderRadius:8,marginBottom:12,overflow:'auto'}}>
             <div style={{padding:'14px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:12}} onClick={()=>toggle(ph.id)}>
               <div style={{width:32,height:32,borderRadius:8,background:`${phaseColor[ph.status]}22`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <span style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:16,color:phaseColor[ph.status]}}>{ph.id}</span>
@@ -28316,7 +28381,7 @@ const Automation = ({data,setData}) => {
       </>}
 
       {tab==='stations'&&<>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Station</th><th>Current Setup</th><th>Goal</th><th>Equipment</th><th>Budget</th><th>Completion</th><th>Status</th><th/></tr></thead>
             <tbody>{(data.automationStations||[]).length===0&&<tr><td colSpan={8}><Empty msg="No stations added — click + Add Station"/></td></tr>}
             {(data.automationStations||[]).map((s,i)=>(
@@ -28346,7 +28411,7 @@ const Automation = ({data,setData}) => {
       </>}
 
       {tab==='roadmap'&&<>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Station</th><th>Current Process</th><th>Target Automation</th><th>Equipment</th><th>Est. Cost</th><th>Labor ↓</th><th>Throughput ↑</th><th>Payback (mo)</th><th>Phase</th><th>Priority</th><th/></tr></thead>
             <tbody>{(data.automationPhasesRoadmap||[]).length===0&&<tr><td colSpan={11}><Empty msg="No roadmap items — click + Add Item"/></td></tr>}
             {(data.automationPhasesRoadmap||[]).map((s,i)=>(
@@ -28473,7 +28538,7 @@ const Sister = ({data,setData}) => {
         {['orders','labor','borrowed','fulfill'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='orders'?'Sister Orders':t==='labor'?'Sister Labor':t==='borrowed'?'Borrowed Labor':t==='fulfill'?'Fulfillment Log':t}</button>)}
       </div>
 
-      {tab==='orders'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='orders'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>ID</th><th>Description</th><th>Value</th><th>Date</th><th>Status</th><th>Notes</th><th/></tr></thead>
           <tbody>{data.sisterOrders.map(o=>(
             <tr key={o.id}>
@@ -28492,7 +28557,7 @@ const Sister = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='labor'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='labor'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Employee</th><th>Date</th><th>Hours</th><th>Rate $/hr</th><th>Billable</th><th>Task</th><th/></tr></thead>
           <tbody>{data.sisterLabor.map(l=>(
             <tr key={l.id}>
@@ -28710,7 +28775,7 @@ const ShopRef = ({data,setData}) => {
         ))}
       </div>
 
-      {tab==='fasteners'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='fasteners'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.fastenerGuide||[]).length > 0 ? (data.fastenerGuide||[]).length+' fasteners from Arsenal Supply workbook' : 'Standard fastener reference data'}
         </div>
@@ -28737,32 +28802,32 @@ const ShopRef = ({data,setData}) => {
           </tbody>
         </table>
       </div>}
-      {tab==='drills'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='drills'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Drill Size</th><th>Decimal</th><th>mm</th><th>Common Use</th></tr></thead>
           <tbody>{SHOP_DATA.drillSizes.map((r,i)=><tr key={i}><td className="mono" style={{fontWeight:700,color:'var(--acc)'}}>{r.size}</td><td className="mono">{r.decimal}</td><td className="mono">{r.mm}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.use}</td></tr>)}</tbody>
         </table>
       </div>}
 
-      {tab==='torque'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='torque'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Fastener</th><th>Material</th><th>Torque (in-lb)</th><th>Torque (ft-lb)</th><th>Notes</th></tr></thead>
           <tbody>{SHOP_DATA.torqueSpecs.map((r,i)=><tr key={i}><td style={{fontWeight:600}}>{r.fastener}</td><td>{r.material}</td><td className="mono" style={{color:'var(--warn)'}}>{r.torqueInLb}</td><td className="mono" style={{color:'var(--warn)'}}>{r.torqueFtLb}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.notes}</td></tr>)}</tbody>
         </table>
       </div>}
 
-      {tab==='tig'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='tig'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Material</th><th>Thickness</th><th>Amps</th><th>Tungsten</th><th>Filler</th><th>Gas</th><th>CFH</th><th>Notes</th></tr></thead>
           <tbody>{SHOP_DATA.tigSettings.map((r,i)=><tr key={i}><td style={{fontWeight:600}}>{r.material}</td><td className="mono">{r.thickness}</td><td className="mono" style={{color:'var(--acc)'}}>{r.ampRange}</td><td style={{fontSize:11}}>{r.tungsten}</td><td className="mono">{r.filler}</td><td style={{fontSize:11}}>{r.gas}</td><td className="mono">{r.cfh}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.notes}</td></tr>)}</tbody>
         </table>
       </div>}
 
-      {tab==='alloys'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='alloys'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Alloy</th><th>Tensile</th><th>Yield</th><th>Elongation</th><th>Machinability</th><th>Weldability</th><th>Uses</th></tr></thead>
           <tbody>{SHOP_DATA.aluminumAlloys.map((r,i)=><tr key={i}><td className="mono" style={{fontWeight:700,color:i===0?'var(--acc)':'var(--txt)'}}>{r.alloy}{i===0&&<span className="badge" style={{marginLeft:8,background:'rgba(0,229,255,.15)',color:'var(--acc)',fontSize:9}}>PRIMARY</span>}</td><td className="mono">{r.tensile}</td><td className="mono">{r.yield}</td><td className="mono">{r.elongation}</td><td>{r.machinability}</td><td>{r.weldability}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.uses}</td></tr>)}</tbody>
         </table>
       </div>}
 
       {tab==='fractions'&&<div className="grid2" style={{gap:16}}>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'10px 14px',background:'var(--s2)',borderBottom:'1px solid var(--bdr)'}}><span className="hd" style={{fontSize:12}}>Fraction → Decimal → mm</span></div>
           <table className="ref-table"><thead><tr><th>Fraction</th><th>Decimal</th><th>mm</th></tr></thead>
             <tbody>{SHOP_DATA.fractionDecimal.map((r,i)=><tr key={i}><td className="mono" style={{fontWeight:700,color:'var(--acc)'}}>{r.frac}</td><td className="mono">{r.dec}</td><td className="mono">{r.mm}</td></tr>)}</tbody>
@@ -28780,7 +28845,7 @@ const ShopRef = ({data,setData}) => {
         </div>
       </div>}
 
-      {tab==='matprops'&&<div className="card" style={{padding:0,overflow:'hidden',maxHeight:500,overflowY:'auto'}}>
+      {tab==='matprops'&&<div className="card" style={{padding:0,overflow:'auto',maxHeight:500,overflowY:'auto'}}>
         <table><thead><tr><th>Material / Component</th><th>Alloy/Grade</th><th>Condition</th><th>Tensile (ksi)</th><th>Yield (ksi)</th><th>Shear (ksi)</th><th>Elong %</th><th>Hardness BHN</th><th>Density</th></tr></thead>
           <tbody>{(data.materialProperties||[]).length===0&&<tr><td colSpan={9}><Empty msg="No material properties data loaded"/></td></tr>}
           {(data.materialProperties||[]).slice(0,60).map((m,i)=>(
@@ -28799,7 +28864,7 @@ const ShopRef = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='weldref'&&<div className="card" style={{padding:0,overflow:'hidden',maxHeight:500,overflowY:'auto'}}>
+      {tab==='weldref'&&<div className="card" style={{padding:0,overflow:'auto',maxHeight:500,overflowY:'auto'}}>
         <table><thead><tr><th>Thickness</th><th>Joint Type</th><th>Filler Dia</th><th>Filler/Inch</th><th>Amps Range</th><th>Tungsten Dia</th><th>Weld Time/in (sec)</th><th>Weld Time/ft</th></tr></thead>
           <tbody>{(data.weldingFab||[]).length===0&&<tr><td colSpan={8}><Empty msg="No welding reference data loaded"/></td></tr>}
           {(data.weldingFab||[]).slice(0,60).map((w,i)=>(
@@ -28822,7 +28887,7 @@ const ShopRef = ({data,setData}) => {
         <MatCostCalc/>
       </div>}
 
-      {tab==='postmfg'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='postmfg'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           Post manufacturing reference — {(data.postsMfgList||[]).length} SKUs · MFG height, cut lengths, raw stock & tooling from GODMODE 📐 SKU Reference
         </div>
@@ -28846,7 +28911,7 @@ const ShopRef = ({data,setData}) => {
                 <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)',textAlign:'center',whiteSpace:'nowrap'}}>{p.cutLength||'—'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap'}}>{p.rawStock||'—'}</td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{p.partsRequired||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.tooling||''}>{p.tooling||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.tooling||''}>{p.tooling||'—'}</td>
               </tr>
             ))}
           </tbody>
@@ -28862,7 +28927,7 @@ const ShopRef = ({data,setData}) => {
             });
           }}/>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Item ID</th><th>Name / Description</th><th>Category</th><th>Unit</th><th>Unit Cost</th><th>Vendor</th><th>Lead Time</th><th>Min Order</th><th>Last Updated</th></tr></thead>
             <tbody>{(data.materialsDB||[]).length===0&&<tr><td colSpan={9}><Empty msg="No materials DB data"/></td></tr>}
             {(data.materialsDB||[]).map((m,i)=>(
@@ -28885,7 +28950,7 @@ const ShopRef = ({data,setData}) => {
           </table>
         </div>
       </div>}
-      {tab==='skureference'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='skureference'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.skuReference||[]).length} SKUs with cut lengths, raw stock, and fixture requirements
         </div>
@@ -28905,7 +28970,7 @@ const ShopRef = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='vendorscores'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='vendorscores'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           Vendor scorecards — rated 1–5 on delivery, quality, pricing, service, lead time
         </div>
@@ -28925,7 +28990,7 @@ const ShopRef = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='borrowed'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='borrowed'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.borrowedLabor||[]).length} entries · {(data.borrowedLabor||[]).reduce((a,b)=>a+(b.totalHrs||0),0).toFixed(0)} hrs · {fmt$((data.borrowedLabor||[]).reduce((a,b)=>a+(b.billable||0),0))} billable
         </div>
@@ -28936,7 +29001,7 @@ const ShopRef = ({data,setData}) => {
               <td style={{color:'var(--muted)',fontSize:10}}>{b.entry||i+1}</td>
               <td style={{fontWeight:600}}>{b.employee}</td>
               <td style={{fontSize:11}}>{b.date}</td>
-              <td style={{fontSize:11,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.task}</td>
+              <td style={{fontSize:11,maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.task}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{b.location}</td>
               <td style={{textAlign:'center'}}>{b.onSiteHrs||'—'}</td>
               <td style={{textAlign:'center'}}>{b.transferHrs||'—'}</td>
@@ -28948,7 +29013,7 @@ const ShopRef = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='fulfill'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='fulfill'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.orderFulfillment||[]).length} orders · {fmt$((data.orderFulfillment||[]).reduce((a,b)=>a+(b.value||0),0))} total value
         </div>
@@ -29080,7 +29145,7 @@ const KPIDashboard = ({data,setData}) => {
       <div style={{display:'flex',gap:6,marginBottom:14}}>
         {['weekly','monthly','targets','stations'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='stations'?'Station Output':t}</button>)}
       </div>
-      {tab==='weekly'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='weekly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th><th>Score</th><th/></tr></thead>
           <tbody>{weekly.length===0&&<tr><td colSpan={11}><Empty msg="No data — click + Log Week"/></td></tr>}
           {weekly.map((w,i)=>(
@@ -29099,20 +29164,20 @@ const KPIDashboard = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='monthly'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='monthly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Month</th><th>Avg On-Time %</th><th>Avg FPY %</th><th>Avg Lead Time</th><th>Avg WIP</th><th>Total Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th></tr></thead>
           <tbody>{monthly.length===0&&<tr><td colSpan={9}><Empty msg="No monthly data"/></td></tr>}
           {monthly.map((m,i)=><tr key={i}><td style={{fontWeight:600}}>{m.month}</td><td>{m.avgOnTimePct||'—'}</td><td>{m.avgFpyPct||'—'}</td><td>{m.avgLeadTime||'—'}</td><td>{m.avgWip||'—'}</td><td>{m.totalScrap?'$'+m.totalScrap:'—'}</td><td>{m.totalSafety||'—'}</td><td>{m.avgDailyOutput||'—'}</td><td>{m.totalReworkHrs||'—'}</td></tr>)}
           </tbody>
         </table>
       </div>}
-      {tab==='targets'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='targets'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>KPI Metric</th><th>Green Target</th><th>Yellow</th><th>Red</th><th>Unit</th><th>Notes</th></tr></thead>
           <tbody>{targets.map((t,i)=><tr key={i}><td style={{fontWeight:600}}>{t.metric}</td><td style={{color:'var(--ok)',fontWeight:700}}>{t.green?(+t.green*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--warn)'}}>{t.yellow?(+t.yellow*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--err)'}}>{t.red?(+t.red*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--muted)'}}>{t.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td></tr>)}
           </tbody>
         </table>
       </div>}
-      {tab==='stations'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='stations'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Hr</th><th>Sections/Day</th><th>Labor $/Day</th><th>Consumable $/Day</th><th>Total $/Day</th></tr></thead>
           <tbody>{station.map((s,i)=><tr key={i}><td style={{fontWeight:600}}>{s.station}</td><td>{s.timePerSectionMin?(+s.timePerSectionMin).toFixed(2):'—'}</td><td>{s.sectionsPerHour?(+s.sectionsPerHour).toFixed(1):'—'}</td><td style={{fontWeight:600,color:'var(--acc)'}}>{s.sectionsPerDay?(+s.sectionsPerDay).toFixed(0):'—'}</td><td>${s.laborDollarDay?(+s.laborDollarDay).toFixed(0):'—'}</td><td>${s.consumableDollarDay?(+s.consumableDollarDay).toFixed(2):'—'}</td><td style={{fontWeight:700}}>${s.totalProcessDollarDay?(+s.totalProcessDollarDay).toFixed(0):'—'}</td></tr>)}
           </tbody>
@@ -29271,19 +29336,19 @@ const Orders = ({data, setData}) => {
                 <td style={{fontSize:11,whiteSpace:'nowrap',color:(o.dueDate&&o.dueDate<now()&&!['Completed','Shipped','Invoiced','Cancelled'].includes(o.status))?'var(--err)':'inherit'}}>{o.dueDate||'—'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{o.customer}</td>
                 <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.shipTo||'—'}</td>
-                <td style={{fontSize:11,maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.project}>{o.project||'—'}</td>
+                <td style={{fontSize:11,maxWidth:130,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.project}>{o.project||'—'}</td>
                 <td style={{fontSize:11,color:'var(--acc)',whiteSpace:'nowrap'}}>{o.productType}</td>
                 <td><span style={{background:typeColors[o.orderType]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.orderType||'New Order'}</span></td>
                 <td style={{textAlign:'center',color:o.lineQty>0?'var(--txt)':'var(--muted)'}}>{o.lineQty||'—'}</td>
                 <td style={{textAlign:'center',color:o.stairQty>0?'var(--txt)':'var(--muted)'}}>{o.stairQty||'—'}</td>
                 <td style={{textAlign:'center',color:o.cornerQty>0?'var(--txt)':'var(--muted)'}}>{o.cornerQty||'—'}</td>
                 <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'—'}</td>
                 <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'—'}</td>
                 <td><span style={{background:statusColors[o.status]||'var(--muted)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.status}</span></td>
                 <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'—'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap',color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||''}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||''}</td>
                 <td style={{whiteSpace:'nowrap'}}><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-xs" onClick={()=>{setForm({...o});setModal('order');}}>Edit</button>
                   <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,orders:(d.orders||[]).filter(x=>x.id!==o.id)}))}>×</button>
@@ -29405,7 +29470,7 @@ const SRSCatalog = ({data,setData}) => {
           <select value={catFilter} onChange={e=>setCatFilter(e.target.value)}>{cats.map(c=><option key={c}>{c}</option>)}</select>
           <span className="chip">{filtered.length} results</span>
         </div>
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Category</th><th>SKU</th><th>Common Name</th><th>Technical Description</th><th>SRS Stock</th><th>GS1 Prefix</th><th>GTIN</th><th>UPC</th><th>Wt (lb)</th><th>Length</th><th/></tr></thead>
             <tbody>{filtered.length===0&&<tr><td colSpan={11}><Empty msg="No SKUs match"/></td></tr>}
             {filtered.map((s,i)=>(
@@ -29413,7 +29478,7 @@ const SRSCatalog = ({data,setData}) => {
                 <td style={{fontSize:10,color:'var(--muted)'}}>{s.category}</td>
                 <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
                 <td style={{fontWeight:500}}>{s.commonName}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.techDesc}>{s.techDesc}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.techDesc}>{s.techDesc}</td>
                 <td style={{textAlign:'center',fontWeight:600}}>{s.srsStock||'—'}</td>
                 <td style={{fontFamily:'monospace',fontSize:10}}>{s.gs1Prefix}</td>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{s.gtin}</td>
@@ -29429,7 +29494,7 @@ const SRSCatalog = ({data,setData}) => {
           </table>
         </div>
       </>}
-      {tab==='dims'&&<div className="card" style={{padding:0,overflow:'hidden'}}>
+      {tab==='dims'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Common Name</th><th>Weight (lb)</th><th>Length</th><th>Width</th><th>Height</th></tr></thead>
           <tbody>{dims.length===0&&<tr><td colSpan={5}><Empty msg="No dimension data"/></td></tr>}
           {dims.map((d,i)=><tr key={i}><td>{d.commonName}</td><td>{d.weightLb||'—'}</td><td>{d.length||'—'}</td><td>{d.width||'—'}</td><td>{d.height||'—'}</td></tr>)}
@@ -29491,7 +29556,7 @@ const LegacyOrders = ({data,setData}) => {
         {Object.entries(byType).slice(0,8).map(([type,count])=>(
           <div key={type} onClick={()=>setTypeFilter(type===typeFilter?'All':type)}
             style={{background:typeFilter===type?'rgba(99,102,241,.15)':'var(--s1)',border:'1px solid '+(typeFilter===type?'rgba(99,102,241,.5)':'var(--bdr)'),borderRadius:6,padding:'10px 12px',cursor:'pointer'}}>
-            <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{type}</div>
+            <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:3,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{type}</div>
             <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,color:'#818cf8'}}>{count}</div>
           </div>
         ))}
@@ -29501,7 +29566,7 @@ const LegacyOrders = ({data,setData}) => {
         <span className="chip">{filtered.length} results</span>
         {typeFilter!=='All'&&<button className="btn btn-xs" onClick={()=>setTypeFilter('All')}>Clear Filter</button>}
       </div>
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>ID</th><th>Customer</th><th>Product Type</th><th>Date</th><th>Ship To</th><th>Line Qty</th><th>Stair Qty</th><th>Corner Qty</th><th/></tr></thead>
           <tbody>{filtered.length===0&&<tr><td colSpan={9}><Empty msg="No orders match"/></td></tr>}
           {filtered.slice(0,300).map(o=>(
