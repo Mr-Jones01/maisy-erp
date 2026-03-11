@@ -29263,6 +29263,21 @@ const Orders = ({data, setData}) => {
     setModal(null);
   };
 
+  const emailTemplates = {
+    'New':          o => ({subject:'Maisy Railing — Order '+o.id+' Received',         body:'Hi '+o.customer+',\n\nThank you for your order! We received Order '+o.id+' for '+( o.project||'your project')+' and it is now in our queue.\n\nDetails:\n• Product: '+o.productType+'\n• Color: '+o.color+'\n• Line Posts: '+( o.lineQty||0)+' | Stair: '+(o.stairQty||0)+' | Corner: '+(o.cornerQty||0)+'\n• Due Date: '+(o.dueDate||'TBD')+'\n\nWe will keep you updated as your order progresses.\n\nBest regards,\nDaniel Jones | Director of Operations\nMaisy Railing | (208) 603-8149'}),
+    'Confirmed':    o => ({subject:'Maisy Railing — Order '+o.id+' Confirmed',         body:'Hi '+o.customer+',\n\nYour order '+o.id+' has been CONFIRMED and scheduled for production.\n\nProject: '+(o.project||'—')+'\nDue Date: '+(o.dueDate||'TBD')+'\nColor: '+o.color+'\n\nWe will notify you when it moves to production.\n\nBest regards,\nDaniel Jones | Maisy Railing'}),
+    'In Production':o => ({subject:'Maisy Railing — Order '+o.id+' In Production',     body:'Hi '+o.customer+',\n\nYour order '+o.id+' is now IN PRODUCTION! Our team is actively building your railing.\n\nExpected completion: '+(o.dueDate||'TBD')+'\n\nWe will notify you when it is ready to ship.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
+    'Ready to Ship':o => ({subject:'Maisy Railing — Order '+o.id+' Ready to Ship!',    body:'Hi '+o.customer+',\n\nExciting news — your order '+o.id+' is READY TO SHIP!\n\nWe will be scheduling carrier pickup shortly and you will receive a tracking number once it ships.\n\nOrder: '+o.id+' | '+o.productType+' | '+o.color+'\nBalance Due: $'+(o.balance||0).toFixed(2)+'\n\nPlease confirm your delivery address and any special instructions.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
+    'Shipped':      o => ({subject:'Maisy Railing — Order '+o.id+' Has Shipped!',      body:'Hi '+o.customer+',\n\nYour order '+o.id+' has shipped!\n\nCarrier: [Carrier Name]\nTracking #: [Tracking Number]\nEstimated Delivery: [Date]\n\nBalance Due: $'+(o.balance||0).toFixed(2)+'\n\nThank you for your business. If you have any issues please contact us immediately.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
+    'Completed':    o => ({subject:'Maisy Railing — Order '+o.id+' Complete — Thank You!', body:'Hi '+o.customer+',\n\nOrder '+o.id+' is now marked complete. Thank you for choosing Maisy Railing!\n\nWe would love your feedback. If you are happy with your railing, please consider leaving us a review.\n\nWe look forward to working with you again.\n\nBest regards,\nDaniel Jones | Maisy Railing'}),
+  };
+  const sendEmail = () => {
+    const mailtoUrl = 'mailto:'+emailForm.to+'?subject='+encodeURIComponent(emailForm.subject)+'&body='+encodeURIComponent(emailForm.body);
+    window.open(mailtoUrl);
+    const log = {id:'EMAIL-'+uid(),date:now(),to:emailForm.to,subject:emailForm.subject,orderId:emailForm.orderId,status:'Sent'};
+    setData(d=>({...d,emailLog:[...(d.emailLog||[]),log]}));
+    setEmailModal(null);
+  };
   const sortBy=f=>{if(sortField===f)setSortDir(d=>d==='asc'?'desc':'asc');else{setSortField(f);setSortDir('asc');}};
   const SortTh=({f,label})=><th onClick={()=>sortBy(f)} style={{cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>{label}{sortField===f?(sortDir==='asc'?' ▲':' ▼'):''}</th>;
 
@@ -29535,7 +29550,7 @@ const SalesPipeline = ({data, setData}) => {
         </div>
         <div className="card" style={{padding:'16px'}}>
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:14}}>Pipeline by Rep</div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr)',gap:10}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10}}>
             {salesReps.filter(r=>pipeline.some(d=>d.rep===r)).map(r=>{
               const repDeals = pipeline.filter(d=>d.rep===r&&!['Closed Won','Closed Lost'].includes(d.stage));
               const repVal = repDeals.reduce((s,d)=>s+(d.amount||0),0);
@@ -29692,7 +29707,7 @@ const Commissions = ({data, setData}) => {
         <StatCard label="Avg Commission Rate"         value={allStats.length?(allStats.reduce((s,r)=>s+r.rate,0)/allStats.length).toFixed(1)+'%':'—'} icon="%" color="var(--ok)" sub="across active reps"/>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr)',gap:12,marginBottom:20}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12,marginBottom:20}}>
         {allStats.map(r=>(
           <div key={r.rep} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',cursor:'pointer',borderTop:`3px solid var(--acc)`}} onClick={()=>setRepFilter(repFilter===r.rep?'All':r.rep)}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
@@ -29858,7 +29873,7 @@ const Payments = ({data, setData}) => {
         <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'10px 14px',marginBottom:14,fontSize:12,color:'var(--warn)'}}>
           🔒 Card vault stores last 4 digits only — never enter full card numbers. For live processing, connect Stripe or Square via API.
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr)',gap:12}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:12}}>
           {methods.map((m,i)=>(
             <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',borderLeft:`3px solid ${m.type==='Visa'?'#1a56db':m.type==='ACH'?'var(--ok)':'var(--warn)'}`}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
