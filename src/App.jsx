@@ -25879,6 +25879,19 @@ const INIT = {
   costPerStation: [],
   bom: [],
   adjustmentLog: [],
+
+  orders: [
+    {id:'ORD-0001',date:'2026-01-08',dueDate:'2026-01-28',customer:'Henderson Deck Co.',po:'HDC-2601',shipTo:'Boise, ID',project:'Boise Residential Deck',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post — surface mount, matte black',lineQty:12,stairQty:6,cornerQty:0,topRailQty:0,lengths:'12x8ft, 4x6ft',color:'Matte Black',status:'Completed',orderTotal:3240,deposit:1620,balance:0,salesRep:'Daniel',notes:'Repeat customer — fast pay'},
+    {id:'ORD-0002',date:'2026-01-15',dueDate:'2026-02-10',customer:'Coastal Living Design',po:'CLD-289',shipTo:'San Diego, CA',project:'San Diego Condo Reno',productType:'Glass Rail',orderType:'New Order',description:'FM 36" glass post — fascia mount, satin silver',lineQty:12,stairQty:0,cornerQty:2,topRailQty:0,lengths:'10x10ft, 2x8ft',color:'Satin Silver',status:'Completed',orderTotal:4800,deposit:2400,balance:0,salesRep:'Rocky',notes:''},
+    {id:'ORD-0003',date:'2026-01-22',dueDate:'2026-02-18',customer:'Apex Construction',po:'APC-1145',shipTo:'Portland, OR',project:'Portland Mixed-Use',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post — surface mount, matte black',lineQty:24,stairQty:8,cornerQty:4,topRailQty:0,lengths:'20x10ft, 8x6ft',color:'Matte Black',status:'Shipped',orderTotal:6480,deposit:3240,balance:3240,salesRep:'Daniel',notes:'4 pkg pallets — LTL freight'},
+    {id:'ORD-0004',date:'2026-02-03',dueDate:'2026-03-05',customer:'Clearwater Design Group',po:'CDG-778',shipTo:'Scottsdale, AZ',project:'Scottsdale Custom Home',productType:'Glass Rail',orderType:'New Order',description:'FM 42" glass post — fascia, white gloss',lineQty:8,stairQty:0,cornerQty:0,topRailQty:8,lengths:'6x12ft, 2x8ft',color:'White Gloss',status:'In Production',orderTotal:3600,deposit:1800,balance:1800,salesRep:'Rocky',notes:'Special order finish — 10 day cure'},
+    {id:'ORD-0005',date:'2026-02-10',dueDate:'2026-03-12',customer:'Home Depot #4521',po:'HD-98847',shipTo:'Seattle, WA',project:'Store Stock Replenishment',productType:'Cable Rail',orderType:'New Order',description:'SM 36" & 42" mix — black, bulk',lineQty:36,stairQty:12,cornerQty:0,topRailQty:0,lengths:'30x10ft, 12x8ft',color:'Matte Black',status:'In Production',orderTotal:7680,deposit:0,balance:7680,salesRep:'Daniel',notes:'Net-30 terms'},
+    {id:'ORD-0006',date:'2026-02-14',dueDate:'2026-03-20',customer:'Alpine Builders',po:'AB-504',shipTo:'Vail, CO',project:'Vail Mountain Cabin',productType:'Stair Rail',orderType:'New Order',description:'Stair cable post SM — angled, bronze',lineQty:4,stairQty:10,cornerQty:0,topRailQty:4,lengths:'4x12ft, 6x8ft, 4x4ft',color:'Bronze',status:'Confirmed',orderTotal:3920,deposit:1960,balance:1960,salesRep:'Rocky',notes:'Ship via FedEx Ground — no LTL'},
+    {id:'ORD-0007',date:'2026-02-20',dueDate:'2026-03-25',customer:'Pacific Northwest Homes',po:'PNH-2244',shipTo:'Seattle, WA',project:'Seattle Rooftop Deck',productType:'Cable Rail',orderType:'New Order',description:'SM 42" surface mount — slate gray',lineQty:18,stairQty:6,cornerQty:0,topRailQty:0,lengths:'12x10ft, 6x8ft',color:'Slate Gray',status:'Confirmed',orderTotal:4320,deposit:2160,balance:2160,salesRep:'Daniel',notes:''},
+    {id:'ORD-0008',date:'2026-02-25',dueDate:'2026-04-01',customer:'Riverside Homes',po:'RH-1087',shipTo:'Boise, ID',project:'Boise New Build',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post surface mount — black',lineQty:16,stairQty:6,cornerQty:0,topRailQty:0,lengths:'10x10ft, 6x8ft',color:'Matte Black',status:'Quoted',orderTotal:3960,deposit:0,balance:3960,salesRep:'Daniel',notes:'Awaiting signed PO'},
+    {id:'ORD-0009',date:'2026-03-01',dueDate:'2026-04-10',customer:'Sunbelt Contractors',po:'',shipTo:'Phoenix, AZ',project:'Phoenix Commercial Plaza',productType:'Glass Rail',orderType:'New Order',description:'FM 42" glass post — fascia, clear anodized',lineQty:24,stairQty:0,cornerQty:4,topRailQty:24,lengths:'20x12ft, 4x10ft',color:'Clear Anodized',status:'Quoted',orderTotal:13500,deposit:0,balance:13500,salesRep:'Rocky',notes:'Large commercial — needs eng stamp'},
+    {id:'ORD-0010',date:'2026-03-05',dueDate:'2026-03-28',customer:'Home Depot #3847',po:'HD-99102',shipTo:'Portland, OR',project:'Store Stock Q1',productType:'Cable Rail',orderType:'Re-Work',description:'Powder coat defect — redo 8 posts',lineQty:8,stairQty:0,cornerQty:0,topRailQty:0,lengths:'8x10ft',color:'Matte Black',status:'In Production',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',notes:'Warranty re-work from ORD-0005 — no charge'},
+  ],
 };
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────────
@@ -29406,6 +29419,7 @@ const KPIDashboard = ({data,setData}) => {
 };
 
 
+
 const Orders = ({data, setData}) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -29414,64 +29428,48 @@ const Orders = ({data, setData}) => {
   const [form, setForm] = useState({});
   const [sortField, setSortField] = useState('date');
   const [sortDir, setSortDir] = useState('desc');
+  const [customColor, setCustomColor] = useState('');
+  const [customProductType, setCustomProductType] = useState('');
 
   const orders = data.orders||[];
   const statuses = ['New','Quoted','Confirmed','In Production','Ready to Ship','Shipped','Invoiced','Completed','Cancelled'];
-  const productTypes = ['All',...[...new Set(orders.map(o=>o.productType).filter(Boolean))]];
-  const statusColors = {
-    'New':'var(--acc)','Quoted':'#818cf8','Confirmed':'var(--warn)',
-    'In Production':'#f59e0b','Ready to Ship':'#10b981','Shipped':'var(--ok)',
-    'Invoiced':'#06b6d4','Completed':'var(--muted)','Cancelled':'var(--err)'
-  };
+  const orderTypes = ['New Order','Re-Work','Warranty','Sample','Rush'];
+  const baseProductTypes = ['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'];
+  const allProductTypes = [...new Set([...baseProductTypes, ...orders.map(o=>o.productType).filter(Boolean)])];
+  const cardinalColors = ['Matte Black','Satin Black','Gloss Black','White Gloss','White Satin','Bronze','Oil Rubbed Bronze','Satin Silver','Brushed Silver','Clear Anodized','Slate Gray','Champagne','Gold'];
+  const allColors = [...new Set([...cardinalColors, ...orders.map(o=>o.color).filter(Boolean)])];
 
-  const filtered = orders.filter(o => {
-    if(statusFilter!=='All' && o.status!==statusFilter) return false;
-    if(typeFilter!=='All' && o.productType!==typeFilter) return false;
-    if(search){
-      const q = search.toLowerCase();
-      if(!(o.customer||'').toLowerCase().includes(q) &&
-         !(o.id||'').toLowerCase().includes(q) &&
-         !(o.project||'').toLowerCase().includes(q) &&
-         !(o.po||'').toLowerCase().includes(q)) return false;
-    }
+  const statusColors = {'New':'var(--acc)','Quoted':'#818cf8','Confirmed':'var(--warn)','In Production':'#f59e0b','Ready to Ship':'#10b981','Shipped':'var(--ok)','Invoiced':'#06b6d4','Completed':'var(--muted)','Cancelled':'var(--err)'};
+  const typeColors = {'New Order':'var(--acc)','Re-Work':'var(--warn)','Warranty':'var(--err)','Sample':'#818cf8','Rush':'#f59e0b'};
+
+  const filtered = orders.filter(o=>{
+    if(statusFilter!=='All'&&o.status!==statusFilter)return false;
+    if(typeFilter!=='All'&&o.orderType!==typeFilter)return false;
+    if(search){const q=search.toLowerCase();if(!(o.customer||'').toLowerCase().includes(q)&&!(o.id||'').toLowerCase().includes(q)&&!(o.project||'').toLowerCase().includes(q)&&!(o.po||'').toLowerCase().includes(q)&&!(o.shipTo||'').toLowerCase().includes(q))return false;}
     return true;
   }).sort((a,b)=>{
-    const av = a[sortField]||'', bv = b[sortField]||'';
-    if(typeof av === 'number') return sortDir==='asc' ? av-bv : bv-av;
-    return sortDir==='asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    const av=a[sortField]||'',bv=b[sortField]||'';
+    if(typeof av==='number')return sortDir==='asc'?av-bv:bv-av;
+    return sortDir==='asc'?String(av).localeCompare(String(bv)):String(bv).localeCompare(String(av));
   });
 
-  const totalVal    = filtered.reduce((s,o)=>s+(o.orderTotal||0),0);
-  const totalOpen   = orders.filter(o=>!['Completed','Cancelled','Shipped','Invoiced'].includes(o.status));
-  const inProd      = orders.filter(o=>o.status==='In Production');
-  const outstanding = orders.reduce((s,o)=>s+(o.balance||0),0);
-  const statusCounts = {};
-  statuses.forEach(s=>{ statusCounts[s]=orders.filter(o=>o.status===s).length; });
+  const totalOpen=orders.filter(o=>!['Completed','Cancelled','Shipped','Invoiced'].includes(o.status));
+  const inProd=orders.filter(o=>o.status==='In Production');
+  const outstanding=orders.reduce((s,o)=>s+(o.balance||0),0);
+  const statusCounts={};statuses.forEach(s=>{statusCounts[s]=orders.filter(o=>o.status===s).length;});
+  const typeCounts={};orderTypes.forEach(t=>{typeCounts[t]=orders.filter(o=>o.orderType===t).length;});
 
-  const newOrder = () => setForm({
-    id:'ORD-'+String(orders.length+1).padStart(4,'0'),
-    date:now(), dueDate:'', customer:'', po:'', project:'',
-    productType:'Cable Rail', description:'', qty:1,
-    material:'6061-T6 Aluminum', finish:'Matte Black',
-    status:'New', orderTotal:0, deposit:0, balance:0,
-    salesRep:'Daniel', notes:''
-  });
+  const newOrder=()=>setForm({id:'ORD-'+String(orders.length+1).padStart(4,'0'),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',notes:''});
 
-  const save = () => {
-    const rec = {...form, orderTotal:Number(form.orderTotal||0), deposit:Number(form.deposit||0), balance:Number(form.balance||0), qty:Number(form.qty||0)};
-    if(!orders.find(o=>o.id===rec.id))
-      setData(d=>({...d, orders:[...(d.orders||[]),rec]}));
-    else
-      setData(d=>({...d, orders:(d.orders||[]).map(o=>o.id===rec.id?rec:o)}));
+  const save=()=>{
+    const rec={...form,orderTotal:Number(form.orderTotal||0),deposit:Number(form.deposit||0),balance:Number(form.balance||0),lineQty:Number(form.lineQty||0),stairQty:Number(form.stairQty||0),cornerQty:Number(form.cornerQty||0),topRailQty:Number(form.topRailQty||0)};
+    if(!orders.find(o=>o.id===rec.id))setData(d=>({...d,orders:[...(d.orders||[]),rec]}));
+    else setData(d=>({...d,orders:(d.orders||[]).map(o=>o.id===rec.id?rec:o)}));
     setModal(null);
   };
 
-  const sortBy = (f) => { if(sortField===f) setSortDir(d=>d==='asc'?'desc':'asc'); else { setSortField(f); setSortDir('asc'); } };
-  const SortTh = ({f,label}) => (
-    <th onClick={()=>sortBy(f)} style={{cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
-      {label}{sortField===f?(sortDir==='asc'?' ▲':' ▼'):''}
-    </th>
-  );
+  const sortBy=f=>{if(sortField===f)setSortDir(d=>d==='asc'?'desc':'asc');else{setSortField(f);setSortDir('asc');}};
+  const SortTh=({f,label})=><th onClick={()=>sortBy(f)} style={{cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>{label}{sortField===f?(sortDir==='asc'?' ▲':' ▼'):''}</th>;
 
   return (
     <div className="fade-up">
@@ -29482,69 +29480,89 @@ const Orders = ({data, setData}) => {
             <span className="chip">{orders.length} total</span>
             <span className="chip">{totalOpen.length} open</span>
             <span className="chip" style={{background:'rgba(245,158,11,.15)',color:'#f59e0b'}}>{inProd.length} in production</span>
+            {typeCounts['Re-Work']>0&&<span className="chip" style={{background:'rgba(251,191,36,.15)',color:'var(--warn)'}}>{typeCounts['Re-Work']} re-work</span>}
+            {typeCounts['Warranty']>0&&<span className="chip" style={{background:'rgba(239,68,68,.15)',color:'var(--err)'}}>{typeCounts['Warranty']} warranty</span>}
           </div>
         </div>
         <button className="btn btn-p" onClick={()=>{newOrder();setModal('order');}}>+ New Order</button>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
-        <StatCard label="Open Order Value"    value={fmt$(totalOpen.reduce((s,o)=>s+(o.orderTotal||0),0))} icon="📋" color="var(--acc)"  sub={totalOpen.length+' open orders'}/>
-        <StatCard label="Outstanding Balance" value={fmt$(outstanding)}  icon="💳" color="var(--warn)" sub="unpaid balance"/>
-        <StatCard label="In Production"       value={inProd.length}      icon="⚙️" color="#f59e0b"     sub={fmt$(inProd.reduce((s,o)=>s+(o.orderTotal||0),0))}/>
-        <StatCard label="Filtered Total"      value={fmt$(totalVal)}     icon="💰" color="var(--ok)"   sub={filtered.length+' orders shown'}/>
+        <StatCard label="Open Order Value"    value={fmt$(totalOpen.reduce((s,o)=>s+(o.orderTotal||0),0))} icon="📋" color="var(--acc)"  sub={totalOpen.length+' open'}/>
+        <StatCard label="Outstanding Balance" value={fmt$(outstanding)} icon="💳" color="var(--warn)" sub="unpaid"/>
+        <StatCard label="In Production"       value={inProd.length}    icon="⚙️" color="#f59e0b"    sub={fmt$(inProd.reduce((s,o)=>s+(o.orderTotal||0),0))}/>
+        <StatCard label="Filtered Total"      value={fmt$(filtered.reduce((s,o)=>s+(o.orderTotal||0),0))} icon="💰" color="var(--ok)" sub={filtered.length+' shown'}/>
       </div>
 
-      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+      <div style={{display:'flex',gap:5,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+        <span style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginRight:2}}>STATUS</span>
         {['All',...statuses].map(s=>(
-          <button key={s} className={'tab'+(statusFilter===s?' on':'')} onClick={()=>setStatusFilter(s)} style={{fontSize:11}}>
-            {s}{s!=='All'&&statusCounts[s]>0&&<span style={{marginLeft:4,background:'rgba(255,255,255,.15)',borderRadius:3,padding:'1px 4px',fontSize:10}}>{statusCounts[s]}</span>}
+          <button key={s} className={'tab'+(statusFilter===s?' on':'')} onClick={()=>setStatusFilter(s)} style={{fontSize:10,padding:'3px 8px'}}>
+            {s}{s!=='All'&&statusCounts[s]>0&&<span style={{marginLeft:3,background:'rgba(255,255,255,.15)',borderRadius:3,padding:'0 3px',fontSize:9}}>{statusCounts[s]}</span>}
+          </button>
+        ))}
+      </div>
+      <div style={{display:'flex',gap:5,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+        <span style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginRight:2}}>TYPE</span>
+        {['All',...orderTypes].map(t=>(
+          <button key={t} className={'tab'+(typeFilter===t?' on':'')} onClick={()=>setTypeFilter(t)} style={{fontSize:10,padding:'3px 8px',borderColor:typeFilter===t&&typeColors[t]?typeColors[t]:''}}>
+            {t}{t!=='All'&&typeCounts[t]>0&&<span style={{marginLeft:3,background:'rgba(255,255,255,.15)',borderRadius:3,padding:'0 3px',fontSize:9}}>{typeCounts[t]}</span>}
           </button>
         ))}
       </div>
 
       <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
-        <input className="search" placeholder="Search customer, order #, project, PO…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:220}}/>
-        <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}>
-          {productTypes.map(t=><option key={t}>{t}</option>)}
-        </select>
+        <input className="search" placeholder="Search customer, order #, project, PO, ship-to…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:220}}/>
         <span className="chip">{filtered.length} results</span>
         {(search||statusFilter!=='All'||typeFilter!=='All')&&<button className="btn btn-xs" onClick={()=>{setSearch('');setStatusFilter('All');setTypeFilter('All');}}>✕ Clear</button>}
       </div>
 
-      <div className="card" style={{padding:0,overflow:'hidden'}}>
-        <table>
+      <div className="card" style={{padding:0,overflowX:'auto'}}>
+        <table style={{minWidth:1600,fontSize:12}}>
           <thead><tr>
             <SortTh f="id"          label="Order #"/>
             <SortTh f="date"        label="Date"/>
             <SortTh f="dueDate"     label="Due"/>
             <SortTh f="customer"    label="Customer"/>
+            <th>Ship To</th>
             <th>Project</th>
-            <SortTh f="productType" label="Type"/>
-            <SortTh f="qty"         label="Qty"/>
-            <th>Finish</th>
-            <SortTh f="status"      label="Status"/>
-            <SortTh f="orderTotal"  label="Total"/>
-            <SortTh f="balance"     label="Balance"/>
-            <th>PO #</th>
+            <SortTh f="productType" label="Product Type"/>
+            <th>Order Type</th>
+            <th title="Line Post Qty">Line</th>
+            <th title="Stair Post Qty">Stair</th>
+            <th title="Corner Post Qty">Corner</th>
+            <th title="Top Rail Qty">Top Rail</th>
+            <th>Lengths</th>
+            <th>Color</th>
+            <SortTh f="status"     label="Status"/>
+            <SortTh f="orderTotal" label="Total"/>
+            <SortTh f="balance"    label="Balance"/>
+            <th>Notes</th>
             <th></th>
           </tr></thead>
           <tbody>
-            {filtered.length===0&&<tr><td colSpan={13}><Empty msg="No orders match filters"/></td></tr>}
+            {filtered.length===0&&<tr><td colSpan={19}><Empty msg="No orders match filters"/></td></tr>}
             {filtered.map(o=>(
               <tr key={o.id}>
-                <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.id}</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{o.date}</td>
-                <td style={{fontSize:11,color:(o.dueDate&&o.dueDate<now()&&!['Completed','Shipped','Invoiced','Cancelled'].includes(o.status))?'var(--err)':'var(--txt)'}}>{o.dueDate||'—'}</td>
-                <td style={{fontWeight:600}}>{o.customer}</td>
-                <td style={{fontSize:11,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
-                <td style={{fontSize:10,color:'var(--acc)'}}>{o.productType}</td>
-                <td style={{textAlign:'center',fontWeight:600}}>{o.qty}</td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{o.finish||'—'}</td>
-                <td><span style={{background:statusColors[o.status]||'var(--muted)',color:'#fff',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.status}</span></td>
-                <td style={{fontWeight:700,color:'var(--ok)'}}>{o.orderTotal?fmt$(o.orderTotal):'—'}</td>
-                <td style={{fontWeight:600,color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
-                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{o.po||'—'}</td>
-                <td><div style={{display:'flex',gap:4}}>
+                <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{o.id}</td>
+                <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.date}</td>
+                <td style={{fontSize:11,whiteSpace:'nowrap',color:(o.dueDate&&o.dueDate<now()&&!['Completed','Shipped','Invoiced','Cancelled'].includes(o.status))?'var(--err)':'inherit'}}>{o.dueDate||'—'}</td>
+                <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{o.customer}</td>
+                <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.shipTo||'—'}</td>
+                <td style={{fontSize:11,maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.project}>{o.project||'—'}</td>
+                <td style={{fontSize:11,color:'var(--acc)',whiteSpace:'nowrap'}}>{o.productType}</td>
+                <td><span style={{background:typeColors[o.orderType]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.orderType||'New Order'}</span></td>
+                <td style={{textAlign:'center',color:o.lineQty>0?'var(--txt)':'var(--muted)'}}>{o.lineQty||'—'}</td>
+                <td style={{textAlign:'center',color:o.stairQty>0?'var(--txt)':'var(--muted)'}}>{o.stairQty||'—'}</td>
+                <td style={{textAlign:'center',color:o.cornerQty>0?'var(--txt)':'var(--muted)'}}>{o.cornerQty||'—'}</td>
+                <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'—'}</td>
+                <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'—'}</td>
+                <td><span style={{background:statusColors[o.status]||'var(--muted)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.status}</span></td>
+                <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'—'}</td>
+                <td style={{fontWeight:600,whiteSpace:'nowrap',color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||''}</td>
+                <td style={{whiteSpace:'nowrap'}}><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-xs" onClick={()=>{setForm({...o});setModal('order');}}>Edit</button>
                   <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,orders:(d.orders||[]).filter(x=>x.id!==o.id)}))}>×</button>
                 </div></td>
@@ -29555,16 +29573,26 @@ const Orders = ({data, setData}) => {
       </div>
 
       {modal==='order'&&<Modal title={orders.find(o=>o.id===form.id)?'Edit Order':'New Order'} onClose={()=>setModal(null)} lg>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
           <Field label="Order #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
           <Field label="Customer *"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Ship To"><input value={form.shipTo||''} placeholder="City, ST" onChange={e=>setForm(f=>({...f,shipTo:e.target.value}))}/></Field>
           <Field label="Order Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
           <Field label="Due Date"><input type="date" value={form.dueDate||''} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></Field>
-          <Field label="Project / Job Name"><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
           <Field label="Customer PO #"><input value={form.po||''} onChange={e=>setForm(f=>({...f,po:e.target.value}))}/></Field>
+        </div>
+        <Field label="Project / Job Name" style={{marginTop:10}}><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:10}}>
           <Field label="Product Type">
-            <select value={form.productType||''} onChange={e=>setForm(f=>({...f,productType:e.target.value}))}>
-              {['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'].map(t=><option key={t}>{t}</option>)}
+            <select value={allProductTypes.includes(form.productType)?form.productType:'__custom__'} onChange={e=>{if(e.target.value!=='__custom__')setForm(f=>({...f,productType:e.target.value}));}}>
+              {allProductTypes.map(t=><option key={t} value={t}>{t}</option>)}
+              <option value="__custom__">+ Add Custom Type…</option>
+            </select>
+            {!allProductTypes.includes(form.productType)&&<input style={{marginTop:4}} placeholder="Custom product type" value={customProductType} onChange={e=>setCustomProductType(e.target.value)} onBlur={e=>{if(e.target.value.trim()){setForm(f=>({...f,productType:e.target.value.trim()}));setCustomProductType('');}}}/>}
+          </Field>
+          <Field label="Order Type">
+            <select value={form.orderType||'New Order'} onChange={e=>setForm(f=>({...f,orderType:e.target.value}))}>
+              {orderTypes.map(t=><option key={t}>{t}</option>)}
             </select>
           </Field>
           <Field label="Status">
@@ -29572,15 +29600,41 @@ const Orders = ({data, setData}) => {
               {statuses.map(s=><option key={s}>{s}</option>)}
             </select>
           </Field>
-          <Field label="Qty"><input type="number" value={form.qty||''} onChange={e=>setForm(f=>({...f,qty:+e.target.value}))}/></Field>
-          <Field label="Finish / Color"><input value={form.finish||''} onChange={e=>setForm(f=>({...f,finish:e.target.value}))}/></Field>
+        </div>
+        <Field label="Color / Finish" style={{marginTop:10}}>
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <select value={allColors.includes(form.color)?form.color:'__custom__'} onChange={e=>{if(e.target.value!=='__custom__')setForm(f=>({...f,color:e.target.value}));}}>
+              <optgroup label="Cardinal Colors">
+                {cardinalColors.map(c=><option key={c} value={c}>{c}</option>)}
+              </optgroup>
+              {allColors.filter(c=>!cardinalColors.includes(c)).length>0&&<optgroup label="Custom / New">
+                {allColors.filter(c=>!cardinalColors.includes(c)).map(c=><option key={c} value={c}>{c}</option>)}
+              </optgroup>}
+              <option value="__custom__">+ Add New Color…</option>
+            </select>
+            <input style={{flex:1}} placeholder="Type new color name then press Tab/Enter" value={customColor} onChange={e=>setCustomColor(e.target.value)} onBlur={e=>{if(e.target.value.trim()){setForm(f=>({...f,color:e.target.value.trim()}));setCustomColor('');}}} onKeyDown={e=>{if((e.key==='Enter'||e.key==='Tab')&&customColor.trim()){setForm(f=>({...f,color:customColor.trim()}));setCustomColor('');}}}/>
+          </div>
+          {form.color&&<div style={{marginTop:4,fontSize:11,color:'var(--muted)'}}>Selected: <strong style={{color:'var(--txt)'}}>{form.color}</strong></div>}
+        </Field>
+        <div style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginTop:10}}>
+          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>Post Quantities</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+            <Field label="Line Posts"><input type="number" min="0" value={form.lineQty||''} onChange={e=>setForm(f=>({...f,lineQty:+e.target.value}))}/></Field>
+            <Field label="Stair Posts"><input type="number" min="0" value={form.stairQty||''} onChange={e=>setForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
+            <Field label="Corner Posts"><input type="number" min="0" value={form.cornerQty||''} onChange={e=>setForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
+            <Field label="Top Rail Qty"><input type="number" min="0" value={form.topRailQty||''} onChange={e=>setForm(f=>({...f,topRailQty:+e.target.value}))}/></Field>
+          </div>
+        </div>
+        <Field label="Lengths (free-form — e.g. 12x10ft, 6x8ft, 4x4ft)" style={{marginTop:10}}>
+          <input value={form.lengths||''} placeholder="e.g. 12x10ft, 6x8ft, 4x4ft — fully customizable" onChange={e=>setForm(f=>({...f,lengths:e.target.value}))}/>
+        </Field>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:10}}>
           <Field label="Order Total ($)"><input type="number" step="0.01" value={form.orderTotal||''} onChange={e=>setForm(f=>({...f,orderTotal:+e.target.value,balance:(+e.target.value)-(f.deposit||0)}))}/></Field>
           <Field label="Deposit ($)"><input type="number" step="0.01" value={form.deposit||''} onChange={e=>setForm(f=>({...f,deposit:+e.target.value,balance:(f.orderTotal||0)-(+e.target.value)}))}/></Field>
           <Field label="Balance ($)"><input type="number" step="0.01" value={form.balance||''} onChange={e=>setForm(f=>({...f,balance:+e.target.value}))}/></Field>
-          <Field label="Sales Rep"><input value={form.salesRep||''} onChange={e=>setForm(f=>({...f,salesRep:e.target.value}))}/></Field>
         </div>
-        <Field label="Description"><textarea rows={2} value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
-        <Field label="Notes"><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <Field label="Description" style={{marginTop:10}}><textarea rows={2} value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <Field label="Notes" style={{marginTop:6}}><textarea rows={3} value={form.notes||''} placeholder="Internal notes, special instructions, follow-up reminders…" onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
           <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
           <button className="btn btn-p" onClick={save} disabled={!form.customer}>Save</button>
@@ -29856,6 +29910,7 @@ const normalizeData = (d) => {
   if (!d.automationPhasesRoadmap) d.automationPhasesRoadmap = [];
   if (!d.postsMfgList) d.postsMfgList = [];
   if (!d.quoteLog) d.quoteLog = [];
+  if(!Array.isArray(d.orders))d.orders=[];
   return d;
 };
 
