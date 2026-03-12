@@ -30896,28 +30896,59 @@ const OrderImport = ({data, setData}) => {
   const saveOD = (u) => setData(d => ({...d, oneDriveSettings:{...(d.oneDriveSettings||{}), ...u}}));
 
   const addLog = (file, status, detail) => {
-    const entry = {id:'IMP-'+uid(), ts:now(), file, status, detail};
+    const entry = {id:'IMP-'+uid(), ts:now(), file, fileId:null, status, detail};
     setData(d => ({...d, importLog:[entry, ...(d.importLog||[]).slice(0,99)]}));
     return entry;
   };
 
   // ── Microsoft Graph: fetch files from OneDrive folder ──────────────────────
-  const fetchOneDriveFiles = async () => {
-    const {accessToken, folderPath} = od;
-    if(!accessToken) return [];
-    const encodedPath = folderPath ? encodeURIComponent(folderPath) : 'root';
-    const url = folderPath
-      ? 'https://graph.microsoft.com/v1.0/me/drive/root:/' + encodeURIComponent(folderPath) + ':/children'
-      : 'https://graph.microsoft.com/v1.0/me/drive/root/children';
-    const res = await fetch(url + '?$filter=file ne null&$select=id,name,size,createdDateTime,lastModifiedDateTime,@microsoft.graph.downloadUrl', {
-      headers: {'Authorization': 'Bearer ' + accessToken}
+  // Recursively fetch all files from a folder and all subfolders (month/year folders)
+  const fetchFolderContents = async (itemId, path, depth) => {
+    if(depth > 5) return []; // safety limit
+    const url = itemId === 'root'
+      ? 'https://graph.microsoft.com/v1.0/me/drive/root/children'
+      : 'https://graph.microsoft.com/v1.0/me/drive/items/' + itemId + '/children';
+    const res = await fetch(url + '?$select=id,name,size,file,folder,createdDateTime,lastModifiedDateTime', {
+      headers: {'Authorization': 'Bearer ' + od.accessToken}
     });
     if(!res.ok) {
       const err = await res.json();
       throw new Error(err.error?.message || 'Graph API error ' + res.status);
     }
     const json = await res.json();
-    return (json.value || []).filter(f => /\.(xlsx|xls|pdf|png|jpg|jpeg)$/i.test(f.name));
+    const items = json.value || [];
+    let files = [];
+    for(const item of items) {
+      const itemPath = path ? path + '/' + item.name : item.name;
+      if(item.file && /\.(xlsx|xls|pdf|png|jpg|jpeg)$/i.test(item.name)) {
+        files.push({...item, folderPath: path});
+      } else if(item.folder) {
+        // Recurse into subfolders (month folders like 2026-March, 2025-December etc)
+        const subFiles = await fetchFolderContents(item.id, itemPath, depth + 1);
+        files = files.concat(subFiles);
+      }
+    }
+    return files;
+  };
+
+  const fetchOneDriveFiles = async () => {
+    const {accessToken, folderPath} = od;
+    if(!accessToken) return [];
+    // Get the root folder item ID to start recursion
+    let rootId = 'root';
+    if(folderPath) {
+      const rootRes = await fetch(
+        'https://graph.microsoft.com/v1.0/me/drive/root:/' + encodeURIComponent(folderPath),
+        {headers: {'Authorization': 'Bearer ' + accessToken}}
+      );
+      if(!rootRes.ok) {
+        const err = await rootRes.json();
+        throw new Error(err.error?.message || 'Folder not found: ' + folderPath);
+      }
+      const rootJson = await rootRes.json();
+      rootId = rootJson.id;
+    }
+    return await fetchFolderContents(rootId, folderPath || '', 0);
   };
 
   // ── Download a file from OneDrive as ArrayBuffer ───────────────────────────
@@ -31035,13 +31066,16 @@ Return ONLY the JSON object, no other text.`;
     setChecking(true);
     try {
       const files = await fetchOneDriveFiles();
-      const alreadyImported = new Set([...queue.map(q=>q.name), ...log.map(l=>l.file)]);
-      const newFiles = files.filter(f => !alreadyImported.has(f.name));
+      // Use file ID (unique across all folders) + name to track what's been imported
+      const alreadyImportedIds = new Set([...queue.map(q=>q.id)]);
+      const alreadyImportedNames = new Set([...log.filter(l=>l.status==='Success').map(l=>l.fileId).filter(Boolean)]);
+      const newFiles = files.filter(f => !alreadyImportedIds.has(f.id) && !alreadyImportedNames.has(f.id));
       if(newFiles.length > 0) {
         setData(d => ({...d,
           importQueue:[...(d.importQueue||[]), ...newFiles.map(f=>({
             id: f.id, name: f.name, size: f.size,
             modified: f.lastModifiedDateTime,
+            folder: f.folderPath || '',
             status: 'pending'
           }))],
           oneDriveSettings:{...(d.oneDriveSettings||{}), lastCheck:now()}
@@ -31084,7 +31118,8 @@ Return ONLY the JSON object, no other text.`;
         orderDrafts: [...(d.orderDrafts||[]), ...draftsToAdd],
         importQueue: (d.importQueue||[]).filter(q=>q.id!==qItem.id),
       }));
-      addLog(qItem.name, 'Success', draftsToAdd.length+' draft order(s) created — review in Drafts tab');
+      const successEntry = {id:'IMP-'+uid(), ts:now(), file:qItem.name, fileId:qItem.id, status:'Success', detail:draftsToAdd.length+' draft order(s) created — review in Drafts tab'};
+      setData(d => ({...d, importLog:[successEntry, ...(d.importLog||[]).slice(0,99)]}));
     } catch(e) {
       setData(d=>({...d, importQueue:(d.importQueue||[]).map(q=>q.id===qItem.id?{...q,status:'error',error:e.message}:q)}));
       addLog(qItem.name, 'Error', e.message);
@@ -31169,7 +31204,7 @@ Return ONLY the JSON object, no other text.`;
             📂 Upload File
             <input type="file" accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg" multiple style={{display:'none'}} onChange={handleManualUpload}/>
           </label>
-          {od.accessToken && <button className="btn btn-p" onClick={checkOneDrive} disabled={checking}>{checking?'Checking...':'⟳ Check OneDrive Now'}</button>}
+          {od.accessToken && <button className="btn btn-p" onClick={checkOneDrive} disabled={checking}>{checking?'Scanning folders...':'⟳ Scan All Folders'}</button>}
         </div>
       </div>
 
@@ -31196,11 +31231,12 @@ Return ONLY the JSON object, no other text.`;
         </div>}
         {queue.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <table>
-            <thead><tr><th>File</th><th>Size</th><th>Modified</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>File</th><th>Folder</th><th>Size</th><th>Modified</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {queue.map((q,i)=>(
                 <tr key={i}>
                   <td style={{fontWeight:600,fontSize:12}}>{q.name}</td>
+                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={q.folder}>{q.folder||'root'}</td>
                   <td style={{fontSize:11,color:'var(--muted)'}}>{q.size?(q.size/1024).toFixed(1)+'kb':'—'}</td>
                   <td style={{fontSize:11,color:'var(--muted)'}}>{q.modified?q.modified.split('T')[0]:'—'}</td>
                   <td>
@@ -31284,7 +31320,13 @@ Return ONLY the JSON object, no other text.`;
             <input value={od.clientId||''} onChange={e=>saveOD({clientId:e.target.value})} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
           </Field>
           <Field label="OneDrive Folder Path" style={{marginTop:10}}>
-            <input value={od.folderPath||''} onChange={e=>saveOD({folderPath:e.target.value})} placeholder="Orders/2026-March"/>
+            <input value={od.folderPath||''} onChange={e=>saveOD({folderPath:e.target.value})} placeholder="Orders"/>
+          </Field>
+          <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:5,padding:'8px 12px',fontSize:10,color:'var(--muted)',lineHeight:1.6}}>
+            Set this to your top-level orders folder (e.g. <strong style={{color:'var(--acc)'}}>Orders</strong>). The ERP will automatically scan all subfolders inside it — 2026-March, 2025-December, etc. — and find every order file across all months and years.
+          </div>
+          <Field label="" style={{display:'none'}}>
+            <input style={{display:'none'}}
           </Field>
           <div style={{marginTop:10,display:'flex',alignItems:'center',gap:10}}>
             <input type="checkbox" id="autoCheck" checked={od.autoCheck!==false} onChange={e=>saveOD({autoCheck:e.target.checked})}/>
