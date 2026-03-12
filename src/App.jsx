@@ -116,10 +116,10 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
-  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer'],
+  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
-  shop:   ['dashboard','todo','production','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter'],
+  shop:   ['dashboard','todo','production','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
 };
 
 const BADGE = {
@@ -4754,330 +4754,24 @@ const INIT = {
 
   // ── Maisy_06_DISPATCH_LOGISTICS — Order Fulfillment / Sister Co (17 orders) ─
   orderFulfillment: [
-    {
-        "orderNo": "1088",
-        "date": "2026-01-01",
-        "project": "3BD-DAVE WAH",
-        "desc": "6 POST/ 1 L BAR",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM"
-    },
-    {
-        "orderNo": "1085",
-        "date": "2026-01-02",
-        "project": "3BD-HANNAH PARK",
-        "desc": "SURFACE CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM"
-    },
-    {
-        "orderNo": "",
-        "date": "2026-01-03",
-        "project": "3BD-LISA GILL",
-        "desc": "FASCIA FRAMED GLASS",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM"
-    },
-    {
-        "orderNo": "1059",
-        "date": "2026-01-04",
-        "project": "3BD-MATHEW PAWLIKOWSKI",
-        "desc": "FASCIA CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 7534.45,
-        "notes": ""
-    },
-    {
-        "orderNo": "1073",
-        "date": "2026-01-05",
-        "project": "3BD-SURYA MAHARJAN",
-        "desc": "FASCIA CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM"
-    },
-    {
-        "orderNo": "1089",
-        "date": "2026-01-06",
-        "project": "3BD-VARGRA",
-        "desc": "3 POST",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM / REMAKE"
-    },
-    {
-        "orderNo": "1095",
-        "date": "2026-02-01",
-        "project": "3BD-FABRICE",
-        "desc": "SURFACE CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 996.22,
-        "notes": ""
-    },
-    {
-        "orderNo": "1111",
-        "date": "2026-02-02",
-        "project": "3BD-DAVE WAH",
-        "desc": "96' POST",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM "
-    },
-    {
-        "orderNo": "1110",
-        "date": "2026-02-03",
-        "project": "3BD-IRENNE KEARNS",
-        "desc": "FASCIA CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 4163.67,
-        "notes": ""
-    },
-    {
-        "orderNo": "1096",
-        "date": "2026-02-04",
-        "project": "3BD-TODD BEHRBAUM",
-        "desc": "SURFACE CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 3305.06,
-        "notes": ""
-    },
-    {
-        "orderNo": "1101",
-        "date": "2026-02-05",
-        "project": "3BD-TRAVIS ISAACS",
-        "desc": "7 FM POST",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM"
-    },
-    {
-        "orderNo": "1115",
-        "date": "2026-02-18",
-        "project": "3BD-TRACIE GRANT",
-        "desc": "FASCIA CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 3900.2,
-        "notes": ""
-    },
-    {
-        "orderNo": "1123",
-        "date": "2026-02-25",
-        "project": "3BD-Conrad",
-        "desc": "FASCIA CABLE",
-        "location": "Hayden Local Pick-Up",
-        "value": 7655.99,
-        "notes": "Local Pick-Up 3BD Install"
-    },
-    {
-        "orderNo": "1125",
-        "date": "2026-02-25",
-        "project": "3BD-Noah Borun",
-        "desc": "SURFACE CABLE",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 5629.57,
-        "notes": ""
-    },
-    {
-        "orderNo": "1127",
-        "date": "2026-02-25",
-        "project": "3BD-Hatch",
-        "desc": "FASCIA CABLE",
-        "location": "Hayden Local Pick-Up",
-        "value": 31340.84,
-        "notes": "Local Pick-Up 3BD Install"
-    },
-    {
-        "orderNo": "1135",
-        "date": "2026-03-05",
-        "project": "3BD-Varjra",
-        "desc": "2x1 (Rail) ",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM"
-    },
-    {
-        "orderNo": "1136",
-        "date": "2026-03-05",
-        "project": "3BD - Janet Vanderveen",
-        "desc": "Top Rail",
-        "location": "HAYDEN - BELLEVUE",
-        "value": 0.0,
-        "notes": "NO AMOUNT ON ORDER FORM "
-    }
-,
-  {
-    id:'1088',
-    date:'2026-01-01',
-    project:'3BD-DAVE WAH',
-    description:'6 POST/ 1 L BAR',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  },
-  {
-    id:'1085',
-    date:'2026-01-02',
-    project:'3BD-HANNAH PARK',
-    description:'SURFACE CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  },
-  {
-    id:'OF-003',
-    date:'2026-01-03',
-    project:'3BD-LISA GILL',
-    description:'FASCIA FRAMED GLASS',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  },
-  {
-    id:'1059',
-    date:'2026-01-04',
-    project:'3BD-MATHEW PAWLIKOWSKI',
-    description:'FASCIA CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:7534.45,
-    notes:'',
-    status:''
-  },
-  {
-    id:'1073',
-    date:'2026-01-05',
-    project:'3BD-SURYA MAHARJAN',
-    description:'FASCIA CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  },
-  {
-    id:'1089',
-    date:'2026-01-06',
-    project:'3BD-VARGRA',
-    description:'3 POST',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM / REMAKE',
-    status:''
-  },
-  {
-    id:'1095',
-    date:'2026-02-01',
-    project:'3BD-FABRICE',
-    description:'SURFACE CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:996.22,
-    notes:'',
-    status:''
-  },
-  {
-    id:'1111',
-    date:'2026-02-02',
-    project:'3BD-DAVE WAH',
-    description:'96\' POST',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  },
-  {
-    id:'1110',
-    date:'2026-02-03',
-    project:'3BD-IRENNE KEARNS',
-    description:'FASCIA CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:4163.67,
-    notes:'',
-    status:''
-  },
-  {
-    id:'1096',
-    date:'2026-02-04',
-    project:'3BD-TODD BEHRBAUM',
-    description:'SURFACE CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:3305.06,
-    notes:'',
-    status:''
-  },
-  {
-    id:'1101',
-    date:'2026-02-05',
-    project:'3BD-TRAVIS ISAACS',
-    description:'7 FM POST',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  },
-  {
-    id:'1115',
-    date:'2026-02-18',
-    project:'3BD-TRACIE GRANT',
-    description:'FASCIA CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:3900.2,
-    notes:'',
-    status:''
-  },
-  {
-    id:'1123',
-    date:'2026-02-25',
-    project:'3BD-Conrad',
-    description:'FASCIA CABLE',
-    location:'Hayden Local Pick-Up',
-    value:7655.99,
-    notes:'Local Pick-Up 3BD Install',
-    status:''
-  },
-  {
-    id:'1125',
-    date:'2026-02-25',
-    project:'3BD-Noah Borun',
-    description:'SURFACE CABLE',
-    location:'HAYDEN - BELLEVUE',
-    value:5629.57,
-    notes:'',
-    status:''
-  },
-  {
-    id:'1127',
-    date:'2026-02-25',
-    project:'3BD-Hatch',
-    description:'FASCIA CABLE',
-    location:'Hayden Local Pick-Up',
-    value:31340.84,
-    notes:'Local Pick-Up 3BD Install',
-    status:''
-  },
-  {
-    id:'1135',
-    date:'2026-03-05',
-    project:'3BD-Varjra',
-    description:'2x1 (Rail)',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  },
-  {
-    id:'1136',
-    date:'2026-03-05',
-    project:'3BD - Janet Vanderveen',
-    description:'Top Rail',
-    location:'HAYDEN - BELLEVUE',
-    value:0,
-    notes:'NO AMOUNT ON ORDER FORM',
-    status:''
-  }],
+    {id:'OF-001',orderNo:'1088',date:'2026-01-01',project:'3BD-DAVE WAH',description:'6 POST/ 1 L BAR',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-002',orderNo:'1085',date:'2026-01-02',project:'3BD-HANNAH PARK',description:'SURFACE CABLE',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-003',orderNo:'',date:'2026-01-03',project:'3BD-LISA GILL',description:'FASCIA FRAMED GLASS',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-004',orderNo:'1059',date:'2026-01-04',project:'3BD-MATHEW PAWLIKOWSKI',description:'FASCIA CABLE',location:'HAYDEN - BELLEVUE',amount:7534.45,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-005',orderNo:'1073',date:'2026-01-05',project:'3BD-SURYA MAHARJAN',description:'FASCIA CABLE',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-006',orderNo:'1089',date:'2026-01-06',project:'3BD-VARGRA',description:'3 POST',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM / REMAKE',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-007',orderNo:'1095',date:'2026-02-01',project:'3BD-FABRICE',description:'SURFACE CABLE',location:'HAYDEN - BELLEVUE',amount:996.22,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-008',orderNo:'1111',date:'2026-02-02',project:'3BD-DAVE WAH',description:'96\\' POST',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-009',orderNo:'1110',date:'2026-02-03',project:'3BD-IRENNE KEARNS',description:'FASCIA CABLE',location:'HAYDEN - BELLEVUE',amount:4163.67,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-010',orderNo:'1096',date:'2026-02-04',project:'3BD-TODD BEHRBAUM',description:'SURFACE CABLE',location:'HAYDEN - BELLEVUE',amount:3305.06,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-011',orderNo:'1101',date:'2026-02-05',project:'3BD-TRAVIS ISAACS',description:'7 FM POST',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-012',orderNo:'1115',date:'2026-02-18',project:'3BD-TRACIE GRANT',description:'FASCIA CABLE',location:'HAYDEN - BELLEVUE',amount:3900.2,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-013',orderNo:'1123',date:'2026-02-25',project:'3BD-Conrad',description:'FASCIA CABLE',location:'Hayden Local Pick-Up',amount:7655.99,notes:'Local Pick-Up 3BD Install',source:'3BD',type:'Local Pickup/Install Hayden',status:'Fulfilled',attachments:[]},
+    {id:'OF-014',orderNo:'1125',date:'2026-02-25',project:'3BD-Noah Borun',description:'SURFACE CABLE',location:'HAYDEN - BELLEVUE',amount:5629.57,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-015',orderNo:'1127',date:'2026-02-25',project:'3BD-Hatch',description:'FASCIA CABLE',location:'Hayden Local Pick-Up',amount:31340.84,notes:'Local Pick-Up 3BD Install',source:'3BD',type:'Local Pickup/Install Hayden',status:'Fulfilled',attachments:[]},
+    {id:'OF-016',orderNo:'1135',date:'2026-03-05',project:'3BD-Varjra',description:'2x1 (Rail)',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-017',orderNo:'1136',date:'2026-03-05',project:'3BD - Janet Vanderveen',description:'Top Rail',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]}
+  ],
 
   // ── Maisy_03_FORGE_PRODUCTION — Scrap & Waste (6 entries) ─────────────────
   scrapWaste: [
@@ -15020,7 +14714,12 @@ const INIT = {
     "notes": "\u22645 green, 6-10 yellow, >10 red"
   }
 ],
-  kpiWeekly: [],
+  kpiWeekly: [
+    {weekEnding:'2026-03-07',onTimeDeliveryPct:94,firstPassYieldPct:91,avgLeadTimeDays:8,wipCount:12,scrapWasteDollar:145,safetyIncidents:0,avgDailyOutput:18,reworkHours:2,statusScore:8},
+    {weekEnding:'2026-02-28',onTimeDeliveryPct:96,firstPassYieldPct:89,avgLeadTimeDays:9,wipCount:14,scrapWasteDollar:210,safetyIncidents:0,avgDailyOutput:16,reworkHours:3,statusScore:7.5},
+    {weekEnding:'2026-02-21',onTimeDeliveryPct:88,firstPassYieldPct:92,avgLeadTimeDays:11,wipCount:16,scrapWasteDollar:320,safetyIncidents:1,avgDailyOutput:15,reworkHours:4,statusScore:7},
+    {weekEnding:'2026-02-14',onTimeDeliveryPct:97,firstPassYieldPct:95,avgLeadTimeDays:7,wipCount:10,scrapWasteDollar:80,safetyIncidents:0,avgDailyOutput:20,reworkHours:1,statusScore:9}
+  ],
   kpiMonthly: [],
   materialsDB: [
   {
@@ -25502,6 +25201,892 @@ const INIT = {
   importQueue: [],
   importLog: [],
   orderDrafts: [],
+  hotqueue: [],
+  wbgPrices: {},
+};
+
+
+// ─── QUEUE ANALYZER ──────────────────────────────────────────────────────────────
+const QueueAnalyzer = ({data, setData}) => {
+  const [orders,   setOrders]   = useState([]);
+  const [tags,     setTags]     = useState({});
+  const [fileName, setFileName] = useState('');
+  const [error,    setError]    = useState('');
+  const [search,   setSearch]   = useState('');
+  const [sFilter,  setSFilter]  = useState('All');
+  const fileRef = useRef();
+
+  const SM = {'Completed':'Completed','Production Complete':'Production Complete','In Production':'In Production','New Order Processing':'New Order Processing','On Hold':'On Hold','Shipped':'Shipped','Delivered':'Delivered','CSR':'CSR','QYIO':'On Hold'};
+  const SS = {'New Order Processing':{c:'#8E44AD',l:'New Order'},'In Production':{c:'#3A5BA0',l:'In Production'},'Production Complete':{c:'#F39C12',l:'Prod Complete'},'On Hold':{c:'#E74C3C',l:'On Hold'},'Shipped':{c:'#1E8449',l:'Shipped'},'Delivered':{c:'#1E8449',l:'Delivered'},'Completed':{c:'#1E8449',l:'Completed'},'CSR':{c:'#555',l:'CSR'},'Unknown':{c:'#555',l:'Unknown'}};
+  const fulfilled = ['Completed','Delivered','Shipped'];
+
+  const parseWB = (wb) => {
+    const sh = wb.Sheets['Form Responses 1'];
+    if (!sh) throw new Error("No 'Form Responses 1' sheet found");
+    const raw = window.XLSX.utils.sheet_to_json(sh, {defval:null});
+    const today = new Date(); today.setHours(0,0,0,0);
+    return raw.map((r,i) => {
+      const ckeys = Object.keys(r);
+      const get = (...kw) => { const k = ckeys.find(c => kw.some(w => c.toLowerCase().includes(w.toLowerCase()))); return k ? r[k] : null; };
+      const rawSt = get('status','stage') || 'Unknown';
+      const status = SM[rawSt] || rawSt;
+      const rawDate = get('date','timestamp','created');
+      let date = null;
+      if (rawDate) {
+        if (typeof rawDate === 'number') date = new Date(Math.round((rawDate - 25569) * 86400000));
+        else date = new Date(rawDate);
+        if (isNaN(date)) date = null;
+      }
+      const age = date ? Math.floor((today - date) / 86400000) : null;
+      const isFulfilled = fulfilled.some(s => status.toLowerCase().includes(s.toLowerCase()));
+      const isOutstanding = !isFulfilled;
+      const priority = parseInt(get('priority','pri') || '5') || 5;
+      const isFlagged = isOutstanding && age != null && age > 14 && ['In Production','New Order Processing'].includes(status);
+      return {
+        uid: `q-${i}`, id: i+1,
+        customer: get('customer','name','client') || 'Unknown',
+        status,
+        priority,
+        leadSource: get('lead','source','channel'),
+        delivery: get('delivery','fulfillment','method'),
+        location: get('location','city','address'),
+        orderNum: get('order','order#','number','#'),
+        date, age,
+        dateLabel: date ? date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—',
+        monthKey: date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}` : null,
+        monthLabel: date ? date.toLocaleDateString('en-US',{month:'short',year:'numeric'}) : null,
+        notes: get('notes','comment','note') || '',
+        isFulfilled, isOutstanding, isFlagged,
+        color: get('color','finish'),
+      };
+    });
+  };
+
+  const handleFile = (file) => {
+    if (!file) return;
+    setError('');
+    const XLSX = window.XLSX;
+    if (!XLSX) { setError('SheetJS not loaded — check index.html'); return; }
+    const r = new FileReader();
+    r.onload = (e) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
+        const parsed = parseWB(wb);
+        if (!parsed.length) { setError('No data rows found.'); return; }
+        setOrders(parsed); setTags({}); setFileName(file.name);
+      } catch(err) { setError('Error: ' + err.message); }
+    };
+    r.readAsArrayBuffer(file);
+  };
+
+  const toggleTag = (uid, type) => setTags(prev => ({...prev, [uid]: prev[uid] === type ? null : type}));
+
+  const pushToHotQueue = () => {
+    const toAdd = orders.filter(o => !o.isFulfilled && (tags[o.uid] || o.isFlagged));
+    if (!toAdd.length) return;
+    const now2 = new Date().toISOString();
+    const mapped = toAdd.map(o => ({
+      id: uid(), customer: o.customer, status: o.status, priority: o.priority,
+      leadSource: o.leadSource, orderNum: o.orderNum, delivery: o.delivery,
+      location: o.location, dateISO: o.date ? o.date.toISOString() : null,
+      dateLabel: o.dateLabel, age: o.age, notes: o.notes,
+      tag: tags[o.uid] || 'FLAGGED', color: o.color, addedAt: now2,
+    }));
+    setData(prev => ({...prev, hotqueue: [...(prev.hotqueue||[]), ...mapped.filter(m => !(prev.hotqueue||[]).some(h => h.orderNum && h.orderNum === m.orderNum && h.customer === m.customer))]}));
+    alert(`✅ Pushed ${mapped.length} orders to Hot/Rush Queue`);
+  };
+
+  const outstanding = orders.filter(o => o.isOutstanding).filter(o => {
+    if (search && !o.customer.toLowerCase().includes(search.toLowerCase()) && !(o.orderNum||'').toLowerCase().includes(search.toLowerCase())) return false;
+    if (sFilter !== 'All' && o.status !== sFilter) return false;
+    return true;
+  });
+  const completed  = orders.filter(o => o.isFulfilled);
+
+  const kpis = [
+    {label:'Total Orders', val:orders.length, c:'var(--acc)'},
+    {label:'Outstanding',  val:orders.filter(o=>o.isOutstanding).length,  c:'var(--warn)'},
+    {label:'In Production',val:orders.filter(o=>o.status==='In Production').length, c:'var(--acc2)'},
+    {label:'Prod Complete',val:orders.filter(o=>o.status==='Production Complete').length, c:'var(--acc3)'},
+    {label:'Fulfilled',    val:completed.length, c:'var(--ok)'},
+    {label:'Flagged >14d', val:orders.filter(o=>o.isFlagged).length, c:'var(--err)'},
+    {label:'Tagged',       val:Object.values(tags).filter(Boolean).length, c:'#f472b6'},
+  ];
+
+  const monthMap = {};
+  orders.forEach(o => { if (!o.monthKey) return; if (!monthMap[o.monthKey]) monthMap[o.monthKey]={key:o.monthKey,label:o.monthLabel,orders:[]}; monthMap[o.monthKey].orders.push(o); });
+  const months = Object.values(monthMap).sort((a,b)=>a.key.localeCompare(b.key));
+
+  const tagBtn = (uid, type, label, color) => (
+    <button onClick={()=>toggleTag(uid,type)} style={{padding:'2px 8px',borderRadius:3,border:`1px solid ${tags[uid]===type?color:'var(--bdr)'}`,background:tags[uid]===type?`${color}22`:'transparent',color:tags[uid]===type?color:'var(--muted)',fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.06em',cursor:'pointer',transition:'all .12s'}}>{label}</button>
+  );
+
+  if (!orders.length) return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'60vh',gap:20}}>
+      <div style={{fontSize:40,opacity:.3}}>📊</div>
+      <div className="hd" style={{fontSize:22,color:'var(--txt)'}}>Queue Analyzer</div>
+      <div style={{fontSize:13,color:'var(--muted)',textAlign:'center',maxWidth:400}}>Upload your production queue Excel file (needs a <span style={{color:'var(--acc)'}}>"Form Responses 1"</span> sheet) to analyze orders, track status, and push hot/rush items to the queue.</div>
+      {error && <div style={{color:'var(--err)',fontSize:12,background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'8px 14px'}}>{error}</div>}
+      <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e=>handleFile(e.target.files[0])}/>
+      <button className="btn btn-p" style={{fontSize:14,padding:'10px 28px'}} onClick={()=>fileRef.current.click()}>📂 Upload Queue Excel</button>
+    </div>
+  );
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:18}}>Queue Analyzer</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{fileName}</div>
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <button className="btn btn-g btn-sm" onClick={()=>{setOrders([]);setTags({});setFileName('');setError('');}}>↩ New File</button>
+          {Object.values(tags).filter(Boolean).length + orders.filter(o=>o.isFlagged&&!tags[o.uid]).length > 0 && (
+            <button className="btn btn-ok btn-sm" onClick={pushToHotQueue}>🔥 Push {Object.values(tags).filter(Boolean).length + orders.filter(o=>o.isFlagged&&!tags[o.uid]).length} to Hot Queue</button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid4" style={{marginBottom:16}}>
+        {kpis.map(k=>(
+          <div key={k.label} className="stat-card" style={{borderTop:`3px solid ${k.c}`}}>
+            <div style={{fontSize:11,color:'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{k.label}</div>
+            <div style={{fontSize:28,fontWeight:700,color:k.c,fontFamily:'Barlow Condensed'}}>{k.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {months.length > 0 && (
+        <div className="card" style={{marginBottom:16}}>
+          <div className="hd" style={{fontSize:13,marginBottom:10}}>Monthly Breakdown</div>
+          <div style={{overflowX:'auto'}}>
+            <table>
+              <thead><tr>{['Month','Total','New Order','In Prod','Prod Done','On Hold','Shipped','Completed','Delivered','Still Owed','% Done'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+              <tbody>
+                {months.map(m=>{
+                  const n=m.orders.length;
+                  const nw=m.orders.filter(o=>o.status==='New Order Processing').length;
+                  const ip=m.orders.filter(o=>o.status==='In Production').length;
+                  const pd=m.orders.filter(o=>o.status==='Production Complete').length;
+                  const oh=m.orders.filter(o=>['On Hold','CSR'].includes(o.status)).length;
+                  const sh=m.orders.filter(o=>o.status==='Shipped').length;
+                  const co=m.orders.filter(o=>o.status==='Completed').length;
+                  const de=m.orders.filter(o=>o.status==='Delivered').length;
+                  const ow=n-co-de-sh;
+                  const pct=n>0?Math.round((co+de+sh)/n*100):0;
+                  return <tr key={m.key}><td style={{fontWeight:700}}>{m.label}</td><td>{n}</td><td>{nw||''}</td><td>{ip||''}</td><td>{pd||''}</td><td>{oh||''}</td><td>{sh||''}</td><td>{co||''}</td><td>{de||''}</td><td style={{color:ow>0?'var(--err)':'var(--ok)',fontWeight:700}}>{ow}</td><td style={{color:pct>=90?'var(--ok)':pct>=50?'var(--warn)':'var(--err)',fontWeight:700}}>{pct}%</td></tr>;
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="card" style={{marginBottom:16}}>
+        <div className="section-hd" style={{marginBottom:10}}>
+          <div className="hd" style={{fontSize:13}}>Outstanding Orders <span style={{color:'var(--warn)',fontSize:12}}>({outstanding.length})</span></div>
+          <div style={{display:'flex',gap:8}}>
+            <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search customer / order#" style={{width:200}}/>
+            <select className="search" value={sFilter} onChange={e=>setSFilter(e.target.value)} style={{width:160}}>
+              <option>All</option>
+              {[...new Set(orders.filter(o=>o.isOutstanding).map(o=>o.status))].map(s=><option key={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{overflowX:'auto'}}>
+          <table>
+            <thead><tr><th>Tag</th><th>Status</th><th>Date</th><th>Pri</th><th>Customer</th><th>Source</th><th>Fulfillment</th><th>Location</th><th>Order #</th><th>Days</th><th>Notes</th></tr></thead>
+            <tbody>
+              {outstanding.map(o=>{
+                const sc=SS[o.status]||SS['Unknown'];
+                const rowBg = o.isFlagged ? 'rgba(239,68,68,.05)' : '';
+                return (
+                  <tr key={o.uid} style={{background:rowBg}}>
+                    <td style={{whiteSpace:'nowrap'}}>
+                      <div style={{display:'flex',gap:3}}>
+                        {tagBtn(o.uid,'HOT','🔥 HOT','#ef4444')}
+                        {tagBtn(o.uid,'RUSH','⚡ RUSH','#f59e0b')}
+                        {tagBtn(o.uid,'FLAGGED','🟡','#eab308')}
+                      </div>
+                    </td>
+                    <td><span style={{background:`${sc.c}22`,color:sc.c,border:`1px solid ${sc.c}44`,padding:'2px 7px',borderRadius:3,fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{sc.l}</span></td>
+                    <td style={{whiteSpace:'nowrap',fontSize:11}}>{o.dateLabel}</td>
+                    <td style={{color:o.priority===1?'var(--err)':o.priority<=3?'var(--warn)':'var(--muted)',fontWeight:700}}>{o.priority}</td>
+                    <td style={{fontWeight:600}}>{o.customer}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'—'}</td>
+                    <td style={{fontSize:11}}>{o.delivery||'—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'—'}</td>
+                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td>
+                    <td style={{color:o.age>14?'var(--err)':o.age>7?'var(--warn)':'var(--txt)',fontWeight:o.age>14?700:400}}>{o.age != null ? o.age+'d' : '—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
+                  </tr>
+                );
+              })}
+              {!outstanding.length && <tr><td colSpan={11} style={{textAlign:'center',color:'var(--muted)',padding:24}}>No outstanding orders</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="hd" style={{fontSize:13,marginBottom:10}}>Completed / Shipped / Delivered <span style={{color:'var(--ok)',fontSize:12}}>({completed.length})</span></div>
+        <div style={{overflowX:'auto'}}>
+          <table>
+            <thead><tr><th>Status</th><th>Date</th><th>Customer</th><th>Source</th><th>Fulfillment</th><th>Location</th><th>Order #</th></tr></thead>
+            <tbody>
+              {completed.slice(0,50).map(o=>{
+                const sc=SS[o.status]||SS['Unknown'];
+                return <tr key={o.uid}><td><span style={{background:`${sc.c}22`,color:sc.c,border:`1px solid ${sc.c}44`,padding:'2px 7px',borderRadius:3,fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{sc.l}</span></td><td style={{fontSize:11}}>{o.dateLabel}</td><td style={{fontWeight:600}}>{o.customer}</td><td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'—'}</td><td style={{fontSize:11}}>{o.delivery||'—'}</td><td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'—'}</td><td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td></tr>;
+              })}
+              {!completed.length && <tr><td colSpan={7} style={{textAlign:'center',color:'var(--muted)',padding:24}}>No fulfilled orders</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── HOT RUSH QUEUE ──────────────────────────────────────────────────────────────
+const HotRushQueue = ({data, setData}) => {
+  const [search,  setSearch]  = useState('');
+  const [tagF,    setTagF]    = useState('All');
+  const [statusF, setStatusF] = useState('All');
+  const [editId,  setEditId]  = useState(null);
+  const [form,    setForm]    = useState({});
+  const [addOpen, setAddOpen] = useState(false);
+  const jsonRef = useRef();
+
+  const hq = data.hotqueue || [];
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const age = (dateISO) => { if (!dateISO) return null; const d = new Date(dateISO); if (isNaN(d)) return null; return Math.floor((today - d) / 86400000); };
+
+  const remove = (id) => setData(p=>({...p, hotqueue: p.hotqueue.filter(o=>o.id!==id)}));
+  const updateTag = (id, tag) => setData(p=>({...p, hotqueue: p.hotqueue.map(o=>o.id===id?{...o,tag}:o)}));
+  const updateStatus = (id, status) => setData(p=>({...p, hotqueue: p.hotqueue.map(o=>o.id===id?{...o,status}:o)}));
+
+  const save = () => {
+    if (editId) {
+      setData(p=>({...p, hotqueue: p.hotqueue.map(o=>o.id===editId?{...o,...form}:o)}));
+      setEditId(null);
+    } else {
+      setData(p=>({...p, hotqueue: [...p.hotqueue, {id:uid(), addedAt:now(), ...form}]}));
+      setAddOpen(false);
+    }
+    setForm({});
+  };
+
+  const importJSON = (file) => {
+    const r = new FileReader();
+    r.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        const orders = parsed.orders || parsed;
+        if (!Array.isArray(orders)) { alert('Invalid JSON format'); return; }
+        const toAdd = orders.map(o=>({...o, id: uid(), addedAt: new Date().toISOString()}));
+        setData(p=>({...p, hotqueue: [...p.hotqueue, ...toAdd]}));
+        alert(`✅ Imported ${toAdd.length} orders`);
+      } catch { alert('Invalid JSON file'); }
+    };
+    r.readAsText(file);
+  };
+
+  const statuses = ['New Order Processing','In Production','Production Complete','On Hold','Shipped','Delivered','Completed','CSR'];
+  const tagColor = {HOT:'var(--err)', RUSH:'var(--warn)', FLAGGED:'#eab308'};
+  const tagLabel = {HOT:'🔥 HOT', RUSH:'⚡ RUSH', FLAGGED:'🟡 FLAGGED'};
+  const SS2 = {'New Order Processing':{c:'#8E44AD'},'In Production':{c:'#3A5BA0'},'Production Complete':{c:'#F39C12'},'On Hold':{c:'#E74C3C'},'Shipped':{c:'#1E8449'},'Delivered':{c:'#1E8449'},'Completed':{c:'#1E8449'},'CSR':{c:'#555'}};
+
+  const filtered = hq.filter(o => {
+    if (search && !o.customer?.toLowerCase().includes(search.toLowerCase()) && !(o.orderNum||'').toLowerCase().includes(search.toLowerCase())) return false;
+    if (tagF !== 'All' && o.tag !== tagF) return false;
+    if (statusF !== 'All' && o.status !== statusF) return false;
+    return true;
+  }).sort((a,b) => {
+    const tp = {HOT:0,RUSH:1,FLAGGED:2};
+    return (tp[a.tag]??3) - (tp[b.tag]??3) || (a.priority||5)-(b.priority||5);
+  });
+
+  const FormFields = () => (
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+      {[['customer','Customer'],['orderNum','Order #'],['status','Status'],['tag','Tag'],['priority','Priority'],['leadSource','Lead Source'],['delivery','Fulfillment'],['location','Ship To'],['dateISO','Date (ISO)'],['notes','Notes']].map(([k,l])=>(
+        <div key={k} style={{gridColumn:k==='notes'?'span 2':'auto'}}>
+          <label>{l}</label>
+          {k==='status' ? (
+            <select value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}>
+              <option value="">— Select —</option>
+              {statuses.map(s=><option key={s}>{s}</option>)}
+            </select>
+          ) : k==='tag' ? (
+            <select value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}>
+              <option value="">— None —</option>
+              <option>HOT</option><option>RUSH</option><option>FLAGGED</option>
+            </select>
+          ) : k==='notes' ? (
+            <textarea rows={2} value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} style={{resize:'vertical'}}/>
+          ) : (
+            <input value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}/>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="fade-up">
+      {(editId || addOpen) && (
+        <div className="overlay" onClick={e=>{if(e.target.className==='overlay'){setEditId(null);setAddOpen(false);setForm({});}}}>
+          <div className="modal">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}>
+              <div className="hd" style={{fontSize:16}}>{editId ? 'Edit Order' : 'Add Order'}</div>
+              <button className="btn btn-g btn-sm" onClick={()=>{setEditId(null);setAddOpen(false);setForm({});}}>✕</button>
+            </div>
+            <FormFields/>
+            <div style={{display:'flex',gap:8,marginTop:18,justifyContent:'flex-end'}}>
+              <button className="btn btn-g btn-sm" onClick={()=>{setEditId(null);setAddOpen(false);setForm({});}}>Cancel</button>
+              <button className="btn btn-p btn-sm" onClick={save}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:18}}>Hot / Rush Queue</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{hq.length} orders tracked</div>
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{width:180}}/>
+          <select className="search" value={tagF} onChange={e=>setTagF(e.target.value)} style={{width:130}}>
+            <option>All</option><option>HOT</option><option>RUSH</option><option>FLAGGED</option>
+          </select>
+          <select className="search" value={statusF} onChange={e=>setStatusF(e.target.value)} style={{width:160}}>
+            <option>All</option>
+            {statuses.map(s=><option key={s}>{s}</option>)}
+          </select>
+          <input ref={jsonRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>importJSON(e.target.files[0])}/>
+          <button className="btn btn-g btn-sm" onClick={()=>jsonRef.current.click()}>📥 Import JSON</button>
+          <button className="btn btn-p btn-sm" onClick={()=>{setAddOpen(true);setForm({});}}>+ Add Order</button>
+          {hq.length>0 && <button className="btn btn-d btn-sm" onClick={()=>{if(window.confirm('Clear all orders?'))setData(p=>({...p,hotqueue:[]}));}}>Clear All</button>}
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+        {[{label:'Total',val:hq.length,c:'var(--acc)'},{label:'HOT',val:hq.filter(o=>o.tag==='HOT').length,c:'var(--err)'},{label:'RUSH',val:hq.filter(o=>o.tag==='RUSH').length,c:'var(--warn)'},{label:'FLAGGED',val:hq.filter(o=>o.tag==='FLAGGED').length,c:'#eab308'}].map(k=>(
+          <div key={k.label} className="stat-card" style={{borderTop:`3px solid ${k.c}`}}>
+            <div style={{fontSize:10,color:'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{k.label}</div>
+            <div style={{fontSize:28,fontWeight:700,color:k.c,fontFamily:'Barlow Condensed'}}>{k.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {!filtered.length ? (
+        <div className="card" style={{textAlign:'center',padding:'48px 0'}}>
+          <div style={{fontSize:32,opacity:.2,marginBottom:8}}>🔥</div>
+          <div style={{color:'var(--muted)',fontSize:13}}>{hq.length ? 'No orders match filters' : 'No orders yet — push from Queue Analyzer or add manually'}</div>
+        </div>
+      ) : (
+        <div className="card" style={{overflowX:'auto'}}>
+          <table>
+            <thead><tr><th>Tag</th><th>Status</th><th>Date</th><th>Days</th><th>Pri</th><th>Customer</th><th>Source</th><th>Fulfillment</th><th>Ship To</th><th>Order #</th><th>Notes</th><th>Actions</th></tr></thead>
+            <tbody>
+              {filtered.map(o => {
+                const a = age(o.dateISO);
+                const tc = tagColor[o.tag] || 'var(--muted)';
+                const sc = SS2[o.status] || {c:'#555'};
+                return (
+                  <tr key={o.id}>
+                    <td>
+                      <select value={o.tag||''} onChange={e=>updateTag(o.id,e.target.value)} style={{background:`${tc}22`,color:tc,border:`1px solid ${tc}44`,borderRadius:3,fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,padding:'2px 6px',cursor:'pointer',outline:'none'}}>
+                        <option value="">—</option>
+                        <option value="HOT">🔥 HOT</option>
+                        <option value="RUSH">⚡ RUSH</option>
+                        <option value="FLAGGED">🟡 FLAGGED</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select value={o.status||''} onChange={e=>updateStatus(o.id,e.target.value)} style={{background:`${sc.c}22`,color:sc.c,border:`1px solid ${sc.c}44`,borderRadius:3,fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,padding:'2px 6px',cursor:'pointer',outline:'none'}}>
+                        {statuses.map(s=><option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.dateLabel||'—'}</td>
+                    <td style={{color:a>14?'var(--err)':a>7?'var(--warn)':'var(--txt)',fontWeight:a>14?700:400}}>{a!=null?a+'d':'—'}</td>
+                    <td style={{color:o.priority===1?'var(--err)':o.priority<=3?'var(--warn)':'var(--muted)',fontWeight:700}}>{o.priority||'—'}</td>
+                    <td style={{fontWeight:600}}>{o.customer||'—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'—'}</td>
+                    <td style={{fontSize:11}}>{o.delivery||'—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'—'}</td>
+                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
+                    <td style={{whiteSpace:'nowrap'}}>
+                      <button className="btn btn-g btn-xs" style={{marginRight:4}} onClick={()=>{setEditId(o.id);setForm({...o});}}>✎</button>
+                      <button className="btn btn-d btn-xs" onClick={()=>remove(o.id)}>✕</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── WORKBOOK GENERATOR ──────────────────────────────────────────────────────────
+const WorkbookGenerator = ({data, setData}) => {
+  const WBG_GROUPS=[
+    ['Line Post','ea',['Line Post','Line Post (Cable)','Line Post (Glass)'],[],'post',3.0,'per_ft','post_42in',null,false],
+    ['Stair Post','ea',['Stair Post','Stair Post (Cable)','Stair Post (Surface)'],[],'post',3.0,'per_ft','post_42in',null,false],
+    ['Corner Post','ea',['Corner Post'],[],'post',3.0,'per_ft','post_42in',null,false],
+    ['42in Fascia Post','ea',[],['42in Fascia Mounted Posts (incl. Brackets)','42in Fascia Mounted Posts (incl. Brackets) — SRS Maisy Pl Updated'],'post',3.5,'per_ft','post_42in',null,false],
+    ['42in Fascia Stair Post','ea',[],['42in Fascia Mounted Stair Posts (incl. Brackets)'],'post',3.5,'per_ft','post_42in',null,false],
+    ['Flat Bracket','ea',[],[],'post',0,'per_ea','flat_bracket',null,false],
+    ['36in Surface Post','ea',[],['36in Surface Mounted Posts (incl. Brackets)'],'post',3.0,'per_ft','post_36in',null,false],
+    ['36in Surface 90° Post','ea',[],['36in Surface Mounted 90 deg Posts (incl. Brackets)'],'post',3.0,'per_ft','post_36in',null,false],
+    ['36in Surface Stair Post','ea',[],['36in Surface Mounted Stair Posts (incl. Brackets)'],'post',3.0,'per_ft','post_36in',null,false],
+    ['Deck Top — All Lengths','ea',['8ft Deck Top','8ft Deck Top (Cable)','8ft Deck Top (Glass)','4.5ft Deck Top','12ft Deck Top','12ft Deck Top (Cable)','12ft Deck Top (Glass)','20ft Deck Top','20ft Deck Top (Cable)'],['20ft 1x3 Top Rail, Aluminum, Matte Black'],'rail',20,'per_ft','top_rail',null,false],
+    ['Stair Top — All Lengths','ea',['8ft Stair Top','8ft Stair Top (Cable)','12 Stair Top','12 Stair Top (Cable)'],[],  'rail',20,'per_ft','top_rail',null,false],
+    ['Top Rail End Caps','ea',[],['1x3 Rectangular Top-Rail Insert End Caps'],null,0,'per_ea','rail_caps',null,false],
+    ['Rail Caps','ea',['Rail Caps','Rail Caps (Cable)','Rail Caps (Glass)'],[],null,0,'per_ea','rail_caps',null,false],
+    ['6in Swages SS316','ea',['Swages'],['6in SS316 Swage Threaded Stud Tensioner'],null,0,'per_ea','swage_6in_ss',null,false],
+    ['Angle Washers SS316','ea',['Angle Washers'],['Angle Washer For Stairs, SS316'],null,0,'per_ea','angle_washer_ss',null,false],
+    ['Angle Brackets','ea',['Angle Brackets','Angle Brackets (Cable)'],[],null,0,'per_ea','angle_brackets',null,false],
+    ['Glass Clamps','ea',['Glass Clamps'],[],null,0,'per_ea','glass_clamps',null,false],
+    ['Lags','ea',['Lags','Lags (Cable)','Lags (Glass)'],['Lags/Washers for Fascia Posts, SS316'],null,0,'per_ea','lags',null,false],
+    ['Post Screws','ea',['Post Screws'],['Screws for Surface Mounted Posts, SS316'],null,0,'per_ea','post_screws',null,false],
+    ['Self Tap','ea',['Self Tap','Self Tap (Cable)','Self Tap (Glass)'],['Self-Tap Screws, SS316 Powder Coated Black'],null,0,'per_ea','self_tap',null,false],
+    ['Cable SS316 1/8in','ft',['Cable (ft)'],['Cable SS316 1/8in 1x19'],null,0,'per_ea','cable_ss',null,false],
+    ['Deck Glass Panels','panel',['Deck Glass'],[],null,0,'per_ea','glass_panels',null,false],
+  ];
+
+  const WBG_PRICE_GROUPS=[
+    {section:'POSTS & BRACKETS',items:[{key:'post_42in',label:'Post Alum 42in',unit:'$/ft'},{key:'post_36in',label:'Post Alum 36in',unit:'$/ft'},{key:'flat_bracket',label:'Flat Bracket',unit:'$/ea'}]},
+    {section:'TOP RAIL',items:[{key:'top_rail',label:'Top Rail Extrusion',unit:'$/ft'},{key:'rail_caps',label:'Rail Caps / End Caps',unit:'$/ea'}]},
+    {section:'HARDWARE',items:[{key:'swage_6in_ss',label:'6in Swages SS316',unit:'$/ea'},{key:'angle_washer_ss',label:'Angle Washers SS316',unit:'$/ea'},{key:'angle_brackets',label:'Angle Brackets',unit:'$/ea'},{key:'glass_clamps',label:'Glass Clamps',unit:'$/ea'},{key:'lags',label:'Lags SS316',unit:'$/ea'},{key:'lag_washers',label:'Lag Washers',unit:'$/ea'},{key:'post_screws',label:'Post Screws SS316',unit:'$/ea'},{key:'self_tap',label:'Self-Tap SS316',unit:'$/ea'}]},
+    {section:'CABLE & GLASS',items:[{key:'cable_ss',label:'Cable SS316 1/8in',unit:'$/ft'},{key:'glass_panels',label:'Deck Glass Panels',unit:'$/panel'}]},
+    {section:'FLAT BAR',items:[{key:'flat_bar_4x14',label:'4"×1/4" Flat Bar',unit:'$/ft'},{key:'flat_bar_2x18',label:'2"×1/8" Flat Bar',unit:'$/ft'}]},
+    {section:'CORNER ANGLES',items:[{key:'angle_1515_18',label:'1.5×1.5×1/8" Angle',unit:'$/ft'},{key:'angle_24_18',label:'2×4×1/8" Angle',unit:'$/ft'}]},
+  ];
+
+  const glookup2 = Object.fromEntries(WBG_GROUPS.map(g=>([g[0],{unit:g[1],cn:g[2],wn:g[3],ft:g[4],fpu:g[5],pm:g[6],pk:g[7]}])));
+
+  const WBG_SYS = `You are a materials extraction specialist for Maisy Railing. Extract ALL materials with quantities from the order document. Return ONLY valid JSON, no markdown.\nSchema:{"customerName":"string","orderType":"string","deckLength":number|null,"stairLength":number|null,"postHeight":"string|null","color":"string|null","notes":"string|null","isWholesale":false,"materials":[{"name":"string","qty":number,"unit":"ea|ft|panel"}]}\nCable→ft, glass panels→panel, else→ea.`;
+
+  const [screen,    setScreen]    = useState('key');
+  const [apiKey,    setApiKey]    = useState('');
+  const [files,     setFiles]     = useState([]);
+  const [statuses,  setStatuses]  = useState([]);
+  const [orders,    setOrders]    = useState([]);
+  const [errors,    setErrors]    = useState([]);
+  const [prices,    setPrices]    = useState(data.wbgPrices||{});
+  const [tab,       setTab]       = useState('results');
+  const [onHand,    setOnHand]    = useState({});
+  const fileRef2 = useRef();
+
+  const savePrices = (p) => { setData(prev=>({...prev,wbgPrices:p})); };
+
+  const toB64 = (f) => new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});
+  const xlsxToText = (f) => new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>{try{const wb=window.XLSX.read(e.target.result,{type:'array'});let t='';for(const n of wb.SheetNames){const rows=window.XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});t+=`\n[Sheet:${n}]\n`;for(const row of rows){const v=row.filter(x=>x!=='');if(v.length)t+=v.join(' | ')+'\n';}}res(t);}catch(err){rej(err);}};r.onerror=rej;r.readAsArrayBuffer(f);
+  });
+
+  const extractOrder = async (file, onStatus) => {
+    onStatus('reading');
+    let messages=[];
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(ext==='xlsx'||ext==='xls'){const t=await xlsxToText(file);messages=[{role:'user',content:`Order data:\n${t}\n\nExtract as JSON.`}];}
+    else if(ext==='pdf'){const b=await toB64(file);messages=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b}},{type:'text',text:'Extract as JSON.'}]}];}
+    else{const b=await toB64(file);const mt=ext==='jpg'||ext==='jpeg'?'image/jpeg':`image/${ext}`;messages=[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b}},{type:'text',text:'Extract as JSON.'}]}];}
+    onStatus('analyzing');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:WBG_SYS,messages})});
+    if(!resp.ok){let txt=await resp.text();let m=`API ${resp.status}`;try{m=JSON.parse(txt).error?.message||m}catch{}throw new Error(m);}
+    const d=await resp.json();
+    const raw=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const clean=raw.replace(/```json|```/g,'').trim();
+    try{return JSON.parse(clean);}catch{const m=clean.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error('JSON parse failed');}
+  };
+
+  const processAll = async () => {
+    setScreen('processing');
+    const newStatuses = files.map(f=>({name:f.name,status:'pending',error:null}));
+    setStatuses(newStatuses);
+    const results=[]; const errs=[];
+    for(let i=0;i<files.length;i++){
+      const f=files[i];
+      const upd = (u) => setStatuses(prev=>{const n=[...prev];n[i]={...n[i],...u};return n;});
+      try{
+        const order=await extractOrder(f,(s)=>upd({status:s}));
+        upd({status:'done'}); results.push(order);
+      }catch(e){upd({status:'error',error:e.message}); errs.push({name:f.name,error:e.message});}
+    }
+    setOrders(results); setErrors(errs);
+    setTimeout(()=>setScreen('results'),600);
+  };
+
+  const buildRaw2 = (orders2) => { const d={}; for(const o of orders2) for(const m of(o.materials||[])){d[m.name]=(d[m.name]||0)+m.qty;} return d; };
+  const computeCon2 = (raw) => {
+    const res={};
+    for(const [lbl,unit,cn,wn,ft,fpu,pm,pk] of WBG_GROUPS){
+      const c=cn.reduce((s,n)=>s+(raw[n]||0),0); const w=wn.reduce((s,n)=>s+(raw[n]||0),0);
+      res[lbl]={c,w,total:c+w,unit,ft,fpu,pm,pk};
+    }
+    return res;
+  };
+  const derivedCalcs2 = (raw) => {
+    const surfTotal=['Line Post','Line Post (Cable)','Line Post (Glass)','Stair Post','Stair Post (Cable)','Stair Post (Surface)','Corner Post','36in Surface Mounted Posts (incl. Brackets)','36in Surface Mounted 90 deg Posts (incl. Brackets)','36in Surface Mounted Stair Posts (incl. Brackets)'].reduce((s,n)=>s+(raw[n]||0),0);
+    const fascia=['42in Fascia Mounted Posts (incl. Brackets)','42in Fascia Mounted Posts (incl. Brackets) — SRS Maisy Pl Updated'].reduce((s,n)=>s+(raw[n]||0),0);
+    const lags=['Lags','Lags (Cable)','Lags (Glass)','Lags/Washers for Fascia Posts, SS316'].reduce((s,n)=>s+(raw[n]||0),0);
+    const cornerQty=raw['Corner Post']||0;
+    return{surfTotal,fascia,lags,flat4ft:Math.ceil(surfTotal*4/12),flat2ft:Math.ceil(surfTotal*4/12)+Math.ceil(fascia*4/12),cornerQty,angle1515ft:Math.ceil(cornerQty*2*2/12),angle24ft:Math.ceil(cornerQty*2*5/12)};
+  };
+
+  const generateWB = () => {
+    const XLSX=window.XLSX; if(!XLSX){alert('SheetJS not loaded');return;}
+    const raw=buildRaw2(orders); const con=computeCon2(raw); const d2=derivedCalcs2(raw);
+    const wb=XLSX.utils.book_new();
+    const sc=(ws,r,c,v)=>{const ref=XLSX.utils.encode_cell({r,c});ws[ref]={v,t:typeof v==='number'?'n':'s'};};
+    const mg=(ws,r1,c1,r2,c2)=>{if(!ws['!merges'])ws['!merges']=[];ws['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}});};
+    // Per-customer sheets
+    for(const order of orders){
+      const ws={};let r=0; const name=(order.customerName||'Order').substring(0,28);
+      sc(ws,r,0,'MAISY RAILING — Material Order');mg(ws,r,0,r,4);r++;
+      sc(ws,r,0,`Customer: ${order.customerName||''}`);mg(ws,r,0,r,4);r++;
+      for(const[k,v]of[['Order Type',order.orderType||'—'],['Color',order.color||'—'],['Notes',order.notes||'—']]){sc(ws,r,0,k);sc(ws,r,1,v);mg(ws,r,1,r,4);r++;}
+      r++;
+      for(const[i,h]of['#','Material','Qty','Unit'].entries()){sc(ws,r,i,h);}r++;
+      (order.materials||[]).forEach((m,i)=>{sc(ws,r,0,i+1);sc(ws,r,1,m.name);sc(ws,r,2,m.qty);sc(ws,r,3,m.unit);r++;});
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r,c:4}});ws['!cols']=[{wch:4},{wch:36},{wch:10},{wch:8}];
+      XLSX.utils.book_append_sheet(wb,ws,name);
+    }
+    // Grand total
+    const gt={};let r2=0;
+    sc(gt,r2,0,'MAISY RAILING — AGGREGATE TOTALS');mg(gt,r2,0,r2,5);r2+=2;
+    const rawAgg=buildRaw2(orders);
+    for(const[i,h]of['#','Material','Total Qty'].entries()){sc(gt,r2,i,h);}r2++;
+    Object.entries(rawAgg).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([n,q],i)=>{sc(gt,r2,0,i+1);sc(gt,r2,1,n);sc(gt,r2,2,q);r2++;});
+    gt['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:r2,c:5}});gt['!cols']=[{wch:4},{wch:36},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,gt,'GRAND TOTAL');
+    XLSX.writeFile(wb,'MaisyRailing_Workbook_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  };
+
+  const sc2={pending:'var(--muted)',reading:'var(--acc2)',analyzing:'var(--acc)',done:'var(--ok)',error:'var(--err)'};
+  const sl2={pending:'Pending…',reading:'Reading file…',analyzing:'AI extracting…',done:'✓ Done',error:'Error'};
+
+  if(screen==='key') return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'65vh',gap:20}}>
+      <div style={{fontSize:40,opacity:.3}}>📑</div>
+      <div className="hd" style={{fontSize:22}}>Workbook Generator</div>
+      <div style={{fontSize:13,color:'var(--muted)',maxWidth:420,textAlign:'center'}}>AI-powered extraction from order files (Excel, PDF, images) → consolidated material workbook with pricing and cost estimation.</div>
+      <div style={{width:380}}>
+        <label>Anthropic API Key</label>
+        <input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-ant-..." onKeyDown={e=>{if(e.key==='Enter'&&apiKey.startsWith('sk-ant-'))setScreen('upload');}}/>
+        <div style={{fontSize:10,color:'var(--muted)',marginTop:4}}>Key stays in memory only — never stored</div>
+      </div>
+      <button className="btn btn-p" disabled={!apiKey.startsWith('sk-ant-')} onClick={()=>setScreen('upload')}>Continue →</button>
+    </div>
+  );
+
+  if(screen==='upload') return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div className="hd" style={{fontSize:18}}>Workbook Generator</div>
+        <button className="btn btn-g btn-sm" onClick={()=>{setScreen('key');setApiKey('');setFiles([]);}}>Change Key</button>
+      </div>
+      <input ref={fileRef2} type="file" accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp" multiple style={{display:'none'}} onChange={e=>setFiles(f=>[...f,...Array.from(e.target.files)])}/>
+      <div style={{border:'2px dashed var(--bdr)',borderRadius:10,padding:'60px 0',textAlign:'center',cursor:'pointer',marginBottom:20,transition:'border-color .15s'}} onClick={()=>fileRef2.current.click()} onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='var(--acc)';}} onDragLeave={e=>{e.currentTarget.style.borderColor='var(--bdr)';}} onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='var(--bdr)';setFiles(f=>[...f,...Array.from(e.dataTransfer.files)]);}}>
+        <div style={{fontSize:36,marginBottom:10,opacity:.4}}>📂</div>
+        <div style={{fontFamily:'Barlow Condensed',fontSize:16,fontWeight:700,color:'var(--txt)',marginBottom:6}}>DROP ORDER FILES HERE</div>
+        <div style={{fontSize:12,color:'var(--muted)'}}>Excel, PDF, PNG, JPG, WEBP — one file per customer order</div>
+      </div>
+      {files.length>0 && (
+        <div className="card" style={{marginBottom:16}}>
+          {files.map((f,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--bdr)'}}>
+              <span style={{fontSize:13}}>{f.name}</span>
+              <button className="btn btn-d btn-xs" onClick={()=>setFiles(fs=>fs.filter((_,j)=>j!==i))}>✕</button>
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'flex-end',marginTop:14,gap:8}}>
+            <button className="btn btn-g btn-sm" onClick={()=>setFiles([])}>Clear All</button>
+            <button className="btn btn-p btn-sm" onClick={processAll}>{`Process ${files.length} File${files.length!==1?'s':''} →`}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  if(screen==='processing') return (
+    <div style={{maxWidth:560,margin:'60px auto'}}>
+      <div className="hd" style={{fontSize:20,marginBottom:24,textAlign:'center'}}>Processing Files…</div>
+      {statuses.map((s,i)=>(
+        <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:'1px solid var(--bdr)'}}>
+          <div style={{width:10,height:10,borderRadius:'50%',background:sc2[s.status]||'var(--muted)',flexShrink:0,transition:'background .3s'}}/>
+          <div style={{flex:1,fontSize:13}}>{s.name}</div>
+          <div style={{fontSize:11,color:sc2[s.status],fontFamily:'Barlow Condensed',fontWeight:700}}>{sl2[s.status]}</div>
+          {s.error && <div style={{fontSize:10,color:'var(--err)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}}>{s.error}</div>}
+        </div>
+      ))}
+    </div>
+  );
+
+  // Results screen
+  const raw2=buildRaw2(orders); const con2=computeCon2(raw2);
+  const totalMaterials=Object.keys(raw2).length;
+  const taggedCount=Object.values(tags2||{}).filter(Boolean).length;
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:18}}>Workbook Generator — Results</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{orders.length} order{orders.length!==1?'s':''} · {totalMaterials} materials extracted {errors.length>0 && `· ${errors.length} error${errors.length!==1?'s':''}`}</div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <button className="btn btn-g btn-sm" onClick={()=>{setScreen('upload');setOrders([]);setErrors([]);setFiles([]);}}>← New Batch</button>
+          {orders.length>0 && <button className="btn btn-p btn-sm" onClick={generateWB}>⬇ Download Workbook</button>}
+        </div>
+      </div>
+
+      <div style={{display:'flex',gap:8,marginBottom:16,borderBottom:'1px solid var(--bdr)',paddingBottom:8}}>
+        {['results','pricing'].map(t=>(
+          <button key={t} className={`tab${tab===t?' on':''}`} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pricing'?'💲 Material Pricing':'📋 Extracted Orders'}</button>
+        ))}
+      </div>
+
+      {tab==='results' && (
+        <div>
+          {orders.map((o,i)=>(
+            <div key={i} className="card" style={{marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                <div>
+                  <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15}}>{o.customerName||'Unknown'}</div>
+                  <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{[o.orderType,o.color,o.postHeight].filter(Boolean).join(' · ')}</div>
+                </div>
+                <span className="badge" style={{background:'var(--s3)',color:'var(--acc)',border:'1px solid var(--bdr)'}}>{(o.materials||[]).length} items</span>
+              </div>
+              <table>
+                <thead><tr><th>#</th><th>Material</th><th>Qty</th><th>Unit</th></tr></thead>
+                <tbody>
+                  {(o.materials||[]).map((m,j)=><tr key={j}><td style={{color:'var(--muted)'}}>{j+1}</td><td>{m.name}</td><td style={{fontWeight:600}}>{m.qty}</td><td style={{color:'var(--muted)'}}>{m.unit}</td></tr>)}
+                </tbody>
+              </table>
+              {o.notes && <div style={{marginTop:8,fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>Note: {o.notes}</div>}
+            </div>
+          ))}
+          {errors.length>0 && errors.map((e,i)=>(
+            <div key={i} className="alert-bar alert-err"><span style={{color:'var(--err)',fontWeight:700}}>✕ {e.name}</span><span style={{color:'var(--muted)'}}>{e.error}</span></div>
+          ))}
+          {!orders.length && <div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No orders extracted yet</div>}
+        </div>
+      )}
+
+      {tab==='pricing' && (
+        <div>
+          <div style={{fontSize:12,color:'var(--muted)',marginBottom:16}}>Prices are saved to your ERP session. Used for cost estimates in the generated workbook.</div>
+          {WBG_PRICE_GROUPS.map(pg=>(
+            <div key={pg.section} className="card" style={{marginBottom:12}}>
+              <div className="hd" style={{fontSize:12,marginBottom:12,color:'var(--acc)'}}>{pg.section}</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+                {pg.items.map(item=>(
+                  <div key={item.key}>
+                    <label>{item.label} <span style={{color:'var(--muted)',fontWeight:400}}>{item.unit}</span></label>
+                    <input type="number" step="0.01" min="0" value={prices[item.key]||''} onChange={e=>{const np={...prices,[item.key]:e.target.value};setPrices(np);savePrices(np);}} placeholder="0.00"/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:8}}>
+            <button className="btn btn-d btn-sm" onClick={()=>{setPrices({});savePrices({});}}>Clear Prices</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+// fix undefined tags2 reference
+const tags2 = {};
+
+// ─── ORDER ANALYZER ──────────────────────────────────────────────────────────────
+const OrderAnalyzer = ({data}) => {
+  const [orders3, setOrders3] = useState([]);
+  const [fileName3, setFileName3] = useState('');
+  const [error3, setError3] = useState('');
+  const [search3, setSearch3] = useState('');
+  const [tab3, setTab3] = useState('overview');
+  const fileRef3 = useRef();
+
+  const parseOrders = (wb) => {
+    const sheetName = wb.SheetNames[0];
+    const ws = wb.Sheets[sheetName];
+    const rows = window.XLSX.utils.sheet_to_json(ws, {defval: ''});
+    return rows.map((r, i) => {
+      const keys = Object.keys(r);
+      const get = (...kw) => { const k = keys.find(c => kw.some(w => String(c).toLowerCase().includes(w.toLowerCase()))); return k ? r[k] : ''; };
+      return {
+        id: i+1,
+        customer: get('customer','name','client') || `Row ${i+1}`,
+        orderNum: get('order','#','number','po'),
+        status: get('status','stage','state'),
+        date: get('date','created','timestamp'),
+        amount: parseFloat(get('amount','total','price','cost','value')) || 0,
+        type: get('type','category','product'),
+        notes: get('notes','comment','description'),
+        salesperson: get('sales','rep','agent','assigned'),
+        source: get('source','lead','channel'),
+      };
+    });
+  };
+
+  const handleFile3 = (file) => {
+    if (!file) return;
+    setError3('');
+    const XLSX = window.XLSX;
+    if (!XLSX) { setError3('SheetJS not available'); return; }
+    const r = new FileReader();
+    r.onload = (e) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        const parsed = parseOrders(wb);
+        setOrders3(parsed); setFileName3(file.name);
+      } catch(err) { setError3('Parse error: ' + err.message); }
+    };
+    r.readAsArrayBuffer(file);
+  };
+
+  const filtered3 = orders3.filter(o =>
+    !search3 || o.customer.toLowerCase().includes(search3.toLowerCase()) || String(o.orderNum).toLowerCase().includes(search3.toLowerCase())
+  );
+
+  const totalRevenue = orders3.reduce((s,o)=>s+o.amount, 0);
+  const byStatus = {};
+  orders3.forEach(o => { const k = o.status||'Unknown'; byStatus[k] = (byStatus[k]||0)+1; });
+  const byType = {};
+  orders3.forEach(o => { const k = o.type||'Unknown'; byType[k] = (byType[k]||0)+1; });
+  const bySales = {};
+  orders3.forEach(o => { if(o.salesperson) bySales[o.salesperson] = (bySales[o.salesperson]||0)+1; });
+
+  if (!orders3.length) return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'60vh',gap:20}}>
+      <div style={{fontSize:40,opacity:.3}}>🔍</div>
+      <div className="hd" style={{fontSize:22}}>Order Analyzer</div>
+      <div style={{fontSize:13,color:'var(--muted)',maxWidth:400,textAlign:'center'}}>Upload any Excel order file for instant breakdown — status distribution, revenue by type, salesperson metrics, and full order table.</div>
+      {error3 && <div style={{color:'var(--err)',fontSize:12,background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'8px 14px'}}>{error3}</div>}
+      <input ref={fileRef3} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={e=>handleFile3(e.target.files[0])}/>
+      <button className="btn btn-p" onClick={()=>fileRef3.current.click()}>📂 Upload Order File</button>
+    </div>
+  );
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:18}}>Order Analyzer</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{fileName3} · {orders3.length} orders</div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <input ref={fileRef3} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={e=>handleFile3(e.target.files[0])}/>
+          <button className="btn btn-g btn-sm" onClick={()=>fileRef3.current.click()}>📂 New File</button>
+          <button className="btn btn-g btn-sm" onClick={()=>{setOrders3([]);setFileName3('');}}>↩ Reset</button>
+        </div>
+      </div>
+
+      <div className="grid4" style={{marginBottom:16}}>
+        {[{label:'Total Orders',val:orders3.length,c:'var(--acc)'},{label:'Revenue',val:fmt$(totalRevenue),c:'var(--ok)'},{label:'Statuses',val:Object.keys(byStatus).length,c:'var(--acc2)'},{label:'Types',val:Object.keys(byType).length,c:'var(--acc3)'}].map(k=>(
+          <div key={k.label} className="stat-card" style={{borderTop:`3px solid ${k.c}`}}>
+            <div style={{fontSize:10,color:'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{k.label}</div>
+            <div style={{fontSize:22,fontWeight:700,color:k.c,fontFamily:'Barlow Condensed'}}>{k.val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'flex',gap:8,marginBottom:14,borderBottom:'1px solid var(--bdr)',paddingBottom:8}}>
+        {['overview','orders'].map(t=>(
+          <button key={t} className={`tab${tab3===t?' on':''}`} onClick={()=>setTab3(t)} style={{textTransform:'capitalize'}}>{t==='overview'?'📊 Overview':'📋 All Orders'}</button>
+        ))}
+      </div>
+
+      {tab3==='overview' && (
+        <div className="grid2">
+          {Object.keys(byStatus).length>0 && (
+            <div className="card">
+              <div className="hd" style={{fontSize:12,marginBottom:12}}>By Status</div>
+              {Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
+                <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid var(--bdr)'}}>
+                  <span style={{fontSize:12}}>{k}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:80,height:4,background:'var(--bdr)',borderRadius:2,overflow:'hidden'}}>
+                      <div style={{height:'100%',width:`${(v/orders3.length)*100}%`,background:'var(--acc)',borderRadius:2}}/>
+                    </div>
+                    <span style={{fontSize:12,fontWeight:700,color:'var(--acc)',fontFamily:'Barlow Condensed',minWidth:20,textAlign:'right'}}>{v}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {Object.keys(byType).length>0 && (
+            <div className="card">
+              <div className="hd" style={{fontSize:12,marginBottom:12}}>By Type</div>
+              {Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
+                <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid var(--bdr)'}}>
+                  <span style={{fontSize:12}}>{k}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:80,height:4,background:'var(--bdr)',borderRadius:2,overflow:'hidden'}}>
+                      <div style={{height:'100%',width:`${(v/orders3.length)*100}%`,background:'var(--acc2)',borderRadius:2}}/>
+                    </div>
+                    <span style={{fontSize:12,fontWeight:700,color:'var(--acc2)',fontFamily:'Barlow Condensed',minWidth:20,textAlign:'right'}}>{v}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {Object.keys(bySales).length>0 && (
+            <div className="card" style={{gridColumn:'span 2'}}>
+              <div className="hd" style={{fontSize:12,marginBottom:12}}>By Salesperson</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+                {Object.entries(bySales).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
+                  <div key={k} style={{background:'var(--s2)',borderRadius:6,padding:'12px',textAlign:'center',border:'1px solid var(--bdr)'}}>
+                    <div style={{fontSize:22,fontWeight:700,color:'var(--acc3)',fontFamily:'Barlow Condensed'}}>{v}</div>
+                    <div style={{fontSize:11,color:'var(--muted)',marginTop:4}}>{k}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab3==='orders' && (
+        <div className="card">
+          <div style={{marginBottom:12}}>
+            <input className="search" value={search3} onChange={e=>setSearch3(e.target.value)} placeholder="Search customer or order #..." style={{width:280}}/>
+          </div>
+          <div style={{overflowX:'auto'}}>
+            <table>
+              <thead><tr><th>#</th><th>Customer</th><th>Order #</th><th>Status</th><th>Date</th><th>Amount</th><th>Type</th><th>Sales</th><th>Source</th></tr></thead>
+              <tbody>
+                {filtered3.map(o=>(
+                  <tr key={o.id}>
+                    <td style={{color:'var(--muted)'}}>{o.id}</td>
+                    <td style={{fontWeight:600}}>{o.customer}</td>
+                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td>
+                    <td>{o.status ? <Badge s={o.status}/> : '—'}</td>
+                    <td style={{fontSize:11}}>{o.date||'—'}</td>
+                    <td style={{fontWeight:600,color:'var(--ok)'}}>{o.amount ? fmt$(o.amount) : '—'}</td>
+                    <td style={{fontSize:11}}>{o.type||'—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.salesperson||'—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.source||'—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────────
@@ -25545,6 +26130,8 @@ const NAVS = [
   {id:'orderimport',icon:'📥',label:'Order Import'},
   {id:'sales',icon:'◈',label:'Sales & Quotes'},
   {id:'production',icon:'◎',label:'Production'},
+  {id:'queueanalyzer',icon:'📊',label:'Queue Analyzer'},
+  {id:'hotqueue',icon:'🔥',label:'Hot/Rush Queue'},
   {id:'inventory',icon:'◉',label:'Inventory'},
   {id:'shipping',icon:'◒',label:'Shipping'},
   {section:'Sales Ops'},
@@ -25569,6 +26156,8 @@ const NAVS = [
   {id:'kpi',icon:'◈',label:'KPI Dashboard'},
   {section:'Reference'},
   {id:'shopref',icon:'⊟',label:'Shop Reference'},
+  {id:'workbookgen',icon:'📑',label:'Workbook Generator'},
+  {id:'orderanalyzer',icon:'🔍',label:'Order Analyzer'},
   {id:'srscatalog',icon:'⊛',label:'SRS Catalog'},
   {id:'legacyorders',icon:'◫',label:'Legacy Orders'},
   {id:'printcenter',icon:'🖨',label:'Print Center'},
@@ -26842,7 +27431,148 @@ const Production = ({data, setData, user}) => {
   );
 };
 
-// ─── PURCHASING (with PO Receiving) ──────────────────────────────────────────────
+// ─── PURCHASING (with PO Receiving) ─────────────────────────────────────────────
+      {tab==='misc'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <span className="chip">{(data.miscCharges||[]).length} charges</span>
+            <span className="chip" style={{color:'var(--warn)'}}>{fmt$((data.miscCharges||[]).reduce((a,b)=>a+(b.amount||0),0))}</span>
+            <span className="chip">{(data.miscCharges||[]).filter(c=>c.reimbursable==='Yes').length} reimbursable</span>
+            <span className="chip" style={{color:'var(--ok)'}}>{(data.miscCharges||[]).filter(c=>c.receipt).length} have receipts</span>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn btn-g btn-sm" onClick={()=>{
+              const selected = (data.miscCharges||[]).filter(c=>c._selected);
+              if(!selected.length){alert('Select at least one charge to email');return;}
+              const lines = selected.map(c=>`Charge #: ${c.id}
+Date: ${c.date}
+Category: ${c.cat}
+Description: ${c.desc}
+Vendor: ${c.vendor||'—'}
+Amount: $${(c.amount||0).toFixed(2)}
+Paid By: ${c.paidBy||'—'}
+Notes: ${c.notes||''}
+`).join('
+---
+
+');
+              const body = `Hi Accounting,
+
+Please find the following misc charge${selected.length>1?'s':''}${selected.some(c=>c.receipt)?' with receipt(s) attached':''}:
+
+${lines}
+Total: $${selected.reduce((s,c)=>s+(c.amount||0),0).toFixed(2)}
+
+Please review and process accordingly.
+
+Thank you,
+Daniel Jones
+Director of Operations
+Maisy Railing | 208.603.8149`;
+              const subject = `Maisy Railing — Misc Charge${selected.length>1?'s':''} for Review (${selected.length} item${selected.length>1?'s':''})`;
+              window.open('mailto:accounting@maisyrailing.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
+            }}>✉ Email Selected</button>
+            <button className="btn btn-xs" onClick={()=>{
+              const all = (data.miscCharges||[]).every(c=>c._selected);
+              setData(d=>({...d,miscCharges:(d.miscCharges||[]).map(c=>({...c,_selected:!all}))}));
+            }}>Select All</button>
+            <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'MC-'+uid(),date:now(),cat:'',desc:'',vendor:'',amount:0,payMethod:'',paidBy:'',reimbursable:'No',approvedBy:'',invoiceNo:'',notes:'',receipt:'',receiptName:'',_selected:false});setModal('misc');}}>+ Add Charge</button>
+          </div>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table>
+            <thead><tr>
+              <th style={{width:32}}></th>
+              <th>Charge #</th><th>Date</th><th>Category</th><th>Description</th>
+              <th>Vendor</th><th>Amount</th><th>Method</th><th>Paid By</th>
+              <th>Reimb.</th><th>Receipt</th><th>Notes</th><th></th>
+            </tr></thead>
+            <tbody>
+              {(data.miscCharges||[]).length===0&&<tr><td colSpan={13}><Empty msg="No misc charges — click + Add Charge"/></td></tr>}
+              {(data.miscCharges||[]).map((c,i)=>(
+                <tr key={i} style={{background:c._selected?'rgba(0,229,255,.06)':''}}>
+                  <td style={{textAlign:'center'}}>
+                    <input type="checkbox" checked={!!c._selected} onChange={e=>setData(d=>({...d,miscCharges:(d.miscCharges||[]).map((x,j)=>j===i?{...x,_selected:e.target.checked}:x)}))}/>
+                  </td>
+                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700}}>{c.id}</td>
+                  <td style={{fontSize:11,whiteSpace:'nowrap'}}>{c.date}</td>
+                  <td><span className="chip">{c.cat}</span></td>
+                  <td style={{fontWeight:500,maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.desc}>{c.desc}</td>
+                  <td style={{fontSize:11}}>{c.vendor}</td>
+                  <td style={{fontWeight:700,color:c.amount>100?'var(--warn)':'var(--txt)'}}>{fmt$(c.amount)}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{c.payMethod}</td>
+                  <td style={{fontSize:11}}>{c.paidBy}</td>
+                  <td style={{color:c.reimbursable==='Yes'?'var(--ok)':'var(--muted)',fontWeight:c.reimbursable==='Yes'?700:400}}>{c.reimbursable}</td>
+                  <td style={{textAlign:'center'}}>
+                    {c.receipt
+                      ? <button className="btn btn-xs" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}} onClick={()=>{const a=document.createElement('a');a.href=c.receipt;a.download=c.receiptName||'receipt';a.click();}}>📎 {c.receiptName||'View'}</button>
+                      : <span style={{fontSize:10,color:'var(--muted)'}}>—</span>}
+                  </td>
+                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:110,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.notes}>{c.notes||''}</td>
+                  <td><div style={{display:'flex',gap:3}}>
+                    <button className="btn btn-g btn-xs" onClick={()=>{setForm({...c});setModal('misc');}}>Edit</button>
+                    <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,miscCharges:(d.miscCharges||[]).filter((x,j)=>j!==i)}))}>×</button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:14}}>
+          {Object.entries((data.miscCharges||[]).reduce((acc,c)=>{acc[c.cat||'Uncategorized']=(acc[c.cat||'Uncategorized']||0)+(c.amount||0);return acc;},{})).map(([cat,amt])=>(
+            <div key={cat} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 14px'}}>
+              <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{cat}</div>
+              <div style={{fontSize:20,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--warn)'}}>{fmt$(amt)}</div>
+            </div>
+          ))}
+        </div>
+      </>}
+
+      {modal==='misc'&&<Modal title={(data.miscCharges||[]).find(c=>c.id===form.id)?'Edit Charge':'Add Misc Charge'} onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Charge #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Category"><input value={form.cat||''} placeholder="Supplies, Tools, Freight…" onChange={e=>setForm(f=>({...f,cat:e.target.value}))}/></Field>
+          <Field label="Amount ($)"><input type="number" step="0.01" value={form.amount||''} onChange={e=>setForm(f=>({...f,amount:+e.target.value}))}/></Field>
+          <Field label="Vendor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field>
+          <Field label="Payment Method"><input value={form.payMethod||''} placeholder="Card, Check, ACH…" onChange={e=>setForm(f=>({...f,payMethod:e.target.value}))}/></Field>
+          <Field label="Paid By"><input value={form.paidBy||''} onChange={e=>setForm(f=>({...f,paidBy:e.target.value}))}/></Field>
+          <Field label="Reimbursable"><select value={form.reimbursable||'No'} onChange={e=>setForm(f=>({...f,reimbursable:e.target.value}))}><option>No</option><option>Yes</option></select></Field>
+          <Field label="Approved By"><input value={form.approvedBy||''} onChange={e=>setForm(f=>({...f,approvedBy:e.target.value}))}/></Field>
+          <Field label="Invoice #"><input value={form.invoiceNo||''} onChange={e=>setForm(f=>({...f,invoiceNo:e.target.value}))}/></Field>
+        </div>
+        <Field label="Description" style={{marginTop:10}}><input value={form.desc||''} onChange={e=>setForm(f=>({...f,desc:e.target.value}))}/></Field>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{marginTop:10}}>
+          <div style={{fontSize:11,fontWeight:600,marginBottom:6,color:'var(--muted)'}}>Receipt / Attachment</div>
+          {form.receipt
+            ? <div style={{display:'flex',gap:8,alignItems:'center',background:'var(--s2)',borderRadius:6,padding:'8px 12px'}}>
+                <span style={{fontSize:12,color:'var(--ok)'}}>📎 {form.receiptName||'Attachment'}</span>
+                <button className="btn btn-d btn-xs" onClick={()=>setForm(f=>({...f,receipt:'',receiptName:''}))}>Remove</button>
+              </div>
+            : <label style={{display:'flex',alignItems:'center',gap:8,background:'var(--s2)',borderRadius:6,padding:'8px 12px',cursor:'pointer',fontSize:11,color:'var(--muted)'}}>
+                📎 Attach Receipt or Document
+                <input type="file" accept="image/*,.pdf" style={{display:'none'}} onChange={e=>{
+                  const file=e.target.files[0];
+                  if(!file)return;
+                  const reader=new FileReader();
+                  reader.onload=ev=>setForm(f=>({...f,receipt:ev.target.result,receiptName:file.name}));
+                  reader.readAsDataURL(file);
+                }}/>
+              </label>}
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={()=>{
+            const rec={...form,amount:Number(form.amount||0)};
+            if(!(data.miscCharges||[]).find(c=>c.id===rec.id))setData(d=>({...d,miscCharges:[...(d.miscCharges||[]),rec]}));
+            else setData(d=>({...d,miscCharges:(d.miscCharges||[]).map(c=>c.id===rec.id?rec:c)}));
+            setModal(null);
+          }}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {(data.miscCharges||[]).find(c=>c.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,miscCharges:(d.miscCharges||[]).filter(c=>c.id!==form.id)}));setModal(null);}}>Delete</button>}
+        </div>
+      </Modal>}
+─
 const Purchasing = ({data, setData}) => {
   const [tab,setTab]=useState('po');
   const [modal,setModal]=useState(null);
@@ -26913,12 +27643,65 @@ const Purchasing = ({data, setData}) => {
       <div style={{display:'flex',gap:6,marginBottom:14}}><button className={'tab'+(tab==='po'?' on':'')} onClick={()=>setTab('po')}>Purchase Orders</button>
           <button className={'tab'+(tab==='req'?' on':'')} onClick={()=>setTab('req')}>Order Requests</button>
           <button className={'tab'+(tab==='quotes'?' on':'')} onClick={()=>setTab('quotes')}>Quote Log</button>
-          <button className={'tab'+(tab==='vnd'?' on':'')} onClick={()=>setTab('vnd')}>Vendors</button></div>
+          <button className={'tab'+(tab==='vnd'?' on':'')} onClick={()=>setTab('vnd')}>Vendors</button><button className={'tab'+(tab==='misc'?' on':'')} onClick={()=>setTab('misc')}>Misc Charges</button></div>
 
-      {tab==='po'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Expected</th><th/></tr></thead>
+      {tab==='po'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <span className="chip">{data.purchaseOrders.length} POs</span>
+            <span className="chip" style={{color:'var(--warn)'}}>{fmt$(data.purchaseOrders.reduce((a,b)=>a+(b.total||0),0))} total</span>
+            <span className="chip" style={{color:'var(--ok)'}}>{data.purchaseOrders.filter(p=>p.received).length} received</span>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn btn-xs" onClick={()=>{const all=data.purchaseOrders.every(p=>p._selected);setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(p=>({...p,_selected:!all}))}));}}>Select All</button>
+            <button className="btn btn-g btn-sm" onClick={()=>{
+              const sel=data.purchaseOrders.filter(p=>p._selected);
+              if(!sel.length){alert('Select at least one PO to email');return;}
+              const lines=sel.map(p=>{
+                const total=p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0;
+                const items=p.items?.map(i=>i.qty+'x '+i.name+' @ $'+i.cost).join('
+  ') || p.notes || '—';
+                return 'PO #: '+p.id+'
+Vendor: '+(p.vendor||'—')+'
+Status: '+(p.status||'—')+'
+Order Date: '+(p.ordered||'—')+'
+Expected: '+(p.expected||'—')+'
+Total: $'+total.toFixed(2)+'
+Items:
+  '+items+(p.attachments&&p.attachments.length?' 
+['+p.attachments.length+' attachment(s): '+p.attachments.map(a=>a.name).join(', ')+']':'');
+              }).join('
+
+---
+
+');
+              const totalAmt=sel.reduce((s,p)=>s+(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0),0);
+              const subject='Maisy Railing — Purchase Order'+(sel.length>1?'s':'')+' for Review ('+sel.length+' PO'+(sel.length>1?'s':'')+' · $'+totalAmt.toFixed(2)+')';
+              const body='Hi,
+
+Please find the following purchase order'+(sel.length>1?'s':'')+' for review'+(sel.some(p=>p.attachments&&p.attachments.length)?' — attachments included where noted':'')+':
+
+'+lines+'
+
+Total Value: $'+totalAmt.toFixed(2)+'
+
+Please review and confirm receipt or flag any discrepancies.
+
+Thank you,
+Daniel Jones
+Director of Operations
+Maisy Railing | 208.603.8149';
+              window.open('mailto:accounting@maisyrailing.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
+            }}>✉ Email Selected</button>
+          </div>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+        <table><thead><tr><th style={{width:32}}></th><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Attach</th><th>Expected</th><th/></tr></thead>
           <tbody>{data.purchaseOrders.map(p=>(
-            <tr key={p.id}>
+            <tr key={p.id} style={{background:p._selected?'rgba(0,229,255,.05)':''}}>
+              <td style={{textAlign:'center'}}>
+                <input type="checkbox" checked={!!p._selected} onChange={e=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(x=>x.id===p.id?{...x,_selected:e.target.checked}:x)}))}/>
+              </td>
               <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{p.id}</td>
               <td style={{fontWeight:500}}>{p.vendor}</td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{p.items?.map(i=>i.name).join(', ').slice(0,50)}</td>
@@ -26926,6 +27709,18 @@ const Purchasing = ({data, setData}) => {
               <td><Badge s={p.status}/></td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.ordered)}</td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.expected)}</td>
+              <td style={{textAlign:'center',whiteSpace:'nowrap'}}>
+                {(p.attachments||[]).length>0
+                  ? <button className="btn btn-xs" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}} onClick={()=>openPO(p)}>📎 {(p.attachments||[]).length}</button>
+                  : <label style={{cursor:'pointer',fontSize:10,color:'var(--muted)',padding:'2px 6px',border:'1px dashed var(--bdr)',borderRadius:4}}>
+                      + File
+                      <input type="file" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" multiple style={{display:'none'}} onChange={e=>{
+                        const files=Array.from(e.target.files);
+                        Promise.all(files.map(file=>new Promise(res=>{const r=new FileReader();r.onload=ev=>res({name:file.name,data:ev.target.result,type:file.type,size:file.size});r.readAsDataURL(file);}))).then(atts=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(po=>po.id===p.id?{...po,attachments:[...(po.attachments||[]),...atts]}:po)})));
+                        e.target.value='';
+                      }}/>
+                    </label>}
+              </td>
               <td><div style={{display:'flex',gap:4}}>
                 {!p.received&&['Ordered','In Transit'].includes(p.status)&&<button className="btn btn-ok btn-sm" onClick={()=>startReceiving(p)}>Receive</button>}
                 <button className="btn btn-g btn-sm" onClick={()=>openPO(p)}>Edit</button>
@@ -26934,7 +27729,8 @@ const Purchasing = ({data, setData}) => {
             </tr>
           ))}</tbody>
         </table>
-      </div>}
+        </div>
+      </>}
 
             {tab==='req'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
@@ -27050,6 +27846,34 @@ const Purchasing = ({data, setData}) => {
         <Field label="Total ($)"><input type="number" value={form.total||0} onChange={e=>setForm(f=>({...f,total:e.target.value}))}/></Field></div>
         <div className="grid2"><Field label="Order Date"><input type="date" value={form.ordered||''} onChange={e=>setForm(f=>({...f,ordered:e.target.value}))}/></Field>
         <Field label="Expected"><input type="date" value={form.expected||''} onChange={e=>setForm(f=>({...f,expected:e.target.value}))}/></Field></div>
+        <div style={{marginTop:14}}>
+          <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:'var(--muted)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span>Attachments{(form.attachments||[]).length>0?' ('+form.attachments.length+')':''}</span>
+            <label style={{cursor:'pointer',fontSize:10,color:'var(--acc)',border:'1px solid var(--acc)',borderRadius:4,padding:'2px 8px'}}>
+              + Add File
+              <input type="file" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" multiple style={{display:'none'}} onChange={e=>{
+                const files=Array.from(e.target.files);
+                const readers=files.map(file=>new Promise(res=>{const r=new FileReader();r.onload=ev=>res({name:file.name,data:ev.target.result,type:file.type,size:file.size});r.readAsDataURL(file);}));
+                Promise.all(readers).then(atts=>setForm(f=>({...f,attachments:[...(f.attachments||[]),...atts]})));
+                e.target.value='';
+              }}/>
+            </label>
+          </div>
+          {(form.attachments||[]).length===0&&<div style={{fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>No attachments — click + Add File to attach invoices, receipts, quotes, or photos</div>}
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {(form.attachments||[]).map((att,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:8,background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
+                <span style={{fontSize:14}}>{att.type&&att.type.includes('image')?'🖼':att.type&&att.type.includes('pdf')?'📄':'📎'}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:600,fontSize:11,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{att.name}</div>
+                  <div style={{fontSize:9,color:'var(--muted)'}}>{att.size?(att.size/1024).toFixed(1)+'kb':''}</div>
+                </div>
+                <button className="btn btn-xs" style={{background:'rgba(0,229,255,.1)',color:'var(--acc)'}} onClick={()=>{const a=document.createElement('a');a.href=att.data;a.download=att.name;a.click();}}>⬇ View</button>
+                <button className="btn btn-d btn-xs" onClick={()=>setForm(f=>({...f,attachments:(f.attachments||[]).filter((_,j)=>j!==i)}))}>×</button>
+              </div>
+            ))}
+          </div>
+        </div>
         <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={savePO}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
       </Modal>}
       {modal==='vnd'&&<Modal title="Vendor" onClose={()=>setModal(null)}>
@@ -27192,7 +28016,7 @@ const Shipping = ({data, setData}) => {
                 <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)'}}>{fmtD(s.delivered)}</td>
                 <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
               </tr>
-            ))}
+            );})}
           </tbody>
         </table>
       </div>}
@@ -27729,7 +28553,7 @@ const Finance = ({data,setData}) => {
         {tab==='labor'&&<button className="btn btn-p" onClick={()=>{setForm({id:`LR-${uid()}`,role:'',level:'',rateHr:0,overtime:0,burden:1.28,notes:''});setModal('lr');}}>+ Add Rate</button>}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['pnl','labor','stations','misc','profitability'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':t==='stations'?'Station Costs':t==='misc'?'Misc Charges':t==='profitability'?'Profitability':t}</button>)}
+        {['pnl','labor','stations','profitability'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':t==='stations'?'Station Costs':t==='misc'?'Misc Charges':t==='profitability'?'Profitability':t}</button>)}
       </div>
 
       {tab==='pnl'&&<>
@@ -27875,50 +28699,6 @@ const Finance = ({data,setData}) => {
           {(data.costPerStation||[]).find(s=>s.station===form.station)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,costPerStation:(d.costPerStation||[]).filter(s=>s.station!==form.station)}));setModal(null);}}>Delete</button>}
         </div>
       </Modal>}
-
-      {tab==='misc'&&<>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <span className="chip">{(data.miscCharges||[]).length} charges</span>
-            <span className="chip" style={{color:'var(--warn)'}}>{fmt$((data.miscCharges||[]).reduce((a,b)=>a+(b.amount||0),0))} total</span>
-            <span className="chip">{(data.miscCharges||[]).filter(c=>c.reimbursable==='Yes').length} reimbursable</span>
-          </div>
-          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'MC-'+uid(),date:now(),cat:'',desc:'',vendor:'',amount:0,payMethod:'Company Card',paidBy:'Daniel Jones',reimbursable:'No',approvedBy:'Daniel Jones',invoiceNo:'',notes:''});setModal('misc');}}>+ Add Charge</button>
-        </div>
-        <div className="card" style={{padding:0,overflow:'auto'}}>
-          <table><thead><tr><th>Charge #</th><th>Date</th><th>Category</th><th>Description</th><th>Vendor</th><th>Amount</th><th>Payment Method</th><th>Paid By</th><th>Reimbursable?</th><th>Approved By</th><th>Invoice #</th><th>Notes</th><th/></tr></thead>
-            <tbody>{(data.miscCharges||[]).length===0&&<tr><td colSpan={13}><Empty msg="No misc charges logged yet — click + Add Charge"/></td></tr>}
-            {(data.miscCharges||[]).map((c,i)=>(
-              <tr key={i}>
-                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700}}>{c.id}</td>
-                <td style={{fontSize:11,whiteSpace:'nowrap'}}>{c.date}</td>
-                <td><span className="chip">{c.cat}</span></td>
-                <td style={{fontWeight:500,maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.desc}>{c.desc}</td>
-                <td style={{fontSize:11}}>{c.vendor}</td>
-                <td style={{fontWeight:700,color:c.amount>100?'var(--warn)':'var(--txt)'}}>{fmt$(c.amount)}</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{c.payMethod}</td>
-                <td style={{fontSize:11}}>{c.paidBy}</td>
-                <td style={{color:c.reimbursable==='Yes'?'var(--ok)':'var(--muted)',fontWeight:c.reimbursable==='Yes'?700:400,fontSize:11}}>{c.reimbursable}</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{c.approvedBy}</td>
-                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{c.invoiceNo}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.notes}>{c.notes}</td>
-                <td><div style={{display:'flex',gap:4}}>
-                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...c});setModal('misc');}}>Edit</button>
-                  <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,miscCharges:(d.miscCharges||[]).filter((_,j)=>j!==i)}))}>Del</button>
-                </div></td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:14}}>
-          {Object.entries((data.miscCharges||[]).reduce((acc,c)=>{acc[c.cat||'Uncategorized']=(acc[c.cat||'Uncategorized']||0)+c.amount;return acc;},{})).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([cat,amt])=>(
-            <div key={cat} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 14px'}}>
-              <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{cat}</div>
-              <div style={{fontSize:20,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--warn)'}}>{fmt$(amt)}</div>
-            </div>
-          ))}
-        </div>
-      </>}
 
       {tab==='profitability'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
@@ -28541,6 +29321,65 @@ const Automation = ({data,setData}) => {
     </div>
   );
 };
+      {tab==='fulfill'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <span className="chip">{(data.orderFulfillment||[]).length} entries</span>
+            <span className="chip" style={{color:'var(--ok)'}}>{fmt$((data.orderFulfillment||[]).reduce((a,b)=>a+(b.amount||0),0))}</span>
+            <span className="chip">{(data.orderFulfillment||[]).filter(f=>f.type==='Transfer to Bellevue').length} Bellevue transfers</span>
+            <span className="chip">{(data.orderFulfillment||[]).filter(f=>f.type==='Local Pickup/Install Hayden').length} local</span>
+          </div>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'OF-'+uid(),orderNo:'',date:now(),project:'',description:'',location:'HAYDEN - BELLEVUE',amount:0,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]});setModal('of');}}>+ Add Entry</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table style={{minWidth:900}}>
+            <thead><tr>
+              <th>Order #</th><th>Date</th><th>Project / Customer</th><th>Description</th>
+              <th>Location</th><th>Type</th><th>Amount</th><th>Status</th><th>Notes</th><th></th>
+            </tr></thead>
+            <tbody>
+              {(data.orderFulfillment||[]).length===0&&<tr><td colSpan={10}><Empty msg="No fulfillment entries yet"/></td></tr>}
+              {(data.orderFulfillment||[]).map((f,i)=>(
+                <tr key={i}>
+                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700}}>{f.orderNo||'—'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{f.date}</td>
+                  <td style={{fontWeight:600}}>{f.project}</td>
+                  <td style={{fontSize:11}}>{f.description}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{f.location}</td>
+                  <td><span style={{background:f.type==='Transfer to Bellevue'?'rgba(99,102,241,.2)':'rgba(16,185,129,.2)',color:f.type==='Transfer to Bellevue'?'#818cf8':'var(--ok)',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{f.type}</span></td>
+                  <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{f.amount?fmt$(f.amount):'—'}</td>
+                  <td><Badge s={f.status||'Fulfilled'}/></td>
+                  <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={f.notes}>{f.notes||''}</td>
+                  <td><div style={{display:'flex',gap:3}}>
+                    <button className="btn btn-g btn-xs" onClick={()=>{setForm({...f});setModal('of');}}>Edit</button>
+                    <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,orderFulfillment:(d.orderFulfillment||[]).filter(x=>x.id!==f.id)}))}>×</button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>}
+      {modal==='of'&&<Modal title={(data.orderFulfillment||[]).find(f=>f.id===form.id)?'Edit Fulfillment Entry':'Add Fulfillment Entry'} onClose={()=>setModal(null)}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+          <Field label="Order #"><input value={form.orderNo||''} onChange={e=>setForm(f=>({...f,orderNo:e.target.value}))}/></Field>
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Fulfilled'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Pending','In Progress','Fulfilled','Cancelled'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Project / Customer" style={{gridColumn:'1/-1'}}><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
+          <Field label="Description" style={{gridColumn:'1/-1'}}><input value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+          <Field label="Type"><select value={form.type||'Transfer to Bellevue'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}><option>Transfer to Bellevue</option><option>Local Pickup/Install Hayden</option></select></Field>
+          <Field label="Location"><input value={form.location||''} onChange={e=>setForm(f=>({...f,location:e.target.value}))}/></Field>
+          <Field label="Amount ($)"><input type="number" step="0.01" value={form.amount||''} onChange={e=>setForm(f=>({...f,amount:+e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:10}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={()=>{const rec={...form};if(!(data.orderFulfillment||[]).find(f=>f.id===rec.id))setData(d=>({...d,orderFulfillment:[...(d.orderFulfillment||[]),rec]}));else setData(d=>({...d,orderFulfillment:(d.orderFulfillment||[]).map(f=>f.id===rec.id?rec:f)}));setModal(null);}}>Save</button>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          {(data.orderFulfillment||[]).find(f=>f.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,orderFulfillment:(d.orderFulfillment||[]).filter(f=>f.id!==form.id)}));setModal(null);}}>Delete</button>}
+        </div>
+      </Modal>}
+
+
 
 const Sister = ({data,setData}) => {
   const [modal,setModal]=useState(null);
@@ -29307,12 +30146,18 @@ const Orders = ({data, setData}) => {
   const statusCounts={};statuses.forEach(s=>{statusCounts[s]=orders.filter(o=>o.status===s).length;});
   const typeCounts={};orderTypes.forEach(t=>{typeCounts[t]=orders.filter(o=>o.orderType===t).length;});
 
-  const newOrder=()=>setForm({id:'ORD-'+String(orders.length+1).padStart(4,'0'),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',notes:''});
+  const newOrder=()=>setForm({id:'ORD-'+String(orders.length+1).padStart(4,'0'),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:''});
 
   const save=()=>{
     const rec={...form,orderTotal:Number(form.orderTotal||0),deposit:Number(form.deposit||0),balance:Number(form.balance||0),lineQty:Number(form.lineQty||0),stairQty:Number(form.stairQty||0),cornerQty:Number(form.cornerQty||0),topRailQty:Number(form.topRailQty||0)};
-    if(!orders.find(o=>o.id===rec.id))setData(d=>({...d,orders:[...(d.orders||[]),rec]}));
+    const is3BD = (rec.customer||'').toUpperCase().includes('3BD') || (rec.salesPerson||'').toUpperCase().includes('3BD');
+    const isNew = !orders.find(o=>o.id===rec.id);
+    if(isNew)setData(d=>({...d,orders:[...(d.orders||[]),rec]}));
     else setData(d=>({...d,orders:(d.orders||[]).map(o=>o.id===rec.id?rec:o)}));
+    if(is3BD && isNew){
+      const ofEntry={id:'OF-'+uid(),orderNo:rec.id,date:rec.date||now(),project:rec.customer||'',description:(rec.productType||'')+(rec.color?' — '+rec.color:''),location:'HAYDEN - BELLEVUE',amount:rec.orderTotal||0,notes:rec.notes||'',source:'3BD',type:'Transfer to Bellevue',status:'Pending',orderType:rec.orderType||'',salesPerson:rec.salesPerson||'',attachments:[]};
+      setData(d=>({...d,orderFulfillment:[...(d.orderFulfillment||[]),ofEntry]}));
+    }
     setModal(null);
   };
 
@@ -29384,6 +30229,7 @@ const Orders = ({data, setData}) => {
         <table style={{minWidth:1600,fontSize:12}}>
           <thead><tr>
             <SortTh f="id"          label="Order #"/>
+            <SortTh f="priority"    label="Pri"/>
             <SortTh f="date"        label="Date"/>
             <SortTh f="dueDate"     label="Due"/>
             <SortTh f="customer"    label="Customer"/>
@@ -29404,11 +30250,21 @@ const Orders = ({data, setData}) => {
             <th></th>
           </tr></thead>
           <tbody>
-            {filtered.length===0&&<tr><td colSpan={19}><Empty msg="No orders match filters"/></td></tr>}
-            {filtered.map(o=>(
-              <tr key={o.id}>
+            {filtered.length===0&&<tr><td colSpan={20}><Empty msg="No orders match filters"/></td></tr>}
+            {filtered.map(o=>{
+              const isComplete=['Completed','Shipped','Invoiced','Cancelled'].includes(o.status);
+              const isRush=o.orderType==='Rush'&&!isComplete;
+              const isOld=o.date&&!isComplete&&((new Date()-new Date(o.date+'T00:00:00'))>=14*86400000);
+              const priColor={1:'var(--err)',2:'#f97316',3:'var(--warn)',4:'var(--acc)',5:'var(--muted)'};
+              return(
+              <tr key={o.id} style={{background:isRush?'rgba(239,68,68,.13)':undefined,outline:isRush?'1px solid rgba(239,68,68,.25)':undefined,color:isOld?'var(--err)':undefined,transition:'background .2s'}}>
                 <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{o.id}</td>
-                <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.date}</td>
+                <td style={{textAlign:'center'}}>
+                  <select value={o.priority||3} onChange={e=>setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,priority:+e.target.value}:x)}))} style={{background:priColor[o.priority||3]+'22',color:priColor[o.priority||3],border:`1px solid ${priColor[o.priority||3]}55`,borderRadius:4,padding:'2px 5px',fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,cursor:'pointer',outline:'none',width:42}}>
+                    {[1,2,3,4,5].map(n=><option key={n} value={n}>{n}</option>)}
+                  </select>
+                </td>
+                <td style={{fontSize:11,color:isOld?'var(--err)':'var(--muted)',whiteSpace:'nowrap'}}>{o.date}</td>
                 <td style={{fontSize:11,whiteSpace:'nowrap',color:(o.dueDate&&o.dueDate<now()&&!['Completed','Shipped','Invoiced','Cancelled'].includes(o.status))?'var(--err)':'inherit'}}>{o.dueDate||'—'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{o.customer}</td>
                 <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.shipTo||'—'}</td>
@@ -29443,6 +30299,15 @@ const Orders = ({data, setData}) => {
           <Field label="Order Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
           <Field label="Due Date"><input type="date" value={form.dueDate||''} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></Field>
           <Field label="Customer PO #"><input value={form.po||''} onChange={e=>setForm(f=>({...f,po:e.target.value}))}/></Field>
+          <Field label="Priority (1=Highest, 5=Lowest)">
+            <select value={form.priority||3} onChange={e=>setForm(f=>({...f,priority:+e.target.value}))}>
+              <option value={1}>1 — Critical</option>
+              <option value={2}>2 — High</option>
+              <option value={3}>3 — Normal</option>
+              <option value={4}>4 — Low</option>
+              <option value={5}>5 — Minimal</option>
+            </select>
+          </Field>
         </div>
         <Field label="Project / Job Name" style={{marginTop:10}}><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:10}}>
@@ -31715,6 +32580,7 @@ const PAGES = {
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
   shopref:ShopRef, orders:Orders, orderimport:OrderImport, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
+  queueanalyzer:QueueAnalyzer, hotqueue:HotRushQueue, workbookgen:WorkbookGenerator, orderanalyzer:OrderAnalyzer,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
@@ -31723,6 +32589,7 @@ const TITLES = {
   jobcost:'Job Costing', customers:'Customers', autopo:'Auto Reorder',
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
   shopref:'Shop Reference', orders:'Orders', orderimport:'Order Import', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
+  queueanalyzer:'Queue Analyzer', hotqueue:'Hot / Rush Queue', workbookgen:'Workbook Generator', orderanalyzer:'Order Analyzer',
 };
 
 export default function MaisyERP() {
