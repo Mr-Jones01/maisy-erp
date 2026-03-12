@@ -31675,7 +31675,7 @@ const PAGES = {
   invoicing:Invoicing, purchasing:Purchasing, finance:Finance,
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
-  shopref:ShopRef, orders:Orders, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
+  shopref:ShopRef, orders:Orders, orderimport:OrderImport, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
@@ -31683,7 +31683,7 @@ const TITLES = {
   invoicing:'Invoicing & A/R', purchasing:'Purchasing', finance:'Finance & P&L',
   jobcost:'Job Costing', customers:'Customers', autopo:'Auto Reorder',
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
-  shopref:'Shop Reference', orders:'Orders', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
+  shopref:'Shop Reference', orders:'Orders', orderimport:'Order Import', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
 };
 
 export default function MaisyERP() {
