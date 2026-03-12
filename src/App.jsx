@@ -31325,9 +31325,6 @@ Return ONLY the JSON object, no other text.`;
           <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:5,padding:'8px 12px',fontSize:10,color:'var(--muted)',lineHeight:1.6}}>
             Set this to your top-level orders folder (e.g. <strong style={{color:'var(--acc)'}}>Orders</strong>). The ERP will automatically scan all subfolders inside it — 2026-March, 2025-December, etc. — and find every order file across all months and years.
           </div>
-          <Field label="" style={{display:'none'}}>
-            <input style={{display:'none'}}
-          </Field>
           <div style={{marginTop:10,display:'flex',alignItems:'center',gap:10}}>
             <input type="checkbox" id="autoCheck" checked={od.autoCheck!==false} onChange={e=>saveOD({autoCheck:e.target.checked})}/>
             <label htmlFor="autoCheck" style={{fontSize:12,cursor:'pointer'}}>Auto-check every hour while ERP is open</label>
