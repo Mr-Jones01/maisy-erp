@@ -116,7 +116,7 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports'],
   owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
   shop:   ['dashboard','todo','production','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter'],
@@ -25497,6 +25497,11 @@ const INIT = {
 
   qbSettings: {clientId:'',clientSecret:'',environment:'sandbox',companyId:'',accessToken:'',refreshToken:'',connected:false,lastSync:''},
   qbSyncLog: [],
+
+  oneDriveSettings: {clientId:'',tenantId:'common',folderPath:'',connected:false,accessToken:'',lastCheck:'',autoCheck:true},
+  importQueue: [],
+  importLog: [],
+  orderDrafts: [],
 };
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────────
@@ -25537,6 +25542,7 @@ const NAVS = [
   {id:'todo',icon:'☑',label:'To-Do / Hot List'},
   {section:'Operations'},
   {id:'orders',icon:'📋',label:'Orders'},
+  {id:'orderimport',icon:'📥',label:'Order Import'},
   {id:'sales',icon:'◈',label:'Sales & Quotes'},
   {id:'production',icon:'◎',label:'Production'},
   {id:'inventory',icon:'◉',label:'Inventory'},
@@ -30869,6 +30875,515 @@ const QuickBooks = ({data, setData}) => {
           </tbody>
         </table>
       </div>}
+    </div>
+  );
+};
+
+
+const OrderImport = ({data, setData}) => {
+  const [tab, setTab] = useState('queue');
+  const [checking, setChecking] = useState(false);
+  const [parsing, setParsing] = useState(null);
+  const [draftModal, setDraftModal] = useState(null);
+  const [draftForm, setDraftForm] = useState({});
+  const [fileInput, setFileInput] = useState(null);
+
+  const od = data.oneDriveSettings || {};
+  const queue = data.importQueue || [];
+  const log = data.importLog || [];
+  const drafts = data.orderDrafts || [];
+
+  const saveOD = (u) => setData(d => ({...d, oneDriveSettings:{...(d.oneDriveSettings||{}), ...u}}));
+
+  const addLog = (file, status, detail) => {
+    const entry = {id:'IMP-'+uid(), ts:now(), file, status, detail};
+    setData(d => ({...d, importLog:[entry, ...(d.importLog||[]).slice(0,99)]}));
+    return entry;
+  };
+
+  // ── Microsoft Graph: fetch files from OneDrive folder ──────────────────────
+  const fetchOneDriveFiles = async () => {
+    const {accessToken, folderPath} = od;
+    if(!accessToken) return [];
+    const encodedPath = folderPath ? encodeURIComponent(folderPath) : 'root';
+    const url = folderPath
+      ? 'https://graph.microsoft.com/v1.0/me/drive/root:/' + encodeURIComponent(folderPath) + ':/children'
+      : 'https://graph.microsoft.com/v1.0/me/drive/root/children';
+    const res = await fetch(url + '?$filter=file ne null&$select=id,name,size,createdDateTime,lastModifiedDateTime,@microsoft.graph.downloadUrl', {
+      headers: {'Authorization': 'Bearer ' + accessToken}
+    });
+    if(!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'Graph API error ' + res.status);
+    }
+    const json = await res.json();
+    return (json.value || []).filter(f => /\.(xlsx|xls|pdf|png|jpg|jpeg)$/i.test(f.name));
+  };
+
+  // ── Download a file from OneDrive as ArrayBuffer ───────────────────────────
+  const downloadFile = async (item) => {
+    const url = 'https://graph.microsoft.com/v1.0/me/drive/items/' + item.id + '/content';
+    const res = await fetch(url, {headers:{'Authorization':'Bearer ' + od.accessToken}});
+    if(!res.ok) throw new Error('Download failed for ' + item.name);
+    return await res.arrayBuffer();
+  };
+
+  // ── Parse Excel with SheetJS ───────────────────────────────────────────────
+  const parseExcel = async (buffer) => {
+    const XLSX = window.XLSX;
+    if(!XLSX) throw new Error('SheetJS not loaded');
+    const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+    return rows;
+  };
+
+  // ── Parse PDF or image with Claude AI ─────────────────────────────────────
+  const parseWithClaude = async (buffer, filename) => {
+    const isPDF = /\.pdf$/i.test(filename);
+    const isImage = /\.(png|jpg|jpeg)$/i.test(filename);
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const mediaType = isPDF ? 'application/pdf' : filename.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+    const prompt = `You are reading a railing order form for Maisy Railing. Extract ALL order information you can find and return it as a single JSON object with these fields (use empty string if not found):
+{
+  "customer": "",
+  "project": "",
+  "contactName": "",
+  "phone": "",
+  "email": "",
+  "shipTo": "",
+  "city": "",
+  "state": "",
+  "zip": "",
+  "orderDate": "",
+  "dueDate": "",
+  "productType": "",
+  "color": "",
+  "lineQty": 0,
+  "stairQty": 0,
+  "cornerQty": 0,
+  "topRailQty": 0,
+  "lengths": "",
+  "orderType": "New Order",
+  "salesPerson": "",
+  "po": "",
+  "notes": "",
+  "orderTotal": 0,
+  "deposit": 0
+}
+Return ONLY the JSON object, no other text.`;
+
+    const msgContent = isPDF
+      ? [{type:'document', source:{type:'base64', media_type:mediaType, data:base64}}, {type:'text', text:prompt}]
+      : [{type:'image', source:{type:'base64', media_type:mediaType, data:base64}}, {type:'text', text:prompt}];
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user', content:msgContent}]
+      })
+    });
+    const json = await res.json();
+    const text = json.content?.[0]?.text || '{}';
+    try {
+      const clean = text.replace(/```json|```/g,'').trim();
+      return JSON.parse(clean);
+    } catch(e) {
+      throw new Error('Could not parse Claude response: ' + text.slice(0,100));
+    }
+  };
+
+  // ── Map parsed row to draft order ─────────────────────────────────────────
+  const rowToDraft = (row, sourceFile) => ({
+    id: 'DRAFT-'+uid(),
+    sourceFile,
+    importedAt: now(),
+    status: 'pending',
+    customer:     row.customer || row.Customer || row['Customer Name'] || '',
+    project:      row.project  || row.Project  || row['Job Name'] || row['Project Name'] || '',
+    contactName:  row.contactName || row['Contact'] || '',
+    phone:        row.phone || row.Phone || '',
+    email:        row.email || row.Email || '',
+    shipTo:       row.shipTo || row['Ship To'] || row.Address || '',
+    city:         row.city || row.City || '',
+    state:        row.state || row.State || 'ID',
+    zip:          row.zip || row.Zip || '',
+    orderDate:    row.orderDate || row['Order Date'] || now(),
+    dueDate:      row.dueDate || row['Due Date'] || row['Ship Date'] || '',
+    productType:  row.productType || row['Product Type'] || row.Product || 'Cable Rail',
+    color:        row.color || row.Color || '',
+    lineQty:      Number(row.lineQty || row['Line Posts'] || row['Line Qty'] || 0),
+    stairQty:     Number(row.stairQty || row['Stair Posts'] || row['Stair Qty'] || 0),
+    cornerQty:    Number(row.cornerQty || row['Corner Posts'] || row['Corner Qty'] || 0),
+    topRailQty:   Number(row.topRailQty || row['Top Rail'] || 0),
+    lengths:      String(row.lengths || row.Lengths || row['Cut Lengths'] || ''),
+    orderType:    row.orderType || row['Order Type'] || 'New Order',
+    salesPerson:  row.salesPerson || row.Rep || row['Sales Rep'] || row['Salesperson'] || '',
+    po:           row.po || row.PO || row['PO Number'] || row['Customer PO'] || '',
+    notes:        row.notes || row.Notes || row.Comments || '',
+    orderTotal:   Number(row.orderTotal || row.Total || row['Order Total'] || 0),
+    deposit:      Number(row.deposit || row.Deposit || 0),
+  });
+
+  // ── Check OneDrive for new files ──────────────────────────────────────────
+  const checkOneDrive = async () => {
+    if(!od.accessToken) return;
+    setChecking(true);
+    try {
+      const files = await fetchOneDriveFiles();
+      const alreadyImported = new Set([...queue.map(q=>q.name), ...log.map(l=>l.file)]);
+      const newFiles = files.filter(f => !alreadyImported.has(f.name));
+      if(newFiles.length > 0) {
+        setData(d => ({...d,
+          importQueue:[...(d.importQueue||[]), ...newFiles.map(f=>({
+            id: f.id, name: f.name, size: f.size,
+            modified: f.lastModifiedDateTime,
+            status: 'pending'
+          }))],
+          oneDriveSettings:{...(d.oneDriveSettings||{}), lastCheck:now()}
+        }));
+        addLog('OneDrive check', 'Success', newFiles.length + ' new file(s) found: ' + newFiles.map(f=>f.name).join(', '));
+      } else {
+        saveOD({lastCheck:now()});
+        addLog('OneDrive check', 'Info', 'No new files found');
+      }
+    } catch(e) {
+      addLog('OneDrive check', 'Error', e.message);
+    }
+    setChecking(false);
+  };
+
+  // ── Process a single file from the queue ─────────────────────────────────
+  const processFile = async (qItem) => {
+    setParsing(qItem.id);
+    try {
+      // Mark as processing
+      setData(d=>({...d, importQueue:(d.importQueue||[]).map(q=>q.id===qItem.id?{...q,status:'processing'}:q)}));
+
+      // Get file download URL from Graph
+      const fileRes = await fetch('https://graph.microsoft.com/v1.0/me/drive/items/'+qItem.id+'/content', {
+        headers:{'Authorization':'Bearer '+od.accessToken}
+      });
+      if(!fileRes.ok) throw new Error('Download failed');
+      const buffer = await fileRes.arrayBuffer();
+
+      let draftsToAdd = [];
+      if(/\.xlsx?$/i.test(qItem.name)) {
+        const rows = await parseExcel(buffer);
+        draftsToAdd = rows.filter(r=>Object.values(r).some(v=>v)).map(r=>rowToDraft(r, qItem.name));
+      } else {
+        const extracted = await parseWithClaude(buffer, qItem.name);
+        draftsToAdd = [rowToDraft(extracted, qItem.name)];
+      }
+
+      setData(d => ({...d,
+        orderDrafts: [...(d.orderDrafts||[]), ...draftsToAdd],
+        importQueue: (d.importQueue||[]).filter(q=>q.id!==qItem.id),
+      }));
+      addLog(qItem.name, 'Success', draftsToAdd.length+' draft order(s) created — review in Drafts tab');
+    } catch(e) {
+      setData(d=>({...d, importQueue:(d.importQueue||[]).map(q=>q.id===qItem.id?{...q,status:'error',error:e.message}:q)}));
+      addLog(qItem.name, 'Error', e.message);
+    }
+    setParsing(null);
+  };
+
+  // ── Confirm draft → create real order ────────────────────────────────────
+  const confirmDraft = () => {
+    const newOrder = {
+      ...draftForm,
+      id: 'ORD-'+String((data.orders||[]).length+1).padStart(4,'0'),
+      status: 'New',
+      balance: Number(draftForm.orderTotal||0) - Number(draftForm.deposit||0),
+      source: 'OneDrive Import',
+    };
+    setData(d => ({
+      ...d,
+      orders: [...(d.orders||[]), newOrder],
+      orderDrafts: (d.orderDrafts||[]).filter(dr=>dr.id!==draftForm.id),
+    }));
+    addLog(draftForm.sourceFile, 'Confirmed', 'Created order '+newOrder.id+' for '+newOrder.customer);
+    setDraftModal(null);
+  };
+
+  const discardDraft = (id) => {
+    setData(d=>({...d, orderDrafts:(d.orderDrafts||[]).filter(dr=>dr.id!==id)}));
+  };
+
+  // ── Manual file upload fallback ───────────────────────────────────────────
+  const handleManualUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    for(const file of files) {
+      setParsing(file.name);
+      try {
+        const buffer = await file.arrayBuffer();
+        let draftsToAdd = [];
+        if(/\.xlsx?$/i.test(file.name)) {
+          const rows = await parseExcel(buffer);
+          draftsToAdd = rows.filter(r=>Object.values(r).some(v=>v)).map(r=>rowToDraft(r, file.name));
+        } else {
+          const extracted = await parseWithClaude(buffer, file.name);
+          draftsToAdd = [rowToDraft(extracted, file.name)];
+        }
+        setData(d=>({...d, orderDrafts:[...(d.orderDrafts||[]), ...draftsToAdd]}));
+        addLog(file.name, 'Success', 'Manual upload: '+draftsToAdd.length+' draft(s) created');
+      } catch(err) {
+        addLog(file.name, 'Error', err.message);
+      }
+      setParsing(null);
+    }
+    e.target.value = '';
+  };
+
+  // ── Auto-check interval (hourly while tab is open) ────────────────────────
+  const [autoCheckRef] = useState({interval:null});
+  useEffect(()=>{
+    if(od.autoCheck && od.accessToken) {
+      autoCheckRef.interval = setInterval(checkOneDrive, 60*60*1000);
+    }
+    return ()=>{ if(autoCheckRef.interval) clearInterval(autoCheckRef.interval); };
+  },[od.autoCheck, od.accessToken]);
+
+  const pendingCount = queue.filter(q=>q.status==='pending').length;
+  const draftCount = drafts.length;
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Order Import</div>
+          <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
+            {od.connected
+              ? <span className="chip" style={{background:'rgba(16,185,129,.2)',color:'var(--ok)'}}>✓ OneDrive Connected</span>
+              : <span className="chip" style={{background:'rgba(239,68,68,.15)',color:'var(--err)'}}>OneDrive Not Connected</span>}
+            {od.lastCheck && <span className="chip">Last check: {od.lastCheck}</span>}
+            {od.autoCheck && od.accessToken && <span className="chip" style={{color:'var(--acc)'}}>⟳ Auto-checking hourly</span>}
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <label className="btn btn-g" style={{cursor:'pointer'}}>
+            📂 Upload File
+            <input type="file" accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg" multiple style={{display:'none'}} onChange={handleManualUpload}/>
+          </label>
+          {od.accessToken && <button className="btn btn-p" onClick={checkOneDrive} disabled={checking}>{checking?'Checking...':'⟳ Check OneDrive Now'}</button>}
+        </div>
+      </div>
+
+      {parsing && <div style={{background:'rgba(0,229,255,.08)',border:'1px solid rgba(0,229,255,.25)',borderRadius:8,padding:'12px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
+        <div style={{width:16,height:16,border:'2px solid var(--acc)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+        <span style={{fontSize:12,color:'var(--acc)'}}>Parsing {typeof parsing==='string'?parsing:'file'} with AI — extracting order data...</span>
+      </div>}
+
+      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+        {['queue','drafts','setup','log'].map(t=>(
+          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
+            {t==='queue'?'Import Queue':t==='drafts'?'Draft Orders':t==='log'?'Import Log':'OneDrive Setup'}
+            {t==='queue'&&pendingCount>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{pendingCount}</span>}
+            {t==='drafts'&&draftCount>0&&<span style={{marginLeft:4,background:'var(--acc)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{draftCount}</span>}
+          </button>
+        ))}
+      </div>
+
+      {tab==='queue'&&<>
+        {pendingCount===0&&queue.length===0&&<div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
+          <div style={{fontSize:36,marginBottom:12}}>📥</div>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>No files in queue</div>
+          <div style={{fontSize:12}}>Connect OneDrive and it will automatically check your orders folder every hour — or upload a file manually using the button above.</div>
+        </div>}
+        {queue.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
+          <table>
+            <thead><tr><th>File</th><th>Size</th><th>Modified</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              {queue.map((q,i)=>(
+                <tr key={i}>
+                  <td style={{fontWeight:600,fontSize:12}}>{q.name}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{q.size?(q.size/1024).toFixed(1)+'kb':'—'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{q.modified?q.modified.split('T')[0]:'—'}</td>
+                  <td>
+                    {q.status==='pending'&&<span style={{background:'rgba(245,158,11,.2)',color:'var(--warn)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>Pending</span>}
+                    {q.status==='processing'&&<span style={{background:'rgba(0,229,255,.15)',color:'var(--acc)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>Processing...</span>}
+                    {q.status==='error'&&<span style={{background:'rgba(239,68,68,.15)',color:'var(--err)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}} title={q.error}>Error</span>}
+                  </td>
+                  <td><div style={{display:'flex',gap:4}}>
+                    {q.status==='pending'&&<button className="btn btn-p btn-xs" onClick={()=>processFile(q)} disabled={!!parsing}>Parse</button>}
+                    <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,importQueue:(d.importQueue||[]).filter(x=>x.id!==q.id)}))}>×</button>
+                  </div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>}
+        {queue.filter(q=>q.status==='pending').length>1&&<div style={{marginTop:10,display:'flex',justifyContent:'flex-end'}}>
+          <button className="btn btn-p" onClick={()=>queue.filter(q=>q.status==='pending').forEach(q=>processFile(q))} disabled={!!parsing}>Parse All Pending</button>
+        </div>}
+      </>}
+
+      {tab==='drafts'&&<>
+        {drafts.length===0&&<div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
+          <div style={{fontSize:36,marginBottom:12}}>📋</div>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>No draft orders yet</div>
+          <div style={{fontSize:12}}>Parsed orders appear here for your review before going live.</div>
+        </div>}
+        {drafts.length>0&&<>
+          <div style={{marginBottom:10,fontSize:12,color:'var(--muted)'}}>Review each draft carefully — AI parsing is accurate but always worth a quick check before confirming.</div>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {drafts.map((d,i)=>(
+              <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',borderLeft:'4px solid var(--warn)'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:14}}>{d.customer||'Unknown Customer'}</div>
+                    <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{d.project||'—'} · Imported from: {d.sourceFile} · {d.importedAt}</div>
+                  </div>
+                  <div style={{display:'flex',gap:6}}>
+                    <button className="btn btn-p btn-sm" onClick={()=>{setDraftForm({...d});setDraftModal(d.id);}}>Review & Confirm</button>
+                    <button className="btn btn-d btn-sm" onClick={()=>discardDraft(d.id)}>Discard</button>
+                  </div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+                  {[
+                    {l:'Product',v:d.productType},
+                    {l:'Color',v:d.color},
+                    {l:'Order Type',v:d.orderType},
+                    {l:'Sales Rep',v:d.salesPerson},
+                    {l:'Line Posts',v:d.lineQty||'—'},
+                    {l:'Stair Posts',v:d.stairQty||'—'},
+                    {l:'Corner Posts',v:d.cornerQty||'—'},
+                    {l:'Top Rail',v:d.topRailQty||'—'},
+                    {l:'Ship To',v:[d.city,d.state].filter(Boolean).join(', ')||'—'},
+                    {l:'Due Date',v:d.dueDate||'—'},
+                    {l:'Total',v:d.orderTotal?fmt$(d.orderTotal):'—'},
+                    {l:'Deposit',v:d.deposit?fmt$(d.deposit):'—'},
+                  ].map(f=>(
+                    <div key={f.l} style={{background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
+                      <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em'}}>{f.l}</div>
+                      <div style={{fontSize:12,fontWeight:600,marginTop:2}}>{f.v||'—'}</div>
+                    </div>
+                  ))}
+                </div>
+                {d.notes&&<div style={{marginTop:8,fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>Notes: {d.notes}</div>}
+              </div>
+            ))}
+          </div>
+        </>}
+      </>}
+
+      {tab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+        <div className="card">
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:4}}>OneDrive Connection</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,lineHeight:1.6}}>
+            Connect your Microsoft 365 / OneDrive account to automatically pull order files from your orders folder.
+          </div>
+          <Field label="Tenant ID">
+            <input value={od.tenantId||'common'} onChange={e=>saveOD({tenantId:e.target.value})} placeholder="common"/>
+          </Field>
+          <Field label="Client ID (Azure App)" style={{marginTop:10}}>
+            <input value={od.clientId||''} onChange={e=>saveOD({clientId:e.target.value})} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+          </Field>
+          <Field label="OneDrive Folder Path" style={{marginTop:10}}>
+            <input value={od.folderPath||''} onChange={e=>saveOD({folderPath:e.target.value})} placeholder="Orders/2026-March"/>
+          </Field>
+          <div style={{marginTop:10,display:'flex',alignItems:'center',gap:10}}>
+            <input type="checkbox" id="autoCheck" checked={od.autoCheck!==false} onChange={e=>saveOD({autoCheck:e.target.checked})}/>
+            <label htmlFor="autoCheck" style={{fontSize:12,cursor:'pointer'}}>Auto-check every hour while ERP is open</label>
+          </div>
+          <div style={{borderTop:'1px solid var(--bdr)',marginTop:14,paddingTop:14}}>
+            <Field label="Access Token (from OAuth)">
+              <textarea rows={3} value={od.accessToken||''} onChange={e=>saveOD({accessToken:e.target.value})} placeholder="Paste Microsoft access token here" style={{fontFamily:'monospace',fontSize:10}}/>
+            </Field>
+          </div>
+          <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
+            <button className="btn btn-p" onClick={()=>{
+              if(!od.clientId){alert('Enter Client ID first');return;}
+              const scope = encodeURIComponent('Files.Read Files.ReadWrite offline_access User.Read');
+              const redirect = encodeURIComponent(window.location.origin);
+              const url = 'https://login.microsoftonline.com/'+( od.tenantId||'common')+'/oauth2/v2.0/authorize?client_id='+od.clientId+'&response_type=token&redirect_uri='+redirect+'&scope='+scope+'&response_mode=fragment';
+              window.open(url,'_blank','width=600,height=700');
+            }}>Start Microsoft OAuth</button>
+            <button className="btn btn-g" onClick={()=>saveOD({connected:!!(od.accessToken)})}>
+              {od.connected?'✓ Connected':'Mark as Connected'}
+            </button>
+            {od.accessToken&&<button className="btn btn-g" onClick={checkOneDrive} disabled={checking}>{checking?'Checking...':'Test Connection'}</button>}
+          </div>
+          {od.connected&&od.accessToken&&<div style={{marginTop:10,fontSize:11,color:'var(--ok)',fontWeight:600}}>✓ Connected — folder: {od.folderPath||'root'}</div>}
+        </div>
+        <div className="card">
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:14}}>Azure App Setup Guide</div>
+          {[
+            {n:'1',t:'Go to Azure Portal',d:'Open portal.azure.com and sign in with your Microsoft 365 account — the same one you use for OneDrive.',l:'portal.azure.com'},
+            {n:'2',t:'Register a New App',d:'Search "App registrations" → New registration. Name it "Maisy Railing ERP". Under Supported account types, choose "Accounts in any organizational directory and personal accounts."',l:null},
+            {n:'3',t:'Set the Redirect URI',d:'After creating the app, go to Authentication → Add a platform → Single-page application. Set the redirect URI to: https://maisy-erp.vercel.app',l:null},
+            {n:'4',t:'Copy Your Application (Client) ID',d:'Go to the app Overview page. Copy the Application (client) ID — it looks like a long string of letters and numbers with dashes.',l:null},
+            {n:'5',t:'Set API Permissions',d:'Go to API permissions → Add a permission → Microsoft Graph → Delegated permissions. Add: Files.Read, Files.ReadWrite, offline_access, User.Read. Click Grant admin consent.',l:null},
+            {n:'6',t:'Paste Client ID + Start OAuth',d:'Come back here, paste the Client ID, set your folder path (e.g. Orders/2026-March), and click Start Microsoft OAuth. Sign in to Microsoft and authorize. Paste the returned token.',l:null},
+          ].map(s=>(
+            <div key={s.n} style={{display:'flex',gap:10,marginBottom:10,alignItems:'flex-start'}}>
+              <div style={{width:22,height:22,borderRadius:'50%',background:'var(--acc)',color:'#000',fontWeight:700,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1}}>{s.n}</div>
+              <div>
+                <div style={{fontWeight:600,fontSize:11,marginBottom:2}}>{s.t}</div>
+                <div style={{fontSize:10,color:'var(--muted)',lineHeight:1.5}}>{s.d}</div>
+                {s.l&&<a href={'https://'+s.l} target="_blank" rel="noopener noreferrer" style={{fontSize:9,color:'var(--acc)',textDecoration:'none',display:'inline-block',marginTop:2}}>{s.l} →</a>}
+              </div>
+            </div>
+          ))}
+          <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:6,padding:'10px 12px',marginTop:8,fontSize:10,color:'var(--warn)'}}>
+            Note: The auto-check runs hourly while this ERP tab is open. For true 24/7 background checking, I can set up a Power Automate flow or small serverless function — ask Daniel.
+          </div>
+        </div>
+      </div>}
+
+      {tab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Import Log</span>
+          <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,importLog:[]}))}>Clear</button>
+        </div>
+        {log.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--muted)',fontSize:13}}>No import activity yet</div>}
+        <table>
+          <thead><tr><th>Time</th><th>File</th><th>Status</th><th>Detail</th></tr></thead>
+          <tbody>{log.map((e,i)=>(
+            <tr key={i}>
+              <td style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap'}}>{e.ts}</td>
+              <td style={{fontWeight:500,fontSize:11}}>{e.file}</td>
+              <td><span style={{background:e.status==='Success'?'var(--ok)':e.status==='Error'?'var(--err)':'var(--warn)',color:'#fff',borderRadius:4,padding:'1px 6px',fontSize:10,fontWeight:700}}>{e.status}</span></td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{e.detail}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {draftModal&&<Modal title="Review Draft Order" onClose={()=>setDraftModal(null)} lg>
+        <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.25)',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>
+          Imported from: {draftForm.sourceFile} — review all fields before confirming
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+          <Field label="Customer *"><input value={draftForm.customer||''} onChange={e=>setDraftForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Project"><input value={draftForm.project||''} onChange={e=>setDraftForm(f=>({...f,project:e.target.value}))}/></Field>
+          <Field label="Sales Rep"><input value={draftForm.salesPerson||''} onChange={e=>setDraftForm(f=>({...f,salesPerson:e.target.value}))}/></Field>
+          <Field label="Product Type"><select value={draftForm.productType||'Cable Rail'} onChange={e=>setDraftForm(f=>({...f,productType:e.target.value}))}>{['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Color"><input value={draftForm.color||''} onChange={e=>setDraftForm(f=>({...f,color:e.target.value}))}/></Field>
+          <Field label="Order Type"><select value={draftForm.orderType||'New Order'} onChange={e=>setDraftForm(f=>({...f,orderType:e.target.value}))}>{['New Order','Re-Work','Warranty','Sample','Rush'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Line Posts"><input type="number" value={draftForm.lineQty||''} onChange={e=>setDraftForm(f=>({...f,lineQty:+e.target.value}))}/></Field>
+          <Field label="Stair Posts"><input type="number" value={draftForm.stairQty||''} onChange={e=>setDraftForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
+          <Field label="Corner Posts"><input type="number" value={draftForm.cornerQty||''} onChange={e=>setDraftForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
+          <Field label="Lengths"><input value={draftForm.lengths||''} placeholder="12x10ft, 6x8ft" onChange={e=>setDraftForm(f=>({...f,lengths:e.target.value}))}/></Field>
+          <Field label="Due Date"><input type="date" value={draftForm.dueDate||''} onChange={e=>setDraftForm(f=>({...f,dueDate:e.target.value}))}/></Field>
+          <Field label="Customer PO"><input value={draftForm.po||''} onChange={e=>setDraftForm(f=>({...f,po:e.target.value}))}/></Field>
+          <Field label="Ship To City"><input value={draftForm.city||''} onChange={e=>setDraftForm(f=>({...f,city:e.target.value}))}/></Field>
+          <Field label="State"><input value={draftForm.state||''} onChange={e=>setDraftForm(f=>({...f,state:e.target.value}))}/></Field>
+          <Field label="Email"><input value={draftForm.email||''} onChange={e=>setDraftForm(f=>({...f,email:e.target.value}))}/></Field>
+          <Field label="Order Total ($)"><input type="number" step="0.01" value={draftForm.orderTotal||''} onChange={e=>setDraftForm(f=>({...f,orderTotal:+e.target.value,balance:(+e.target.value)-(f.deposit||0)}))}/></Field>
+          <Field label="Deposit ($)"><input type="number" step="0.01" value={draftForm.deposit||''} onChange={e=>setDraftForm(f=>({...f,deposit:+e.target.value,balance:(f.orderTotal||0)-(+e.target.value)}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:10}}><textarea rows={2} value={draftForm.notes||''} onChange={e=>setDraftForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={confirmDraft} disabled={!draftForm.customer}>✓ Confirm — Create Order</button>
+          <button className="btn" onClick={()=>setDraftModal(null)}>Cancel</button>
+          <button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{discardDraft(draftForm.id);setDraftModal(null);}}>Discard Draft</button>
+        </div>
+      </Modal>}
     </div>
   );
 };
