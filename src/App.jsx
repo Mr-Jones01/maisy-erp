@@ -27656,38 +27656,12 @@ const Purchasing = ({data, setData}) => {
               if(!sel.length){alert('Select at least one PO to email');return;}
               const lines=sel.map(p=>{
                 const total=p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0;
-                const items=p.items?.map(i=>i.qty+'x '+i.name+' @ $'+i.cost).join('
-  ') || p.notes || '—';
-                return 'PO #: '+p.id+'
-Vendor: '+(p.vendor||'—')+'
-Status: '+(p.status||'—')+'
-Order Date: '+(p.ordered||'—')+'
-Expected: '+(p.expected||'—')+'
-Total: $'+total.toFixed(2)+'
-Items:
-  '+items+(p.attachments&&p.attachments.length?' 
-['+p.attachments.length+' attachment(s): '+p.attachments.map(a=>a.name).join(', ')+']':'');
-              }).join('
-
----
-
-');
+                const items=p.items?.map(i=>i.qty+'x '+i.name+' @ $'+i.cost).join('\n  ') || p.notes || '—';
+                return 'PO #: '+p.id+'\nVendor: '+(p.vendor||'\u2014')+'\nStatus: '+(p.status||'\u2014')+'\nOrder Date: '+(p.ordered||'\u2014')+'\nExpected: '+(p.expected||'\u2014')+'\nTotal: $'+total.toFixed(2)+'\nItems:\n  '+items+(p.attachments&&p.attachments.length?' \n['+p.attachments.length+' attachment(s): '+p.attachments.map(a=>a.name).join(', ')+']':'');
+              }).join('\n\n---\n\n');
               const totalAmt=sel.reduce((s,p)=>s+(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0),0);
-              const subject='Maisy Railing — Purchase Order'+(sel.length>1?'s':'')+' for Review ('+sel.length+' PO'+(sel.length>1?'s':'')+' · $'+totalAmt.toFixed(2)+')';
-              const body='Hi,
-
-Please find the following purchase order'+(sel.length>1?'s':'')+' for review'+(sel.some(p=>p.attachments&&p.attachments.length)?' — attachments included where noted':'')+':
-
-'+lines+'
-
-Total Value: $'+totalAmt.toFixed(2)+'
-
-Please review and confirm receipt or flag any discrepancies.
-
-Thank you,
-Daniel Jones
-Director of Operations
-Maisy Railing | 208.603.8149';
+              const subject='Maisy Railing \u2014 Purchase Order'+(sel.length>1?'s':'')+' for Review ('+sel.length+' PO'+(sel.length>1?'s':'')+' \u00b7 $'+totalAmt.toFixed(2)+')';
+              const body='Hi,\n\nPlease find the following purchase order'+(sel.length>1?'s':'')+' for review'+(sel.some(p=>p.attachments&&p.attachments.length)?' \u2014 attachments included where noted':'')+': \n\n'+lines+'\n\nTotal Value: $'+totalAmt.toFixed(2)+'\n\nPlease review and confirm receipt or flag any discrepancies.\n\nThank you,\nDaniel Jones\nDirector of Operations\nMaisy Railing | 208.603.8149';
               window.open('mailto:accounting@maisyrailing.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
             }}>✉ Email Selected</button>
           </div>
@@ -28013,7 +27987,7 @@ const Shipping = ({data, setData}) => {
                 <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)'}}>{fmtD(s.delivered)}</td>
                 <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
               </tr>
-            );})}
+            ))}
           </tbody>
         </table>
       </div>}
@@ -30283,8 +30257,7 @@ const Orders = ({data, setData}) => {
                   <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,orders:(d.orders||[]).filter(x=>x.id!==o.id)}))}>×</button>
                 </div></td>
               </tr>
-              );
-            })}
+            );})}
           </tbody>
         </table>
       </div>
