@@ -27452,10 +27452,7 @@ Vendor: ${c.vendor||'—'}
 Amount: $${(c.amount||0).toFixed(2)}
 Paid By: ${c.paidBy||'—'}
 Notes: ${c.notes||''}
-`).join('
----
-
-');
+`).join('\n---\n\n');
               const body = `Hi Accounting,
 
 Please find the following misc charge${selected.length>1?'s':''}${selected.some(c=>c.receipt)?' with receipt(s) attached':''}:
