@@ -26276,7 +26276,7 @@ const Dashboard = ({data,setPage}) => {
 
 // ─── TODO & HOT LIST ─────────────────────────────────────────────────────────────
 const Todo = ({data,setData,user}) => {
-  const [todoTab,setTab]=useState('tasks');
+  const [todoTab,setTodoTab]=useState('tasks');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   const [filter,setFilter]=useState('All');
@@ -26314,7 +26314,7 @@ const Todo = ({data,setData,user}) => {
         <button className="btn btn-p" onClick={()=>{if(todoTab==='tasks')openTask();else openHot();}}>+ New {todoTab==='tasks'?'Task':'Hot Item'}</button>
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['tasks','hotlist'].map(t=><button key={t} className={`tab${todoTab===t?' on':''}`} onClick={()=>setTab(t)}>{t==='tasks'?'Tasks':'🔥 Hot List'}</button>)}
+        {['tasks','hotlist'].map(t=><button key={t} className={`tab${todoTab===t?' on':''}`} onClick={()=>setTodoTab(t)}>{t==='tasks'?'Tasks':'🔥 Hot List'}</button>)}
         {todoTab==='tasks'&&<div style={{marginLeft:'auto',display:'flex',gap:6}}>
           {['All','Open','Done'].map(f=><button key={f} className={`tab${filter===f?' on':''}`} onClick={()=>setFilter(f)}>{f}</button>)}
         </div>}
@@ -26407,7 +26407,7 @@ const Todo = ({data,setData,user}) => {
 };
 
 const Sales = ({data, setData}) => {
-  const [salesTab,setTab]=useState('all');
+  const [salesTab,setSalesTab]=useState('all');
   const [search,setSearch]=useState('');
   const [repFilter,setRepFilter]=useState('All');
   const [modal,setModal]=useState(null);
@@ -26455,7 +26455,7 @@ const Sales = ({data, setData}) => {
       </StatRow>
 
       <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
-        {['all','orders','quotes','catalog','sku','issues'].map(t=><button key={t} className={'tab'+(salesTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='sku'?'SKU Master':t==='issues'?'Issues':t}</button>)}
+        {['all','orders','quotes','catalog','sku','issues'].map(t=><button key={t} className={'tab'+(salesTab===t?' on':'')} onClick={()=>setSalesTab(t)} style={{textTransform:'capitalize'}}>{t==='sku'?'SKU Master':t==='issues'?'Issues':t}</button>)}
       </div>
 
       {(salesTab==='all'||salesTab==='orders'||salesTab==='quotes')&&<>
@@ -26673,7 +26673,7 @@ const QRLabel = ({item, onClose}) => {
 };
 
 const Inventory = ({data, setData, user}) => {
-  const [invTab,setTab]=useState('items');
+  const [invTab,setInvTab]=useState('items');
   const [search,setSearch]=useState('');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
@@ -26753,7 +26753,7 @@ const Inventory = ({data, setData, user}) => {
       </StatRow>
       {low.length>0&&<div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span><span><strong>Low Stock:</strong> {low.map(i=>`${i.name} (${i.qty} ${i.unit})`).join(' · ')}</span></div>}
       <div style={{display:'flex',gap:6,marginBottom:16}}>
-        {['items','glass','consumables','cyclecount','adjustments','bom','import'].map(t=><button key={t} className={'tab'+(invTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t}</button>)}
+        {['items','glass','consumables','cyclecount','adjustments','bom','import'].map(t=><button key={t} className={'tab'+(invTab===t?' on':'')} onClick={()=>setInvTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t}</button>)}
       </div>
 
       {/* ITEMS TAB */}
@@ -27373,7 +27373,7 @@ const Production = ({data, setData, user}) => {
   );
 };
 const Purchasing = ({data, setData}) => {
-  const [purchTab,setTab]=useState('po');
+  const [purchTab,setPurchTab]=useState('po');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   const [receiving,setReceiving]=useState(null);
@@ -27439,10 +27439,10 @@ const Purchasing = ({data, setData}) => {
         <StatCard label="Active Vendors" value={data.vendors.length} icon="🏢" color="var(--acc2)" sub="In vendor directory"/>
       </StatRow>
       {readyToReceive.length>0&&<div className="alert-bar alert-info"><span style={{color:'var(--info)'}}>📦</span><span><strong>POs Ready to Receive:</strong> {readyToReceive.map(p=>p.id).join(' · ')} — click "Receive" to update inventory automatically</span></div>}
-      <div style={{display:'flex',gap:6,marginBottom:14}}><button className={'tab'+(purchTab==='po'?' on':'')} onClick={()=>setTab('po')}>Purchase Orders</button>
-          <button className={'tab'+(purchTab==='req'?' on':'')} onClick={()=>setTab('req')}>Order Requests</button>
-          <button className={'tab'+(purchTab==='quotes'?' on':'')} onClick={()=>setTab('quotes')}>Quote Log</button>
-          <button className={'tab'+(purchTab==='vnd'?' on':'')} onClick={()=>setTab('vnd')}>Vendors</button><button className={'tab'+(purchTab==='misc'?' on':'')} onClick={()=>setTab('misc')}>Misc Charges</button></div>
+      <div style={{display:'flex',gap:6,marginBottom:14}}><button className={'tab'+(purchTab==='po'?' on':'')} onClick={()=>setPurchTab('po')}>Purchase Orders</button>
+          <button className={'tab'+(purchTab==='req'?' on':'')} onClick={()=>setPurchTab('req')}>Order Requests</button>
+          <button className={'tab'+(purchTab==='quotes'?' on':'')} onClick={()=>setPurchTab('quotes')}>Quote Log</button>
+          <button className={'tab'+(purchTab==='vnd'?' on':'')} onClick={()=>setPurchTab('vnd')}>Vendors</button><button className={'tab'+(purchTab==='misc'?' on':'')} onClick={()=>setPurchTab('misc')}>Misc Charges</button></div>
 
       {purchTab==='po'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
@@ -28414,7 +28414,7 @@ const Reports = ({data,setData}) => {
 
 // ─── FINANCE & P&L ────────────────────────────────────────────────────────────────
 const Finance = ({data,setData}) => {
-  const [finTab,setTab]=useState('pnl');
+  const [finTab,setFinTab]=useState('pnl');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
 
@@ -28464,7 +28464,7 @@ const Finance = ({data,setData}) => {
         {finTab==='labor'&&<button className="btn btn-p" onClick={()=>{setForm({id:`LR-${uid()}`,role:'',level:'',rateHr:0,overtime:0,burden:1.28,notes:''});setModal('lr');}}>+ Add Rate</button>}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['pnl','labor','stations','profitability'].map(t=><button key={t} className={'tab'+(finTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':t==='stations'?'Station Costs':t==='misc'?'Misc Charges':t==='profitability'?'Profitability':t}</button>)}
+        {['pnl','labor','stations','profitability'].map(t=><button key={t} className={'tab'+(finTab===t?' on':'')} onClick={()=>setFinTab(t)} style={{textTransform:'capitalize'}}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':t==='stations'?'Station Costs':t==='misc'?'Misc Charges':t==='profitability'?'Profitability':t}</button>)}
       </div>
 
       {finTab==='pnl'&&<>
@@ -28718,7 +28718,7 @@ const STATIONS_ALL = ['CNC Cut','CNC Drill','Welding','Powder Coat','Assembly','
 const SKILL_LEVELS = [{v:0,label:'—',bg:'var(--dim)',fg:'var(--muted)'},{v:1,label:'T',bg:'rgba(245,158,11,.2)',fg:'var(--warn)'},{v:2,label:'✓',bg:'rgba(59,130,246,.2)',fg:'var(--info)'},{v:3,label:'★',bg:'rgba(16,185,129,.2)',fg:'var(--ok)'}];
 
 const People = ({data,setData,user}) => {
-  const [peopleTab,setTab]=useState('employees');
+  const [peopleTab,setPeopleTab]=useState('employees');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
 
@@ -28778,7 +28778,7 @@ const People = ({data,setData,user}) => {
         <StatCard label="Avg Rate" value={"$"+(data.employees.length?Math.round(data.employees.reduce((a,b)=>a+(b.rateHr||0),0)/data.employees.length):0)+"/hr"} icon="💵" color="var(--muted)" small/>
       </StatRow>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['employees','training','certs','efficiency','equipment','facility','positions','discipline'].map(t=><button key={t} className={'tab'+(peopleTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='certs'?'Certifications':t==='efficiency'?'Efficiency':t==='equipment'?'Equipment':t==='facility'?'Facility Move':t}</button>)}
+        {['employees','training','certs','efficiency','equipment','facility','positions','discipline'].map(t=><button key={t} className={'tab'+(peopleTab===t?' on':'')} onClick={()=>setPeopleTab(t)} style={{textTransform:'capitalize'}}>{t==='certs'?'Certifications':t==='efficiency'?'Efficiency':t==='equipment'?'Equipment':t==='facility'?'Facility Move':t}</button>)}
       </div>
 
       {peopleTab==='employees'&&<div className="card" style={{padding:0,overflow:'auto'}}>
@@ -29007,7 +29007,7 @@ const Automation = ({data,setData}) => {
   const [expanded,setExpanded]=useState({});
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
-  const [autoTab,setTab]=useState('phases');
+  const [autoTab,setAutoTab]=useState('phases');
 
   const toggle=id=>setExpanded(e=>({...e,[id]:!e[id]}));
   const totalBudget=(data.automationPhases||[]).reduce((a,b)=>a+b.budget,0);
@@ -29054,7 +29054,7 @@ const Automation = ({data,setData}) => {
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['phases','stations','roadmap'].map(t=><button key={t} className={'tab'+(autoTab===t?' on':'')} onClick={()=>setTab(t)}>{t==='phases'?'📋 Phase Plan':t==='stations'?'🏭 Station Details':'🗺️ Station Roadmap'}</button>)}
+        {['phases','stations','roadmap'].map(t=><button key={t} className={'tab'+(autoTab===t?' on':'')} onClick={()=>setAutoTab(t)}>{t==='phases'?'📋 Phase Plan':t==='stations'?'🏭 Station Details':'🗺️ Station Roadmap'}</button>)}
       </div>
 
       {autoTab==='phases'&&<>
@@ -29229,9 +29229,6 @@ const Automation = ({data,setData}) => {
           <button className="btn btn-p" onClick={saveRoadmap}>Save</button>
         </div>
       </Modal>}
-    </div>
-  );
-};
       {autoTab==='fulfill'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
@@ -29290,12 +29287,15 @@ const Automation = ({data,setData}) => {
         </div>
       </Modal>}
 
+    </div>
+  );
+};
 
 
 const Sister = ({data,setData}) => {
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
-  const [sisterTab,setTab]=useState('orders');
+  const [sisterTab,setSisterTab]=useState('orders');
 
   const totalOrderValue=data.sisterOrders.reduce((a,b)=>a+b.value,0);
   const totalLaborCost=data.sisterLabor.reduce((a,b)=>a+b.billable,0);
@@ -29344,7 +29344,7 @@ const Sister = ({data,setData}) => {
         ].map(s=><div className="stat-card" key={s.l}><div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--muted)',marginBottom:8}}>{s.l}</div><div className="mono hd" style={{fontSize:22,color:s.c}}>{s.v}</div></div>)}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['orders','labor','borrowed','fulfill'].map(t=><button key={t} className={'tab'+(sisterTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='orders'?'Sister Orders':t==='labor'?'Sister Labor':t==='borrowed'?'Borrowed Labor':t==='fulfill'?'Fulfillment Log':t}</button>)}
+        {['orders','labor','borrowed','fulfill'].map(t=><button key={t} className={'tab'+(sisterTab===t?' on':'')} onClick={()=>setSisterTab(t)} style={{textTransform:'capitalize'}}>{t==='orders'?'Sister Orders':t==='labor'?'Sister Labor':t==='borrowed'?'Borrowed Labor':t==='fulfill'?'Fulfillment Log':t}</button>)}
       </div>
 
       {sisterTab==='orders'&&<div className="card" style={{padding:0,overflow:'auto'}}>
@@ -29569,7 +29569,7 @@ const MatCostCalc = () => {
 };
 
 const ShopRef = ({data,setData}) => {
-  const [shopTab,setTab]=useState('fasteners');
+  const [shopTab,setShopTab]=useState('fasteners');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   return(
@@ -29580,7 +29580,7 @@ const ShopRef = ({data,setData}) => {
       </div>
       <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:14}}>
         {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','postmfg','materialsdb','skureference','vendorscores','calculators'].map(t=>(
-          <button key={t} className={'tab'+(shopTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t==='skureference'?'SKU Reference':t}</button>
+          <button key={t} className={'tab'+(shopTab===t?' on':'')} onClick={()=>setShopTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t==='skureference'?'SKU Reference':t}</button>
         ))}
       </div>
 
@@ -29910,7 +29910,7 @@ const AIPanel = ({data,open,onClose}) => {
 };
 
 const KPIDashboard = ({data,setData}) => {
-  const [kpiTab,setTab] = useState('weekly');
+  const [kpiTab,setKpiTab] = useState('weekly');
   const [form,setForm] = useState({});
   const [modal,setModal] = useState(null);
   const targets = data.kpiTargets||[];
@@ -29952,7 +29952,7 @@ const KPIDashboard = ({data,setData}) => {
         ))}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['weekly','monthly','targets','stations'].map(t=><button key={t} className={'tab'+(kpiTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='stations'?'Station Output':t}</button>)}
+        {['weekly','monthly','targets','stations'].map(t=><button key={t} className={'tab'+(kpiTab===t?' on':'')} onClick={()=>setKpiTab(t)} style={{textTransform:'capitalize'}}>{t==='stations'?'Station Output':t}</button>)}
       </div>
       {kpiTab==='weekly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th><th>Score</th><th/></tr></thead>
@@ -30297,7 +30297,7 @@ const Orders = ({data, setData}) => {
 
 
 const SalesPipeline = ({data, setData}) => {
-  const [pipeTab, setTab] = useState('pipeline');
+  const [pipeTab, setPipeTab] = useState('pipeline');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
   const [repFilter, setRepFilter] = useState('All');
@@ -30363,7 +30363,7 @@ const SalesPipeline = ({data, setData}) => {
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['pipeline','funnel','kpi'].map(t=><button key={t} className={'tab'+(pipeTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='kpi'?'KPI & Invoices':t}</button>)}
+        {['pipeline','funnel','kpi'].map(t=><button key={t} className={'tab'+(pipeTab===t?' on':'')} onClick={()=>setPipeTab(t)} style={{textTransform:'capitalize'}}>{t==='kpi'?'KPI & Invoices':t}</button>)}
       </div>
 
       {pipeTab==='funnel'&&<>
@@ -30620,7 +30620,7 @@ const Commissions = ({data, setData}) => {
 };
 
 const Payments = ({data, setData}) => {
-  const [payTab, setTab] = useState('records');
+  const [payTab, setPayTab] = useState('records');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
 
@@ -30668,7 +30668,7 @@ const Payments = ({data, setData}) => {
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['records','vault'].map(t=><button key={t} className={'tab'+(payTab===t?' on':'')} onClick={()=>setTab(t)}>{t==='records'?'Payment Records':'Card Vault'}</button>)}
+        {['records','vault'].map(t=><button key={t} className={'tab'+(payTab===t?' on':'')} onClick={()=>setPayTab(t)}>{t==='records'?'Payment Records':'Card Vault'}</button>)}
       </div>
 
       {payTab==='records'&&<div className="card" style={{padding:0,overflow:'auto'}}>
@@ -30763,7 +30763,7 @@ const Payments = ({data, setData}) => {
 
 
 const TaxCenter = ({data, setData}) => {
-  const [taxTab, setTab] = useState('avatax');
+  const [taxTab, setTaxTab] = useState('avatax');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
   // Static calc state
@@ -30892,7 +30892,7 @@ const TaxCenter = ({data, setData}) => {
 
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
         {['avatax','setup','certs','rates'].map(t=>(
-          <button key={t} className={'tab'+(taxTab===t?' on':'')} onClick={()=>setTab(t)}>
+          <button key={t} className={'tab'+(taxTab===t?' on':'')} onClick={()=>setTaxTab(t)}>
             {t==='avatax'?'Live Tax Lookup':t==='setup'?'Avatax Setup':t==='certs'?'Resale Certs':'State Rates'}
           </button>
         ))}
@@ -31278,7 +31278,7 @@ const ShipCalc = ({data, setData}) => {
 
 
 const QuickBooks = ({data, setData}) => {
-  const [qbTab, setTab] = useState('dashboard');
+  const [qbTab, setQbTab] = useState('dashboard');
   const [syncing, setSyncing] = useState({});
   const [lastResult, setLastResult] = useState(null);
 
@@ -31462,7 +31462,7 @@ const QuickBooks = ({data, setData}) => {
 
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
         {['dashboard','invoices','payments','customers','setup','log'].map(t=>(
-          <button key={t} className={'tab'+(qbTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
+          <button key={t} className={'tab'+(qbTab===t?' on':'')} onClick={()=>setQbTab(t)} style={{textTransform:'capitalize'}}>
             {t==='log'?'Sync Log':t}
             {t==='invoices'&&unsynced.invoices>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{unsynced.invoices}</span>}
             {t==='payments'&&unsynced.payments>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{unsynced.payments}</span>}
@@ -31657,7 +31657,7 @@ const QuickBooks = ({data, setData}) => {
 
 
 const OrderImport = ({data, setData}) => {
-  const [importTab, setTab] = useState('queue');
+  const [importTab, setImportTab] = useState('queue');
   const [checking, setChecking] = useState(false);
   const [parsing, setParsing] = useState(null);
   const [draftModal, setDraftModal] = useState(null);
@@ -31991,7 +31991,7 @@ Return ONLY the JSON object, no other text.`;
 
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
         {['queue','drafts','setup','log'].map(t=>(
-          <button key={t} className={'tab'+(importTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
+          <button key={t} className={'tab'+(importTab===t?' on':'')} onClick={()=>setImportTab(t)} style={{textTransform:'capitalize'}}>
             {t==='queue'?'Import Queue':t==='drafts'?'Draft Orders':t==='log'?'Import Log':'OneDrive Setup'}
             {t==='queue'&&pendingCount>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{pendingCount}</span>}
             {t==='drafts'&&draftCount>0&&<span style={{marginLeft:4,background:'var(--acc)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{draftCount}</span>}
@@ -32208,7 +32208,7 @@ const SRSCatalog = ({data,setData}) => {
   const [catFilter,setCatFilter] = useState('All');
   const [modal,setModal] = useState(null);
   const [form,setForm] = useState({});
-  const [srsTab,setTab] = useState('catalog');
+  const [srsTab,setSrsTab] = useState('catalog');
   const catalog = data.srsCatalog||[];
   const dims = data.srsDims||[];
   const cats = ['All',...new Set(catalog.map(s=>s.category).filter(Boolean))];
@@ -32234,7 +32234,7 @@ const SRSCatalog = ({data,setData}) => {
         SRS Customer Catalog from co-worker AM. Separate from Maisy production SKUs. Includes GTIN/UPC barcodes.
       </div>
       <div style={{display:'flex',gap:6,marginBottom:12}}>
-        {['catalog','dims'].map(t=><button key={t} className={'tab'+(srsTab===t?' on':'')} onClick={()=>setTab(t)}>{t==='dims'?'Dimensions (Sheet1)':'Full Catalog (Sheet2)'}</button>)}
+        {['catalog','dims'].map(t=><button key={t} className={'tab'+(srsTab===t?' on':'')} onClick={()=>setSrsTab(t)}>{t==='dims'?'Dimensions (Sheet1)':'Full Catalog (Sheet2)'}</button>)}
       </div>
       {srsTab==='catalog'&&<>
         <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
