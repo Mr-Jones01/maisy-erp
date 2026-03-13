@@ -27885,22 +27885,24 @@ const Shipping = ({data, setData}) => {
   const [form,setForm]=useState({});
   const statuses=['Ready to Ship','Shipped','In Transit','Delivered','Exception'];
   const carriers=['R+L Carriers','XPO Logistics','Old Dominion','FedEx Freight','UPS Freight','Local Delivery'];
-  const open=(row=null)=>{setForm(row?{...row}:{id:`SHP-${uid()}`,orderId:'',customer:'',carrier:'R+L Carriers',tracking:'',status:'Ready to Ship',shipped:'',delivered:''});setModal(row?'edit':'new');};
-  const save=()=>{if(modal==='new')setData(d=>({...d,shipments:[...d.shipments,form]}));else setData(d=>({...d,shipments:d.shipments.map(s=>s.id===form.id?form:s)}));setModal(null);};
+  const open=(row=null)=>{setForm(row?{...row}:{id:`SHP-${uid()}`,orderId:'',customer:'',carrier:'R+L Carriers',tracking:'',status:'Ready to Ship',shipped:'',delivered:'',weight:'',dims:'',totalCost:0,notes:''});setModal(row?'edit':'new');};
+  const save=()=>{const rec={...form,totalCost:Number(form.totalCost||0)};if(modal==='new')setData(d=>({...d,shipments:[...d.shipments,rec]}));else setData(d=>({...d,shipments:d.shipments.map(s=>s.id===rec.id?rec:s)}));setModal(null);};
   const del=id=>setData(d=>({...d,shipments:d.shipments.filter(s=>s.id!==id)}));
   return (
     <div className="fade-up">
       {(()=>{
         const shipLog=data.shipCostLog||[];
-        const totalShipSpend=shipLog.reduce((a,b)=>a+(b.totalCost||0),0);
-        const inTransit=(data.shipments||[]).filter(s=>s.status==='Shipped'||s.status==='In Transit');
-        const avgCost=shipLog.length?totalShipSpend/shipLog.length:0;
-        const carriers=[...new Set(shipLog.map(s=>s.carrier).filter(Boolean))];
+        const shipments=data.shipments||[];
+        const totalShipSpend=shipLog.reduce((a,b)=>a+(b.totalCost||0),0)+shipments.reduce((a,b)=>a+(b.totalCost||0),0);
+        const totalCount=shipLog.length+shipments.filter(s=>s.totalCost>0).length;
+        const inTransit=shipments.filter(s=>s.status==='Shipped'||s.status==='In Transit');
+        const avgCost=totalCount?totalShipSpend/totalCount:0;
+        const carrierSet=[...new Set([...shipLog.map(s=>s.carrier),...shipments.map(s=>s.carrier)].filter(Boolean))];
         return <StatRow>
-          <StatCard label="Total Freight Spend" value={fmt$(totalShipSpend)} icon="🚚" color="var(--acc)" sub={shipLog.length+" shipments logged"}/>
+          <StatCard label="Total Freight Spend" value={fmt$(totalShipSpend)} icon="🚚" color="var(--acc)" sub={totalCount+" shipments logged"}/>
           <StatCard label="In Transit" value={inTransit.length} icon="📦" color={inTransit.length>0?'var(--warn)':'var(--ok)'} sub="Active shipments"/>
           <StatCard label="Avg Cost / Shipment" value={fmt$(avgCost)} icon="📊" color="var(--acc2)" sub="All carriers combined"/>
-          <StatCard label="Carriers Used" value={carriers.length} icon="🏢" color="var(--muted)" sub={carriers.slice(0,2).join(', ')||'None logged'}/>
+          <StatCard label="Carriers Used" value={carrierSet.length} icon="🏢" color="var(--muted)" sub={carrierSet.slice(0,2).join(', ')||'None logged'}/>
         </StatRow>;
       })()}
       <div className="section-hd">
@@ -27912,9 +27914,9 @@ const Shipping = ({data, setData}) => {
         {['log','analysis','monthly'].map(t=><button key={t} className={'tab'+(shipTab===t?' on':'')} onClick={()=>setShipTab(t)}>{t==='log'?'Ship Log':t==='analysis'?'Carrier Analysis':'Monthly Summary'}</button>)}
       </div>
       {shipTab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>Shipment #</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Delivered</th><th/></tr></thead>
+        <table><thead><tr><th>Shipment #</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Delivered</th><th style={{textAlign:'right'}}>Cost</th><th/></tr></thead>
           <tbody>
-            {(data.shipments||[]).length===0&&<tr><td colSpan={9}><Empty msg="No shipments"/></td></tr>}
+            {(data.shipments||[]).length===0&&<tr><td colSpan={10}><Empty msg="No shipments"/></td></tr>}
             {(data.shipments||[]).map(s=>(
               <tr key={s.id}>
                 <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{s.id}</td>
@@ -27925,6 +27927,7 @@ const Shipping = ({data, setData}) => {
                 <td><Badge s={s.status}/></td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(s.shipped)}</td>
                 <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)'}}>{fmtD(s.delivered)}</td>
+                <td style={{fontFamily:'monospace',fontWeight:600,textAlign:'right',color:s.totalCost>0?'var(--warn)':'var(--muted)'}}>{s.totalCost>0?fmt$(s.totalCost):'—'}</td>
                 <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
               </tr>
             ))}
@@ -27963,16 +27966,102 @@ const Shipping = ({data, setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {modal&&<Modal title={modal==='new'?'New Shipment':'Edit'} onClose={()=>setModal(null)}>
-        <div className="grid2"><Field label="Shipment #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
-        <Field label="Sales Order #"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field></div>
+      {modal&&<Modal title={modal==='new'?'New Shipment':'Edit Shipment'} onClose={()=>setModal(null)} lg>
+        {/* PO Lookup — searches shipCostLog + orders by PO ref or order ID */}
+        {modal==='new'&&(()=>{
+          const lookup = (poVal) => {
+            const q = (poVal||'').trim().toLowerCase();
+            if(!q) return;
+            // Search shipCostLog first (has weight, dims, cost)
+            const hit = (data.shipCostLog||[]).find(s =>
+              (s.poRef||'').toLowerCase().includes(q) ||
+              (s.tracking||'').toLowerCase().includes(q) ||
+              (s.customer||'').toLowerCase().includes(q)
+            );
+            if(hit){
+              setForm(f=>({...f,
+                orderId: hit.poRef||f.orderId,
+                customer: hit.customer||f.customer,
+                carrier: hit.carrier||f.carrier,
+                tracking: hit.tracking||f.tracking,
+                weight: hit.weight||f.weight,
+                dims: hit.dims||f.dims,
+                totalCost: hit.totalCost||f.totalCost,
+                notes: hit.destCity&&hit.destState ? `Ship to: ${hit.destCity}, ${hit.destState}` : f.notes,
+              }));
+              return;
+            }
+            // Fall back to orders
+            const order = (data.orders||[]).find(o =>
+              (o.id||'').toLowerCase().includes(q) ||
+              (o.po||'').toLowerCase().includes(q) ||
+              (o.customer||'').toLowerCase().includes(q)
+            );
+            if(order){
+              setForm(f=>({...f,
+                orderId: order.id||f.orderId,
+                customer: order.customer||f.customer,
+                notes: order.shipTo ? `Ship to: ${order.shipTo}` : f.notes,
+              }));
+            }
+          };
+          return (
+            <div style={{background:'rgba(56,189,248,.07)',border:'1px solid rgba(56,189,248,.2)',borderRadius:6,padding:'10px 14px',marginBottom:14}}>
+              <label style={{color:'var(--acc)'}}>Auto-Fill from GOD Mode / History</label>
+              <div style={{display:'flex',gap:8,marginTop:4}}>
+                <input
+                  placeholder="Type PO #, Order #, tracking, or customer name…"
+                  style={{flex:1}}
+                  onKeyDown={e=>{if(e.key==='Enter')lookup(e.target.value);}}
+                  onChange={e=>setForm(f=>({...f,_lookupQ:e.target.value}))}
+                  value={form._lookupQ||''}
+                />
+                <button className="btn btn-p btn-sm" onClick={()=>lookup(form._lookupQ)}>🔍 Look Up</button>
+              </div>
+              <div style={{fontSize:10,color:'var(--muted)',marginTop:4}}>
+                Searches {(data.shipCostLog||[]).length} historical shipments · {(data.orders||[]).length} orders — press Enter or click Look Up to auto-fill cost, weight, dims, carrier
+              </div>
+            </div>
+          );
+        })()}
+        <div className="grid2">
+          <Field label="Shipment #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Sales Order / PO #"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
+        </div>
         <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
-        <div className="grid2"><Field label="Carrier"><select value={form.carrier} onChange={e=>setForm(f=>({...f,carrier:e.target.value}))}>{carriers.map(c=><option key={c}>{c}</option>)}</select></Field>
-        <Field label="Tracking #"><input value={form.tracking||''} onChange={e=>setForm(f=>({...f,tracking:e.target.value}))}/></Field></div>
-        <Field label="Status"><select value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{statuses.map(s=><option key={s}>{s}</option>)}</select></Field>
-        <div className="grid2"><Field label="Ship Date"><input type="date" value={form.shipped||''} onChange={e=>setForm(f=>({...f,shipped:e.target.value}))}/></Field>
-        <Field label="Delivery Date"><input type="date" value={form.delivered||''} onChange={e=>setForm(f=>({...f,delivered:e.target.value}))}/></Field></div>
-        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+        <div className="grid2">
+          <Field label="Carrier">
+            <select value={form.carrier||'R+L Carriers'} onChange={e=>setForm(f=>({...f,carrier:e.target.value}))}>
+              {[...carriers, ...(form.carrier&&!carriers.includes(form.carrier)?[form.carrier]:[])].map(c=><option key={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Tracking #"><input value={form.tracking||''} onChange={e=>setForm(f=>({...f,tracking:e.target.value}))}/></Field>
+        </div>
+        <Field label="Status">
+          <select value={form.status||'Ready to Ship'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+            {statuses.map(s=><option key={s}>{s}</option>)}
+          </select>
+        </Field>
+        <div className="grid2">
+          <Field label="Ship Date"><input type="date" value={form.shipped||''} onChange={e=>setForm(f=>({...f,shipped:e.target.value}))}/></Field>
+          <Field label="Delivery Date"><input type="date" value={form.delivered||''} onChange={e=>setForm(f=>({...f,delivered:e.target.value}))}/></Field>
+        </div>
+        <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginTop:4}}>
+          <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:10}}>Freight Details</div>
+          <div className="grid2" style={{gap:10}}>
+            <Field label="Freight Cost ($)"><input type="number" step="0.01" min="0" value={form.totalCost||''} placeholder="0.00" onChange={e=>setForm(f=>({...f,totalCost:e.target.value}))}/></Field>
+            <Field label="Weight (lbs)"><input type="number" min="0" value={form.weight||''} placeholder="lbs" onChange={e=>setForm(f=>({...f,weight:e.target.value}))}/></Field>
+          </div>
+          <Field label="Dimensions — L × W × H (inches)" style={{marginTop:8}}>
+            <input value={form.dims||''} placeholder="e.g. 144×44×17" onChange={e=>setForm(f=>({...f,dims:e.target.value}))}/>
+          </Field>
+        </div>
+        <Field label="Notes" style={{marginTop:8}}><input value={form.notes||''} placeholder="Special instructions, ship-to address, references…" onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={save}>Save Shipment</button>
+          <button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button>
+          {modal==='edit'&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{del(form.id);setModal(null);}}>Delete</button>}
+        </div>
       </Modal>}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginTop:20}}>
         <div>
