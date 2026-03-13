@@ -27683,7 +27683,7 @@ const Purchasing = ({data, setData}) => {
         </div>
       </>}
 
-{tab==='quotes'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {tab==='quotes'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.quoteLog||[]).length} shipping quotes logged
         </div>
