@@ -26276,7 +26276,7 @@ const Dashboard = ({data,setPage}) => {
 
 // ─── TODO & HOT LIST ─────────────────────────────────────────────────────────────
 const Todo = ({data,setData,user}) => {
-  const [tab,setTab]=useState('tasks');
+  const [todoTab,setTab]=useState('tasks');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   const [filter,setFilter]=useState('All');
@@ -26311,16 +26311,16 @@ const Todo = ({data,setData,user}) => {
             <span className="chip" style={{color:'var(--err)'}}>{data.hotList.length} hot items</span>
           </div>
         </div>
-        <button className="btn btn-p" onClick={()=>{if(tab==='tasks')openTask();else openHot();}}>+ New {tab==='tasks'?'Task':'Hot Item'}</button>
+        <button className="btn btn-p" onClick={()=>{if(todoTab==='tasks')openTask();else openHot();}}>+ New {todoTab==='tasks'?'Task':'Hot Item'}</button>
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['tasks','hotlist'].map(t=><button key={t} className={`tab${tab===t?' on':''}`} onClick={()=>setTab(t)}>{t==='tasks'?'Tasks':'🔥 Hot List'}</button>)}
-        {tab==='tasks'&&<div style={{marginLeft:'auto',display:'flex',gap:6}}>
+        {['tasks','hotlist'].map(t=><button key={t} className={`tab${todoTab===t?' on':''}`} onClick={()=>setTab(t)}>{t==='tasks'?'Tasks':'🔥 Hot List'}</button>)}
+        {todoTab==='tasks'&&<div style={{marginLeft:'auto',display:'flex',gap:6}}>
           {['All','Open','Done'].map(f=><button key={f} className={`tab${filter===f?' on':''}`} onClick={()=>setFilter(f)}>{f}</button>)}
         </div>}
       </div>
 
-      {tab==='tasks'&&<div>
+      {todoTab==='tasks'&&<div>
         {filtered.length===0&&<Empty msg="No tasks"/>}
         {['Critical','High','Medium','Low'].map(pri=>{
           const items=filtered.filter(t=>t.priority===pri);
@@ -26355,7 +26355,7 @@ const Todo = ({data,setData,user}) => {
         })}
       </div>}
 
-      {tab==='hotlist'&&<div>
+      {todoTab==='hotlist'&&<div>
         {data.hotList.length===0&&<Empty msg="Hot list clear"/>}
         {data.hotList.map(h=>(
           <div key={h.id} style={{padding:'12px 16px',background:'var(--s1)',border:`1px solid ${h.flag==='HOT'?'rgba(239,68,68,.3)':h.flag==='RUSH'?'rgba(249,115,22,.3)':'var(--bdr)'}`,borderLeft:`4px solid ${h.flag==='HOT'?'var(--err)':h.flag==='RUSH'?'var(--acc3)':'var(--warn)'}`,borderRadius:6,marginBottom:8,display:'flex',gap:12,alignItems:'flex-start'}}>
@@ -26407,7 +26407,7 @@ const Todo = ({data,setData,user}) => {
 };
 
 const Sales = ({data, setData}) => {
-  const [tab,setTab]=useState('all');
+  const [salesTab,setTab]=useState('all');
   const [search,setSearch]=useState('');
   const [repFilter,setRepFilter]=useState('All');
   const [modal,setModal]=useState(null);
@@ -26416,8 +26416,8 @@ const Sales = ({data, setData}) => {
   const salesReps=['Kyle', 'AJ', '3BD', 'Tony', 'Rocky', 'Beth', 'Ryan', 'Fien', 'RC', 'Other'];
 
   const filtered=data.salesOrders.filter(o=>{
-    if(tab==='orders'&&o.type!=='order')return false;
-    if(tab==='quotes'&&o.type!=='quote')return false;
+    if(salesTab==='orders'&&o.type!=='order')return false;
+    if(salesTab==='quotes'&&o.type!=='quote')return false;
     if(repFilter!=='All'&&o.salesPerson!==repFilter)return false;
     if(search&&!o.customer.toLowerCase().includes(search.toLowerCase())&&!o.id.toLowerCase().includes(search.toLowerCase()))return false;
     return true;
@@ -26455,10 +26455,10 @@ const Sales = ({data, setData}) => {
       </StatRow>
 
       <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
-        {['all','orders','quotes','catalog','sku','issues'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='sku'?'SKU Master':t==='issues'?'Issues':t}</button>)}
+        {['all','orders','quotes','catalog','sku','issues'].map(t=><button key={t} className={'tab'+(salesTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='sku'?'SKU Master':t==='issues'?'Issues':t}</button>)}
       </div>
 
-      {(tab==='all'||tab==='orders'||tab==='quotes')&&<>
+      {(salesTab==='all'||salesTab==='orders'||salesTab==='quotes')&&<>
         <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center'}}>
           <input className="search" placeholder="Search customer, order ID…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:180}}/>
           <select value={repFilter} onChange={e=>setRepFilter(e.target.value)} style={{minWidth:120}}>
@@ -26498,8 +26498,8 @@ const Sales = ({data, setData}) => {
         </div>
       </>}
 
-      {(tab==='catalog'||tab==='sku'||tab==='issues')&&<>
-        {tab==='catalog'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {(salesTab==='catalog'||salesTab==='sku'||salesTab==='issues')&&<>
+        {salesTab==='catalog'&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--muted)'}}>
             {(data.productCatalog||[]).length} kits in catalog
           </div>
@@ -26517,7 +26517,7 @@ const Sales = ({data, setData}) => {
             ))}</tbody>
           </table>
         </div>}
-        {tab==='sku'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        {salesTab==='sku'&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>SKU</th><th>Description</th><th>Sub-Category</th><th>Family</th><th>Material</th><th>Finish</th><th>SRS</th><th>Online</th><th>HD</th></tr></thead>
             <tbody>{(data.productSkuMaster||[]).length===0&&<tr><td colSpan={9}><Empty msg="No SKU master data"/></td></tr>}
             {(data.productSkuMaster||[]).map((s,i)=>(
@@ -26532,7 +26532,7 @@ const Sales = ({data, setData}) => {
             ))}</tbody>
           </table>
         </div>}
-        {tab==='issues'&&<>
+        {salesTab==='issues'&&<>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
               <span className="chip">{(data.customerIssues||[]).length} issues</span>
@@ -26673,7 +26673,7 @@ const QRLabel = ({item, onClose}) => {
 };
 
 const Inventory = ({data, setData, user}) => {
-  const [tab,setTab]=useState('items');
+  const [invTab,setTab]=useState('items');
   const [search,setSearch]=useState('');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
@@ -26742,8 +26742,8 @@ const Inventory = ({data, setData, user}) => {
         <div><div className="hd" style={{fontSize:22}}>Inventory & Materials</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{fmt$(totalVal)}</span><span className="chip" style={{color:low.length?'var(--warn)':undefined}}>{low.length} low stock</span></div>
         </div>
-        {tab==='items'&&<button className="btn btn-p" onClick={()=>openItem()}>+ Add Item</button>}
-        {tab==='bom'&&<button className="btn btn-p" onClick={()=>{setBomForm({id:`BOM-${uid()}`,productSku:'',productName:'',items:[]});setModal('bom');}}>+ New BOM</button>}
+        {invTab==='items'&&<button className="btn btn-p" onClick={()=>openItem()}>+ Add Item</button>}
+        {invTab==='bom'&&<button className="btn btn-p" onClick={()=>{setBomForm({id:`BOM-${uid()}`,productSku:'',productName:'',items:[]});setModal('bom');}}>+ New BOM</button>}
       </div>
       <StatRow>
         <StatCard label="Total Inventory Value" value={fmt$(totalVal)} icon="🏭" color="var(--acc)" sub={totalItems+" line items tracked"}/>
@@ -26753,11 +26753,11 @@ const Inventory = ({data, setData, user}) => {
       </StatRow>
       {low.length>0&&<div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span><span><strong>Low Stock:</strong> {low.map(i=>`${i.name} (${i.qty} ${i.unit})`).join(' · ')}</span></div>}
       <div style={{display:'flex',gap:6,marginBottom:16}}>
-        {['items','glass','consumables','cyclecount','adjustments','bom','import'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t}</button>)}
+        {['items','glass','consumables','cyclecount','adjustments','bom','import'].map(t=><button key={t} className={'tab'+(invTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t}</button>)}
       </div>
 
       {/* ITEMS TAB */}
-      {tab==='items'&&<>
+      {invTab==='items'&&<>
         <input className="search" placeholder="Search…" value={search} onChange={e=>setSearch(e.target.value)} style={{marginBottom:12,width:260}}/>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>SKU</th><th>Item</th><th>Cat</th><th>On Hand</th><th>Reorder At</th><th>Unit Cost</th><th>Value</th><th>Location</th><th/></tr></thead>
@@ -26783,7 +26783,7 @@ const Inventory = ({data, setData, user}) => {
         </div>
       </>}
 
-      {tab==='glass'&&<>
+      {invTab==='glass'&&<>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
           {(()=>{
             const gl=data.glassInventory||[];
@@ -26815,7 +26815,7 @@ const Inventory = ({data, setData, user}) => {
       </>}
 
       {/* BOM TAB */}
-      {tab==='consumables'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {invTab==='consumables'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>SKU</th><th>Item</th><th>Category</th><th>On Hand</th><th>Unit</th><th>Reorder At</th><th>Unit Cost</th><th>Value</th><th>Location</th></tr></thead>
           <tbody>{(data.shopConsumables||[]).length===0&&<tr><td colSpan={9}><Empty msg="No consumables data"/></td></tr>}
           {(data.shopConsumables||[]).map((c,i)=>(
@@ -26833,7 +26833,7 @@ const Inventory = ({data, setData, user}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='cyclecount'&&<>
+      {invTab==='cyclecount'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.cycleCount||[]).length} count events</span>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({countNo:'CC-'+uid(),date:now(),location:'',category:'',item:'',systemQty:0,actualQty:0,variance:0,variancePct:0,countedBy:'',notes:''});setModal('cycle');}}>+ Log Count</button>
@@ -26859,7 +26859,7 @@ const Inventory = ({data, setData, user}) => {
           </table>
         </div>
       </>}
-      {tab==='bom'&&<>
+      {invTab==='bom'&&<>
         {data.bom.length===0&&<Empty msg="No Bills of Materials defined"/>}
         {data.bom.map(b=>{
           const totalMatCost=b.items.reduce((a,item)=>{const inv=data.inventory.find(i=>i.id===item.inventoryId);return a+(inv?inv.cost*item.qty:0);},0);
@@ -26891,7 +26891,7 @@ const Inventory = ({data, setData, user}) => {
       </>}
 
       {/* ADJUSTMENTS TAB */}
-      {tab==='adjustments'&&<>
+      {invTab==='adjustments'&&<>
         <div className="card" style={{marginBottom:16}}>
           <div className="hd" style={{fontSize:14,marginBottom:14}}>New Adjustment</div>
           <div className="grid2" style={{marginBottom:12}}>
@@ -26935,7 +26935,7 @@ const Inventory = ({data, setData, user}) => {
       </>}
 
       {/* CSV IMPORT TAB */}
-      {tab==='import'&&<>
+      {invTab==='import'&&<>
         <div className="card" style={{marginBottom:16}}>
           <div className="hd" style={{fontSize:14,marginBottom:8}}>Bulk SKU Import via CSV</div>
           <div className="alert-bar alert-info" style={{marginBottom:12}}>
@@ -27372,9 +27372,315 @@ const Production = ({data, setData, user}) => {
     </div>
   );
 };
+const Purchasing = ({data, setData}) => {
+  const [purchTab,setTab]=useState('po');
+  const [modal,setModal]=useState(null);
+  const [form,setForm]=useState({});
+  const [receiving,setReceiving]=useState(null);
+  const [recQtys,setRecQtys]=useState({});
+  const poStatuses=['Draft','Ordered','In Transit','Received','Cancelled'];
 
-// ─── PURCHASING (with PO Receiving) ─────────────────────────────────────────────
-      {tab==='misc'&&<>
+  const openPO=(row=null)=>{
+    setForm(row?{...row,items:row.items?[...row.items.map(i=>({...i}))]:[]}:{id:`PO-${uid()}`,vendor:'',vendorId:'',items:[],total:0,status:'Draft',ordered:now(),expected:'',received:false});
+    setModal('po');
+  };
+  const openVnd=(row=null)=>{ setForm(row?{...row}:{id:`VND-${uid()}`,name:'',contact:'',email:'',phone:'',cat:'',rating:5,ytd:0,leadDays:7}); setModal('vnd'); };
+
+  const savePO=()=>{
+    const po={...form,total:Number(form.total||form.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0)};
+    if(!data.purchaseOrders.find(p=>p.id===po.id))setData(d=>({...d,purchaseOrders:[...d.purchaseOrders,po]}));
+    else setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(p=>p.id===po.id?po:p)}));
+    setModal(null);
+  };
+  const saveVnd=()=>{const v={...form,ytd:Number(form.ytd),rating:Number(form.rating),leadDays:Number(form.leadDays)};if(!data.vendors.find(x=>x.id===v.id))setData(d=>({...d,vendors:[...d.vendors,v]}));else setData(d=>({...d,vendors:d.vendors.map(x=>x.id===v.id?v:x)}));setModal(null);};
+
+  const startReceiving=(po)=>{
+    const init={};
+    po.items?.forEach(item=>{ init[item.inventoryId]=item.qty; });
+    setRecQtys(init);
+    setReceiving(po);
+  };
+
+  const confirmReceiving=()=>{
+    if(!receiving)return;
+    const logs=[];
+    const updInv=data.inventory.map(i=>{
+      const rcvQty=recQtys[i.id];
+      if(rcvQty>0){
+        logs.push({id:`ADJ-${uid()}`,inventoryId:i.id,itemName:i.name,type:'add',qty:Number(rcvQty),reason:`${receiving.id} received from ${receiving.vendor}`,date:now(),user:'Daniel Jones'});
+        return {...i,qty:i.qty+Number(rcvQty)};
+      }
+      return i;
+    });
+    setData(d=>({...d,
+      inventory:updInv,
+      adjustmentLog:[...logs,...d.adjustmentLog],
+      purchaseOrders:d.purchaseOrders.map(p=>p.id===receiving.id?{...p,status:'Received',received:true}:p),
+    }));
+    setReceiving(null);
+  };
+
+  const del=id=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.filter(p=>p.id!==id)}));
+  const delVnd=id=>setData(d=>({...d,vendors:d.vendors.filter(v=>v.id!==id)}));
+  const readyToReceive=data.purchaseOrders.filter(p=>!p.received&&['Ordered','In Transit'].includes(p.status));
+  const totalPOSpend=data.purchaseOrders.reduce((a,b)=>a+(b.total||0),0);
+  const openPOs=data.purchaseOrders.filter(p=>!['Received','Cancelled'].includes(p.status));
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Purchasing & Vendors</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.vendors.length} vendors</span><span className="chip" style={{color:readyToReceive.length?'var(--info)':undefined}}>{readyToReceive.length} ready to receive</span></div></div>
+        {purchTab==='po'?<button className="btn btn-p" onClick={()=>openPO()}>+ New PO</button>:<button className="btn btn-p" onClick={()=>openVnd()}>+ Add Vendor</button>}
+      </div>
+      <StatRow>
+        <StatCard label="Open Purchase Orders" value={openPOs.length} icon="📦" color="var(--acc)" sub={fmt$(openPOs.reduce((a,b)=>a+b.total,0))+" committed"}/>
+        <StatCard label="Ready to Receive" value={readyToReceive.length} icon="🚚" color={readyToReceive.length>0?'var(--warn)':'var(--muted)'} sub="In transit or ordered"/>
+        <StatCard label="Total PO Spend" value={fmt$(totalPOSpend)} icon="💰" color="var(--ok)" sub={data.purchaseOrders.length+" total POs"}/>
+        <StatCard label="Active Vendors" value={data.vendors.length} icon="🏢" color="var(--acc2)" sub="In vendor directory"/>
+      </StatRow>
+      {readyToReceive.length>0&&<div className="alert-bar alert-info"><span style={{color:'var(--info)'}}>📦</span><span><strong>POs Ready to Receive:</strong> {readyToReceive.map(p=>p.id).join(' · ')} — click "Receive" to update inventory automatically</span></div>}
+      <div style={{display:'flex',gap:6,marginBottom:14}}><button className={'tab'+(purchTab==='po'?' on':'')} onClick={()=>setTab('po')}>Purchase Orders</button>
+          <button className={'tab'+(purchTab==='req'?' on':'')} onClick={()=>setTab('req')}>Order Requests</button>
+          <button className={'tab'+(purchTab==='quotes'?' on':'')} onClick={()=>setTab('quotes')}>Quote Log</button>
+          <button className={'tab'+(purchTab==='vnd'?' on':'')} onClick={()=>setTab('vnd')}>Vendors</button><button className={'tab'+(purchTab==='misc'?' on':'')} onClick={()=>setTab('misc')}>Misc Charges</button></div>
+
+      {purchTab==='po'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <span className="chip">{data.purchaseOrders.length} POs</span>
+            <span className="chip" style={{color:'var(--warn)'}}>{fmt$(data.purchaseOrders.reduce((a,b)=>a+(b.total||0),0))} total</span>
+            <span className="chip" style={{color:'var(--ok)'}}>{data.purchaseOrders.filter(p=>p.received).length} received</span>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn btn-xs" onClick={()=>{const all=data.purchaseOrders.every(p=>p._selected);setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(p=>({...p,_selected:!all}))}));}}>Select All</button>
+            <button className="btn btn-g btn-sm" onClick={()=>{
+              const sel=data.purchaseOrders.filter(p=>p._selected);
+              if(!sel.length){alert('Select at least one PO to email');return;}
+              const lines=sel.map(p=>{
+                const total=p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0;
+                const items=p.items?.map(i=>i.qty+'x '+i.name+' @ $'+i.cost).join('\n  ') || p.notes || '—';
+                return 'PO #: '+p.id+'\nVendor: '+(p.vendor||'\u2014')+'\nStatus: '+(p.status||'\u2014')+'\nOrder Date: '+(p.ordered||'\u2014')+'\nExpected: '+(p.expected||'\u2014')+'\nTotal: $'+total.toFixed(2)+'\nItems:\n  '+items+(p.attachments&&p.attachments.length?' \n['+p.attachments.length+' attachment(s): '+p.attachments.map(a=>a.name).join(', ')+']':'');
+              }).join('\n\n---\n\n');
+              const totalAmt=sel.reduce((s,p)=>s+(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0),0);
+              const subject='Maisy Railing \u2014 Purchase Order'+(sel.length>1?'s':'')+' for Review ('+sel.length+' PO'+(sel.length>1?'s':'')+' \u00b7 $'+totalAmt.toFixed(2)+')';
+              const body='Hi,\n\nPlease find the following purchase order'+(sel.length>1?'s':'')+' for review'+(sel.some(p=>p.attachments&&p.attachments.length)?' \u2014 attachments included where noted':'')+': \n\n'+lines+'\n\nTotal Value: $'+totalAmt.toFixed(2)+'\n\nPlease review and confirm receipt or flag any discrepancies.\n\nThank you,\nDaniel Jones\nDirector of Operations\nMaisy Railing | 208.603.8149';
+              window.open('mailto:accounting@maisyrailing.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
+            }}>✉ Email Selected</button>
+          </div>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+        <table><thead><tr><th style={{width:32}}></th><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Attach</th><th>Expected</th><th/></tr></thead>
+          <tbody>{data.purchaseOrders.map(p=>(
+            <tr key={p.id} style={{background:p._selected?'rgba(0,229,255,.05)':''}}>
+              <td style={{textAlign:'center'}}>
+                <input type="checkbox" checked={!!p._selected} onChange={e=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(x=>x.id===p.id?{...x,_selected:e.target.checked}:x)}))}/>
+              </td>
+              <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{p.id}</td>
+              <td style={{fontWeight:500}}>{p.vendor}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{p.items?.map(i=>i.name).join(', ').slice(0,50)}</td>
+              <td className="mono" style={{fontWeight:500}}>{fmt$(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0)}</td>
+              <td><Badge s={p.status}/></td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.ordered)}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.expected)}</td>
+              <td style={{textAlign:'center',whiteSpace:'nowrap'}}>
+                {(p.attachments||[]).length>0
+                  ? <button className="btn btn-xs" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}} onClick={()=>openPO(p)}>📎 {(p.attachments||[]).length}</button>
+                  : <label style={{cursor:'pointer',fontSize:10,color:'var(--muted)',padding:'2px 6px',border:'1px dashed var(--bdr)',borderRadius:4}}>
+                      + File
+                      <input type="file" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" multiple style={{display:'none'}} onChange={e=>{
+                        const files=Array.from(e.target.files);
+                        Promise.all(files.map(file=>new Promise(res=>{const r=new FileReader();r.onload=ev=>res({name:file.name,data:ev.target.result,type:file.type,size:file.size});r.readAsDataURL(file);}))).then(atts=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(po=>po.id===p.id?{...po,attachments:[...(po.attachments||[]),...atts]}:po)})));
+                        e.target.value='';
+                      }}/>
+                    </label>}
+              </td>
+              <td><div style={{display:'flex',gap:4}}>
+                {!p.received&&['Ordered','In Transit'].includes(p.status)&&<button className="btn btn-ok btn-sm" onClick={()=>startReceiving(p)}>Receive</button>}
+                <button className="btn btn-g btn-sm" onClick={()=>openPO(p)}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>del(p.id)}>Del</button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+        </div>
+      </>}
+
+            {purchTab==='req'&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <span className="chip">{(data.orderRequests||[]).length} requests</span>
+            <span className="chip" style={{color:'var(--warn)'}}>{(data.orderRequests||[]).filter(r=>r.status==='On Order').length} on order</span>
+            <span className="chip" style={{color:'var(--ok)'}}>{(data.orderRequests||[]).filter(r=>r.status==='Received').length} received</span>
+          </div>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'REQ-'+uid(),dateReq:now(),dateNeed:'',item:'',dept:'',requester:'',priority:'Medium',approvedBy:'',approvalDate:'',vendor:'',partNo:'',qty:1,unit:'EA',estCost:0,estTotal:0,status:'Requested',notes:''});setModal('req');}}>+ New Request</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table><thead><tr><th>Request ID</th><th>Date Req</th><th>Date Needed</th><th>Item</th><th>Dept</th><th>Requester</th><th>Priority</th><th>Vendor</th><th>Part #</th><th>Qty</th><th>Est Cost</th><th>Est Total</th><th>Status</th><th>Notes</th><th/></tr></thead>
+            <tbody>{(data.orderRequests||[]).length===0&&<tr><td colSpan={15}><Empty msg="No order requests"/></td></tr>}
+            {(data.orderRequests||[]).map((r,i)=>(
+              <tr key={i}>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{r.id}</td>
+                <td style={{fontSize:11}}>{r.dateReq}</td>
+                <td style={{fontSize:11,color:r.dateNeed&&r.dateNeed<now()?'var(--err)':''}}>{r.dateNeed||'—'}</td>
+                <td style={{fontWeight:500}}>{r.item}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{r.dept}</td>
+                <td style={{fontSize:11}}>{r.requester}</td>
+                <td><span style={{fontWeight:700,color:r.priority==='High'?'var(--err)':r.priority==='Medium'?'var(--warn)':'var(--muted)',fontSize:11}}>{r.priority}</span></td>
+                <td style={{fontSize:11}}>{r.vendor||'—'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10}}>{r.partNo||'—'}</td>
+                <td style={{textAlign:'center'}}>{r.qty}</td>
+                <td>{r.estCost?'$'+r.estCost:'—'}</td>
+                <td style={{fontWeight:600}}>{r.estTotal?'$'+r.estTotal:'—'}</td>
+                <td><Badge s={r.status||'Requested'}/></td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{r.notes}</td>
+                <td><div style={{display:'flex',gap:4}}>
+                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...r});setModal('req');}}>Edit</button>
+                  <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,orderRequests:(d.orderRequests||[]).filter((_,j)=>j!==i)}))}>Del</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </>}
+
+      {purchTab==='quotes'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
+          {(data.quoteLog||[]).length} shipping quotes logged
+        </div>
+        <table><thead><tr><th>Quote #</th><th>Date</th><th>Customer</th><th>Ship From</th><th>Ship To</th><th>Carrier</th><th>Service</th><th>Pkgs</th><th>Total Wt (lbs)</th><th>Est. Cost</th><th>Actual Cost</th><th>Variance</th><th>Status</th></tr></thead>
+          <tbody>{(data.quoteLog||[]).length===0&&<tr><td colSpan={13}><Empty msg="No shipping quotes logged yet"/></td></tr>}
+          {(data.quoteLog||[]).map((q,i)=>(
+            <tr key={i}>
+              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{q.id}</td>
+              <td style={{fontSize:11}}>{q.date}</td>
+              <td style={{fontWeight:500}}>{q.customer}</td>
+              <td style={{fontSize:11}}>{q.origin}</td>
+              <td style={{fontSize:11}}>{q.dest}</td>
+              <td>{q.carrier}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{q.service}</td>
+              <td style={{textAlign:'center'}}>{q.pieces}</td>
+              <td style={{textAlign:'center'}}>{q.weight}</td>
+              <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{q.estCost?'$'+q.estCost:'—'}</td>
+              <td style={{fontFamily:'monospace',fontWeight:600,color:'var(--ok)'}}>{q.actualCost?'$'+q.actualCost:'—'}</td>
+              <td style={{fontFamily:'monospace',color:q.variance>0?'var(--err)':q.variance<0?'var(--ok)':'var(--muted)'}}>{q.variance?'$'+q.variance:'—'}</td>
+              <td><Badge s={q.status||'Quoted'}/></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {purchTab==='vnd'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table><thead><tr><th>Vendor</th><th>Contact</th><th>Category</th><th>Lead Days</th><th>Rating</th><th>YTD Spend</th><th/></tr></thead>
+          <tbody>{data.vendors.map(v=>(
+            <tr key={v.id}>
+              <td style={{fontWeight:500}}>{v.name}</td>
+              <td style={{fontSize:11}}><div>{v.contact}</div><div className="mono" style={{fontSize:10,color:'var(--muted)'}}>{v.email}</div></td>
+              <td><span className="chip">{v.cat}</span></td>
+              <td className="mono" style={{color:'var(--muted)'}}>{v.leadDays}d</td>
+              <td><span style={{color:'var(--warn)'}}>{Array(Math.round(v.rating)).fill('★').join('')}</span><span style={{color:'var(--dim)'}}>{Array(5-Math.round(v.rating)).fill('★').join('')}</span></td>
+              <td className="mono" style={{fontWeight:500}}>{fmt$(v.ytd)}</td>
+              <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>openVnd(v)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>delVnd(v.id)}>Del</button></div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {/* PO Receiving Modal */}
+      {receiving&&<Modal title={`Receive PO — ${receiving.id}`} onClose={()=>setReceiving(null)}>
+        <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginBottom:16}}>
+          <div style={{fontSize:12,color:'var(--muted)'}}>Vendor: <strong style={{color:'var(--txt)'}}>{receiving.vendor}</strong></div>
+        </div>
+        <div className="hd" style={{fontSize:13,marginBottom:10}}>Confirm Received Quantities</div>
+        {receiving.items?.map(item=>{
+          const inv=data.inventory.find(i=>i.id===item.inventoryId);
+          return (
+            <div key={item.inventoryId} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,padding:'8px 12px',background:'var(--s2)',borderRadius:5}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12.5,fontWeight:500}}>{item.name}</div>
+                <div style={{fontSize:11,color:'var(--muted)'}}>Currently: {inv?.qty||0} {item.unit} on hand</div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <label style={{margin:0,textTransform:'none',letterSpacing:0,fontSize:11}}>Qty received:</label>
+                <input type="number" min={0} value={recQtys[item.inventoryId]||0} onChange={e=>setRecQtys(r=>({...r,[item.inventoryId]:e.target.value}))} style={{width:80}}/>
+                <span style={{fontSize:11,color:'var(--muted)'}}>{item.unit}</span>
+              </div>
+            </div>
+          );
+        })}
+        <div style={{background:'rgba(16,185,129,.07)',border:'1px solid rgba(16,185,129,.2)',borderRadius:5,padding:'8px 12px',fontSize:12,marginBottom:14,color:'var(--ok)'}}>
+          ✓ Receiving this PO will automatically update inventory quantities and log adjustments.
+        </div>
+        <div style={{display:'flex',gap:8}}><button className="btn btn-p" onClick={confirmReceiving}>Confirm & Update Inventory</button><button className="btn btn-g" onClick={()=>setReceiving(null)}>Cancel</button></div>
+      </Modal>}
+
+      {modal==='po'&&<Modal title="Purchase Order" onClose={()=>setModal(null)}>
+        <div className="grid2"><Field label="PO #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+        <Field label="Vendor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field></div>
+        <div className="grid2"><Field label="Status"><select value={form.status||'Draft'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{poStatuses.map(s=><option key={s}>{s}</option>)}</select></Field>
+        <Field label="Total ($)"><input type="number" value={form.total||0} onChange={e=>setForm(f=>({...f,total:e.target.value}))}/></Field></div>
+        <div className="grid2"><Field label="Order Date"><input type="date" value={form.ordered||''} onChange={e=>setForm(f=>({...f,ordered:e.target.value}))}/></Field>
+        <Field label="Expected"><input type="date" value={form.expected||''} onChange={e=>setForm(f=>({...f,expected:e.target.value}))}/></Field></div>
+        <div style={{marginTop:14}}>
+          <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:'var(--muted)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span>Attachments{(form.attachments||[]).length>0?' ('+form.attachments.length+')':''}</span>
+            <label style={{cursor:'pointer',fontSize:10,color:'var(--acc)',border:'1px solid var(--acc)',borderRadius:4,padding:'2px 8px'}}>
+              + Add File
+              <input type="file" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" multiple style={{display:'none'}} onChange={e=>{
+                const files=Array.from(e.target.files);
+                const readers=files.map(file=>new Promise(res=>{const r=new FileReader();r.onload=ev=>res({name:file.name,data:ev.target.result,type:file.type,size:file.size});r.readAsDataURL(file);}));
+                Promise.all(readers).then(atts=>setForm(f=>({...f,attachments:[...(f.attachments||[]),...atts]})));
+                e.target.value='';
+              }}/>
+            </label>
+          </div>
+          {(form.attachments||[]).length===0&&<div style={{fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>No attachments — click + Add File to attach invoices, receipts, quotes, or photos</div>}
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {(form.attachments||[]).map((att,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:8,background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
+                <span style={{fontSize:14}}>{att.type&&att.type.includes('image')?'🖼':att.type&&att.type.includes('pdf')?'📄':'📎'}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:600,fontSize:11,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{att.name}</div>
+                  <div style={{fontSize:9,color:'var(--muted)'}}>{att.size?(att.size/1024).toFixed(1)+'kb':''}</div>
+                </div>
+                <button className="btn btn-xs" style={{background:'rgba(0,229,255,.1)',color:'var(--acc)'}} onClick={()=>{const a=document.createElement('a');a.href=att.data;a.download=att.name;a.click();}}>⬇ View</button>
+                <button className="btn btn-d btn-xs" onClick={()=>setForm(f=>({...f,attachments:(f.attachments||[]).filter((_,j)=>j!==i)}))}>×</button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={savePO}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+      {modal==='vnd'&&<Modal title="Vendor" onClose={()=>setModal(null)}>
+        <Field label="Company Name"><input value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></Field>
+        <div className="grid2"><Field label="Contact"><input value={form.contact||''} onChange={e=>setForm(f=>({...f,contact:e.target.value}))}/></Field>
+        <Field label="Category"><input value={form.cat||''} onChange={e=>setForm(f=>({...f,cat:e.target.value}))}/></Field></div>
+        <div className="grid2"><Field label="Email"><input value={form.email||''} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></Field>
+        <Field label="Phone"><input value={form.phone||''} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></Field></div>
+        <div className="grid2"><Field label="Lead Days"><input type="number" value={form.leadDays||7} onChange={e=>setForm(f=>({...f,leadDays:e.target.value}))}/></Field>
+        <Field label="Rating (1-5)"><input type="number" min={1} max={5} step={.1} value={form.rating||5} onChange={e=>setForm(f=>({...f,rating:e.target.value}))}/></Field></div>
+        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={saveVnd}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+      {modal==='req'&&<Modal title="Order Request" onClose={()=>setModal(null)} lg>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <Field label="Item Description"><input value={form.item||''} onChange={e=>setForm(f=>({...f,item:e.target.value}))}/></Field>
+          <Field label="Requester"><input value={form.requester||''} onChange={e=>setForm(f=>({...f,requester:e.target.value}))}/></Field>
+          <Field label="Department"><input value={form.dept||''} onChange={e=>setForm(f=>({...f,dept:e.target.value}))}/></Field>
+          <Field label="Priority"><select value={form.priority||'Medium'} onChange={e=>setForm(f=>({...f,priority:e.target.value}))}>{['Low','Medium','High','Critical'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Date Requested"><input type="date" value={form.dateReq||''} onChange={e=>setForm(f=>({...f,dateReq:e.target.value}))}/></Field>
+          <Field label="Date Needed By"><input type="date" value={form.dateNeed||''} onChange={e=>setForm(f=>({...f,dateNeed:e.target.value}))}/></Field>
+          <Field label="Vendor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field>
+          <Field label="Vendor Part #"><input value={form.partNo||''} onChange={e=>setForm(f=>({...f,partNo:e.target.value}))}/></Field>
+          <Field label="Qty"><input type="number" value={form.qty||''} onChange={e=>setForm(f=>({...f,qty:Number(e.target.value),estTotal:Number(e.target.value)*(form.estCost||0)}))}/></Field>
+          <Field label="Est. Unit Cost ($)"><input type="number" step="0.01" value={form.estCost||''} onChange={e=>setForm(f=>({...f,estCost:Number(e.target.value),estTotal:(form.qty||0)*Number(e.target.value)}))}/></Field>
+          <Field label="Approved By"><input value={form.approvedBy||''} onChange={e=>setForm(f=>({...f,approvedBy:e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Requested'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Requested','Approved','On Order','Back Ordered','Received','Cancelled'].map(s=><option key={s}>{s}</option>)}</select></Field>
+        </div>
+        <Field label="Notes"><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
+          <button className="btn btn-p" onClick={()=>{const r={...form};if(!(data.orderRequests||[]).find(x=>x.id===r.id))setData(d=>({...d,orderRequests:[...(d.orderRequests||[]),r]}));else setData(d=>({...d,orderRequests:(d.orderRequests||[]).map(x=>x.id===r.id?r:x)}));setModal(null);}}>Save</button>
+        </div>
+      </Modal>}
+      {purchTab==='misc'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <span className="chip">{(data.miscCharges||[]).length} charges</span>
@@ -27512,314 +27818,6 @@ Maisy Railing | 208.603.8149`;
         </div>
       </Modal>}
 
-const Purchasing = ({data, setData}) => {
-  const [tab,setTab]=useState('po');
-  const [modal,setModal]=useState(null);
-  const [form,setForm]=useState({});
-  const [receiving,setReceiving]=useState(null);
-  const [recQtys,setRecQtys]=useState({});
-  const poStatuses=['Draft','Ordered','In Transit','Received','Cancelled'];
-
-  const openPO=(row=null)=>{
-    setForm(row?{...row,items:row.items?[...row.items.map(i=>({...i}))]:[]}:{id:`PO-${uid()}`,vendor:'',vendorId:'',items:[],total:0,status:'Draft',ordered:now(),expected:'',received:false});
-    setModal('po');
-  };
-  const openVnd=(row=null)=>{ setForm(row?{...row}:{id:`VND-${uid()}`,name:'',contact:'',email:'',phone:'',cat:'',rating:5,ytd:0,leadDays:7}); setModal('vnd'); };
-
-  const savePO=()=>{
-    const po={...form,total:Number(form.total||form.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0)};
-    if(!data.purchaseOrders.find(p=>p.id===po.id))setData(d=>({...d,purchaseOrders:[...d.purchaseOrders,po]}));
-    else setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(p=>p.id===po.id?po:p)}));
-    setModal(null);
-  };
-  const saveVnd=()=>{const v={...form,ytd:Number(form.ytd),rating:Number(form.rating),leadDays:Number(form.leadDays)};if(!data.vendors.find(x=>x.id===v.id))setData(d=>({...d,vendors:[...d.vendors,v]}));else setData(d=>({...d,vendors:d.vendors.map(x=>x.id===v.id?v:x)}));setModal(null);};
-
-  const startReceiving=(po)=>{
-    const init={};
-    po.items?.forEach(item=>{ init[item.inventoryId]=item.qty; });
-    setRecQtys(init);
-    setReceiving(po);
-  };
-
-  const confirmReceiving=()=>{
-    if(!receiving)return;
-    const logs=[];
-    const updInv=data.inventory.map(i=>{
-      const rcvQty=recQtys[i.id];
-      if(rcvQty>0){
-        logs.push({id:`ADJ-${uid()}`,inventoryId:i.id,itemName:i.name,type:'add',qty:Number(rcvQty),reason:`${receiving.id} received from ${receiving.vendor}`,date:now(),user:'Daniel Jones'});
-        return {...i,qty:i.qty+Number(rcvQty)};
-      }
-      return i;
-    });
-    setData(d=>({...d,
-      inventory:updInv,
-      adjustmentLog:[...logs,...d.adjustmentLog],
-      purchaseOrders:d.purchaseOrders.map(p=>p.id===receiving.id?{...p,status:'Received',received:true}:p),
-    }));
-    setReceiving(null);
-  };
-
-  const del=id=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.filter(p=>p.id!==id)}));
-  const delVnd=id=>setData(d=>({...d,vendors:d.vendors.filter(v=>v.id!==id)}));
-  const readyToReceive=data.purchaseOrders.filter(p=>!p.received&&['Ordered','In Transit'].includes(p.status));
-  const totalPOSpend=data.purchaseOrders.reduce((a,b)=>a+(b.total||0),0);
-  const openPOs=data.purchaseOrders.filter(p=>!['Received','Cancelled'].includes(p.status));
-  return (
-    <div className="fade-up">
-      <div className="section-hd">
-        <div><div className="hd" style={{fontSize:22}}>Purchasing & Vendors</div>
-          <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.vendors.length} vendors</span><span className="chip" style={{color:readyToReceive.length?'var(--info)':undefined}}>{readyToReceive.length} ready to receive</span></div></div>
-        {tab==='po'?<button className="btn btn-p" onClick={()=>openPO()}>+ New PO</button>:<button className="btn btn-p" onClick={()=>openVnd()}>+ Add Vendor</button>}
-      </div>
-      <StatRow>
-        <StatCard label="Open Purchase Orders" value={openPOs.length} icon="📦" color="var(--acc)" sub={fmt$(openPOs.reduce((a,b)=>a+b.total,0))+" committed"}/>
-        <StatCard label="Ready to Receive" value={readyToReceive.length} icon="🚚" color={readyToReceive.length>0?'var(--warn)':'var(--muted)'} sub="In transit or ordered"/>
-        <StatCard label="Total PO Spend" value={fmt$(totalPOSpend)} icon="💰" color="var(--ok)" sub={data.purchaseOrders.length+" total POs"}/>
-        <StatCard label="Active Vendors" value={data.vendors.length} icon="🏢" color="var(--acc2)" sub="In vendor directory"/>
-      </StatRow>
-      {readyToReceive.length>0&&<div className="alert-bar alert-info"><span style={{color:'var(--info)'}}>📦</span><span><strong>POs Ready to Receive:</strong> {readyToReceive.map(p=>p.id).join(' · ')} — click "Receive" to update inventory automatically</span></div>}
-      <div style={{display:'flex',gap:6,marginBottom:14}}><button className={'tab'+(tab==='po'?' on':'')} onClick={()=>setTab('po')}>Purchase Orders</button>
-          <button className={'tab'+(tab==='req'?' on':'')} onClick={()=>setTab('req')}>Order Requests</button>
-          <button className={'tab'+(tab==='quotes'?' on':'')} onClick={()=>setTab('quotes')}>Quote Log</button>
-          <button className={'tab'+(tab==='vnd'?' on':'')} onClick={()=>setTab('vnd')}>Vendors</button><button className={'tab'+(tab==='misc'?' on':'')} onClick={()=>setTab('misc')}>Misc Charges</button></div>
-
-      {tab==='po'&&<>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <span className="chip">{data.purchaseOrders.length} POs</span>
-            <span className="chip" style={{color:'var(--warn)'}}>{fmt$(data.purchaseOrders.reduce((a,b)=>a+(b.total||0),0))} total</span>
-            <span className="chip" style={{color:'var(--ok)'}}>{data.purchaseOrders.filter(p=>p.received).length} received</span>
-          </div>
-          <div style={{display:'flex',gap:8}}>
-            <button className="btn btn-xs" onClick={()=>{const all=data.purchaseOrders.every(p=>p._selected);setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(p=>({...p,_selected:!all}))}));}}>Select All</button>
-            <button className="btn btn-g btn-sm" onClick={()=>{
-              const sel=data.purchaseOrders.filter(p=>p._selected);
-              if(!sel.length){alert('Select at least one PO to email');return;}
-              const lines=sel.map(p=>{
-                const total=p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0;
-                const items=p.items?.map(i=>i.qty+'x '+i.name+' @ $'+i.cost).join('\n  ') || p.notes || '—';
-                return 'PO #: '+p.id+'\nVendor: '+(p.vendor||'\u2014')+'\nStatus: '+(p.status||'\u2014')+'\nOrder Date: '+(p.ordered||'\u2014')+'\nExpected: '+(p.expected||'\u2014')+'\nTotal: $'+total.toFixed(2)+'\nItems:\n  '+items+(p.attachments&&p.attachments.length?' \n['+p.attachments.length+' attachment(s): '+p.attachments.map(a=>a.name).join(', ')+']':'');
-              }).join('\n\n---\n\n');
-              const totalAmt=sel.reduce((s,p)=>s+(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0),0);
-              const subject='Maisy Railing \u2014 Purchase Order'+(sel.length>1?'s':'')+' for Review ('+sel.length+' PO'+(sel.length>1?'s':'')+' \u00b7 $'+totalAmt.toFixed(2)+')';
-              const body='Hi,\n\nPlease find the following purchase order'+(sel.length>1?'s':'')+' for review'+(sel.some(p=>p.attachments&&p.attachments.length)?' \u2014 attachments included where noted':'')+': \n\n'+lines+'\n\nTotal Value: $'+totalAmt.toFixed(2)+'\n\nPlease review and confirm receipt or flag any discrepancies.\n\nThank you,\nDaniel Jones\nDirector of Operations\nMaisy Railing | 208.603.8149';
-              window.open('mailto:accounting@maisyrailing.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
-            }}>✉ Email Selected</button>
-          </div>
-        </div>
-        <div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th style={{width:32}}></th><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Attach</th><th>Expected</th><th/></tr></thead>
-          <tbody>{data.purchaseOrders.map(p=>(
-            <tr key={p.id} style={{background:p._selected?'rgba(0,229,255,.05)':''}}>
-              <td style={{textAlign:'center'}}>
-                <input type="checkbox" checked={!!p._selected} onChange={e=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(x=>x.id===p.id?{...x,_selected:e.target.checked}:x)}))}/>
-              </td>
-              <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{p.id}</td>
-              <td style={{fontWeight:500}}>{p.vendor}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{p.items?.map(i=>i.name).join(', ').slice(0,50)}</td>
-              <td className="mono" style={{fontWeight:500}}>{fmt$(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0)}</td>
-              <td><Badge s={p.status}/></td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.ordered)}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.expected)}</td>
-              <td style={{textAlign:'center',whiteSpace:'nowrap'}}>
-                {(p.attachments||[]).length>0
-                  ? <button className="btn btn-xs" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}} onClick={()=>openPO(p)}>📎 {(p.attachments||[]).length}</button>
-                  : <label style={{cursor:'pointer',fontSize:10,color:'var(--muted)',padding:'2px 6px',border:'1px dashed var(--bdr)',borderRadius:4}}>
-                      + File
-                      <input type="file" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" multiple style={{display:'none'}} onChange={e=>{
-                        const files=Array.from(e.target.files);
-                        Promise.all(files.map(file=>new Promise(res=>{const r=new FileReader();r.onload=ev=>res({name:file.name,data:ev.target.result,type:file.type,size:file.size});r.readAsDataURL(file);}))).then(atts=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(po=>po.id===p.id?{...po,attachments:[...(po.attachments||[]),...atts]}:po)})));
-                        e.target.value='';
-                      }}/>
-                    </label>}
-              </td>
-              <td><div style={{display:'flex',gap:4}}>
-                {!p.received&&['Ordered','In Transit'].includes(p.status)&&<button className="btn btn-ok btn-sm" onClick={()=>startReceiving(p)}>Receive</button>}
-                <button className="btn btn-g btn-sm" onClick={()=>openPO(p)}>Edit</button>
-                <button className="btn btn-d btn-sm" onClick={()=>del(p.id)}>Del</button>
-              </div></td>
-            </tr>
-          ))}</tbody>
-        </table>
-        </div>
-      </>}
-
-            {tab==='req'&&<>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <span className="chip">{(data.orderRequests||[]).length} requests</span>
-            <span className="chip" style={{color:'var(--warn)'}}>{(data.orderRequests||[]).filter(r=>r.status==='On Order').length} on order</span>
-            <span className="chip" style={{color:'var(--ok)'}}>{(data.orderRequests||[]).filter(r=>r.status==='Received').length} received</span>
-          </div>
-          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'REQ-'+uid(),dateReq:now(),dateNeed:'',item:'',dept:'',requester:'',priority:'Medium',approvedBy:'',approvalDate:'',vendor:'',partNo:'',qty:1,unit:'EA',estCost:0,estTotal:0,status:'Requested',notes:''});setModal('req');}}>+ New Request</button>
-        </div>
-        <div className="card" style={{padding:0,overflow:'auto'}}>
-          <table><thead><tr><th>Request ID</th><th>Date Req</th><th>Date Needed</th><th>Item</th><th>Dept</th><th>Requester</th><th>Priority</th><th>Vendor</th><th>Part #</th><th>Qty</th><th>Est Cost</th><th>Est Total</th><th>Status</th><th>Notes</th><th/></tr></thead>
-            <tbody>{(data.orderRequests||[]).length===0&&<tr><td colSpan={15}><Empty msg="No order requests"/></td></tr>}
-            {(data.orderRequests||[]).map((r,i)=>(
-              <tr key={i}>
-                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{r.id}</td>
-                <td style={{fontSize:11}}>{r.dateReq}</td>
-                <td style={{fontSize:11,color:r.dateNeed&&r.dateNeed<now()?'var(--err)':''}}>{r.dateNeed||'—'}</td>
-                <td style={{fontWeight:500}}>{r.item}</td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{r.dept}</td>
-                <td style={{fontSize:11}}>{r.requester}</td>
-                <td><span style={{fontWeight:700,color:r.priority==='High'?'var(--err)':r.priority==='Medium'?'var(--warn)':'var(--muted)',fontSize:11}}>{r.priority}</span></td>
-                <td style={{fontSize:11}}>{r.vendor||'—'}</td>
-                <td style={{fontFamily:'monospace',fontSize:10}}>{r.partNo||'—'}</td>
-                <td style={{textAlign:'center'}}>{r.qty}</td>
-                <td>{r.estCost?'$'+r.estCost:'—'}</td>
-                <td style={{fontWeight:600}}>{r.estTotal?'$'+r.estTotal:'—'}</td>
-                <td><Badge s={r.status||'Requested'}/></td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{r.notes}</td>
-                <td><div style={{display:'flex',gap:4}}>
-                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...r});setModal('req');}}>Edit</button>
-                  <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,orderRequests:(d.orderRequests||[]).filter((_,j)=>j!==i)}))}>Del</button>
-                </div></td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-      </>}
-
-      {tab==='quotes'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
-          {(data.quoteLog||[]).length} shipping quotes logged
-        </div>
-        <table><thead><tr><th>Quote #</th><th>Date</th><th>Customer</th><th>Ship From</th><th>Ship To</th><th>Carrier</th><th>Service</th><th>Pkgs</th><th>Total Wt (lbs)</th><th>Est. Cost</th><th>Actual Cost</th><th>Variance</th><th>Status</th></tr></thead>
-          <tbody>{(data.quoteLog||[]).length===0&&<tr><td colSpan={13}><Empty msg="No shipping quotes logged yet"/></td></tr>}
-          {(data.quoteLog||[]).map((q,i)=>(
-            <tr key={i}>
-              <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{q.id}</td>
-              <td style={{fontSize:11}}>{q.date}</td>
-              <td style={{fontWeight:500}}>{q.customer}</td>
-              <td style={{fontSize:11}}>{q.origin}</td>
-              <td style={{fontSize:11}}>{q.dest}</td>
-              <td>{q.carrier}</td>
-              <td style={{fontSize:10,color:'var(--muted)'}}>{q.service}</td>
-              <td style={{textAlign:'center'}}>{q.pieces}</td>
-              <td style={{textAlign:'center'}}>{q.weight}</td>
-              <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{q.estCost?'$'+q.estCost:'—'}</td>
-              <td style={{fontFamily:'monospace',fontWeight:600,color:'var(--ok)'}}>{q.actualCost?'$'+q.actualCost:'—'}</td>
-              <td style={{fontFamily:'monospace',color:q.variance>0?'var(--err)':q.variance<0?'var(--ok)':'var(--muted)'}}>{q.variance?'$'+q.variance:'—'}</td>
-              <td><Badge s={q.status||'Quoted'}/></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>}
-      {tab==='vnd'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>Vendor</th><th>Contact</th><th>Category</th><th>Lead Days</th><th>Rating</th><th>YTD Spend</th><th/></tr></thead>
-          <tbody>{data.vendors.map(v=>(
-            <tr key={v.id}>
-              <td style={{fontWeight:500}}>{v.name}</td>
-              <td style={{fontSize:11}}><div>{v.contact}</div><div className="mono" style={{fontSize:10,color:'var(--muted)'}}>{v.email}</div></td>
-              <td><span className="chip">{v.cat}</span></td>
-              <td className="mono" style={{color:'var(--muted)'}}>{v.leadDays}d</td>
-              <td><span style={{color:'var(--warn)'}}>{Array(Math.round(v.rating)).fill('★').join('')}</span><span style={{color:'var(--dim)'}}>{Array(5-Math.round(v.rating)).fill('★').join('')}</span></td>
-              <td className="mono" style={{fontWeight:500}}>{fmt$(v.ytd)}</td>
-              <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>openVnd(v)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>delVnd(v.id)}>Del</button></div></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>}
-
-      {/* PO Receiving Modal */}
-      {receiving&&<Modal title={`Receive PO — ${receiving.id}`} onClose={()=>setReceiving(null)}>
-        <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginBottom:16}}>
-          <div style={{fontSize:12,color:'var(--muted)'}}>Vendor: <strong style={{color:'var(--txt)'}}>{receiving.vendor}</strong></div>
-        </div>
-        <div className="hd" style={{fontSize:13,marginBottom:10}}>Confirm Received Quantities</div>
-        {receiving.items?.map(item=>{
-          const inv=data.inventory.find(i=>i.id===item.inventoryId);
-          return (
-            <div key={item.inventoryId} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,padding:'8px 12px',background:'var(--s2)',borderRadius:5}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:12.5,fontWeight:500}}>{item.name}</div>
-                <div style={{fontSize:11,color:'var(--muted)'}}>Currently: {inv?.qty||0} {item.unit} on hand</div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <label style={{margin:0,textTransform:'none',letterSpacing:0,fontSize:11}}>Qty received:</label>
-                <input type="number" min={0} value={recQtys[item.inventoryId]||0} onChange={e=>setRecQtys(r=>({...r,[item.inventoryId]:e.target.value}))} style={{width:80}}/>
-                <span style={{fontSize:11,color:'var(--muted)'}}>{item.unit}</span>
-              </div>
-            </div>
-          );
-        })}
-        <div style={{background:'rgba(16,185,129,.07)',border:'1px solid rgba(16,185,129,.2)',borderRadius:5,padding:'8px 12px',fontSize:12,marginBottom:14,color:'var(--ok)'}}>
-          ✓ Receiving this PO will automatically update inventory quantities and log adjustments.
-        </div>
-        <div style={{display:'flex',gap:8}}><button className="btn btn-p" onClick={confirmReceiving}>Confirm & Update Inventory</button><button className="btn btn-g" onClick={()=>setReceiving(null)}>Cancel</button></div>
-      </Modal>}
-
-      {modal==='po'&&<Modal title="Purchase Order" onClose={()=>setModal(null)}>
-        <div className="grid2"><Field label="PO #"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
-        <Field label="Vendor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field></div>
-        <div className="grid2"><Field label="Status"><select value={form.status||'Draft'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{poStatuses.map(s=><option key={s}>{s}</option>)}</select></Field>
-        <Field label="Total ($)"><input type="number" value={form.total||0} onChange={e=>setForm(f=>({...f,total:e.target.value}))}/></Field></div>
-        <div className="grid2"><Field label="Order Date"><input type="date" value={form.ordered||''} onChange={e=>setForm(f=>({...f,ordered:e.target.value}))}/></Field>
-        <Field label="Expected"><input type="date" value={form.expected||''} onChange={e=>setForm(f=>({...f,expected:e.target.value}))}/></Field></div>
-        <div style={{marginTop:14}}>
-          <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:'var(--muted)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <span>Attachments{(form.attachments||[]).length>0?' ('+form.attachments.length+')':''}</span>
-            <label style={{cursor:'pointer',fontSize:10,color:'var(--acc)',border:'1px solid var(--acc)',borderRadius:4,padding:'2px 8px'}}>
-              + Add File
-              <input type="file" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" multiple style={{display:'none'}} onChange={e=>{
-                const files=Array.from(e.target.files);
-                const readers=files.map(file=>new Promise(res=>{const r=new FileReader();r.onload=ev=>res({name:file.name,data:ev.target.result,type:file.type,size:file.size});r.readAsDataURL(file);}));
-                Promise.all(readers).then(atts=>setForm(f=>({...f,attachments:[...(f.attachments||[]),...atts]})));
-                e.target.value='';
-              }}/>
-            </label>
-          </div>
-          {(form.attachments||[]).length===0&&<div style={{fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>No attachments — click + Add File to attach invoices, receipts, quotes, or photos</div>}
-          <div style={{display:'flex',flexDirection:'column',gap:6}}>
-            {(form.attachments||[]).map((att,i)=>(
-              <div key={i} style={{display:'flex',alignItems:'center',gap:8,background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
-                <span style={{fontSize:14}}>{att.type&&att.type.includes('image')?'🖼':att.type&&att.type.includes('pdf')?'📄':'📎'}</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:600,fontSize:11,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{att.name}</div>
-                  <div style={{fontSize:9,color:'var(--muted)'}}>{att.size?(att.size/1024).toFixed(1)+'kb':''}</div>
-                </div>
-                <button className="btn btn-xs" style={{background:'rgba(0,229,255,.1)',color:'var(--acc)'}} onClick={()=>{const a=document.createElement('a');a.href=att.data;a.download=att.name;a.click();}}>⬇ View</button>
-                <button className="btn btn-d btn-xs" onClick={()=>setForm(f=>({...f,attachments:(f.attachments||[]).filter((_,j)=>j!==i)}))}>×</button>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={savePO}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
-      </Modal>}
-      {modal==='vnd'&&<Modal title="Vendor" onClose={()=>setModal(null)}>
-        <Field label="Company Name"><input value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></Field>
-        <div className="grid2"><Field label="Contact"><input value={form.contact||''} onChange={e=>setForm(f=>({...f,contact:e.target.value}))}/></Field>
-        <Field label="Category"><input value={form.cat||''} onChange={e=>setForm(f=>({...f,cat:e.target.value}))}/></Field></div>
-        <div className="grid2"><Field label="Email"><input value={form.email||''} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></Field>
-        <Field label="Phone"><input value={form.phone||''} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></Field></div>
-        <div className="grid2"><Field label="Lead Days"><input type="number" value={form.leadDays||7} onChange={e=>setForm(f=>({...f,leadDays:e.target.value}))}/></Field>
-        <Field label="Rating (1-5)"><input type="number" min={1} max={5} step={.1} value={form.rating||5} onChange={e=>setForm(f=>({...f,rating:e.target.value}))}/></Field></div>
-        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={saveVnd}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
-      </Modal>}
-      {modal==='req'&&<Modal title="Order Request" onClose={()=>setModal(null)} lg>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-          <Field label="Item Description"><input value={form.item||''} onChange={e=>setForm(f=>({...f,item:e.target.value}))}/></Field>
-          <Field label="Requester"><input value={form.requester||''} onChange={e=>setForm(f=>({...f,requester:e.target.value}))}/></Field>
-          <Field label="Department"><input value={form.dept||''} onChange={e=>setForm(f=>({...f,dept:e.target.value}))}/></Field>
-          <Field label="Priority"><select value={form.priority||'Medium'} onChange={e=>setForm(f=>({...f,priority:e.target.value}))}>{['Low','Medium','High','Critical'].map(s=><option key={s}>{s}</option>)}</select></Field>
-          <Field label="Date Requested"><input type="date" value={form.dateReq||''} onChange={e=>setForm(f=>({...f,dateReq:e.target.value}))}/></Field>
-          <Field label="Date Needed By"><input type="date" value={form.dateNeed||''} onChange={e=>setForm(f=>({...f,dateNeed:e.target.value}))}/></Field>
-          <Field label="Vendor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field>
-          <Field label="Vendor Part #"><input value={form.partNo||''} onChange={e=>setForm(f=>({...f,partNo:e.target.value}))}/></Field>
-          <Field label="Qty"><input type="number" value={form.qty||''} onChange={e=>setForm(f=>({...f,qty:Number(e.target.value),estTotal:Number(e.target.value)*(form.estCost||0)}))}/></Field>
-          <Field label="Est. Unit Cost ($)"><input type="number" step="0.01" value={form.estCost||''} onChange={e=>setForm(f=>({...f,estCost:Number(e.target.value),estTotal:(form.qty||0)*Number(e.target.value)}))}/></Field>
-          <Field label="Approved By"><input value={form.approvedBy||''} onChange={e=>setForm(f=>({...f,approvedBy:e.target.value}))}/></Field>
-          <Field label="Status"><select value={form.status||'Requested'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Requested','Approved','On Order','Back Ordered','Received','Cancelled'].map(s=><option key={s}>{s}</option>)}</select></Field>
-        </div>
-        <Field label="Notes"><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
-        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
-          <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
-          <button className="btn btn-p" onClick={()=>{const r={...form};if(!(data.orderRequests||[]).find(x=>x.id===r.id))setData(d=>({...d,orderRequests:[...(d.orderRequests||[]),r]}));else setData(d=>({...d,orderRequests:(d.orderRequests||[]).map(x=>x.id===r.id?r:x)}));setModal(null);}}>Save</button>
-        </div>
-      </Modal>}
     </div>
   );
 };
@@ -28416,7 +28414,7 @@ const Reports = ({data,setData}) => {
 
 // ─── FINANCE & P&L ────────────────────────────────────────────────────────────────
 const Finance = ({data,setData}) => {
-  const [tab,setTab]=useState('pnl');
+  const [finTab,setTab]=useState('pnl');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
 
@@ -28462,14 +28460,14 @@ const Finance = ({data,setData}) => {
             <span className="chip" style={{color:'var(--ok)'}}>{avgMargin}% EBITDA margin</span>
           </div>
         </div>
-        {tab==='pnl'&&<button className="btn btn-p" onClick={()=>{setForm({month:'',revenue:0,cogs:0,overhead:0});setModal('month');}}>+ Add Month</button>}
-        {tab==='labor'&&<button className="btn btn-p" onClick={()=>{setForm({id:`LR-${uid()}`,role:'',level:'',rateHr:0,overtime:0,burden:1.28,notes:''});setModal('lr');}}>+ Add Rate</button>}
+        {finTab==='pnl'&&<button className="btn btn-p" onClick={()=>{setForm({month:'',revenue:0,cogs:0,overhead:0});setModal('month');}}>+ Add Month</button>}
+        {finTab==='labor'&&<button className="btn btn-p" onClick={()=>{setForm({id:`LR-${uid()}`,role:'',level:'',rateHr:0,overtime:0,burden:1.28,notes:''});setModal('lr');}}>+ Add Rate</button>}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['pnl','labor','stations','profitability'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':t==='stations'?'Station Costs':t==='misc'?'Misc Charges':t==='profitability'?'Profitability':t}</button>)}
+        {['pnl','labor','stations','profitability'].map(t=><button key={t} className={'tab'+(finTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pnl'?'P&L':t==='labor'?'Labor Rates':t==='stations'?'Station Costs':t==='misc'?'Misc Charges':t==='profitability'?'Profitability':t}</button>)}
       </div>
 
-      {tab==='pnl'&&<>
+      {finTab==='pnl'&&<>
         <div className="grid4" style={{marginBottom:16}}>
           {[
             {l:'YTD Revenue',v:fmt$(ytdRev),c:'var(--acc)'},
@@ -28509,7 +28507,7 @@ const Finance = ({data,setData}) => {
         </div>
       </>}
 
-      {tab==='labor'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {finTab==='labor'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Role</th><th>Level</th><th>Base $/hr</th><th>OT $/hr</th><th>Burden Rate</th><th>Burdened $/hr</th><th>Notes</th><th/></tr></thead>
           <tbody>{(data.laborRates||[]).map(r=>(
             <tr key={r.id}>
@@ -28529,7 +28527,7 @@ const Finance = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='stations'&&<>
+      {finTab==='stations'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <span className="chip">{(data.costPerStation||[]).length} stations</span>
@@ -28613,7 +28611,7 @@ const Finance = ({data,setData}) => {
         </div>
       </Modal>}
 
-      {tab==='profitability'&&<>
+      {finTab==='profitability'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <span className="chip">{(data.productProfitability||[]).length} product lines</span>
@@ -28720,7 +28718,7 @@ const STATIONS_ALL = ['CNC Cut','CNC Drill','Welding','Powder Coat','Assembly','
 const SKILL_LEVELS = [{v:0,label:'—',bg:'var(--dim)',fg:'var(--muted)'},{v:1,label:'T',bg:'rgba(245,158,11,.2)',fg:'var(--warn)'},{v:2,label:'✓',bg:'rgba(59,130,246,.2)',fg:'var(--info)'},{v:3,label:'★',bg:'rgba(16,185,129,.2)',fg:'var(--ok)'}];
 
 const People = ({data,setData,user}) => {
-  const [tab,setTab]=useState('employees');
+  const [peopleTab,setTab]=useState('employees');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
 
@@ -28768,9 +28766,9 @@ const People = ({data,setData,user}) => {
             <span className="chip" style={{color:'var(--warn)'}}>{data.openPositions.filter(p=>p.status==='Open').length} open positions</span>
           </div>
         </div>
-        {tab==='employees'&&<button className="btn btn-p" onClick={()=>{setForm({id:`EMP-${uid()}`,name:'',role:'',dept:'Production',hire:now(),status:'Active',rateHr:20,email:'',phone:'',notes:''});setModal('emp');}}>+ Add Employee</button>}
-        {tab==='positions'&&<button className="btn btn-p" onClick={()=>{setForm({id:`POS-${uid()}`,title:'',dept:'Production',priority:'Medium',status:'Open',posted:now(),notes:''});setModal('pos');}}>+ Add Position</button>}
-        {tab==='discipline'&&<button className="btn btn-p" onClick={()=>{setForm({id:`DIS-${uid()}`,empId:'',empName:'',type:'Verbal Warning',date:now(),issue:'',action:'',issuedBy:'Daniel Jones'});setModal('disc');}}>+ Add Entry</button>}
+        {peopleTab==='employees'&&<button className="btn btn-p" onClick={()=>{setForm({id:`EMP-${uid()}`,name:'',role:'',dept:'Production',hire:now(),status:'Active',rateHr:20,email:'',phone:'',notes:''});setModal('emp');}}>+ Add Employee</button>}
+        {peopleTab==='positions'&&<button className="btn btn-p" onClick={()=>{setForm({id:`POS-${uid()}`,title:'',dept:'Production',priority:'Medium',status:'Open',posted:now(),notes:''});setModal('pos');}}>+ Add Position</button>}
+        {peopleTab==='discipline'&&<button className="btn btn-p" onClick={()=>{setForm({id:`DIS-${uid()}`,empId:'',empName:'',type:'Verbal Warning',date:now(),issue:'',action:'',issuedBy:'Daniel Jones'});setModal('disc');}}>+ Add Entry</button>}
       </div>
       <StatRow cols={5}>
         <StatCard label="Active Employees" value={data.employees.filter(e=>e.status==='Active').length} icon="👤" color="var(--acc)" small/>
@@ -28780,10 +28778,10 @@ const People = ({data,setData,user}) => {
         <StatCard label="Avg Rate" value={"$"+(data.employees.length?Math.round(data.employees.reduce((a,b)=>a+(b.rateHr||0),0)/data.employees.length):0)+"/hr"} icon="💵" color="var(--muted)" small/>
       </StatRow>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['employees','training','certs','efficiency','equipment','facility','positions','discipline'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='certs'?'Certifications':t==='efficiency'?'Efficiency':t==='equipment'?'Equipment':t==='facility'?'Facility Move':t}</button>)}
+        {['employees','training','certs','efficiency','equipment','facility','positions','discipline'].map(t=><button key={t} className={'tab'+(peopleTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='certs'?'Certifications':t==='efficiency'?'Efficiency':t==='equipment'?'Equipment':t==='facility'?'Facility Move':t}</button>)}
       </div>
 
-      {tab==='employees'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {peopleTab==='employees'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Name</th><th>Role</th><th>Dept</th><th>Hire Date</th><th>$/hr</th><th>Status</th><th>Contact</th><th/></tr></thead>
           <tbody>{data.employees.map(e=>(
             <tr key={e.id}>
@@ -28803,7 +28801,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='training'&&<div>
+      {peopleTab==='training'&&<div>
         <div className="alert-bar alert-info" style={{marginBottom:14}}><span style={{color:'var(--info)'}}>ℹ</span> Click any cell to cycle skill level: — → T (Trainee) → ✓ (Capable) → ★ (Expert) → —</div>
         <div className="card" style={{overflowX:'auto',padding:0}}>
           <table className="ref-table">
@@ -28832,7 +28830,7 @@ const People = ({data,setData,user}) => {
         </div>
       </div>}
 
-      {tab==='certs'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {peopleTab==='certs'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Employee</th><th>Skill / Certification</th><th>Status</th><th>Badge</th></tr></thead>
           <tbody>{(data.trainingCerts||[]).length===0&&<tr><td colSpan={4}><Empty msg="No certification records — will load from Excel training matrix"/></td></tr>}
           {(data.trainingCerts||[]).map((c,i)=>(
@@ -28846,7 +28844,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='efficiency'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {peopleTab==='efficiency'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.employeeEfficiency||[]).length} efficiency entries logged</span>
           <button className="btn btn-p btn-sm" onClick={()=>setModal('efficiency')}>+ Log Entry</button>
@@ -28870,7 +28868,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='equipment'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {peopleTab==='equipment'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.equipmentLog||[]).length} machines tracked</span>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'EQ-'+uid(),name:'',mfr:'',model:'',serial:'',acquired:now(),cost:0,location:'',condition:3,nextPM:''});setModal('equipment');}}>+ Add Equipment</button>
@@ -28897,7 +28895,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='facility'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {peopleTab==='facility'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>Facility move & capital projects</span>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({category:'',description:'',estCost:0,actualCost:0,vendor:'',status:'Planned',dueDate:'',paid:'No',notes:''});setModal('facility');}}>+ Add Item</button>
@@ -28924,7 +28922,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='positions'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {peopleTab==='positions'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Position</th><th>Dept</th><th>Priority</th><th>Status</th><th>Posted</th><th>Notes</th><th/></tr></thead>
           <tbody>{data.openPositions.map(p=>(
             <tr key={p.id}>
@@ -28943,7 +28941,7 @@ const People = ({data,setData,user}) => {
         </table>
       </div>}
 
-      {tab==='discipline'&&<div>
+      {peopleTab==='discipline'&&<div>
         <div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span> Disciplinary records are confidential — admin access only.</div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Employee</th><th>Type</th><th>Date</th><th>Issue</th><th>Action Taken</th><th>Issued By</th><th/></tr></thead>
@@ -29009,7 +29007,7 @@ const Automation = ({data,setData}) => {
   const [expanded,setExpanded]=useState({});
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
-  const [tab,setTab]=useState('phases');
+  const [autoTab,setTab]=useState('phases');
 
   const toggle=id=>setExpanded(e=>({...e,[id]:!e[id]}));
   const totalBudget=(data.automationPhases||[]).reduce((a,b)=>a+b.budget,0);
@@ -29050,16 +29048,16 @@ const Automation = ({data,setData}) => {
           </div>
         </div>
         <div style={{display:'flex',gap:8}}>
-          {tab==='stations'&&<button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'STA-'+uid(),station:'',currentSetup:'',goal:'',equipment:'',budget:0,completion:0,status:'Not Started',notes:''});setModal('station');}}>+ Add Station</button>}
-          {tab==='roadmap'&&<button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'AR-'+uid(),station:'',currentProcess:'',targetAutomation:'',equipment:'',estCost:'',laborReduction:'',throughputIncrease:'',paybackMonths:'',phase:'1',priority:3,status:'Planning',notes:''});setModal('roadmap');}}>+ Add Item</button>}
+          {autoTab==='stations'&&<button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'STA-'+uid(),station:'',currentSetup:'',goal:'',equipment:'',budget:0,completion:0,status:'Not Started',notes:''});setModal('station');}}>+ Add Station</button>}
+          {autoTab==='roadmap'&&<button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'AR-'+uid(),station:'',currentProcess:'',targetAutomation:'',equipment:'',estCost:'',laborReduction:'',throughputIncrease:'',paybackMonths:'',phase:'1',priority:3,status:'Planning',notes:''});setModal('roadmap');}}>+ Add Item</button>}
         </div>
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['phases','stations','roadmap'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='phases'?'📋 Phase Plan':t==='stations'?'🏭 Station Details':'🗺️ Station Roadmap'}</button>)}
+        {['phases','stations','roadmap'].map(t=><button key={t} className={'tab'+(autoTab===t?' on':'')} onClick={()=>setTab(t)}>{t==='phases'?'📋 Phase Plan':t==='stations'?'🏭 Station Details':'🗺️ Station Roadmap'}</button>)}
       </div>
 
-      {tab==='phases'&&<>
+      {autoTab==='phases'&&<>
         <div className="card" style={{marginBottom:16}}>
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12}}>5-Phase Progress Overview</div>
           <div className="progress-bar" style={{height:10,marginBottom:12}}>
@@ -29132,7 +29130,7 @@ const Automation = ({data,setData}) => {
         ))}
       </>}
 
-      {tab==='stations'&&<>
+      {autoTab==='stations'&&<>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Station</th><th>Current Setup</th><th>Goal</th><th>Equipment</th><th>Budget</th><th>Completion</th><th>Status</th><th/></tr></thead>
             <tbody>{(data.automationStations||[]).length===0&&<tr><td colSpan={8}><Empty msg="No stations added — click + Add Station"/></td></tr>}
@@ -29162,7 +29160,7 @@ const Automation = ({data,setData}) => {
         </div>
       </>}
 
-      {tab==='roadmap'&&<>
+      {autoTab==='roadmap'&&<>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Station</th><th>Current Process</th><th>Target Automation</th><th>Equipment</th><th>Est. Cost</th><th>Labor ↓</th><th>Throughput ↑</th><th>Payback (mo)</th><th>Phase</th><th>Priority</th><th/></tr></thead>
             <tbody>{(data.automationPhasesRoadmap||[]).length===0&&<tr><td colSpan={11}><Empty msg="No roadmap items — click + Add Item"/></td></tr>}
@@ -29234,7 +29232,7 @@ const Automation = ({data,setData}) => {
     </div>
   );
 };
-      {tab==='fulfill'&&<>
+      {autoTab==='fulfill'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <span className="chip">{(data.orderFulfillment||[]).length} entries</span>
@@ -29297,7 +29295,7 @@ const Automation = ({data,setData}) => {
 const Sister = ({data,setData}) => {
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
-  const [tab,setTab]=useState('orders');
+  const [sisterTab,setTab]=useState('orders');
 
   const totalOrderValue=data.sisterOrders.reduce((a,b)=>a+b.value,0);
   const totalLaborCost=data.sisterLabor.reduce((a,b)=>a+b.billable,0);
@@ -29336,7 +29334,7 @@ const Sister = ({data,setData}) => {
             <span className="chip" style={{color:netDue>0?'var(--ok)':'var(--err)'}}>Net: {fmt$(netDue)}</span>
           </div>
         </div>
-        <button className="btn btn-p" onClick={()=>{if(tab==='orders')setForm({id:`SIS-${uid()}`,description:'',value:0,date:now(),status:'Pending',notes:''});else setForm({id:`SLB-${uid()}`,empName:'',hrs:0,date:now(),rate:28,task:'',billable:0});setModal(tab==='orders'?'order':'labor');}}>+ New {tab==='orders'?'Order':'Labor Entry'}</button>
+        <button className="btn btn-p" onClick={()=>{if(sisterTab==='orders')setForm({id:`SIS-${uid()}`,description:'',value:0,date:now(),status:'Pending',notes:''});else setForm({id:`SLB-${uid()}`,empName:'',hrs:0,date:now(),rate:28,task:'',billable:0});setModal(sisterTab==='orders'?'order':'labor');}}>+ New {sisterTab==='orders'?'Order':'Labor Entry'}</button>
       </div>
       <div className="grid3" style={{marginBottom:16}}>
         {[
@@ -29346,10 +29344,10 @@ const Sister = ({data,setData}) => {
         ].map(s=><div className="stat-card" key={s.l}><div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--muted)',marginBottom:8}}>{s.l}</div><div className="mono hd" style={{fontSize:22,color:s.c}}>{s.v}</div></div>)}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['orders','labor','borrowed','fulfill'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='orders'?'Sister Orders':t==='labor'?'Sister Labor':t==='borrowed'?'Borrowed Labor':t==='fulfill'?'Fulfillment Log':t}</button>)}
+        {['orders','labor','borrowed','fulfill'].map(t=><button key={t} className={'tab'+(sisterTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='orders'?'Sister Orders':t==='labor'?'Sister Labor':t==='borrowed'?'Borrowed Labor':t==='fulfill'?'Fulfillment Log':t}</button>)}
       </div>
 
-      {tab==='orders'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {sisterTab==='orders'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>ID</th><th>Description</th><th>Value</th><th>Date</th><th>Status</th><th>Notes</th><th/></tr></thead>
           <tbody>{data.sisterOrders.map(o=>(
             <tr key={o.id}>
@@ -29368,7 +29366,7 @@ const Sister = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='labor'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {sisterTab==='labor'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Employee</th><th>Date</th><th>Hours</th><th>Rate $/hr</th><th>Billable</th><th>Task</th><th/></tr></thead>
           <tbody>{data.sisterLabor.map(l=>(
             <tr key={l.id}>
@@ -29571,7 +29569,7 @@ const MatCostCalc = () => {
 };
 
 const ShopRef = ({data,setData}) => {
-  const [tab,setTab]=useState('fasteners');
+  const [shopTab,setTab]=useState('fasteners');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   return(
@@ -29582,11 +29580,11 @@ const ShopRef = ({data,setData}) => {
       </div>
       <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:14}}>
         {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','postmfg','materialsdb','skureference','vendorscores','calculators'].map(t=>(
-          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t==='skureference'?'SKU Reference':t}</button>
+          <button key={t} className={'tab'+(shopTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t==='skureference'?'SKU Reference':t}</button>
         ))}
       </div>
 
-      {tab==='fasteners'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='fasteners'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.fastenerGuide||[]).length > 0 ? (data.fastenerGuide||[]).length+' fasteners from Arsenal Supply workbook' : 'Standard fastener reference data'}
         </div>
@@ -29613,31 +29611,31 @@ const ShopRef = ({data,setData}) => {
           </tbody>
         </table>
       </div>}
-      {tab==='drills'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='drills'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Drill Size</th><th>Decimal</th><th>mm</th><th>Common Use</th></tr></thead>
           <tbody>{SHOP_DATA.drillSizes.map((r,i)=><tr key={i}><td className="mono" style={{fontWeight:700,color:'var(--acc)'}}>{r.size}</td><td className="mono">{r.decimal}</td><td className="mono">{r.mm}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.use}</td></tr>)}</tbody>
         </table>
       </div>}
 
-      {tab==='torque'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='torque'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Fastener</th><th>Material</th><th>Torque (in-lb)</th><th>Torque (ft-lb)</th><th>Notes</th></tr></thead>
           <tbody>{SHOP_DATA.torqueSpecs.map((r,i)=><tr key={i}><td style={{fontWeight:600}}>{r.fastener}</td><td>{r.material}</td><td className="mono" style={{color:'var(--warn)'}}>{r.torqueInLb}</td><td className="mono" style={{color:'var(--warn)'}}>{r.torqueFtLb}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.notes}</td></tr>)}</tbody>
         </table>
       </div>}
 
-      {tab==='tig'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='tig'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Material</th><th>Thickness</th><th>Amps</th><th>Tungsten</th><th>Filler</th><th>Gas</th><th>CFH</th><th>Notes</th></tr></thead>
           <tbody>{SHOP_DATA.tigSettings.map((r,i)=><tr key={i}><td style={{fontWeight:600}}>{r.material}</td><td className="mono">{r.thickness}</td><td className="mono" style={{color:'var(--acc)'}}>{r.ampRange}</td><td style={{fontSize:11}}>{r.tungsten}</td><td className="mono">{r.filler}</td><td style={{fontSize:11}}>{r.gas}</td><td className="mono">{r.cfh}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.notes}</td></tr>)}</tbody>
         </table>
       </div>}
 
-      {tab==='alloys'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='alloys'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table className="ref-table"><thead><tr><th>Alloy</th><th>Tensile</th><th>Yield</th><th>Elongation</th><th>Machinability</th><th>Weldability</th><th>Uses</th></tr></thead>
           <tbody>{SHOP_DATA.aluminumAlloys.map((r,i)=><tr key={i}><td className="mono" style={{fontWeight:700,color:i===0?'var(--acc)':'var(--txt)'}}>{r.alloy}{i===0&&<span className="badge" style={{marginLeft:8,background:'rgba(0,229,255,.15)',color:'var(--acc)',fontSize:9}}>PRIMARY</span>}</td><td className="mono">{r.tensile}</td><td className="mono">{r.yield}</td><td className="mono">{r.elongation}</td><td>{r.machinability}</td><td>{r.weldability}</td><td style={{fontSize:11,color:'var(--muted)'}}>{r.uses}</td></tr>)}</tbody>
         </table>
       </div>}
 
-      {tab==='fractions'&&<div className="grid2" style={{gap:16}}>
+      {shopTab==='fractions'&&<div className="grid2" style={{gap:16}}>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'10px 14px',background:'var(--s2)',borderBottom:'1px solid var(--bdr)'}}><span className="hd" style={{fontSize:12}}>Fraction → Decimal → mm</span></div>
           <table className="ref-table"><thead><tr><th>Fraction</th><th>Decimal</th><th>mm</th></tr></thead>
@@ -29656,7 +29654,7 @@ const ShopRef = ({data,setData}) => {
         </div>
       </div>}
 
-      {tab==='matprops'&&<div className="card" style={{padding:0,overflow:'auto',maxHeight:500,overflowY:'auto'}}>
+      {shopTab==='matprops'&&<div className="card" style={{padding:0,overflow:'auto',maxHeight:500,overflowY:'auto'}}>
         <table><thead><tr><th>Material / Component</th><th>Alloy/Grade</th><th>Condition</th><th>Tensile (ksi)</th><th>Yield (ksi)</th><th>Shear (ksi)</th><th>Elong %</th><th>Hardness BHN</th><th>Density</th></tr></thead>
           <tbody>{(data.materialProperties||[]).length===0&&<tr><td colSpan={9}><Empty msg="No material properties data loaded"/></td></tr>}
           {(data.materialProperties||[]).slice(0,60).map((m,i)=>(
@@ -29675,7 +29673,7 @@ const ShopRef = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='weldref'&&<div className="card" style={{padding:0,overflow:'auto',maxHeight:500,overflowY:'auto'}}>
+      {shopTab==='weldref'&&<div className="card" style={{padding:0,overflow:'auto',maxHeight:500,overflowY:'auto'}}>
         <table><thead><tr><th>Thickness</th><th>Joint Type</th><th>Filler Dia</th><th>Filler/Inch</th><th>Amps Range</th><th>Tungsten Dia</th><th>Weld Time/in (sec)</th><th>Weld Time/ft</th></tr></thead>
           <tbody>{(data.weldingFab||[]).length===0&&<tr><td colSpan={8}><Empty msg="No welding reference data loaded"/></td></tr>}
           {(data.weldingFab||[]).slice(0,60).map((w,i)=>(
@@ -29693,12 +29691,12 @@ const ShopRef = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='calculators'&&<div className="grid2" style={{gap:16,alignItems:'start'}}>
+      {shopTab==='calculators'&&<div className="grid2" style={{gap:16,alignItems:'start'}}>
         <StairCalc/>
         <MatCostCalc/>
       </div>}
 
-      {tab==='postmfg'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='postmfg'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           Post manufacturing reference — {(data.postsMfgList||[]).length} SKUs · MFG height, cut lengths, raw stock & tooling from GODMODE 📐 SKU Reference
         </div>
@@ -29728,7 +29726,7 @@ const ShopRef = ({data,setData}) => {
           </tbody>
         </table>
       </div>}
-      {tab==='materialsdb'&&<div>
+      {shopTab==='materialsdb'&&<div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>{(data.materialsDB||[]).length} materials from 04_ARSENAL Materials DB</span>
           <input className="search" placeholder="Search materials…" style={{width:240}} onChange={e=>{
@@ -29761,7 +29759,7 @@ const ShopRef = ({data,setData}) => {
           </table>
         </div>
       </div>}
-      {tab==='skureference'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='skureference'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.skuReference||[]).length} SKUs with cut lengths, raw stock, and fixture requirements
         </div>
@@ -29781,7 +29779,7 @@ const ShopRef = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='vendorscores'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='vendorscores'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           Vendor scorecards — rated 1–5 on delivery, quality, pricing, service, lead time
         </div>
@@ -29801,7 +29799,7 @@ const ShopRef = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='borrowed'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='borrowed'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.borrowedLabor||[]).length} entries · {(data.borrowedLabor||[]).reduce((a,b)=>a+(b.totalHrs||0),0).toFixed(0)} hrs · {fmt$((data.borrowedLabor||[]).reduce((a,b)=>a+(b.billable||0),0))} billable
         </div>
@@ -29824,7 +29822,7 @@ const ShopRef = ({data,setData}) => {
         </table>
       </div>}
 
-      {tab==='fulfill'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {shopTab==='fulfill'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.orderFulfillment||[]).length} orders · {fmt$((data.orderFulfillment||[]).reduce((a,b)=>a+(b.value||0),0))} total value
         </div>
@@ -29912,7 +29910,7 @@ const AIPanel = ({data,open,onClose}) => {
 };
 
 const KPIDashboard = ({data,setData}) => {
-  const [tab,setTab] = useState('weekly');
+  const [kpiTab,setTab] = useState('weekly');
   const [form,setForm] = useState({});
   const [modal,setModal] = useState(null);
   const targets = data.kpiTargets||[];
@@ -29942,7 +29940,7 @@ const KPIDashboard = ({data,setData}) => {
         </div>
         <div style={{display:'flex',gap:8}}>
           <PrintBtn onClick={()=>printKPIReport(data)} label="KPI Report"/>
-          {tab==='weekly'&&<button className="btn btn-p" onClick={()=>{setForm({weekEnding:now()});setModal('weekly');}}>+ Log Week</button>}
+          {kpiTab==='weekly'&&<button className="btn btn-p" onClick={()=>{setForm({weekEnding:now()});setModal('weekly');}}>+ Log Week</button>}
         </div>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
@@ -29954,9 +29952,9 @@ const KPIDashboard = ({data,setData}) => {
         ))}
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['weekly','monthly','targets','stations'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='stations'?'Station Output':t}</button>)}
+        {['weekly','monthly','targets','stations'].map(t=><button key={t} className={'tab'+(kpiTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='stations'?'Station Output':t}</button>)}
       </div>
-      {tab==='weekly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {kpiTab==='weekly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th><th>Score</th><th/></tr></thead>
           <tbody>{weekly.length===0&&<tr><td colSpan={11}><Empty msg="No data — click + Log Week"/></td></tr>}
           {weekly.map((w,i)=>(
@@ -29975,20 +29973,20 @@ const KPIDashboard = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {tab==='monthly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {kpiTab==='monthly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Month</th><th>Avg On-Time %</th><th>Avg FPY %</th><th>Avg Lead Time</th><th>Avg WIP</th><th>Total Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th></tr></thead>
           <tbody>{monthly.length===0&&<tr><td colSpan={9}><Empty msg="No monthly data"/></td></tr>}
           {monthly.map((m,i)=><tr key={i}><td style={{fontWeight:600}}>{m.month}</td><td>{m.avgOnTimePct||'—'}</td><td>{m.avgFpyPct||'—'}</td><td>{m.avgLeadTime||'—'}</td><td>{m.avgWip||'—'}</td><td>{m.totalScrap?'$'+m.totalScrap:'—'}</td><td>{m.totalSafety||'—'}</td><td>{m.avgDailyOutput||'—'}</td><td>{m.totalReworkHrs||'—'}</td></tr>)}
           </tbody>
         </table>
       </div>}
-      {tab==='targets'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {kpiTab==='targets'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>KPI Metric</th><th>Green Target</th><th>Yellow</th><th>Red</th><th>Unit</th><th>Notes</th></tr></thead>
           <tbody>{targets.map((t,i)=><tr key={i}><td style={{fontWeight:600}}>{t.metric}</td><td style={{color:'var(--ok)',fontWeight:700}}>{t.green?(+t.green*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--warn)'}}>{t.yellow?(+t.yellow*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--err)'}}>{t.red?(+t.red*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--muted)'}}>{t.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td></tr>)}
           </tbody>
         </table>
       </div>}
-      {tab==='stations'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {kpiTab==='stations'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Hr</th><th>Sections/Day</th><th>Labor $/Day</th><th>Consumable $/Day</th><th>Total $/Day</th></tr></thead>
           <tbody>{station.map((s,i)=><tr key={i}><td style={{fontWeight:600}}>{s.station}</td><td>{s.timePerSectionMin?(+s.timePerSectionMin).toFixed(2):'—'}</td><td>{s.sectionsPerHour?(+s.sectionsPerHour).toFixed(1):'—'}</td><td style={{fontWeight:600,color:'var(--acc)'}}>{s.sectionsPerDay?(+s.sectionsPerDay).toFixed(0):'—'}</td><td>${s.laborDollarDay?(+s.laborDollarDay).toFixed(0):'—'}</td><td>${s.consumableDollarDay?(+s.consumableDollarDay).toFixed(2):'—'}</td><td style={{fontWeight:700}}>${s.totalProcessDollarDay?(+s.totalProcessDollarDay).toFixed(0):'—'}</td></tr>)}
           </tbody>
@@ -30299,7 +30297,7 @@ const Orders = ({data, setData}) => {
 
 
 const SalesPipeline = ({data, setData}) => {
-  const [tab, setTab] = useState('pipeline');
+  const [pipeTab, setTab] = useState('pipeline');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
   const [repFilter, setRepFilter] = useState('All');
@@ -30365,10 +30363,10 @@ const SalesPipeline = ({data, setData}) => {
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['pipeline','funnel','kpi'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='kpi'?'KPI & Invoices':t}</button>)}
+        {['pipeline','funnel','kpi'].map(t=><button key={t} className={'tab'+(pipeTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='kpi'?'KPI & Invoices':t}</button>)}
       </div>
 
-      {tab==='funnel'&&<>
+      {pipeTab==='funnel'&&<>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
           {funnelData.map(f=>(
             <div key={f.stage} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',textAlign:'center',borderTop:`3px solid ${stageColors[f.stage]||'var(--acc)'}`}}>
@@ -30399,7 +30397,7 @@ const SalesPipeline = ({data, setData}) => {
         </div>
       </>}
 
-      {tab==='kpi'&&<>
+      {pipeTab==='kpi'&&<>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
           <div className="card">
             <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:12,color:'var(--acc)'}}>ESTIMATES / QUOTES</div>
@@ -30422,7 +30420,7 @@ const SalesPipeline = ({data, setData}) => {
         </div>
       </>}
 
-      {tab==='pipeline'&&<>
+      {pipeTab==='pipeline'&&<>
         <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center'}}>
           <select value={repFilter} onChange={e=>setRepFilter(e.target.value)}>
             <option value="All">All Reps</option>
@@ -30622,7 +30620,7 @@ const Commissions = ({data, setData}) => {
 };
 
 const Payments = ({data, setData}) => {
-  const [tab, setTab] = useState('records');
+  const [payTab, setTab] = useState('records');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
 
@@ -30658,8 +30656,8 @@ const Payments = ({data, setData}) => {
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{records.length} transactions</span></div>
         </div>
         <div style={{display:'flex',gap:8}}>
-          {tab==='records'&&<button className="btn btn-p" onClick={()=>{setForm({id:'PAY-'+uid(),date:now(),customer:'',orderId:'',amount:0,method:'',type:'Deposit',status:'Pending',ref:'',notes:''});setModal('record');}}>+ Add Payment</button>}
-          {tab==='vault'&&<button className="btn btn-g" onClick={()=>{setForm({id:'PM-'+uid(),label:'',type:'Visa',last4:'',expiry:'',customer:'',default:false,notes:''});setModal('method');}}>+ Add Method</button>}
+          {payTab==='records'&&<button className="btn btn-p" onClick={()=>{setForm({id:'PAY-'+uid(),date:now(),customer:'',orderId:'',amount:0,method:'',type:'Deposit',status:'Pending',ref:'',notes:''});setModal('record');}}>+ Add Payment</button>}
+          {payTab==='vault'&&<button className="btn btn-g" onClick={()=>{setForm({id:'PM-'+uid(),label:'',type:'Visa',last4:'',expiry:'',customer:'',default:false,notes:''});setModal('method');}}>+ Add Method</button>}
         </div>
       </div>
 
@@ -30670,10 +30668,10 @@ const Payments = ({data, setData}) => {
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['records','vault'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='records'?'Payment Records':'Card Vault'}</button>)}
+        {['records','vault'].map(t=><button key={t} className={'tab'+(payTab===t?' on':'')} onClick={()=>setTab(t)}>{t==='records'?'Payment Records':'Card Vault'}</button>)}
       </div>
 
-      {tab==='records'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {payTab==='records'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table>
           <thead><tr><th>Pay #</th><th>Date</th><th>Customer</th><th>Order</th><th>Amount</th><th>Method</th><th>Type</th><th>Status</th><th>Ref #</th><th>Notes</th><th></th></tr></thead>
           <tbody>
@@ -30700,7 +30698,7 @@ const Payments = ({data, setData}) => {
         </table>
       </div>}
 
-      {tab==='vault'&&<>
+      {payTab==='vault'&&<>
         <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'10px 14px',marginBottom:14,fontSize:12,color:'var(--warn)'}}>
           🔒 Card vault stores last 4 digits only — never enter full card numbers. For live processing, connect Stripe or Square via API.
         </div>
@@ -30765,7 +30763,7 @@ const Payments = ({data, setData}) => {
 
 
 const TaxCenter = ({data, setData}) => {
-  const [tab, setTab] = useState('avatax');
+  const [taxTab, setTab] = useState('avatax');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
   // Static calc state
@@ -30894,13 +30892,13 @@ const TaxCenter = ({data, setData}) => {
 
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
         {['avatax','setup','certs','rates'].map(t=>(
-          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>
+          <button key={t} className={'tab'+(taxTab===t?' on':'')} onClick={()=>setTab(t)}>
             {t==='avatax'?'Live Tax Lookup':t==='setup'?'Avatax Setup':t==='certs'?'Resale Certs':'State Rates'}
           </button>
         ))}
       </div>
 
-      {tab==='avatax'&&<div style={{display:'grid',gridTemplateColumns:'380px 1fr',gap:20}}>
+      {taxTab==='avatax'&&<div style={{display:'grid',gridTemplateColumns:'380px 1fr',gap:20}}>
         <div>
           <div className="card">
             <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,marginBottom:14,color:'var(--acc)'}}>
@@ -31006,7 +31004,7 @@ const TaxCenter = ({data, setData}) => {
         </div>
       </div>}
 
-      {tab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+      {taxTab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
         <div className="card">
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:4}}>Avalara Avatax Credentials</div>
           <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,lineHeight:1.6}}>
@@ -31060,7 +31058,7 @@ const TaxCenter = ({data, setData}) => {
         </div>
       </div>}
 
-      {tab==='certs'&&<>
+      {taxTab==='certs'&&<>
         <div style={{display:'flex',justifyContent:'flex-end',marginBottom:10}}>
           <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'RC-'+uid(),customer:'',state:'',certNumber:'',issueDate:now(),expDate:'',status:'Active',taxExempt:true,notes:''});setModal('cert');}}>+ Add Certificate</button>
         </div>
@@ -31091,7 +31089,7 @@ const TaxCenter = ({data, setData}) => {
         </div>
       </>}
 
-      {tab==='rates'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+      {taxTab==='rates'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
         <div>
           <div className="card" style={{marginBottom:12,padding:'12px 14px'}}>
             <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,color:'var(--warn)',marginBottom:6}}>⚠ State Rates Only</div>
@@ -31280,7 +31278,7 @@ const ShipCalc = ({data, setData}) => {
 
 
 const QuickBooks = ({data, setData}) => {
-  const [tab, setTab] = useState('dashboard');
+  const [qbTab, setTab] = useState('dashboard');
   const [syncing, setSyncing] = useState({});
   const [lastResult, setLastResult] = useState(null);
 
@@ -31458,13 +31456,13 @@ const QuickBooks = ({data, setData}) => {
           {qb.connected&&<button className="btn btn-p" onClick={syncAll} disabled={!!syncing.ALL}>
             {syncing.ALL?'Syncing...':'⟳ Sync All to QB'}
           </button>}
-          {!qb.connected&&<button className="btn btn-g" onClick={()=>setTab('setup')}>⚙ Setup Connection</button>}
+          {!qb.connected&&<button className="btn btn-g" onClick={()=>setQbTab('setup')}>⚙ Setup Connection</button>}
         </div>
       </div>
 
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
         {['dashboard','invoices','payments','customers','setup','log'].map(t=>(
-          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
+          <button key={t} className={'tab'+(qbTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
             {t==='log'?'Sync Log':t}
             {t==='invoices'&&unsynced.invoices>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{unsynced.invoices}</span>}
             {t==='payments'&&unsynced.payments>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{unsynced.payments}</span>}
@@ -31473,7 +31471,7 @@ const QuickBooks = ({data, setData}) => {
         ))}
       </div>
 
-      {tab==='dashboard'&&<>
+      {qbTab==='dashboard'&&<>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:18}}>
           <StatCard label="Customers in QB"   value={synced.customers}   icon="👥" color="var(--ok)"   sub={unsynced.customers+' pending sync'}/>
           <StatCard label="Invoices in QB"    value={synced.invoices}    icon="🧾" color="var(--acc)"  sub={unsynced.invoices+' pending sync'}/>
@@ -31508,7 +31506,7 @@ const QuickBooks = ({data, setData}) => {
         </div>
       </>}
 
-      {tab==='invoices'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {qbTab==='invoices'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table>
           <thead><tr><th>Invoice #</th><th>Customer</th><th>Amount</th><th>Status</th><th>QB Status</th><th>Synced</th><th></th></tr></thead>
           <tbody>
@@ -31531,7 +31529,7 @@ const QuickBooks = ({data, setData}) => {
         </table>
       </div>}
 
-      {tab==='payments'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {qbTab==='payments'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table>
           <thead><tr><th>Pay #</th><th>Date</th><th>Customer</th><th>Amount</th><th>Method</th><th>QB Status</th><th>Synced</th><th></th></tr></thead>
           <tbody>
@@ -31555,7 +31553,7 @@ const QuickBooks = ({data, setData}) => {
         </table>
       </div>}
 
-      {tab==='customers'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {qbTab==='customers'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table>
           <thead><tr><th>Customer</th><th>Email</th><th>Phone</th><th>QB Status</th><th></th></tr></thead>
           <tbody>
@@ -31576,7 +31574,7 @@ const QuickBooks = ({data, setData}) => {
         </table>
       </div>}
 
-      {tab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+      {qbTab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
         <div className="card">
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:4}}>QuickBooks Credentials</div>
           <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,lineHeight:1.6}}>
@@ -31633,7 +31631,7 @@ const QuickBooks = ({data, setData}) => {
         </div>
       </div>}
 
-      {tab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {qbTab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Sync Log</span>
           <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,qbSyncLog:[]}))}>Clear Log</button>
@@ -31659,7 +31657,7 @@ const QuickBooks = ({data, setData}) => {
 
 
 const OrderImport = ({data, setData}) => {
-  const [tab, setTab] = useState('queue');
+  const [importTab, setTab] = useState('queue');
   const [checking, setChecking] = useState(false);
   const [parsing, setParsing] = useState(null);
   const [draftModal, setDraftModal] = useState(null);
@@ -31993,7 +31991,7 @@ Return ONLY the JSON object, no other text.`;
 
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
         {['queue','drafts','setup','log'].map(t=>(
-          <button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
+          <button key={t} className={'tab'+(importTab===t?' on':'')} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>
             {t==='queue'?'Import Queue':t==='drafts'?'Draft Orders':t==='log'?'Import Log':'OneDrive Setup'}
             {t==='queue'&&pendingCount>0&&<span style={{marginLeft:4,background:'var(--warn)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{pendingCount}</span>}
             {t==='drafts'&&draftCount>0&&<span style={{marginLeft:4,background:'var(--acc)',color:'#000',borderRadius:10,padding:'0 5px',fontSize:9,fontWeight:700}}>{draftCount}</span>}
@@ -32001,7 +31999,7 @@ Return ONLY the JSON object, no other text.`;
         ))}
       </div>
 
-      {tab==='queue'&&<>
+      {importTab==='queue'&&<>
         {pendingCount===0&&queue.length===0&&<div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
           <div style={{fontSize:36,marginBottom:12}}>📥</div>
           <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>No files in queue</div>
@@ -32036,7 +32034,7 @@ Return ONLY the JSON object, no other text.`;
         </div>}
       </>}
 
-      {tab==='drafts'&&<>
+      {importTab==='drafts'&&<>
         {drafts.length===0&&<div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
           <div style={{fontSize:36,marginBottom:12}}>📋</div>
           <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>No draft orders yet</div>
@@ -32085,7 +32083,7 @@ Return ONLY the JSON object, no other text.`;
         </>}
       </>}
 
-      {tab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+      {importTab==='setup'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
         <div className="card">
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:4}}>OneDrive Connection</div>
           <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,lineHeight:1.6}}>
@@ -32152,7 +32150,7 @@ Return ONLY the JSON object, no other text.`;
         </div>
       </div>}
 
-      {tab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {importTab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Import Log</span>
           <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,importLog:[]}))}>Clear</button>
@@ -32210,7 +32208,7 @@ const SRSCatalog = ({data,setData}) => {
   const [catFilter,setCatFilter] = useState('All');
   const [modal,setModal] = useState(null);
   const [form,setForm] = useState({});
-  const [tab,setTab] = useState('catalog');
+  const [srsTab,setTab] = useState('catalog');
   const catalog = data.srsCatalog||[];
   const dims = data.srsDims||[];
   const cats = ['All',...new Set(catalog.map(s=>s.category).filter(Boolean))];
@@ -32236,9 +32234,9 @@ const SRSCatalog = ({data,setData}) => {
         SRS Customer Catalog from co-worker AM. Separate from Maisy production SKUs. Includes GTIN/UPC barcodes.
       </div>
       <div style={{display:'flex',gap:6,marginBottom:12}}>
-        {['catalog','dims'].map(t=><button key={t} className={'tab'+(tab===t?' on':'')} onClick={()=>setTab(t)}>{t==='dims'?'Dimensions (Sheet1)':'Full Catalog (Sheet2)'}</button>)}
+        {['catalog','dims'].map(t=><button key={t} className={'tab'+(srsTab===t?' on':'')} onClick={()=>setTab(t)}>{t==='dims'?'Dimensions (Sheet1)':'Full Catalog (Sheet2)'}</button>)}
       </div>
-      {tab==='catalog'&&<>
+      {srsTab==='catalog'&&<>
         <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
           <input className="search" placeholder="Search SKU, name, description…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:200}}/>
           <select value={catFilter} onChange={e=>setCatFilter(e.target.value)}>{cats.map(c=><option key={c}>{c}</option>)}</select>
@@ -32268,7 +32266,7 @@ const SRSCatalog = ({data,setData}) => {
           </table>
         </div>
       </>}
-      {tab==='dims'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {srsTab==='dims'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Common Name</th><th>Weight (lb)</th><th>Length</th><th>Width</th><th>Height</th></tr></thead>
           <tbody>{dims.length===0&&<tr><td colSpan={5}><Empty msg="No dimension data"/></td></tr>}
           {dims.map((d,i)=><tr key={i}><td>{d.commonName}</td><td>{d.weightLb||'—'}</td><td>{d.length||'—'}</td><td>{d.width||'—'}</td><td>{d.height||'—'}</td></tr>)}
