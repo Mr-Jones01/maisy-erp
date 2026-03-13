@@ -32880,8 +32880,60 @@ export default function MaisyERP() {
   }catch(e){}})();},[]);
   useEffect(()=>{if(!data)return;const t=setTimeout(async()=>{try{await window.storage.set('maisy_erp_v4',JSON.stringify(data));setSaved(true);setTimeout(()=>setSaved(false),1600);}catch(e){}},900);return()=>clearTimeout(t);},[data]);
 
+  const [backupModal, setBackupModal] = useState(false);
+  const importRef = useRef();
+
   const handleLogin=(u)=>{setUser(u);setPage('dashboard');};
   const handleLogout=()=>{setUser(null);setAiOpen(false);};
+
+  // ── Export full data snapshot as JSON ──────────────────────────────────────
+  const exportData = () => {
+    const snapshot = {
+      _meta: {
+        version: 'maisy_erp_v4',
+        exportedAt: new Date().toISOString(),
+        exportedBy: user?.name || 'Unknown',
+        recordCounts: Object.fromEntries(
+          Object.entries(data).map(([k,v]) => [k, Array.isArray(v) ? v.length : typeof v])
+        ),
+      },
+      data,
+    };
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], {type: 'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `MaisyRailing_ERP_Backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Import JSON backup ─────────────────────────────────────────────────────
+  const importData = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        // Support both raw data and wrapped snapshot format
+        const incoming = parsed.data || parsed;
+        if (!incoming || typeof incoming !== 'object') throw new Error('Invalid format');
+        // Merge: preserve INIT structure, overlay imported data
+        const merged = {...INIT};
+        Object.keys(incoming).forEach(k => {
+          if (k.startsWith('_')) return; // skip meta keys
+          merged[k] = incoming[k];
+        });
+        const normalized = normalizeData(merged);
+        setData(normalized);
+        setBackupModal(false);
+        alert('✅ Data restored successfully. ' + Object.keys(incoming).filter(k=>!k.startsWith('_')).length + ' modules loaded.');
+      } catch(err) {
+        alert('❌ Import failed: ' + err.message + '\nMake sure you are using a Maisy ERP backup file.');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   if(!user)return <><G/><Login onLogin={handleLogin}/></>;
 
@@ -32899,6 +32951,8 @@ export default function MaisyERP() {
             <span className="hd" style={{fontSize:13,color:'var(--muted)',flex:1}}>{TITLES[page]}</span>
             {saved&&<span style={{fontSize:10,color:'var(--ok)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',animation:'fadeIn .2s ease'}}>● Saved</span>}
             <div style={{width:1,height:18,background:'var(--bdr)',margin:'0 6px'}}/>
+            <button onClick={()=>setBackupModal(true)} title="Backup & Restore your data" style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',borderRadius:5,padding:'5px 10px',cursor:'pointer',fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',transition:'all .15s'}} onMouseOver={e=>e.target.style.color='var(--acc)'} onMouseOut={e=>e.target.style.color='var(--muted)'}>💾 Backup</button>
+            <div style={{width:1,height:18,background:'var(--bdr)',margin:'0 6px'}}/>
             <button onClick={()=>setAiOpen(o=>!o)} style={{position:'relative',background:aiOpen?'rgba(0,229,255,.1)':'none',border:'1px solid',borderColor:aiOpen?'rgba(0,229,255,.4)':'var(--bdr)',color:aiOpen?'var(--acc)':'var(--muted)',borderRadius:5,padding:'5px 12px',cursor:'pointer',fontFamily:'Barlow Condensed',fontSize:11.5,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',display:'flex',alignItems:'center',gap:5,transition:'all .2s'}}>
               {alerts>0&&<div className="pulse" style={{width:6,height:6,background:'var(--err)',borderRadius:'50%'}}/>}
               ◈ AI{alerts>0?` · ${alerts}`:''}
@@ -32912,6 +32966,81 @@ export default function MaisyERP() {
         </div>
         <AIPanel data={data} open={aiOpen} onClose={()=>setAiOpen(false)}/>
       </div>
+
+      {/* ── BACKUP & RESTORE MODAL ─────────────────────────────────────────── */}
+      {backupModal&&(
+        <div className="overlay" onClick={e=>{if(e.target.className==='overlay')setBackupModal(false);}}>
+          <div className="modal" style={{maxWidth:520}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <div className="hd" style={{fontSize:18}}>💾 Backup & Restore</div>
+              <button className="btn btn-g btn-sm" onClick={()=>setBackupModal(false)}>✕</button>
+            </div>
+
+            {/* Auto-save status */}
+            <div style={{background:'rgba(16,185,129,.08)',border:'1px solid rgba(16,185,129,.25)',borderRadius:6,padding:'10px 14px',marginBottom:16}}>
+              <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ok)',marginBottom:4}}>● Auto-Save Active</div>
+              <div style={{fontSize:12,color:'var(--muted)',lineHeight:1.5}}>
+                Your data saves automatically to this browser every time you make a change. It will survive page refreshes, new tabs, and new deploys — as long as you access the ERP from this same Claude.ai account.
+              </div>
+            </div>
+
+            {/* What survives vs what doesn't */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+              <div style={{background:'rgba(16,185,129,.06)',border:'1px solid rgba(16,185,129,.2)',borderRadius:6,padding:'10px 12px'}}>
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:10,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ok)',marginBottom:6}}>✓ Automatically Preserved</div>
+                {['All data you enter','Orders, shipments, POs','Sister co. records','Inventory adjustments','Shipping costs','Any edits you make'].map(t=>(
+                  <div key={t} style={{fontSize:11,color:'var(--muted)',marginBottom:2}}>· {t}</div>
+                ))}
+              </div>
+              <div style={{background:'rgba(239,68,68,.06)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'10px 12px'}}>
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:10,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--err)',marginBottom:6}}>⚠ Download Backup When</div>
+                {['Switching computers','Sharing with team','Before major changes','Monthly archiving','Moving to new account'].map(t=>(
+                  <div key={t} style={{fontSize:11,color:'var(--muted)',marginBottom:2}}>· {t}</div>
+                ))}
+              </div>
+            </div>
+
+            {/* Record counts */}
+            <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginBottom:16}}>
+              <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:10,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--muted)',marginBottom:8}}>Current Data Snapshot</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                {[
+                  ['Orders',         (data.orders||[]).length],
+                  ['Shipments',      (data.shipments||[]).length],
+                  ['Purchase Orders',(data.purchaseOrders||[]).length],
+                  ['Inventory Items',(data.inventory||[]).length],
+                  ['Sister Orders',  (data.orderFulfillment||[]).length],
+                  ['Borrowed Labor', (data.borrowedLabor||[]).length],
+                  ['Invoices',       (data.invoices||[]).length],
+                  ['Employees',      (data.employees||[]).length],
+                  ['Raw Materials',  (data.rawMaterials||[]).length],
+                ].map(([label, count])=>(
+                  <div key={label} style={{textAlign:'center'}}>
+                    <div style={{fontSize:18,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--acc)'}}>{count}</div>
+                    <div style={{fontSize:9,color:'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <button className="btn btn-p" onClick={exportData} style={{justifyContent:'center',fontSize:13,padding:'10px'}}>
+                ⬇ Download JSON Backup — {new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+              </button>
+              <div>
+                <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>importData(e.target.files[0])}/>
+                <button className="btn btn-warn" onClick={()=>importRef.current.click()} style={{width:'100%',justifyContent:'center',fontSize:13,padding:'10px'}}>
+                  ⬆ Restore from JSON Backup
+                </button>
+                <div style={{fontSize:10,color:'var(--muted)',marginTop:4,textAlign:'center'}}>
+                  Replaces current data with backup file. Auto-save will preserve the restored data immediately.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
