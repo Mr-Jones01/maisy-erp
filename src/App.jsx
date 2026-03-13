@@ -4761,7 +4761,7 @@ const INIT = {
     {id:'OF-005',orderNo:'1073',date:'2026-01-05',project:'3BD-SURYA MAHARJAN',description:'FASCIA CABLE',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
     {id:'OF-006',orderNo:'1089',date:'2026-01-06',project:'3BD-VARGRA',description:'3 POST',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM / REMAKE',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
     {id:'OF-007',orderNo:'1095',date:'2026-02-01',project:'3BD-FABRICE',description:'SURFACE CABLE',location:'HAYDEN - BELLEVUE',amount:996.22,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
-    {id:'OF-008',orderNo:'1111',date:'2026-02-02',project:'3BD-DAVE WAH',description:'96\\' POST',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
+    {id:'OF-008',orderNo:'1111',date:'2026-02-02',project:'3BD-DAVE WAH',description:'96in POST',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
     {id:'OF-009',orderNo:'1110',date:'2026-02-03',project:'3BD-IRENNE KEARNS',description:'FASCIA CABLE',location:'HAYDEN - BELLEVUE',amount:4163.67,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
     {id:'OF-010',orderNo:'1096',date:'2026-02-04',project:'3BD-TODD BEHRBAUM',description:'SURFACE CABLE',location:'HAYDEN - BELLEVUE',amount:3305.06,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
     {id:'OF-011',orderNo:'1101',date:'2026-02-05',project:'3BD-TRAVIS ISAACS',description:'7 FM POST',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
@@ -30286,7 +30286,8 @@ const Orders = ({data, setData}) => {
                   <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,orders:(d.orders||[]).filter(x=>x.id!==o.id)}))}>×</button>
                 </div></td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
