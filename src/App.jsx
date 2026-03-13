@@ -27569,7 +27569,7 @@ Maisy Railing | 208.603.8149`;
           {(data.miscCharges||[]).find(c=>c.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,miscCharges:(d.miscCharges||[]).filter(c=>c.id!==form.id)}));setModal(null);}}>Delete</button>}
         </div>
       </Modal>}
-─
+
 const Purchasing = ({data, setData}) => {
   const [tab,setTab]=useState('po');
   const [modal,setModal]=useState(null);
