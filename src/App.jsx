@@ -29382,120 +29382,384 @@ const Automation = ({data,setData}) => {
 
 
 const Sister = ({data,setData}) => {
-  const [modal,setModal]=useState(null);
-  const [form,setForm]=useState({});
-  const [sisterTab,setSisterTab]=useState('orders');
+  const [modal,setModal]    = useState(null);
+  const [form,setForm]      = useState({});
+  const [sisterTab,setSisterTab] = useState('dashboard');
+  const [search,setSearch]  = useState('');
 
-  const totalOrderValue=data.sisterOrders.reduce((a,b)=>a+b.value,0);
-  const totalLaborCost=data.sisterLabor.reduce((a,b)=>a+b.billable,0);
-  const netDue=totalOrderValue-totalLaborCost;
+  // Primary data sources — straight from GOD Mode tabs
+  const fulfillment = data.orderFulfillment || [];
+  const borrowed    = data.borrowedLabor    || [];
 
-  const saveOrder=()=>{
-    if(!data.sisterOrders.find(o=>o.id===form.id))setData(d=>({...d,sisterOrders:[...d.sisterOrders,{...form,value:Number(form.value)}]}));
-    else setData(d=>({...d,sisterOrders:d.sisterOrders.map(o=>o.id===form.id?{...form,value:Number(form.value)}:o)}));
+  // KPI rollups
+  const totalRevenue    = fulfillment.reduce((a,b)=>a+(b.amount||0),0);
+  const totalLaborCost  = borrowed.reduce((a,b)=>a+(b.billable||0),0);
+  const netBalance      = totalRevenue + totalLaborCost; // revenue + labor (what sister owes)
+  const totalHrs        = borrowed.reduce((a,b)=>a+(b.totalHrs||0),0);
+  const transferHrs     = borrowed.reduce((a,b)=>a+(b.transferHrs||0),0);
+  const onSiteHrs       = borrowed.reduce((a,b)=>a+(b.onSiteHrs||0),0);
+  const employees       = [...new Set(borrowed.map(l=>l.employee).filter(Boolean))];
+
+  // Per-employee summary
+  const empSummary = employees.map(emp => {
+    const rows = borrowed.filter(l=>l.employee===emp);
+    return {
+      name:        emp,
+      onSiteHrs:   rows.reduce((a,b)=>a+(b.onSiteHrs||0),0),
+      transferHrs: rows.reduce((a,b)=>a+(b.transferHrs||0),0),
+      totalHrs:    rows.reduce((a,b)=>a+(b.totalHrs||0),0),
+      cost:        rows.reduce((a,b)=>a+(b.billable||0),0),
+    };
+  });
+
+  // Save handlers
+  const saveFulfillment = () => {
+    const rec = {...form, amount: Number(form.amount||0), id: form.id||'OF-'+uid()};
+    if(!fulfillment.find(o=>o.id===rec.id))
+      setData(d=>({...d, orderFulfillment:[...d.orderFulfillment, rec]}));
+    else
+      setData(d=>({...d, orderFulfillment:d.orderFulfillment.map(o=>o.id===rec.id?rec:o)}));
     setModal(null);
   };
-  const saveLabor=()=>{
-    if(!data.sisterLabor.find(l=>l.id===form.id))setData(d=>({...d,sisterLabor:[...d.sisterLabor,{...form,hrs:Number(form.hrs),rate:Number(form.rate),billable:Number(form.hrs)*Number(form.rate)}]}));
-    else setData(d=>({...d,sisterLabor:d.sisterLabor.map(l=>l.id===form.id?{...form,hrs:Number(form.hrs),rate:Number(form.rate),billable:Number(form.hrs)*Number(form.rate)}:l)}));
+
+  const saveBorrowed = () => {
+    const hrs    = Number(form.totalHrs||0);
+    const rate   = Number(form.rate||0);
+    const rec    = {...form, totalHrs:hrs, onSiteHrs:Number(form.onSiteHrs||0),
+                   transferHrs:Number(form.transferHrs||0), rate, billable:hrs*rate,
+                   id: form.id||'BL-'+uid()};
+    if(!borrowed.find(l=>l.id===rec.id))
+      setData(d=>({...d, borrowedLabor:[...d.borrowedLabor, rec]}));
+    else
+      setData(d=>({...d, borrowedLabor:d.borrowedLabor.map(l=>l.id===rec.id?rec:l)}));
     setModal(null);
   };
 
-  return(
+  // Filtered fulfillment for search
+  const filtFulfill = fulfillment.filter(o =>
+    !search ||
+    (o.orderNo||'').toLowerCase().includes(search.toLowerCase()) ||
+    (o.project||'').toLowerCase().includes(search.toLowerCase()) ||
+    (o.description||'').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filtBorrowed = borrowed.filter(l =>
+    !search ||
+    (l.employee||'').toLowerCase().includes(search.toLowerCase()) ||
+    (l.task||'').toLowerCase().includes(search.toLowerCase()) ||
+    (l.location||'').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const typeColor = (type) => {
+    if((type||'').includes('Bellevue'))  return {bg:'rgba(99,102,241,.2)',c:'#818cf8'};
+    if((type||'').includes('Hayden'))    return {bg:'rgba(16,185,129,.15)',c:'var(--ok)'};
+    if((type||'').includes('Install'))   return {bg:'rgba(245,158,11,.15)',c:'var(--warn)'};
+    return {bg:'var(--s3)',c:'var(--muted)'};
+  };
+
+  return (
     <div className="fade-up">
-      {(()=>{
-        const orders=data.sisterOrders||[];
-        const labor=data.sisterLabor||[];
-        const totalRev=orders.reduce((a,b)=>a+(b.value||0),0);
-        const totalLab=labor.reduce((a,b)=>a+(b.billable||0),0);
-        return <StatRow>
-          <StatCard label="Total Order Revenue" value={fmt$(totalRev)} icon="💰" color="var(--ok)" sub={orders.length+" orders fulfilled"}/>
-          <StatCard label="Total Labor Cost" value={fmt$(totalLab)} icon="👷" color="var(--warn)" sub={labor.reduce((a,b)=>a+(b.totalHrs||0),0).toFixed(0)+" hours worked"}/>
-          <StatCard label="Net Balance" value={fmt$(totalRev-totalLab)} icon="📊" color={totalRev-totalLab>0?'var(--ok)':'var(--err)'} sub="Revenue minus labor"/>
-          <StatCard label="Employees Used" value={[...new Set(labor.map(l=>l.employee))].length} icon="👥" color="var(--acc)" sub="Unique workers deployed"/>
-        </StatRow>;
-      })()}
+
+      {/* ── KPI Row ── */}
+      <StatRow>
+        <StatCard label="Order Revenue" value={fmt$(totalRevenue)}   icon="💰" color="var(--ok)"   sub={fulfillment.length+" orders fulfilled"}/>
+        <StatCard label="Labor Cost"    value={fmt$(totalLaborCost)} icon="👷" color="var(--warn)" sub={totalHrs.toFixed(0)+" total hours"}/>
+        <StatCard label="Net Balance"   value={fmt$(netBalance)}     icon="📊" color={netBalance>0?'var(--ok)':'var(--err)'} sub="Revenue + Labor owed"/>
+        <StatCard label="Employees Used" value={employees.length}    icon="👥" color="var(--acc)"  sub={employees.join(', ')||'—'}/>
+      </StatRow>
+
+      {/* ── Header ── */}
       <div className="section-hd">
-        <div><div className="hd" style={{fontSize:22}}>Sister Company</div>
-          <div style={{display:'flex',gap:6,marginTop:5}}>
-            <span className="chip">Orders: {fmt$(totalOrderValue)}</span>
+        <div>
+          <div className="hd" style={{fontSize:22}}>Sister Company (3BD)</div>
+          <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
+            <span className="chip">Revenue: {fmt$(totalRevenue)}</span>
             <span className="chip" style={{color:'var(--warn)'}}>Labor: {fmt$(totalLaborCost)}</span>
-            <span className="chip" style={{color:netDue>0?'var(--ok)':'var(--err)'}}>Net: {fmt$(netDue)}</span>
+            <span className="chip" style={{color:netBalance>0?'var(--ok)':'var(--err)'}}>Net: {fmt$(netBalance)}</span>
+            <span className="chip">{onSiteHrs}h on-site · {transferHrs}h transfer</span>
           </div>
         </div>
-        <button className="btn btn-p" onClick={()=>{if(sisterTab==='orders')setForm({id:`SIS-${uid()}`,description:'',value:0,date:now(),status:'Pending',notes:''});else setForm({id:`SLB-${uid()}`,empName:'',hrs:0,date:now(),rate:28,task:'',billable:0});setModal(sisterTab==='orders'?'order':'labor');}}>+ New {sisterTab==='orders'?'Order':'Labor Entry'}</button>
+        <div style={{display:'flex',gap:8}}>
+          {sisterTab==='fulfillment'&&<button className="btn btn-p" onClick={()=>{setForm({id:'OF-'+uid(),orderNo:'',date:now(),project:'',description:'',location:'HAYDEN - BELLEVUE',amount:0,notes:'',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled'});setModal('fulfill');}}>+ New Order</button>}
+          {sisterTab==='borrowed'&&<button className="btn btn-p" onClick={()=>{setForm({id:'BL-'+uid(),employee:'',date:now(),task:'',location:'HAYDEN-BELLEVUE',onSiteHrs:0,transferHrs:0,totalHrs:0,rate:35,billable:0});setModal('borrow');}}>+ Log Labor</button>}
+        </div>
       </div>
-      <div className="grid3" style={{marginBottom:16}}>
-        {[
-          {l:'Total Order Value',v:fmt$(totalOrderValue),c:'var(--acc)'},
-          {l:'Total Labor Billed',v:fmt$(totalLaborCost),c:'var(--warn)'},
-          {l:'Net Receivable',v:fmt$(netDue),c:netDue>0?'var(--ok)':'var(--err)'},
-        ].map(s=><div className="stat-card" key={s.l}><div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--muted)',marginBottom:8}}>{s.l}</div><div className="mono hd" style={{fontSize:22,color:s.c}}>{s.v}</div></div>)}
-      </div>
+
+      {/* ── Tabs ── */}
       <div style={{display:'flex',gap:6,marginBottom:14}}>
-        {['orders','labor','borrowed','fulfill'].map(t=><button key={t} className={'tab'+(sisterTab===t?' on':'')} onClick={()=>setSisterTab(t)} style={{textTransform:'capitalize'}}>{t==='orders'?'Sister Orders':t==='labor'?'Sister Labor':t==='borrowed'?'Borrowed Labor':t==='fulfill'?'Fulfillment Log':t}</button>)}
+        {[
+          {id:'dashboard',   label:'📊 Dashboard'},
+          {id:'fulfillment', label:'📋 Order Fulfillment'},
+          {id:'borrowed',    label:'👷 Borrowed Labor'},
+        ].map(t=>(
+          <button key={t.id} className={'tab'+(sisterTab===t.id?' on':'')} onClick={()=>{setSisterTab(t.id);setSearch('');}}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {sisterTab==='orders'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>ID</th><th>Description</th><th>Value</th><th>Date</th><th>Status</th><th>Notes</th><th/></tr></thead>
-          <tbody>{data.sisterOrders.map(o=>(
-            <tr key={o.id}>
-              <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{o.id}</td>
-              <td style={{fontWeight:500}}>{o.description}</td>
-              <td className="mono" style={{color:'var(--ok)'}}>{fmt$(o.value)}</td>
-              <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(o.date)}</td>
-              <td><Badge s={o.status}/></td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{o.notes}</td>
-              <td><div style={{display:'flex',gap:4}}>
-                <button className="btn btn-g btn-xs" onClick={()=>{setForm({...o});setModal('order');}}>Edit</button>
-                <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,sisterOrders:d.sisterOrders.filter(x=>x.id!==o.id)}))}>×</button>
-              </div></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>}
+      {/* ── DASHBOARD TAB ── */}
+      {sisterTab==='dashboard' && (
+        <div>
+          <div className="grid2" style={{marginBottom:16}}>
 
-      {sisterTab==='labor'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>Employee</th><th>Date</th><th>Hours</th><th>Rate $/hr</th><th>Billable</th><th>Task</th><th/></tr></thead>
-          <tbody>{data.sisterLabor.map(l=>(
-            <tr key={l.id}>
-              <td style={{fontWeight:500}}>{l.empName}</td>
-              <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(l.date)}</td>
-              <td className="mono">{l.hrs}</td>
-              <td className="mono">{fmt$(l.rate)}</td>
-              <td className="mono" style={{color:'var(--warn)',fontWeight:600}}>{fmt$(l.billable)}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{l.task}</td>
-              <td><div style={{display:'flex',gap:4}}>
-                <button className="btn btn-g btn-xs" onClick={()=>{setForm({...l});setModal('labor');}}>Edit</button>
-                <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,sisterLabor:d.sisterLabor.filter(x=>x.id!==l.id)}))}>×</button>
-              </div></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>}
+            {/* Revenue Breakdown */}
+            <div className="card">
+              <div className="hd" style={{fontSize:13,marginBottom:14,color:'var(--ok)'}}>Order Fulfillment Revenue</div>
+              {[
+                {label:'Total Orders',       val: fulfillment.length,                                                      isNum:false},
+                {label:'Orders with Value',  val: fulfillment.filter(o=>o.amount>0).length,                                isNum:false},
+                {label:'No Amount on Form',  val: fulfillment.filter(o=>!o.amount||o.amount===0).length,                   isNum:false},
+                {label:'Total Revenue',      val: fmt$(totalRevenue),                                                       isNum:false},
+                {label:'Avg per Order',      val: fmt$(fulfillment.filter(o=>o.amount>0).length ? totalRevenue/fulfillment.filter(o=>o.amount>0).length : 0), isNum:false},
+                {label:'Transfer to Bellevue',val:fulfillment.filter(o=>(o.type||'').includes('Bellevue')).length+' orders', isNum:false},
+                {label:'Hayden Local',        val:fulfillment.filter(o=>(o.location||'').toLowerCase().includes('hayden')).length+' orders', isNum:false},
+              ].map(r=>(
+                <div key={r.label} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid var(--bdr)'}}>
+                  <span style={{fontSize:12,color:'var(--muted)'}}>{r.label}</span>
+                  <span style={{fontSize:12,fontWeight:600,color:'var(--txt)'}}>{r.val}</span>
+                </div>
+              ))}
+            </div>
 
-      {modal==='order'&&<Modal title="Sister Co Order" onClose={()=>setModal(null)}>
-        <Field label="Description"><input value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+            {/* Labor Breakdown */}
+            <div className="card">
+              <div className="hd" style={{fontSize:13,marginBottom:14,color:'var(--warn)'}}>Borrowed Labor Summary</div>
+              {[
+                {label:'Total Entries',       val: borrowed.length},
+                {label:'On-Site Hours',       val: onSiteHrs+'h'},
+                {label:'Transfer Hours',      val: transferHrs+'h'},
+                {label:'Total Hours',         val: totalHrs+'h'},
+                {label:'Total Labor Cost',    val: fmt$(totalLaborCost)},
+                {label:'Avg Hourly Rate',     val: totalHrs>0 ? fmt$(totalLaborCost/totalHrs)+'/hr' : '—'},
+              ].map(r=>(
+                <div key={r.label} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid var(--bdr)'}}>
+                  <span style={{fontSize:12,color:'var(--muted)'}}>{r.label}</span>
+                  <span style={{fontSize:12,fontWeight:600,color:'var(--txt)'}}>{r.val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Employee Hours Table */}
+          <div className="card" style={{marginBottom:16}}>
+            <div className="hd" style={{fontSize:13,marginBottom:12}}>Employee Hours Breakdown</div>
+            <table>
+              <thead><tr><th>Employee</th><th style={{textAlign:'right'}}>On-Site Hrs</th><th style={{textAlign:'right'}}>Transfer Hrs</th><th style={{textAlign:'right'}}>Total Hrs</th><th style={{textAlign:'right'}}>Est. Cost</th></tr></thead>
+              <tbody>
+                {empSummary.map(e=>(
+                  <tr key={e.name}>
+                    <td style={{fontWeight:600}}>{e.name}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace'}}>{e.onSiteHrs}h</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace'}}>{e.transferHrs}h</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{e.totalHrs}h</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(e.cost)}</td>
+                  </tr>
+                ))}
+                <tr style={{borderTop:'2px solid var(--bdr2)'}}>
+                  <td style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.08em',textTransform:'uppercase'}}>TOTAL</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{onSiteHrs}h</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{transferHrs}h</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{totalHrs}h</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(totalLaborCost)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Recent Orders */}
+          <div className="card">
+            <div className="hd" style={{fontSize:13,marginBottom:12}}>Recent Order Fulfillment</div>
+            <table>
+              <thead><tr><th>Order #</th><th>Date</th><th>Project</th><th>Description</th><th>Location</th><th style={{textAlign:'right'}}>Value</th><th>Notes</th></tr></thead>
+              <tbody>
+                {[...fulfillment].sort((a,b)=>b.date?.localeCompare(a.date||'')).slice(0,8).map((o,i)=>{
+                  const tc = typeColor(o.type);
+                  return (
+                    <tr key={i}>
+                      <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{o.orderNo||'—'}</td>
+                      <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtDs(o.date)}</td>
+                      <td style={{fontWeight:600,fontSize:12}}>{o.project}</td>
+                      <td style={{fontSize:11}}>{o.description}</td>
+                      <td><span style={{background:tc.bg,color:tc.c,borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{o.location}</span></td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:600,color:o.amount>0?'var(--ok)':'var(--muted)'}}>{o.amount>0?fmt$(o.amount):'—'}</td>
+                      <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── ORDER FULFILLMENT TAB ── */}
+      {sisterTab==='fulfillment' && (
+        <div>
+          <div style={{display:'flex',gap:8,marginBottom:12,alignItems:'center'}}>
+            <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search order #, project, description…" style={{flex:1,maxWidth:340}}/>
+            <span className="chip">{filtFulfill.length} orders · {fmt$(filtFulfill.reduce((a,b)=>a+(b.amount||0),0))}</span>
+          </div>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <table style={{minWidth:900}}>
+              <thead><tr><th>Order #</th><th>Date</th><th>Project / Customer</th><th>Description</th><th>Location</th><th>Type</th><th style={{textAlign:'right'}}>Value</th><th>Status</th><th>Notes</th><th/></tr></thead>
+              <tbody>
+                {filtFulfill.length===0&&<tr><td colSpan={10}><Empty msg="No fulfillment orders"/></td></tr>}
+                {filtFulfill.map((o,i)=>{
+                  const tc = typeColor(o.type);
+                  return (
+                    <tr key={i}>
+                      <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.orderNo||'—'}</td>
+                      <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtDs(o.date)}</td>
+                      <td style={{fontWeight:600}}>{o.project}</td>
+                      <td style={{fontSize:11}}>{o.description}</td>
+                      <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.location}</td>
+                      <td><span style={{background:tc.bg,color:tc.c,borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em',whiteSpace:'nowrap'}}>{o.type||'—'}</span></td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:o.amount>0?'var(--ok)':'var(--muted)'}}>{o.amount>0?fmt$(o.amount):'—'}</td>
+                      <td><Badge s={o.status||'Fulfilled'}/></td>
+                      <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
+                      <td style={{whiteSpace:'nowrap'}}>
+                        <div style={{display:'flex',gap:3}}>
+                          <button className="btn btn-g btn-xs" onClick={()=>{setForm({...o});setModal('fulfill');}}>Edit</button>
+                          <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,orderFulfillment:d.orderFulfillment.filter(x=>x.id!==o.id)}))}>×</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── BORROWED LABOR TAB ── */}
+      {sisterTab==='borrowed' && (
+        <div>
+          <div style={{display:'flex',gap:8,marginBottom:12,alignItems:'center'}}>
+            <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search employee, task, location…" style={{flex:1,maxWidth:340}}/>
+            <span className="chip">{filtBorrowed.length} entries · {filtBorrowed.reduce((a,b)=>a+(b.totalHrs||0),0)}h · {fmt$(filtBorrowed.reduce((a,b)=>a+(b.billable||0),0))}</span>
+          </div>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <table style={{minWidth:800}}>
+              <thead><tr><th>Entry</th><th>Employee</th><th>Date</th><th>Task</th><th>Location</th><th style={{textAlign:'right'}}>On-Site Hrs</th><th style={{textAlign:'right'}}>Transfer Hrs</th><th style={{textAlign:'right'}}>Total Hrs</th><th style={{textAlign:'right'}}>Rate</th><th style={{textAlign:'right'}}>Billable</th><th/></tr></thead>
+              <tbody>
+                {filtBorrowed.length===0&&<tr><td colSpan={11}><Empty msg="No borrowed labor entries"/></td></tr>}
+                {filtBorrowed.map((l,i)=>(
+                  <tr key={i}>
+                    <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{l.entry||i+1}</td>
+                    <td style={{fontWeight:600}}>{l.employee}</td>
+                    <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtDs(l.date)}</td>
+                    <td style={{fontSize:11}}>{l.task}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{l.location}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:l.onSiteHrs>0?'var(--txt)':'var(--dim)'}}>{l.onSiteHrs||'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:l.transferHrs>0?'var(--txt)':'var(--dim)'}}>{l.transferHrs||'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{l.totalHrs}h</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--muted)'}}>{l.rate?'$'+l.rate:' —'}/hr</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(l.billable)}</td>
+                    <td style={{whiteSpace:'nowrap'}}>
+                      <div style={{display:'flex',gap:3}}>
+                        <button className="btn btn-g btn-xs" onClick={()=>{setForm({...l});setModal('borrow');}}>Edit</button>
+                        <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,borrowedLabor:d.borrowedLabor.filter(x=>x.id!==l.id)}))}>×</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filtBorrowed.length>0&&(
+                  <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+                    <td colSpan={5} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',paddingLeft:12}}>TOTALS</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{filtBorrowed.reduce((a,b)=>a+(b.onSiteHrs||0),0)}h</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{filtBorrowed.reduce((a,b)=>a+(b.transferHrs||0),0)}h</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{filtBorrowed.reduce((a,b)=>a+(b.totalHrs||0),0)}h</td>
+                    <td></td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(filtBorrowed.reduce((a,b)=>a+(b.billable||0),0))}</td>
+                    <td></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODALS ── */}
+      {modal==='fulfill'&&<Modal title={fulfillment.find(o=>o.id===form.id)?'Edit Order':'New Fulfillment Order'} onClose={()=>setModal(null)} lg>
         <div className="grid2">
-          <Field label="Value ($)"><input type="number" value={form.value||0} onChange={e=>setForm(f=>({...f,value:e.target.value}))}/></Field>
+          <Field label="Order #"><input value={form.orderNo||''} onChange={e=>setForm(f=>({...f,orderNo:e.target.value}))}/></Field>
           <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
         </div>
-        <Field label="Status"><select value={form.status||'Pending'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}><option>Pending</option><option>In Progress</option><option>Completed</option><option>Invoiced</option><option>Paid</option></select></Field>
-        <Field label="Notes"><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
-        <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={saveOrder}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+        <Field label="Project / Customer"><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
+        <Field label="Description" style={{marginTop:8}}><input value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <div className="grid2" style={{marginTop:8}}>
+          <Field label="Location">
+            <select value={form.location||'HAYDEN - BELLEVUE'} onChange={e=>setForm(f=>({...f,location:e.target.value}))}>
+              <option>HAYDEN - BELLEVUE</option>
+              <option>Hayden Local Pick-Up</option>
+              <option>Other</option>
+            </select>
+          </Field>
+          <Field label="Type">
+            <select value={form.type||'Transfer to Bellevue'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
+              <option>Transfer to Bellevue</option>
+              <option>Local Pickup/Install Hayden</option>
+              <option>Other</option>
+            </select>
+          </Field>
+        </div>
+        <div className="grid2" style={{marginTop:8}}>
+          <Field label="Order Value ($)"><input type="number" step="0.01" min="0" value={form.amount||''} placeholder="0.00" onChange={e=>setForm(f=>({...f,amount:e.target.value}))}/></Field>
+          <Field label="Status">
+            <select value={form.status||'Fulfilled'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+              {['Fulfilled','Pending','In Progress','Invoiced','Paid'].map(s=><option key={s}>{s}</option>)}
+            </select>
+          </Field>
+        </div>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={saveFulfillment}>Save</button>
+          <button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button>
+          {fulfillment.find(o=>o.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,orderFulfillment:d.orderFulfillment.filter(o=>o.id!==form.id)}));setModal(null);}}>Delete</button>}
+        </div>
       </Modal>}
-      {modal==='labor'&&<Modal title="Borrowed Labor Entry" onClose={()=>setModal(null)}>
+
+      {modal==='borrow'&&<Modal title={borrowed.find(l=>l.id===form.id)?'Edit Labor Entry':'Log Borrowed Labor'} onClose={()=>setModal(null)}>
         <div className="grid2">
-          <Field label="Employee"><input value={form.empName||''} onChange={e=>setForm(f=>({...f,empName:e.target.value}))}/></Field>
+          <Field label="Employee">
+            <select value={form.employee||''} onChange={e=>setForm(f=>({...f,employee:e.target.value}))}>
+              <option value="">— Select —</option>
+              {['Jace','Amber','Michael','Nick'].map(e=><option key={e}>{e}</option>)}
+            </select>
+          </Field>
           <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
         </div>
-        <div className="grid2">
-          <Field label="Hours"><input type="number" step=".5" value={form.hrs||0} onChange={e=>setForm(f=>({...f,hrs:e.target.value}))}/></Field>
-          <Field label="Rate $/hr"><input type="number" step=".50" value={form.rate||28} onChange={e=>setForm(f=>({...f,rate:e.target.value}))}/></Field>
+        <Field label="Task / Job Description" style={{marginTop:8}}><input value={form.task||''} onChange={e=>setForm(f=>({...f,task:e.target.value}))}/></Field>
+        <Field label="Location" style={{marginTop:8}}>
+          <select value={form.location||'HAYDEN-BELLEVUE'} onChange={e=>setForm(f=>({...f,location:e.target.value}))}>
+            <option>HAYDEN-BELLEVUE</option>
+            <option>HAYDEN</option>
+            <option>BELLEVUE</option>
+            <option>Other</option>
+          </select>
+        </Field>
+        <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginTop:10}}>
+          <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:10}}>Hours</div>
+          <div className="grid2" style={{gap:10}}>
+            <Field label="On-Site Hrs"><input type="number" step="0.5" min="0" value={form.onSiteHrs||''} placeholder="0" onChange={e=>{const v=Number(e.target.value)||0;setForm(f=>({...f,onSiteHrs:v,totalHrs:v+(Number(f.transferHrs)||0),billable:(v+(Number(f.transferHrs)||0))*(Number(f.rate)||0)}));}}/></Field>
+            <Field label="Transfer Hrs (W-to-W)"><input type="number" step="0.5" min="0" value={form.transferHrs||''} placeholder="0" onChange={e=>{const v=Number(e.target.value)||0;setForm(f=>({...f,transferHrs:v,totalHrs:(Number(f.onSiteHrs)||0)+v,billable:((Number(f.onSiteHrs)||0)+v)*(Number(f.rate)||0)}));}}/></Field>
+          </div>
+          <div className="grid2" style={{gap:10,marginTop:10}}>
+            <Field label="Total Hrs (auto)"><input type="number" step="0.5" value={form.totalHrs||0} onChange={e=>setForm(f=>({...f,totalHrs:e.target.value,billable:Number(e.target.value)*(Number(f.rate)||0)}))}/></Field>
+            <Field label="Hourly Rate ($)"><input type="number" step="0.5" value={form.rate||35} onChange={e=>setForm(f=>({...f,rate:e.target.value,billable:(Number(f.totalHrs)||0)*Number(e.target.value)}))}/></Field>
+          </div>
+          <div style={{marginTop:10,padding:'8px 12px',background:'rgba(245,158,11,.1)',border:'1px solid rgba(245,158,11,.25)',borderRadius:5,fontSize:13,fontWeight:700,color:'var(--warn)'}}>
+            Billable Total: {fmt$((Number(form.totalHrs)||0)*(Number(form.rate)||0))}
+          </div>
         </div>
-        <Field label="Task Description"><input value={form.task||''} onChange={e=>setForm(f=>({...f,task:e.target.value}))}/></Field>
-        <div style={{padding:'8px 12px',background:'var(--s2)',borderRadius:5,fontSize:12,color:'var(--ok)',marginBottom:12}}>Billable = {fmt$(Number(form.hrs||0)*Number(form.rate||0))}</div>
-        <div style={{display:'flex',gap:8}}><button className="btn btn-p" onClick={saveLabor}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={saveBorrowed}>Save</button>
+          <button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button>
+          {borrowed.find(l=>l.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,borrowedLabor:d.borrowedLabor.filter(l=>l.id!==form.id)}));setModal(null);}}>Delete</button>}
+        </div>
       </Modal>}
     </div>
   );
