@@ -25635,53 +25635,25 @@ const HotRushQueue = ({data, setData}) => {
 
 // ─── WORKBOOK GENERATOR ──────────────────────────────────────────────────────────
 const WorkbookGenerator = ({data, setData}) => {
-  const WBG_GROUPS=[
-    ['Line Post','ea',['Line Post','Line Post (Cable)','Line Post (Glass)'],[],'post',3.0,'per_ft','post_42in',null,false],
-    ['Stair Post','ea',['Stair Post','Stair Post (Cable)','Stair Post (Surface)'],[],'post',3.0,'per_ft','post_42in',null,false],
-    ['Corner Post','ea',['Corner Post'],[],'post',3.0,'per_ft','post_42in',null,false],
-    ['42in Fascia Post','ea',[],['42in Fascia Mounted Posts (incl. Brackets)','42in Fascia Mounted Posts (incl. Brackets) — SRS Maisy Pl Updated'],'post',3.5,'per_ft','post_42in',null,false],
-    ['42in Fascia Stair Post','ea',[],['42in Fascia Mounted Stair Posts (incl. Brackets)'],'post',3.5,'per_ft','post_42in',null,false],
-    ['Flat Bracket','ea',[],[],'post',0,'per_ea','flat_bracket',null,false],
-    ['36in Surface Post','ea',[],['36in Surface Mounted Posts (incl. Brackets)'],'post',3.0,'per_ft','post_36in',null,false],
-    ['36in Surface 90° Post','ea',[],['36in Surface Mounted 90 deg Posts (incl. Brackets)'],'post',3.0,'per_ft','post_36in',null,false],
-    ['36in Surface Stair Post','ea',[],['36in Surface Mounted Stair Posts (incl. Brackets)'],'post',3.0,'per_ft','post_36in',null,false],
-    ['Deck Top — All Lengths','ea',['8ft Deck Top','8ft Deck Top (Cable)','8ft Deck Top (Glass)','4.5ft Deck Top','12ft Deck Top','12ft Deck Top (Cable)','12ft Deck Top (Glass)','20ft Deck Top','20ft Deck Top (Cable)'],['20ft 1x3 Top Rail, Aluminum, Matte Black'],'rail',20,'per_ft','top_rail',null,false],
-    ['Stair Top — All Lengths','ea',['8ft Stair Top','8ft Stair Top (Cable)','12 Stair Top','12 Stair Top (Cable)'],[],  'rail',20,'per_ft','top_rail',null,false],
-    ['Top Rail End Caps','ea',[],['1x3 Rectangular Top-Rail Insert End Caps'],null,0,'per_ea','rail_caps',null,false],
-    ['Rail Caps','ea',['Rail Caps','Rail Caps (Cable)','Rail Caps (Glass)'],[],null,0,'per_ea','rail_caps',null,false],
-    ['6in Swages SS316','ea',['Swages'],['6in SS316 Swage Threaded Stud Tensioner'],null,0,'per_ea','swage_6in_ss',null,false],
-    ['Angle Washers SS316','ea',['Angle Washers'],['Angle Washer For Stairs, SS316'],null,0,'per_ea','angle_washer_ss',null,false],
-    ['Angle Brackets','ea',['Angle Brackets','Angle Brackets (Cable)'],[],null,0,'per_ea','angle_brackets',null,false],
-    ['Glass Clamps','ea',['Glass Clamps'],[],null,0,'per_ea','glass_clamps',null,false],
-    ['Lags','ea',['Lags','Lags (Cable)','Lags (Glass)'],['Lags/Washers for Fascia Posts, SS316'],null,0,'per_ea','lags',null,false],
-    ['Post Screws','ea',['Post Screws'],['Screws for Surface Mounted Posts, SS316'],null,0,'per_ea','post_screws',null,false],
-    ['Self Tap','ea',['Self Tap','Self Tap (Cable)','Self Tap (Glass)'],['Self-Tap Screws, SS316 Powder Coated Black'],null,0,'per_ea','self_tap',null,false],
-    ['Cable SS316 1/8in','ft',['Cable (ft)'],['Cable SS316 1/8in 1x19'],null,0,'per_ea','cable_ss',null,false],
-    ['Deck Glass Panels','panel',['Deck Glass'],[],null,0,'per_ea','glass_panels',null,false],
-  ];
-
   const WBG_PRICE_GROUPS=[
     {section:'POSTS & BRACKETS',items:[{key:'post_42in',label:'Post Alum 42in',unit:'$/ft'},{key:'post_36in',label:'Post Alum 36in',unit:'$/ft'},{key:'flat_bracket',label:'Flat Bracket',unit:'$/ea'}]},
     {section:'TOP RAIL',items:[{key:'top_rail',label:'Top Rail Extrusion',unit:'$/ft'},{key:'rail_caps',label:'Rail Caps / End Caps',unit:'$/ea'}]},
     {section:'HARDWARE',items:[{key:'swage_6in_ss',label:'6in Swages SS316',unit:'$/ea'},{key:'angle_washer_ss',label:'Angle Washers SS316',unit:'$/ea'},{key:'angle_brackets',label:'Angle Brackets',unit:'$/ea'},{key:'glass_clamps',label:'Glass Clamps',unit:'$/ea'},{key:'lags',label:'Lags SS316',unit:'$/ea'},{key:'lag_washers',label:'Lag Washers',unit:'$/ea'},{key:'post_screws',label:'Post Screws SS316',unit:'$/ea'},{key:'self_tap',label:'Self-Tap SS316',unit:'$/ea'}]},
     {section:'CABLE & GLASS',items:[{key:'cable_ss',label:'Cable SS316 1/8in',unit:'$/ft'},{key:'glass_panels',label:'Deck Glass Panels',unit:'$/panel'}]},
-    {section:'FLAT BAR',items:[{key:'flat_bar_4x14',label:'4"×1/4" Flat Bar',unit:'$/ft'},{key:'flat_bar_2x18',label:'2"×1/8" Flat Bar',unit:'$/ft'}]},
-    {section:'CORNER ANGLES',items:[{key:'angle_1515_18',label:'1.5×1.5×1/8" Angle',unit:'$/ft'},{key:'angle_24_18',label:'2×4×1/8" Angle',unit:'$/ft'}]},
+    {section:'FLAT BAR',items:[{key:'flat_bar_4x14',label:'4"x1/4" Flat Bar',unit:'$/ft'},{key:'flat_bar_2x18',label:'2"x1/8" Flat Bar',unit:'$/ft'}]},
+    {section:'CORNER ANGLES',items:[{key:'angle_1515_18',label:'1.5x1.5x1/8" Angle',unit:'$/ft'},{key:'angle_24_18',label:'2x4x1/8" Angle',unit:'$/ft'}]},
   ];
 
-  const glookup2 = Object.fromEntries(WBG_GROUPS.map(g=>([g[0],{unit:g[1],cn:g[2],wn:g[3],ft:g[4],fpu:g[5],pm:g[6],pk:g[7]}])));
+  const WBG_SYS = `You are a materials extraction specialist for Maisy Railing. Extract ALL materials with quantities from the order document. Return ONLY valid JSON, no markdown.\nSchema:{"customerName":"string","orderType":"string","deckLength":number|null,"stairLength":number|null,"postHeight":"string|null","color":"string|null","notes":"string|null","isWholesale":false,"materials":[{"name":"string","qty":number,"unit":"ea|ft|panel"}]}\nCable->ft, glass panels->panel, else->ea.`;
 
-  const WBG_SYS = `You are a materials extraction specialist for Maisy Railing. Extract ALL materials with quantities from the order document. Return ONLY valid JSON, no markdown.\nSchema:{"customerName":"string","orderType":"string","deckLength":number|null,"stairLength":number|null,"postHeight":"string|null","color":"string|null","notes":"string|null","isWholesale":false,"materials":[{"name":"string","qty":number,"unit":"ea|ft|panel"}]}\nCable→ft, glass panels→panel, else→ea.`;
-
-  const [screen,    setScreen]    = useState('key');
-  const [apiKey,    setApiKey]    = useState('');
-  const [files,     setFiles]     = useState([]);
-  const [statuses,  setStatuses]  = useState([]);
-  const [orders,    setOrders]    = useState([]);
-  const [errors,    setErrors]    = useState([]);
-  const [prices,    setPrices]    = useState(data.wbgPrices||{});
-  const [tab,       setTab]       = useState('results');
-  const [onHand,    setOnHand]    = useState({});
+  const [screen,   setScreen]  = useState('key');
+  const [apiKey,   setApiKey]  = useState('');
+  const [wbgFiles, setWbgFiles] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [wbgOrders,setWbgOrders] = useState([]);
+  const [wbgErrors,setWbgErrors] = useState([]);
+  const [prices,   setPrices]  = useState(data.wbgPrices||{});
+  const [wbgTab,   setWbgTab]  = useState('results');
   const fileRef2 = useRef();
 
   const savePrices = (p) => { setData(prev=>({...prev,wbgPrices:p})); };
@@ -25710,202 +25682,174 @@ const WorkbookGenerator = ({data, setData}) => {
 
   const processAll = async () => {
     setScreen('processing');
-    const newStatuses = files.map(f=>({name:f.name,status:'pending',error:null}));
-    setStatuses(newStatuses);
+    const ns = wbgFiles.map(f=>({name:f.name,status:'pending',error:null}));
+    setStatuses(ns);
     const results=[]; const errs=[];
-    for(let i=0;i<files.length;i++){
-      const f=files[i];
-      const upd = (u) => setStatuses(prev=>{const n=[...prev];n[i]={...n[i],...u};return n;});
-      try{
-        const order=await extractOrder(f,(s)=>upd({status:s}));
-        upd({status:'done'}); results.push(order);
-      }catch(e){upd({status:'error',error:e.message}); errs.push({name:f.name,error:e.message});}
+    for(let i=0;i<wbgFiles.length;i++){
+      const f=wbgFiles[i];
+      const upd=(u)=>setStatuses(prev=>{const n=[...prev];n[i]={...n[i],...u};return n;});
+      try{const order=await extractOrder(f,(s)=>upd({status:s}));upd({status:'done'});results.push(order);}
+      catch(e){upd({status:'error',error:e.message});errs.push({name:f.name,error:e.message});}
     }
-    setOrders(results); setErrors(errs);
+    setWbgOrders(results);setWbgErrors(errs);
     setTimeout(()=>setScreen('results'),600);
-  };
-
-  const buildRaw2 = (orders2) => { const d={}; for(const o of orders2) for(const m of(o.materials||[])){d[m.name]=(d[m.name]||0)+m.qty;} return d; };
-  const computeCon2 = (raw) => {
-    const res={};
-    for(const [lbl,unit,cn,wn,ft,fpu,pm,pk] of WBG_GROUPS){
-      const c=cn.reduce((s,n)=>s+(raw[n]||0),0); const w=wn.reduce((s,n)=>s+(raw[n]||0),0);
-      res[lbl]={c,w,total:c+w,unit,ft,fpu,pm,pk};
-    }
-    return res;
-  };
-  const derivedCalcs2 = (raw) => {
-    const surfTotal=['Line Post','Line Post (Cable)','Line Post (Glass)','Stair Post','Stair Post (Cable)','Stair Post (Surface)','Corner Post','36in Surface Mounted Posts (incl. Brackets)','36in Surface Mounted 90 deg Posts (incl. Brackets)','36in Surface Mounted Stair Posts (incl. Brackets)'].reduce((s,n)=>s+(raw[n]||0),0);
-    const fascia=['42in Fascia Mounted Posts (incl. Brackets)','42in Fascia Mounted Posts (incl. Brackets) — SRS Maisy Pl Updated'].reduce((s,n)=>s+(raw[n]||0),0);
-    const lags=['Lags','Lags (Cable)','Lags (Glass)','Lags/Washers for Fascia Posts, SS316'].reduce((s,n)=>s+(raw[n]||0),0);
-    const cornerQty=raw['Corner Post']||0;
-    return{surfTotal,fascia,lags,flat4ft:Math.ceil(surfTotal*4/12),flat2ft:Math.ceil(surfTotal*4/12)+Math.ceil(fascia*4/12),cornerQty,angle1515ft:Math.ceil(cornerQty*2*2/12),angle24ft:Math.ceil(cornerQty*2*5/12)};
   };
 
   const generateWB = () => {
     const XLSX=window.XLSX; if(!XLSX){alert('SheetJS not loaded');return;}
-    const raw=buildRaw2(orders); const con=computeCon2(raw); const d2=derivedCalcs2(raw);
     const wb=XLSX.utils.book_new();
     const sc=(ws,r,c,v)=>{const ref=XLSX.utils.encode_cell({r,c});ws[ref]={v,t:typeof v==='number'?'n':'s'};};
-    const mg=(ws,r1,c1,r2,c2)=>{if(!ws['!merges'])ws['!merges']=[];ws['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}});};
-    // Per-customer sheets
-    for(const order of orders){
+    for(const order of wbgOrders){
       const ws={};let r=0; const name=(order.customerName||'Order').substring(0,28);
-      sc(ws,r,0,'MAISY RAILING — Material Order');mg(ws,r,0,r,4);r++;
-      sc(ws,r,0,`Customer: ${order.customerName||''}`);mg(ws,r,0,r,4);r++;
-      for(const[k,v]of[['Order Type',order.orderType||'—'],['Color',order.color||'—'],['Notes',order.notes||'—']]){sc(ws,r,0,k);sc(ws,r,1,v);mg(ws,r,1,r,4);r++;}
+      sc(ws,r,0,'MAISY RAILING - Material Order');r++;
+      sc(ws,r,0,`Customer: ${order.customerName||''}`);r++;
+      for(const[k,v]of[['Type',order.orderType||'-'],['Color',order.color||'-'],['Notes',order.notes||'-']]){sc(ws,r,0,k);sc(ws,r,1,v);r++;}
       r++;
       for(const[i,h]of['#','Material','Qty','Unit'].entries()){sc(ws,r,i,h);}r++;
       (order.materials||[]).forEach((m,i)=>{sc(ws,r,0,i+1);sc(ws,r,1,m.name);sc(ws,r,2,m.qty);sc(ws,r,3,m.unit);r++;});
-      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r,c:4}});ws['!cols']=[{wch:4},{wch:36},{wch:10},{wch:8}];
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r,c:4}});
       XLSX.utils.book_append_sheet(wb,ws,name);
     }
-    // Grand total
     const gt={};let r2=0;
-    sc(gt,r2,0,'MAISY RAILING — AGGREGATE TOTALS');mg(gt,r2,0,r2,5);r2+=2;
-    const rawAgg=buildRaw2(orders);
+    sc(gt,r2,0,'AGGREGATE TOTALS');r2+=2;
     for(const[i,h]of['#','Material','Total Qty'].entries()){sc(gt,r2,i,h);}r2++;
+    const rawAgg={};for(const o of wbgOrders)for(const m of(o.materials||[])){rawAgg[m.name]=(rawAgg[m.name]||0)+m.qty;}
     Object.entries(rawAgg).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([n,q],i)=>{sc(gt,r2,0,i+1);sc(gt,r2,1,n);sc(gt,r2,2,q);r2++;});
-    gt['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:r2,c:5}});gt['!cols']=[{wch:4},{wch:36},{wch:12}];
+    gt['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:r2,c:3}});
     XLSX.utils.book_append_sheet(wb,gt,'GRAND TOTAL');
     XLSX.writeFile(wb,'MaisyRailing_Workbook_'+new Date().toISOString().slice(0,10)+'.xlsx');
   };
 
-  const sc2={pending:'var(--muted)',reading:'var(--acc2)',analyzing:'var(--acc)',done:'var(--ok)',error:'var(--err)'};
-  const sl2={pending:'Pending…',reading:'Reading file…',analyzing:'AI extracting…',done:'✓ Done',error:'Error'};
-
-  if(screen==='key') return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'65vh',gap:20}}>
-      <div style={{fontSize:40,opacity:.3}}>📑</div>
-      <div className="hd" style={{fontSize:22}}>Workbook Generator</div>
-      <div style={{fontSize:13,color:'var(--muted)',maxWidth:420,textAlign:'center'}}>AI-powered extraction from order files (Excel, PDF, images) → consolidated material workbook with pricing and cost estimation.</div>
-      <div style={{width:380}}>
-        <label>Anthropic API Key</label>
-        <input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-ant-..." onKeyDown={e=>{if(e.key==='Enter'&&apiKey.startsWith('sk-ant-'))setScreen('upload');}}/>
-        <div style={{fontSize:10,color:'var(--muted)',marginTop:4}}>Key stays in memory only — never stored</div>
-      </div>
-      <button className="btn btn-p" disabled={!apiKey.startsWith('sk-ant-')} onClick={()=>setScreen('upload')}>Continue →</button>
-    </div>
-  );
-
-  if(screen==='upload') return (
-    <div className="fade-up">
-      <div className="section-hd">
-        <div className="hd" style={{fontSize:18}}>Workbook Generator</div>
-        <button className="btn btn-g btn-sm" onClick={()=>{setScreen('key');setApiKey('');setFiles([]);}}>Change Key</button>
-      </div>
-      <input ref={fileRef2} type="file" accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp" multiple style={{display:'none'}} onChange={e=>setFiles(f=>[...f,...Array.from(e.target.files)])}/>
-      <div style={{border:'2px dashed var(--bdr)',borderRadius:10,padding:'60px 0',textAlign:'center',cursor:'pointer',marginBottom:20,transition:'border-color .15s'}} onClick={()=>fileRef2.current.click()} onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='var(--acc)';}} onDragLeave={e=>{e.currentTarget.style.borderColor='var(--bdr)';}} onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='var(--bdr)';setFiles(f=>[...f,...Array.from(e.dataTransfer.files)]);}}>
-        <div style={{fontSize:36,marginBottom:10,opacity:.4}}>📂</div>
-        <div style={{fontFamily:'Barlow Condensed',fontSize:16,fontWeight:700,color:'var(--txt)',marginBottom:6}}>DROP ORDER FILES HERE</div>
-        <div style={{fontSize:12,color:'var(--muted)'}}>Excel, PDF, PNG, JPG, WEBP — one file per customer order</div>
-      </div>
-      {files.length>0 && (
-        <div className="card" style={{marginBottom:16}}>
-          {files.map((f,i)=>(
-            <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--bdr)'}}>
-              <span style={{fontSize:13}}>{f.name}</span>
-              <button className="btn btn-d btn-xs" onClick={()=>setFiles(fs=>fs.filter((_,j)=>j!==i))}>✕</button>
-            </div>
-          ))}
-          <div style={{display:'flex',justifyContent:'flex-end',marginTop:14,gap:8}}>
-            <button className="btn btn-g btn-sm" onClick={()=>setFiles([])}>Clear All</button>
-            <button className="btn btn-p btn-sm" onClick={processAll}>{`Process ${files.length} File${files.length!==1?'s':''} →`}</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  if(screen==='processing') return (
-    <div style={{maxWidth:560,margin:'60px auto'}}>
-      <div className="hd" style={{fontSize:20,marginBottom:24,textAlign:'center'}}>Processing Files…</div>
-      {statuses.map((s,i)=>(
-        <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:'1px solid var(--bdr)'}}>
-          <div style={{width:10,height:10,borderRadius:'50%',background:sc2[s.status]||'var(--muted)',flexShrink:0,transition:'background .3s'}}/>
-          <div style={{flex:1,fontSize:13}}>{s.name}</div>
-          <div style={{fontSize:11,color:sc2[s.status],fontFamily:'Barlow Condensed',fontWeight:700}}>{sl2[s.status]}</div>
-          {s.error && <div style={{fontSize:10,color:'var(--err)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}}>{s.error}</div>}
-        </div>
-      ))}
-    </div>
-  );
-
-  // Results screen
-  const raw2=buildRaw2(orders); const con2=computeCon2(raw2);
-  const totalMaterials=Object.keys(raw2).length;
+  const scMap={pending:'var(--muted)',reading:'var(--acc2)',analyzing:'var(--acc)',done:'var(--ok)',error:'var(--err)'};
+  const slMap={pending:'Pending',reading:'Reading...',analyzing:'AI Analyzing...',done:'Done',error:'Error'};
 
   return (
     <div className="fade-up">
-      <div className="section-hd">
-        <div>
-          <div className="hd" style={{fontSize:18}}>Workbook Generator — Results</div>
-          <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{orders.length} order{orders.length!==1?'s':''} · {totalMaterials} materials extracted {errors.length>0 && `· ${errors.length} error${errors.length!==1?'s':''}`}</div>
-        </div>
-        <div style={{display:'flex',gap:8}}>
-          <button className="btn btn-g btn-sm" onClick={()=>{setScreen('upload');setOrders([]);setErrors([]);setFiles([]);}}>← New Batch</button>
-          {orders.length>0 && <button className="btn btn-p btn-sm" onClick={generateWB}>⬇ Download Workbook</button>}
-        </div>
-      </div>
-
-      <div style={{display:'flex',gap:8,marginBottom:16,borderBottom:'1px solid var(--bdr)',paddingBottom:8}}>
-        {['results','pricing'].map(t=>(
-          <button key={t} className={`tab${tab===t?' on':''}`} onClick={()=>setTab(t)} style={{textTransform:'capitalize'}}>{t==='pricing'?'💲 Material Pricing':'📋 Extracted Orders'}</button>
-        ))}
-      </div>
-
-      {tab==='results' && (
-        <div>
-          {orders.map((o,i)=>(
-            <div key={i} className="card" style={{marginBottom:12}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
-                <div>
-                  <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15}}>{o.customerName||'Unknown'}</div>
-                  <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{[o.orderType,o.color,o.postHeight].filter(Boolean).join(' · ')}</div>
-                </div>
-                <span className="badge" style={{background:'var(--s3)',color:'var(--acc)',border:'1px solid var(--bdr)'}}>{(o.materials||[]).length} items</span>
-              </div>
-              <table>
-                <thead><tr><th>#</th><th>Material</th><th>Qty</th><th>Unit</th></tr></thead>
-                <tbody>
-                  {(o.materials||[]).map((m,j)=><tr key={j}><td style={{color:'var(--muted)'}}>{j+1}</td><td>{m.name}</td><td style={{fontWeight:600}}>{m.qty}</td><td style={{color:'var(--muted)'}}>{m.unit}</td></tr>)}
-                </tbody>
-              </table>
-              {o.notes && <div style={{marginTop:8,fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>Note: {o.notes}</div>}
-            </div>
-          ))}
-          {errors.length>0 && errors.map((e,i)=>(
-            <div key={i} className="alert-bar alert-err"><span style={{color:'var(--err)',fontWeight:700}}>✕ {e.name}</span><span style={{color:'var(--muted)'}}>{e.error}</span></div>
-          ))}
-          {!orders.length && <div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No orders extracted yet</div>}
+      {screen==='key' && (
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'65vh',gap:20}}>
+          <div style={{fontSize:40,opacity:.3}}>📑</div>
+          <div className="hd" style={{fontSize:22}}>Workbook Generator</div>
+          <div style={{fontSize:13,color:'var(--muted)',maxWidth:420,textAlign:'center'}}>AI-powered extraction from order files (Excel, PDF, images) to consolidated material workbook.</div>
+          <div style={{width:380}}>
+            <label>Anthropic API Key</label>
+            <input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-ant-..." onKeyDown={e=>{if(e.key==='Enter'&&apiKey.startsWith('sk-ant-'))setScreen('upload');}}/>
+            <div style={{fontSize:10,color:'var(--muted)',marginTop:4}}>Key stays in memory only</div>
+          </div>
+          <button className="btn btn-p" disabled={!apiKey.startsWith('sk-ant-')} onClick={()=>setScreen('upload')}>Continue</button>
         </div>
       )}
 
-      {tab==='pricing' && (
+      {screen==='upload' && (
         <div>
-          <div style={{fontSize:12,color:'var(--muted)',marginBottom:16}}>Prices are saved to your ERP session. Used for cost estimates in the generated workbook.</div>
-          {WBG_PRICE_GROUPS.map(pg=>(
-            <div key={pg.section} className="card" style={{marginBottom:12}}>
-              <div className="hd" style={{fontSize:12,marginBottom:12,color:'var(--acc)'}}>{pg.section}</div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-                {pg.items.map(item=>(
-                  <div key={item.key}>
-                    <label>{item.label} <span style={{color:'var(--muted)',fontWeight:400}}>{item.unit}</span></label>
-                    <input type="number" step="0.01" min="0" value={prices[item.key]||''} onChange={e=>{const np={...prices,[item.key]:e.target.value};setPrices(np);savePrices(np);}} placeholder="0.00"/>
-                  </div>
-                ))}
+          <div className="section-hd">
+            <div className="hd" style={{fontSize:18}}>Workbook Generator</div>
+            <button className="btn btn-g btn-sm" onClick={()=>{setScreen('key');setApiKey('');setWbgFiles([]);}}>Change Key</button>
+          </div>
+          <input ref={fileRef2} type="file" accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp" multiple style={{display:'none'}} onChange={e=>setWbgFiles(f=>[...f,...Array.from(e.target.files)])}/>
+          <div style={{border:'2px dashed var(--bdr)',borderRadius:10,padding:'60px 0',textAlign:'center',cursor:'pointer',marginBottom:20}} onClick={()=>fileRef2.current.click()} onDragOver={e=>{e.preventDefault();}} onDrop={e=>{e.preventDefault();setWbgFiles(f=>[...f,...Array.from(e.dataTransfer.files)]);}}>
+            <div style={{fontSize:36,marginBottom:10,opacity:.4}}>📂</div>
+            <div className="hd" style={{fontSize:16,color:'var(--txt)',marginBottom:6}}>DROP ORDER FILES HERE</div>
+            <div style={{fontSize:12,color:'var(--muted)'}}>Excel, PDF, PNG, JPG — one file per customer order</div>
+          </div>
+          {wbgFiles.length>0 && (
+            <div className="card" style={{marginBottom:16}}>
+              {wbgFiles.map((f,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--bdr)'}}>
+                  <span style={{fontSize:13}}>{f.name}</span>
+                  <button className="btn btn-d btn-xs" onClick={()=>setWbgFiles(fs=>fs.filter((_,j)=>j!==i))}>x</button>
+                </div>
+              ))}
+              <div style={{display:'flex',justifyContent:'flex-end',marginTop:14,gap:8}}>
+                <button className="btn btn-g btn-sm" onClick={()=>setWbgFiles([])}>Clear</button>
+                <button className="btn btn-p btn-sm" onClick={processAll}>{`Process ${wbgFiles.length} File${wbgFiles.length!==1?'s':''}`}</button>
               </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {screen==='processing' && (
+        <div style={{maxWidth:560,margin:'60px auto'}}>
+          <div className="hd" style={{fontSize:20,marginBottom:24,textAlign:'center'}}>Processing Files...</div>
+          {statuses.map((s,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:'1px solid var(--bdr)'}}>
+              <div style={{width:10,height:10,borderRadius:'50%',background:scMap[s.status]||'var(--muted)',flexShrink:0}}/>
+              <div style={{flex:1,fontSize:13}}>{s.name}</div>
+              <div style={{fontSize:11,color:scMap[s.status],fontFamily:'Barlow Condensed',fontWeight:700}}>{slMap[s.status]||s.status}</div>
+              {s.error && <div style={{fontSize:10,color:'var(--err)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}}>{s.error}</div>}
+            </div>
           ))}
-          <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:8}}>
-            <button className="btn btn-d btn-sm" onClick={()=>{setPrices({});savePrices({});}}>Clear Prices</button>
+        </div>
+      )}
+
+      {screen==='results' && (
+        <div>
+          <div className="section-hd">
+            <div>
+              <div className="hd" style={{fontSize:18}}>Workbook Generator — Results</div>
+              <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{wbgOrders.length} order{wbgOrders.length!==1?'s':''} · {Object.keys(wbgOrders.reduce((a,o)=>{(o.materials||[]).forEach(m=>{a[m.name]=1;});return a;},{})).length} materials</div>
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <button className="btn btn-g btn-sm" onClick={()=>{setScreen('upload');setWbgOrders([]);setWbgErrors([]);setWbgFiles([]);}}>New Batch</button>
+              {wbgOrders.length>0 && <button className="btn btn-p btn-sm" onClick={generateWB}>Download Workbook</button>}
+            </div>
           </div>
+          <div style={{display:'flex',gap:8,marginBottom:16,borderBottom:'1px solid var(--bdr)',paddingBottom:8}}>
+            {['results','pricing'].map(t=>(
+              <button key={t} className={`tab${wbgTab===t?' on':''}`} onClick={()=>setWbgTab(t)} style={{textTransform:'capitalize'}}>{t==='pricing'?'Material Pricing':'Extracted Orders'}</button>
+            ))}
+          </div>
+          {wbgTab==='results' && (
+            <div>
+              {wbgOrders.map((o,i)=>(
+                <div key={i} className="card" style={{marginBottom:12}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                    <div>
+                      <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15}}>{o.customerName||'Unknown'}</div>
+                      <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{[o.orderType,o.color,o.postHeight].filter(Boolean).join(' - ')}</div>
+                    </div>
+                    <span className="badge" style={{background:'var(--s3)',color:'var(--acc)',border:'1px solid var(--bdr)'}}>{(o.materials||[]).length} items</span>
+                  </div>
+                  <table>
+                    <thead><tr><th>#</th><th>Material</th><th>Qty</th><th>Unit</th></tr></thead>
+                    <tbody>{(o.materials||[]).map((m,j)=><tr key={j}><td style={{color:'var(--muted)'}}>{j+1}</td><td>{m.name}</td><td style={{fontWeight:600}}>{m.qty}</td><td style={{color:'var(--muted)'}}>{m.unit}</td></tr>)}</tbody>
+                  </table>
+                </div>
+              ))}
+              {wbgErrors.length>0 && wbgErrors.map((e,i)=>(
+                <div key={i} className="alert-bar alert-err"><span style={{color:'var(--err)',fontWeight:700}}>Error: {e.name}</span><span style={{color:'var(--muted)'}}>{e.error}</span></div>
+              ))}
+              {!wbgOrders.length && <div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No orders extracted yet</div>}
+            </div>
+          )}
+          {wbgTab==='pricing' && (
+            <div>
+              <div style={{fontSize:12,color:'var(--muted)',marginBottom:16}}>Prices saved to ERP session. Used for cost estimates in the generated workbook.</div>
+              {WBG_PRICE_GROUPS.map(pg=>(
+                <div key={pg.section} className="card" style={{marginBottom:12}}>
+                  <div className="hd" style={{fontSize:12,marginBottom:12,color:'var(--acc)'}}>{pg.section}</div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+                    {pg.items.map(item=>(
+                      <div key={item.key}>
+                        <label>{item.label} <span style={{color:'var(--muted)',fontWeight:400}}>{item.unit}</span></label>
+                        <input type="number" step="0.01" min="0" value={prices[item.key]||''} onChange={e=>{const np={...prices,[item.key]:e.target.value};setPrices(np);savePrices(np);}} placeholder="0.00"/>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:8}}>
+                <button className="btn btn-d btn-sm" onClick={()=>{setPrices({});savePrices({});}}>Clear Prices</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 };
-// fix undefined tags2 reference
+
+
 
 // ─── ORDER ANALYZER ──────────────────────────────────────────────────────────────
 const OrderAnalyzer = ({data}) => {
