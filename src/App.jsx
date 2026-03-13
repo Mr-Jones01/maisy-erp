@@ -25834,7 +25834,6 @@ const WorkbookGenerator = ({data, setData}) => {
   // Results screen
   const raw2=buildRaw2(orders); const con2=computeCon2(raw2);
   const totalMaterials=Object.keys(raw2).length;
-  const taggedCount=Object.values(tags2||{}).filter(Boolean).length;
 
   return (
     <div className="fade-up">
@@ -25907,7 +25906,6 @@ const WorkbookGenerator = ({data, setData}) => {
   );
 };
 // fix undefined tags2 reference
-const tags2 = {};
 
 // ─── ORDER ANALYZER ──────────────────────────────────────────────────────────────
 const OrderAnalyzer = ({data}) => {
