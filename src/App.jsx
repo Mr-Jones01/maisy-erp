@@ -116,7 +116,7 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','workorders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','workorders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer','buildschedule','processtracker','processcost','shifthandoff','calculators','facilitymove','employeereviews','productcatalog','opsreference'],
   owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue','workorders'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
   shop:   ['dashboard','todo','production','orders','workorders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
@@ -25203,6 +25203,11 @@ const INIT = {
   orderDrafts: [],
   hotqueue: [],
   wbgPrices: {},
+  buildSchedule: [],
+  employeeReviews: [],
+  facilityMoveTasks: [],
+  facilityMoveOverview: {currentFacility:'15,000 sq ft — Hayden, ID',newFacility:'',targetDate:'',downtime:'',budget:0,coordinator:'Daniel Jones'},
+  kitCatalog: [],
 };
 
 
@@ -26105,6 +26110,16 @@ const NAVS = [
   {id:'people',icon:'◍',label:'People & HR'},
   {id:'automation',icon:'⊞',label:'Automation Roadmap'},
   {id:'kpi',icon:'◈',label:'KPI Dashboard'},
+  {section:'Admin Only'},
+  {id:'buildschedule',icon:'📅',label:'Build Schedule'},
+  {id:'processtracker',icon:'⏱',label:'Process Tracker'},
+  {id:'processcost',icon:'💲',label:'Process Cost Analysis'},
+  {id:'shifthandoff',icon:'📋',label:'Shift Handoff'},
+  {id:'calculators',icon:'🧮',label:'Shop Calculators'},
+  {id:'facilitymove',icon:'🏗️',label:'Facility Move'},
+  {id:'employeereviews',icon:'⭐',label:'Employee Reviews'},
+  {id:'productcatalog',icon:'🏷️',label:'Product Catalog'},
+  {id:'opsreference',icon:'📖',label:'Ops Reference'},
   {section:'Reference'},
   {id:'shopref',icon:'⊟',label:'Shop Reference'},
   {id:'workbookgen',icon:'📑',label:'Workbook Generator'},
@@ -30660,9 +30675,63 @@ const calcBOM = (order) => {
     }
   }
 
-  // ── 11. POWDER COAT — flag color for powder room (not deducted, just flagged)
-  if(totalPosts > 0 && color) {
-    items.push({inventoryId:'PC-FLAG', sku:'PC-FLAG', name:`Powder Coat: ${color}`, qty:totalPosts, unit:'Posts', cat:'Powder Coat', note:'Flag for powder room — verify color stock'});
+  // ── 11. POWDER COAT — calculate lbs needed and match to inventory item
+  // Surface area: 1"x3" tube @ 42" = 2.33 sqft, @ 36" = 2.0 sqft
+  // Top rail: 1"x2" tube = 0.5 sqft/ft
+  // Coverage: 80 sqft/lb at 2-3 mil DFT
+  if(totalPosts > 0 || totalRailFt > 0) {
+    const COVERAGE_SQ_FT_PER_LB = 80;
+    const postSqFt = is36
+      ? totalPosts * 2.0    // 36" post = 3.0ft × 0.667ft perimeter
+      : totalPosts * 2.33;  // 42" post = 3.5ft × 0.667ft perimeter
+    const railSqFt = totalRailFt * 0.5; // 1"x2" tube perimeter = 0.5ft/ft
+    const totalSqFt = postSqFt + railSqFt;
+    const lbsNeeded = Math.ceil((totalSqFt / COVERAGE_SQ_FT_PER_LB) * 10) / 10; // round up to 1 decimal
+
+    // Color match: strip spaces/dashes, extract code segment
+    // Order colors: "BK 303 Matte Black", "C241-BK303", "T002-WH08", etc.
+    // Inventory: "Powder - C241-BK303", "Powder - T002-WH08" etc.
+    const colorClean = (color||'').toUpperCase().replace(/\s+/g,'').replace(/-/g,'');
+    // Build inventory color lookup (RM-017 to RM-044)
+    const POWDER_MAP = {
+      'T009BG01':'RM-017','T002WH08':'RM-018','T075BK211':'RM-019','T002BK08':'RM-020',
+      'C013GR08':'RM-021','T005BK78':'RM-022','C241GR305':'RM-023','C206BK266':'RM-024',
+      'C241GR07':'RM-025','T025BR01':'RM-026','T243GR301':'RM-027','T064BR24':'RM-028',
+      'T013GR185':'RM-029','T291BR251':'RM-030','T091BR47':'RM-031','T375BK26':'RM-032',
+      'T012BR161':'RM-033','P000BK247':'RM-035','T375BK07':'RM-036','C031WH120':'RM-037',
+      'T238GR2070':'RM-038','T209C101':'RM-039','C209BR358':'RM-040','E305GR533':'RM-041',
+      'P000BG631':'RM-042','C241BK303':'RM-043','T032BL04':'RM-044',
+    };
+    // Try to find matching powder inv item
+    let powderInvId = null;
+    let matchedColorCode = null;
+    for(const [code, id] of Object.entries(POWDER_MAP)) {
+      if(colorClean.includes(code)) { powderInvId = id; matchedColorCode = code; break; }
+    }
+    // Fallback: try partial match on just the numeric portion
+    if(!powderInvId) {
+      const numMatch = (color||'').match(/\d{3,}/)?.[0];
+      if(numMatch) {
+        for(const [code, id] of Object.entries(POWDER_MAP)) {
+          if(code.includes(numMatch)) { powderInvId = id; matchedColorCode = code; break; }
+        }
+      }
+    }
+
+    const powderName = powderInvId
+      ? `Powder Coat — ${color} (${powderInvId})`
+      : `Powder Coat — ${color||'UNSPECIFIED'} ⚠ Color not in inventory map`;
+
+    items.push({
+      inventoryId: powderInvId || 'PC-UNKNOWN',
+      sku: powderInvId || 'PC-UNKNOWN',
+      name: powderName,
+      qty: lbsNeeded,
+      unit: 'LB',
+      cat: 'Powder Coat',
+      note: `${totalPosts} posts (${totalSqFt.toFixed(1)} sqft) ÷ ${COVERAGE_SQ_FT_PER_LB} sqft/lb = ${lbsNeeded} lbs`,
+      isPowder: true,
+    });
   }
 
   return items;
@@ -33607,7 +33676,7 @@ const WorkOrders = ({data, setData}) => {
     const bom = order.bom && order.bom.length > 0 ? order.bom : calcBOM(order);
     const totalPosts = (order.lineQty||0)+(order.stairQty||0)+(order.cornerQty||0);
 
-    const bomRows = bom.filter(i=>i.inventoryId!=='PC-FLAG').map(item => {
+    const bomRows = bom.filter(i=>!i.isPowder).map(item => {
       const inv = (data.inventory||[]).find(i=>i.id===item.inventoryId);
       const onHand = inv?.qty||0;
       const ok = onHand >= item.qty;
@@ -33624,7 +33693,7 @@ const WorkOrders = ({data, setData}) => {
         </tr>`;
     }).join('');
 
-    const powderCoat = bom.find(i=>i.inventoryId==='PC-FLAG');
+    const powderCoat = bom.find(i=>i.isPowder);
     const railPieces = [
       (order.rail8ft||0)>0   ? `${order.rail8ft}× 8ft`   : '',
       (order.rail12ft||0)>0  ? `${order.rail12ft}× 12ft`  : '',
@@ -33702,17 +33771,34 @@ const WorkOrders = ({data, setData}) => {
 
 <!-- Powder Coat -->
 <div class="section">
-  <div class="section-title">Powder Coat Color</div>
-  <div style="background:#1a1a2e;color:#fff;padding:12px 16px;border-radius:6px;display:flex;align-items:center;justify-content:space-between">
+  <div class="section-title">Powder Coat</div>
+  <div style="background:#1a1a2e;color:#fff;padding:14px 16px;border-radius:6px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px;align-items:center">
     <div>
       <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:3px">Color Code / Name</div>
       <div style="font-size:20px;font-weight:900;letter-spacing:.04em">${order.color||'NOT SPECIFIED'}</div>
+      ${powderCoat&&powderCoat.inventoryId!=='PC-UNKNOWN'?`<div style="font-size:10px;opacity:.6;margin-top:3px">Inventory: ${powderCoat.inventoryId}</div>`:'<div style="font-size:10px;color:#f87171;margin-top:3px">⚠ Color not matched to inventory — verify manually</div>'}
     </div>
-    <div style="text-align:right">
-      <div style="font-size:9px;opacity:.7;margin-bottom:3px">Total Posts to Coat</div>
+    <div style="text-align:center">
+      <div style="font-size:9px;opacity:.7;margin-bottom:3px">Posts to Coat</div>
       <div style="font-size:28px;font-weight:900">${totalPosts}</div>
     </div>
+    <div style="text-align:center">
+      <div style="font-size:9px;opacity:.7;margin-bottom:3px">Powder Needed</div>
+      <div style="font-size:28px;font-weight:900">${powderCoat?powderCoat.qty:'—'}</div>
+      <div style="font-size:9px;opacity:.7">lbs</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:9px;opacity:.7;margin-bottom:3px">On Hand</div>
+      ${(()=>{
+        if(!powderCoat||powderCoat.inventoryId==='PC-UNKNOWN') return '<div style="font-size:16px;color:#f87171;font-weight:700">Check</div>';
+        const inv=(data.inventory||[]).find(i=>i.id===powderCoat.inventoryId);
+        const oh=inv?.qty||0;
+        const ok=oh>=powderCoat.qty;
+        return `<div style="font-size:24px;font-weight:900;color:${ok?'#86efac':'#f87171'}">${oh}</div><div style="font-size:9px;opacity:.7">lbs</div>`;
+      })()}
+    </div>
   </div>
+  ${powderCoat?`<div style="font-size:10px;color:#6b7280;margin-top:4px">Calculation: ${powderCoat.note}</div>`:''}
 </div>
 
 <!-- Post Quantities -->
@@ -33865,6 +33951,1880 @@ ${order.notes ? `<div class="section">
   );
 };
 
+
+// ─── BUILD SCHEDULE ──────────────────────────────────────────────────────────
+const BuildSchedule = ({data, setData}) => {
+  const [bsTab, setBsTab] = useState('schedule');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const schedule = data.buildSchedule || [];
+  const stations = ['Cutting','CNC','Welding','Grinding','Powder Coat','Assembly','QC','Packaging'];
+  const stationColors = {'Cutting':'#06b6d4','CNC':'#8b5cf6','Welding':'#f59e0b','Grinding':'#6b7280','Powder Coat':'#ec4899','Assembly':'#10b981','QC':'#3b82f6','Packaging':'#f97316'};
+  const stationStatuses = ['Queued','In Progress','Complete','On Hold'];
+  const dailyOutput = [
+    {station:'1. Material Cutting', timePerSection:40, sectionsPerDay:13, laborPerDay:210.60, consumablePerDay:13.10, totalPerDay:224.06},
+    {station:'2. CNC Machining', timePerSection:37, sectionsPerDay:15, laborPerDay:274.73, consumablePerDay:24.58, totalPerDay:323.62},
+    {station:'3. Welding & Fabrication', timePerSection:88.5, sectionsPerDay:6, laborPerDay:310.64, consumablePerDay:60.26, totalPerDay:384.17},
+    {station:'4. Grinding & Finishing', timePerSection:41.5, sectionsPerDay:13, laborPerDay:218.50, consumablePerDay:65.87, totalPerDay:288.32},
+    {station:'5. Powder Coating', timePerSection:91, sectionsPerDay:6, laborPerDay:245.70, consumablePerDay:46.08, totalPerDay:296.47},
+    {station:'6. Assembly', timePerSection:39, sectionsPerDay:14, laborPerDay:208.85, consumablePerDay:314.22, totalPerDay:523.65},
+    {station:'7. Quality Control', timePerSection:25, sectionsPerDay:22, laborPerDay:247.50, consumablePerDay:21.78, totalPerDay:270.04},
+    {station:'8. Packaging & Shipping', timePerSection:34, sectionsPerDay:16, laborPerDay:208.08, consumablePerDay:213.76, totalPerDay:424.20},
+  ];
+  const bottleneck = dailyOutput.reduce((a,b)=>b.timePerSection>a.timePerSection?b:a);
+
+  const save = () => {
+    const rec = {...form, id:form.id||'BS-'+uid()};
+    if(!schedule.find(s=>s.id===rec.id)) setData(d=>({...d,buildSchedule:[...(d.buildSchedule||[]),rec]}));
+    else setData(d=>({...d,buildSchedule:(d.buildSchedule||[]).map(s=>s.id===rec.id?rec:s)}));
+    setModal(null);
+  };
+
+  const queuedOrders = (data.orders||[]).filter(o=>['Confirmed','In Production'].includes(o.status));
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Build Schedule</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}>
+            <span className="chip">{queuedOrders.length} active orders</span>
+            <span className="chip" style={{color:'var(--err)'}}>Bottleneck: {bottleneck.station}</span>
+          </div>
+        </div>
+        {bsTab==='schedule'&&<button className="btn btn-p" onClick={()=>{setForm({id:'',orderId:'',customer:'',productType:'',qty:0,priority:3,dateReceived:now(),dateDue:'',cutting:'Queued',cnc:'Queued',welding:'Queued',grinding:'Queued',powderCoat:'Queued',assembly:'Queued',qc:'Queued',packaging:'Queued',notes:''});setModal('add');}}>+ Add to Schedule</button>}
+      </div>
+      <StatRow>
+        <StatCard label="In Production" value={(data.orders||[]).filter(o=>o.status==='In Production').length} icon="⚙️" color="#f59e0b" sub="Active builds"/>
+        <StatCard label="Confirmed / Queued" value={(data.orders||[]).filter(o=>o.status==='Confirmed').length} icon="📋" color="var(--acc)" sub="Ready to start"/>
+        <StatCard label="Bottleneck Station" value="Welding" icon="⚠️" color="var(--err)" sub="6 sections/day max"/>
+        <StatCard label="Daily Capacity" value="6 sec/day" icon="📊" color="var(--muted)" sub="Limited by welding"/>
+      </StatRow>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['schedule','output','bottleneck'].map(t=>(
+          <button key={t} className={'tab'+(bsTab===t?' on':'')} onClick={()=>setBsTab(t)} style={{textTransform:'capitalize'}}>
+            {t==='output'?'Station Output':t==='bottleneck'?'Bottleneck Analysis':'Production Schedule'}
+          </button>
+        ))}
+      </div>
+
+      {bsTab==='schedule'&&<div>
+        {/* Live orders from Orders page */}
+        {queuedOrders.length>0&&<div style={{marginBottom:16}}>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Active Orders (from Orders page)</div>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <table style={{minWidth:1000}}>
+              <thead><tr><th>Order #</th><th>Customer</th><th>Product</th><th>Posts</th><th>Due</th><th>Status</th><th>Priority</th>{stations.map(s=><th key={s} style={{textAlign:'center',fontSize:9,whiteSpace:'nowrap'}}>{s}</th>)}</tr></thead>
+              <tbody>{queuedOrders.map(o=>{
+                const sched = schedule.find(s=>s.orderId===o.id)||{};
+                const totalPosts=(o.lineQty||0)+(o.stairQty||0)+(o.cornerQty||0);
+                return (<tr key={o.id}>
+                  <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.id}</td>
+                  <td style={{fontWeight:600}}>{o.customer}</td>
+                  <td style={{fontSize:11}}>{o.productType||'—'}</td>
+                  <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700}}>{totalPosts||'—'}</td>
+                  <td style={{fontSize:11,whiteSpace:'nowrap',color:o.dueDate&&o.dueDate<now()?'var(--err)':'var(--muted)'}}>{o.dueDate||'—'}</td>
+                  <td><Badge s={o.status}/></td>
+                  <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700,color:{'1':'var(--err)','2':'#f97316','3':'var(--warn)','4':'var(--acc)','5':'var(--muted)'}[o.priority||3]}}>{o.priority||3}</td>
+                  {stations.map(s=>{
+                    const key = s.toLowerCase().replace(' ','').replace(' coat','Coat');
+                    const val = sched[key]||'Queued';
+                    const bg = val==='Complete'?'rgba(16,185,129,.2)':val==='In Progress'?'rgba(245,158,11,.2)':val==='On Hold'?'rgba(239,68,68,.2)':'var(--s3)';
+                    const c = val==='Complete'?'var(--ok)':val==='In Progress'?'var(--warn)':val==='On Hold'?'var(--err)':'var(--muted)';
+                    return <td key={s} style={{textAlign:'center'}}>
+                      <select value={val} onChange={e=>{const upd={...(schedule.find(x=>x.orderId===o.id)||{id:'BS-'+uid(),orderId:o.id}),[key]:e.target.value};setData(d=>({...d,buildSchedule:d.buildSchedule?.find(x=>x.orderId===o.id)?d.buildSchedule.map(x=>x.orderId===o.id?upd:x):[...(d.buildSchedule||[]),upd]}));}} style={{background:bg,color:c,border:'none',borderRadius:3,padding:'2px 3px',fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,cursor:'pointer',outline:'none',width:72}}>
+                        {stationStatuses.map(s=><option key={s}>{s}</option>)}
+                      </select>
+                    </td>;
+                  })}
+                </tr>);
+              })}</tbody>
+            </table>
+          </div>
+        </div>}
+        {queuedOrders.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No active orders — confirm orders on the Orders page to populate the schedule</div>}
+      </div>}
+
+      {bsTab==='output'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>Station</th><th style={{textAlign:'right'}}>Min/Section</th><th style={{textAlign:'right'}}>Sections/Day</th><th style={{textAlign:'right'}}>Labor $/Day</th><th style={{textAlign:'right'}}>Consumable $/Day</th><th style={{textAlign:'right'}}>Total $/Day</th></tr></thead>
+          <tbody>{dailyOutput.map((s,i)=>(
+            <tr key={i} style={{background:s.station===bottleneck.station?'rgba(239,68,68,.05)':undefined}}>
+              <td style={{fontWeight:600,color:s.station===bottleneck.station?'var(--err)':undefined}}>{s.station}{s.station===bottleneck.station&&<span style={{marginLeft:6,fontSize:9,background:'rgba(239,68,68,.2)',color:'var(--err)',borderRadius:3,padding:'1px 5px',fontWeight:700}}>BOTTLENECK</span>}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:s.timePerSection>60?'var(--err)':s.timePerSection>40?'var(--warn)':'var(--ok)'}}>{s.timePerSection}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{s.sectionsPerDay}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{fmt$(s.laborPerDay)}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{fmt$(s.consumablePerDay)}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{fmt$(s.totalPerDay)}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+
+      {bsTab==='bottleneck'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+          {dailyOutput.map((s,i)=>(
+            <div key={i} className="card" style={{borderLeft:'4px solid '+(s.station===bottleneck.station?'var(--err)':stationColors[s.station.replace(/^\d+\. /,'').split(' ')[0]]||'var(--bdr)')}}>
+              <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:4}}>{s.station}</div>
+              <div style={{fontSize:24,fontFamily:'Barlow Condensed',fontWeight:700,color:s.station===bottleneck.station?'var(--err)':'var(--txt)'}}>{s.sectionsPerDay}/day</div>
+              <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{s.timePerSection} min/section</div>
+            </div>
+          ))}
+        </div>
+        <div className="card" style={{background:'rgba(239,68,68,.06)',border:'1px solid rgba(239,68,68,.25)'}}>
+          <div className="hd" style={{fontSize:14,color:'var(--err)',marginBottom:8}}>⚠ Bottleneck: {bottleneck.station}</div>
+          <div style={{fontSize:12,color:'var(--muted)',lineHeight:1.7}}>
+            Welding limits overall throughput to <strong style={{color:'var(--txt)'}}>6 sections/day</strong> regardless of capacity at other stations. 
+            All other stations run faster — they sit idle waiting for welding. 
+            To increase total output, focus investment on welding capacity: second welder, improved fixtures, or robotic welding integration per the Automation Roadmap.
+          </div>
+        </div>
+      </div>}
+
+      {modal==='add'&&<Modal title="Add to Build Schedule" onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="Order ID"><input value={form.orderId||''} placeholder="ORD-2000" onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
+          <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
+          <Field label="Product Type"><input value={form.productType||''} onChange={e=>setForm(f=>({...f,productType:e.target.value}))}/></Field>
+          <Field label="Qty"><input type="number" value={form.qty||''} onChange={e=>setForm(f=>({...f,qty:+e.target.value}))}/></Field>
+          <Field label="Date Received"><input type="date" value={form.dateReceived||''} onChange={e=>setForm(f=>({...f,dateReceived:e.target.value}))}/></Field>
+          <Field label="Due Date"><input type="date" value={form.dateDue||''} onChange={e=>setForm(f=>({...f,dateDue:e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:8}}><input value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:12}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+    </div>
+  );
+};
+
+// ─── PROCESS TRACKER ─────────────────────────────────────────────────────────
+const ProcessTracker = ({data}) => {
+  const [ptTab, setPtTab] = useState('cutting');
+  const STATIONS = {
+    cutting: {
+      name:'1. Material Cutting', rate:24.30,
+      tasks:[
+        {task:'Pull work order & verify BOM',min:3,notes:'Review order spec, count components'},
+        {task:'Retrieve raw aluminum from rack',min:4,notes:'Overhead crane or manual pull'},
+        {task:'Inspect raw material for defects',min:2,notes:'Check dents, scratches, correct alloy'},
+        {task:'Measure & mark cut lines',min:3,notes:'Tape measure + marking pen per cut list'},
+        {task:'Set up cold saw / chop saw',min:2,notes:'Blade check, fence alignment'},
+        {task:'Cut top rail (6063-T6 tubing)',min:1.5,notes:'8ft nominal length'},
+        {task:'Cut bottom rail',min:1.5,notes:'Per section'},
+        {task:'Cut pickets / balusters',min:8,notes:'~12-16 pickets @ 30sec each'},
+        {task:'Deburr all cut ends',min:5,notes:'Scotch-Brite or file — all edges'},
+        {task:'Inspect & stage cut parts',min:3,notes:'Count, bundle, label'},
+      ]
+    },
+    cnc: {
+      name:'2. CNC Machining', rate:29.70,
+      tasks:[
+        {task:'Load CNC program for order',min:2,notes:'Select program or load from USB'},
+        {task:'Install / verify tooling',min:4,notes:'Tool length offset, collet inspection'},
+        {task:'Load fixture onto CNC table',min:3,notes:'Bolt down jig, align stops'},
+        {task:'Load first workpiece into fixture',min:1.5,notes:'Clamp profile, verify seating'},
+        {task:'Run first piece (prove out)',min:3,notes:'Slow feed first pass to verify'},
+        {task:'Inspect first piece',min:2,notes:'Calipers, go/no-go gauges'},
+        {task:'Run top rail — drill picket holes',min:4,notes:'12-16 holes per 8ft section'},
+        {task:'Run bottom rail — drill picket holes',min:4,notes:'Mirror pattern of top rail'},
+        {task:'Run pickets / balusters',min:8,notes:'Batch run — all in one fixture load'},
+        {task:'Unload & inspect batch',min:3,notes:'Count, check hole placement'},
+        {task:'Clean CNC table',min:2,notes:'Vacuum chips, wipe table'},
+      ]
+    },
+    welding: {
+      name:'3. Welding & Fabrication', rate:32.00,
+      tasks:[
+        {task:'Set up welding fixture',min:5,notes:'Clamp rails and pickets to fixture'},
+        {task:'Tack weld all joints',min:15,notes:'4 tacks per picket joint minimum'},
+        {task:'Full weld top rail joints',min:20,notes:'TIG weld — full penetration'},
+        {task:'Full weld bottom rail joints',min:20,notes:'TIG weld — full penetration'},
+        {task:'Weld end caps',min:8,notes:'Both ends, both rails'},
+        {task:'Grind weld seams flush',min:10,notes:'4.5" angle grinder'},
+        {task:'Inspect welds — visual QC',min:5,notes:'No porosity, undercut, or cold welds'},
+        {task:'Stage for grinding',min:5,notes:'Bundle and label'},
+      ]
+    },
+    grinding: {
+      name:'4. Grinding & Finishing', rate:24.30,
+      tasks:[
+        {task:'Grind weld flash and seams',min:12,notes:'Angle grinder + flap disc'},
+        {task:'Scotch-Brite surface blend',min:10,notes:'Uniform surface finish'},
+        {task:'Sand all edges and corners',min:8,notes:'Remove sharp edges — safety'},
+        {task:'Final surface inspection',min:5,notes:'Reject if visible scratches'},
+        {task:'Clean with solvent wipe',min:3,notes:'IPA wipe — remove oils for powder'},
+        {task:'Stage for powder coat',min:3,notes:'Rack and label'},
+      ]
+    },
+    powder: {
+      name:'5. Powder Coating', rate:27.00,
+      tasks:[
+        {task:'Pre-inspection — verify surface clean',min:2,notes:'Reject back to grinding if issues'},
+        {task:'Hang parts on rack',min:4,notes:'Proper spacing, ground connections'},
+        {task:'Outgassing bake (aluminum)',min:10,notes:'400°F for 10 min'},
+        {task:'Cool to ambient temperature',min:5,notes:'Must cool before pretreat'},
+        {task:'Chemical pretreatment (3-stage)',min:8,notes:'Cleaner → rinse → conversion coating'},
+        {task:'Dry parts',min:5,notes:'Forced air + oven flash'},
+        {task:'Mask areas not to be coated',min:3,notes:'Silicone plugs, high-temp tape'},
+        {task:'Set up powder gun',min:2,notes:'kV, flow rate, air pressure'},
+        {task:'Apply powder coat',min:8,notes:'2 passes — even coverage'},
+        {task:'Cure in oven',min:20,notes:'400°F for 20 min'},
+        {task:'Cool and inspect DFT',min:10,notes:'2-3 mil target — use DFT gauge'},
+      ]
+    },
+    assembly: {
+      name:'6. Assembly', rate:24.30,
+      tasks:[
+        {task:'Pull hardware kit per BOM',min:3,notes:'Count all hardware against BOM'},
+        {task:'Install pickets to rails',min:10,notes:'Snap or fasten per product spec'},
+        {task:'Install cable terminations',min:8,notes:'Swage and tensioner ends'},
+        {task:'Install end caps',min:3,notes:'Both ends, both rails'},
+        {task:'Final assembly inspection',min:5,notes:'Square, plumb, all hardware present'},
+        {task:'Apply touch-up paint if needed',min:3,notes:'Small brush, color-match only'},
+        {task:'Stage for QC',min:2,notes:'Label with order ID'},
+      ]
+    },
+    qc: {
+      name:'7. Quality Control', rate:24.30,
+      tasks:[
+        {task:'Verify order against BOM',min:3,notes:'Count all components'},
+        {task:'Inspect powder coat finish',min:5,notes:'DFT gauge, visual — no runs, sags'},
+        {task:'Check weld quality',min:5,notes:'Visual + tap test'},
+        {task:'Verify dimensions',min:5,notes:'Height, length, hole spacing'},
+        {task:'Check hardware completeness',min:3,notes:'All fasteners, caps, tensioners'},
+        {task:'Document defects or pass',min:2,notes:'Log in QC system'},
+        {task:'Apply QC pass label',min:1,notes:'Green sticker or stamp'},
+        {task:'Stage for packaging',min:1,notes:''},
+      ]
+    },
+    packaging: {
+      name:'8. Packaging & Shipping', rate:27.00,
+      tasks:[
+        {task:'Wrap each piece in poly tubing',min:5,notes:'6mil poly — full coverage'},
+        {task:'Bundle sections together',min:4,notes:'Strapping, edge protectors'},
+        {task:'Apply labels and paperwork',min:3,notes:'Ship label, packing list, order ID'},
+        {task:'Palletize if LTL',min:8,notes:'Stretch wrap, secure to pallet'},
+        {task:'Final shipping inspection',min:3,notes:'Count pieces vs order'},
+        {task:'Schedule carrier pickup',min:3,notes:'Call or portal booking'},
+        {task:'Update order status to Shipped',min:1,notes:''},
+      ]
+    }
+  };
+
+  const tabList = Object.entries(STATIONS);
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Process Tracker</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Step-by-step task breakdown for each production station — times, labor costs, and notes</div>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+        {tabList.map(([key,s])=>(
+          <button key={key} className={'tab'+(ptTab===key?' on':'')} onClick={()=>setPtTab(key)} style={{fontSize:10,padding:'4px 10px'}}>
+            {s.name.split('.')[0]+'.'+s.name.split('.')[1]?.split(' ')[1]}
+          </button>
+        ))}
+      </div>
+      {tabList.map(([key,station])=>(
+        ptTab===key&&<div key={key}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+            {[
+              {l:'Station',v:station.name,c:'var(--acc)'},
+              {l:'Labor Rate',v:fmt$(station.rate)+'/hr',c:'var(--warn)'},
+              {l:'Total Time',v:(station.tasks.reduce((a,b)=>a+b.min,0))+' min',c:'var(--txt)'},
+              {l:'Labor Cost',v:fmt$(station.tasks.reduce((a,b)=>a+b.min,0)/60*station.rate),c:'var(--ok)'},
+            ].map(s=>(
+              <div key={s.l} className="card" style={{textAlign:'center'}}>
+                <div style={{fontSize:9,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{s.l}</div>
+                <div style={{fontSize:18,fontFamily:'Barlow Condensed',fontWeight:700,color:s.c}}>{s.v}</div>
+              </div>
+            ))}
+          </div>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <table>
+              <thead><tr><th>#</th><th>Task / Step</th><th style={{textAlign:'right'}}>Min</th><th style={{textAlign:'right'}}>Labor Cost</th><th>Notes</th></tr></thead>
+              <tbody>{station.tasks.map((t,i)=>(
+                <tr key={i}>
+                  <td className="mono" style={{fontSize:11,color:'var(--muted)',width:30}}>{i+1}</td>
+                  <td style={{fontWeight:600}}>{t.task}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{t.min}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--warn)'}}>{fmt$(t.min/60*station.rate)}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td>
+                </tr>
+              ))}
+              <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+                <td colSpan={2} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',paddingLeft:12}}>TOTAL</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{station.tasks.reduce((a,b)=>a+b.min,0)} min</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(station.tasks.reduce((a,b)=>a+b.min,0)/60*station.rate)}</td>
+                <td></td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── SHIFT HANDOFF ───────────────────────────────────────────────────────────
+const ShiftHandoff = ({data, setData}) => {
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const log = (data.shiftHandoff || []).map(l=>({...l, shiftLead:l.shiftLead||l.lead||'', id:l.id||'SH-'+Math.random().toString(36).slice(2)}));
+  const save = () => {
+    const rec = {...form, id:form.id||'SH-'+uid()};
+    if(!log.find(l=>l.id===rec.id)) setData(d=>({...d,shiftHandoff:[rec,...(d.shiftHandoff||[])]}));
+    else setData(d=>({...d,shiftHandoff:(d.shiftHandoff||[]).map(l=>l.id===rec.id?rec:l)}));
+    setModal(null);
+  };
+  const statusDot = v => <span style={{display:'inline-block',width:8,height:8,borderRadius:'50%',background:(!v||v==='None')?'var(--ok)':'var(--err)',marginRight:5}}/>;
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Shift Handoff</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>End-of-day production notes for shift leads</div>
+        </div>
+        <button className="btn btn-p" onClick={()=>{setForm({id:'',date:now(),shiftLead:'',ordersCompleted:0,ordersInProgress:0,stationsDown:'None',qualityIssues:'None',materialShortages:'None',safetyIssues:'None',notes:''});setModal('edit');}}>+ Add Handoff</button>
+      </div>
+      {log.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No shift handoff notes yet</div>}
+      {log.length>0&&<div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {log.slice(0,20).map((l,i)=>(
+          <div key={i} className="card" style={{borderLeft:'4px solid '+((l.stationsDown&&l.stationsDown!=='None')||(l.qualityIssues&&l.qualityIssues!=='None')||(l.safetyIssues&&l.safetyIssues!=='None')?'var(--err)':'var(--ok)')}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:14}}>{l.date} — {l.shiftLead}</div>
+                <div style={{display:'flex',gap:12,marginTop:4}}>
+                  <span style={{fontSize:11,color:'var(--ok)'}}><strong>{l.ordersCompleted}</strong> completed</span>
+                  <span style={{fontSize:11,color:'var(--warn)'}}><strong>{l.ordersInProgress}</strong> in progress</span>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <button className="btn btn-g btn-sm" onClick={()=>{setForm({...l});setModal('edit');}}>Edit</button>
+                <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,shiftHandoff:(d.shiftHandoff||[]).filter(x=>x.id!==l.id)}))}>×</button>
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+              {[
+                {l:'Stations Down',v:l.stationsDown},
+                {l:'Quality Issues',v:l.qualityIssues},
+                {l:'Material Shortages',v:l.materialShortages},
+                {l:'Safety Issues',v:l.safetyIssues},
+              ].map(f=>(
+                <div key={f.l} style={{background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
+                  <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:2}}>{f.l}</div>
+                  <div style={{fontSize:11,fontWeight:600,display:'flex',alignItems:'center'}}>{statusDot(f.v)}{f.v||'None'}</div>
+                </div>
+              ))}
+            </div>
+            {l.notes&&<div style={{marginTop:8,fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>{l.notes}</div>}
+          </div>
+        ))}
+      </div>}
+      {modal==='edit'&&<Modal title="Shift Handoff" onClose={()=>setModal(null)} lg>
+        <div className="grid2">
+          <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+          <Field label="Shift Lead"><select value={form.shiftLead||''} onChange={e=>setForm(f=>({...f,shiftLead:e.target.value}))}><option value="">—</option>{['Daniel','Amber','Jace','Michael','Nick'].map(n=><option key={n}>{n}</option>)}</select></Field>
+          <Field label="Orders Completed"><input type="number" min="0" value={form.ordersCompleted||''} onChange={e=>setForm(f=>({...f,ordersCompleted:+e.target.value}))}/></Field>
+          <Field label="Orders In Progress"><input type="number" min="0" value={form.ordersInProgress||''} onChange={e=>setForm(f=>({...f,ordersInProgress:+e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+          <Field label="Stations Down"><input value={form.stationsDown||''} placeholder="None" onChange={e=>setForm(f=>({...f,stationsDown:e.target.value}))}/></Field>
+          <Field label="Quality Issues"><input value={form.qualityIssues||''} placeholder="None" onChange={e=>setForm(f=>({...f,qualityIssues:e.target.value}))}/></Field>
+          <Field label="Material Shortages"><input value={form.materialShortages||''} placeholder="None" onChange={e=>setForm(f=>({...f,materialShortages:e.target.value}))}/></Field>
+          <Field label="Safety Issues"><input value={form.safetyIssues||''} placeholder="None" onChange={e=>setForm(f=>({...f,safetyIssues:e.target.value}))}/></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={3} value={form.notes||''} placeholder="Additional details, follow-up items, hand-off instructions..." onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:12}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+    </div>
+  );
+};
+
+// ─── CALCULATORS ─────────────────────────────────────────────────────────────
+const Calculators = () => {
+  const [calcTab, setCalcTab] = useState('powder');
+  // Powder Coat Calc
+  const [pc, setPc] = useState({perimeter:4.71,length:6,pieces:30,costPerLb:4.50,coverage:80});
+  const pcSqFtPerPiece = pc.perimeter / 12 * pc.length;
+  const pcTotalSqFt = pcSqFtPerPiece * pc.pieces;
+  const pcLbsNeeded = pcTotalSqFt / pc.coverage;
+  const pcMaterialCost = pcLbsNeeded * pc.costPerLb;
+  // Material Cost Calc
+  const [mc, setMc] = useState({rollLength:1000,purchasePrice:93,waste:0,pieces:10,pieceLength:8});
+  const mcCostPerFt = mc.purchasePrice / (mc.rollLength * (1 - mc.waste/100));
+  const mcCostPerPiece = mcCostPerFt * mc.pieceLength;
+  const mcTotalCost = mcCostPerPiece * mc.pieces;
+  // Labor Calc
+  const [lc, setLc] = useState({wage:22,payrollTax:7.65,workersComp:4,benefits:3.5,overhead:5,hours:8,units:80});
+  const lcBurden = (lc.payrollTax/100+lc.workersComp/100)*lc.wage + lc.benefits + lc.overhead;
+  const lcFullRate = lc.wage + lcBurden;
+  const lcLaborPerDay = lcFullRate * lc.hours;
+  const lcLaborPerUnit = lcLaborPerDay / lc.units;
+  // Automation ROI
+  const [ar, setAr] = useState({workers:3,rate:38,shifts:1,days:250,hrs:7,units:80,capex:250000,autoWorkers:1,autoRate:38,autoUnits:200});
+  const arManualAnnual = ar.workers * ar.rate * ar.hrs * ar.shifts * ar.days;
+  const arAutoAnnual = ar.autoWorkers * ar.rate * ar.hrs * ar.shifts * ar.days;
+  const arSavings = arManualAnnual - arAutoAnnual;
+  const arPayback = ar.capex / arSavings;
+  const arManualUnitsYr = ar.units * ar.shifts * ar.days;
+  const arAutoUnitsYr = ar.autoUnits * ar.shifts * ar.days;
+  // Unit Converter
+  const [uc, setUc] = useState({ft:10});
+  const ucIn = uc.ft * 12;
+  const ucMm = uc.ft * 304.8;
+  const ucM = uc.ft * 0.3048;
+
+  const CalcField = ({label, value, onChange, type='number', step='any', unit}) => (
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+      <label style={{flex:1,fontSize:11,color:'var(--muted)',margin:0,textTransform:'none',letterSpacing:0}}>{label}</label>
+      <input type={type} step={step} value={value} onChange={e=>onChange(e.target.value)} style={{width:100,textAlign:'right'}}/>
+      {unit&&<span style={{fontSize:11,color:'var(--muted)',width:30}}>{unit}</span>}
+    </div>
+  );
+  const Result = ({label,value,color='var(--ok)'}) => (
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--s2)',borderRadius:5,marginBottom:6}}>
+      <span style={{fontSize:11,color:'var(--muted)'}}>{label}</span>
+      <span style={{fontFamily:'Barlow Condensed',fontSize:16,fontWeight:700,color}}>{value}</span>
+    </div>
+  );
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Shop Calculators</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Interactive calculators for powder coat, material cost, labor, automation ROI, and unit conversion</div>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+        {[['powder','🎨 Powder Coat'],['material','📦 Material Cost'],['labor','👷 Labor & Job Cost'],['roi','🤖 Automation ROI'],['convert','📐 Unit Converter']].map(([k,l])=>(
+          <button key={k} className={'tab'+(calcTab===k?' on':'')} onClick={()=>setCalcTab(k)}>{l}</button>
+        ))}
+      </div>
+
+      {calcTab==='powder'&&<div className="grid2" style={{gap:20}}>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Inputs</div>
+          <CalcField label="Tube/Rail Perimeter (in)" value={pc.perimeter} onChange={v=>setPc(p=>({...p,perimeter:+v}))}/>
+          <CalcField label="Piece Length (ft)" value={pc.length} onChange={v=>setPc(p=>({...p,length:+v}))} unit="ft"/>
+          <CalcField label="Number of Pieces in Batch" value={pc.pieces} onChange={v=>setPc(p=>({...p,pieces:+v}))} unit="pcs"/>
+          <CalcField label="Powder Cost per lb" value={pc.costPerLb} onChange={v=>setPc(p=>({...p,costPerLb:+v}))} step="0.01" unit="$"/>
+          <CalcField label="Coverage Rate" value={pc.coverage} onChange={v=>setPc(p=>({...p,coverage:+v}))} unit="sqft/lb"/>
+          <div style={{fontSize:10,color:'var(--muted)',marginTop:8}}>Typical: 60-100 sqft/lb at 2-3 mil DFT</div>
+        </div>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Results</div>
+          <Result label="Surface Area per Piece" value={(pcSqFtPerPiece).toFixed(3)+' sqft'}/>
+          <Result label="Total Batch Surface Area" value={(pcTotalSqFt).toFixed(2)+' sqft'}/>
+          <Result label="Powder Needed" value={(pcLbsNeeded).toFixed(2)+' lbs'}/>
+          <Result label="Powder Material Cost" value={fmt$(pcMaterialCost)} color="var(--warn)"/>
+          <Result label="Cost per Piece" value={fmt$(pcMaterialCost/pc.pieces)} color="var(--acc)"/>
+          <div style={{marginTop:10,padding:'8px 12px',background:'rgba(236,72,153,.08)',border:'1px solid rgba(236,72,153,.2)',borderRadius:5,fontSize:11,color:'#ec4899'}}>
+            For 1"x3" aluminum post (42"): perimeter ≈ 8in = 0.667ft → 3.5ft long → 2.33 sqft/post
+          </div>
+        </div>
+      </div>}
+
+      {calcTab==='material'&&<div className="grid2" style={{gap:20}}>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Inputs — Linear Material</div>
+          <CalcField label="Total Roll/Coil Length" value={mc.rollLength} onChange={v=>setMc(m=>({...m,rollLength:+v}))} unit="ft"/>
+          <CalcField label="Total Purchase Price" value={mc.purchasePrice} onChange={v=>setMc(m=>({...m,purchasePrice:+v}))} step="0.01" unit="$"/>
+          <CalcField label="Scrap / Waste Factor" value={mc.waste} onChange={v=>setMc(m=>({...m,waste:+v}))} unit="%"/>
+          <CalcField label="Pieces Needed" value={mc.pieces} onChange={v=>setMc(m=>({...m,pieces:+v}))} unit="pcs"/>
+          <CalcField label="Length per Piece" value={mc.pieceLength} onChange={v=>setMc(m=>({...m,pieceLength:+v}))} unit="ft"/>
+        </div>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Results</div>
+          <Result label="Cost per Usable Foot" value={'$'+mcCostPerFt.toFixed(4)+'/ft'}/>
+          <Result label="Cost per Piece" value={fmt$(mcCostPerPiece)}/>
+          <Result label="Total Material Cost" value={fmt$(mcTotalCost)} color="var(--warn)"/>
+        </div>
+      </div>}
+
+      {calcTab==='labor'&&<div className="grid2" style={{gap:20}}>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Inputs</div>
+          <CalcField label="Base Hourly Wage" value={lc.wage} onChange={v=>setLc(l=>({...l,wage:+v}))} step="0.5" unit="$/hr"/>
+          <CalcField label="Payroll Tax Burden" value={lc.payrollTax} onChange={v=>setLc(l=>({...l,payrollTax:+v}))} unit="%"/>
+          <CalcField label="Workers Comp Rate" value={lc.workersComp} onChange={v=>setLc(l=>({...l,workersComp:+v}))} unit="%"/>
+          <CalcField label="Benefits / Insurance" value={lc.benefits} onChange={v=>setLc(l=>({...l,benefits:+v}))} step="0.5" unit="$/hr"/>
+          <CalcField label="Overhead Allocation" value={lc.overhead} onChange={v=>setLc(l=>({...l,overhead:+v}))} step="0.5" unit="$/hr"/>
+          <CalcField label="Hours per Shift" value={lc.hours} onChange={v=>setLc(l=>({...l,hours:+v}))} step="0.25" unit="hrs"/>
+          <CalcField label="Units per Shift" value={lc.units} onChange={v=>setLc(l=>({...l,units:+v}))} unit="pcs"/>
+        </div>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Results</div>
+          <Result label="Fully-Loaded Labor Rate" value={fmt$(lcFullRate)+'/hr'} color="var(--warn)"/>
+          <Result label="Labor Cost per Shift" value={fmt$(lcLaborPerDay)}/>
+          <Result label="Labor Cost per Unit" value={fmt$(lcLaborPerUnit)} color="var(--acc)"/>
+          <Result label="Annual Labor Cost (250 days)" value={fmt$(lcFullRate*lc.hours*250)} color="var(--err)"/>
+        </div>
+      </div>}
+
+      {calcTab==='roi'&&<div className="grid2" style={{gap:20}}>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14,color:'var(--muted)'}}>Manual Operations</div>
+          <CalcField label="Workers on Task" value={ar.workers} onChange={v=>setAr(a=>({...a,workers:+v}))}/>
+          <CalcField label="Fully-Loaded Rate" value={ar.rate} onChange={v=>setAr(a=>({...a,rate:+v}))} unit="$/hr"/>
+          <CalcField label="Units per Shift" value={ar.units} onChange={v=>setAr(a=>({...a,units:+v}))}/>
+          <div className="hd" style={{fontSize:13,margin:'14px 0 10px',color:'var(--acc)'}}>Automated Operations</div>
+          <CalcField label="Workers Needed" value={ar.autoWorkers} onChange={v=>setAr(a=>({...a,autoWorkers:+v}))}/>
+          <CalcField label="Units per Shift (auto)" value={ar.autoUnits} onChange={v=>setAr(a=>({...a,autoUnits:+v}))}/>
+          <CalcField label="CapEx Investment" value={ar.capex} onChange={v=>setAr(a=>({...a,capex:+v}))} step="5000" unit="$"/>
+        </div>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>ROI Analysis</div>
+          <Result label="Manual Annual Labor" value={fmt$(arManualAnnual)} color="var(--err)"/>
+          <Result label="Automated Annual Labor" value={fmt$(arAutoAnnual)} color="var(--ok)"/>
+          <Result label="Annual Savings" value={fmt$(arSavings)} color="var(--ok)"/>
+          <Result label="Payback Period" value={arPayback>0?(arPayback).toFixed(1)+' yrs':'N/A'} color={arPayback<3?'var(--ok)':arPayback<5?'var(--warn)':'var(--err)'}/>
+          <Result label="Manual Capacity (units/yr)" value={arManualUnitsYr.toLocaleString()}/>
+          <Result label="Auto Capacity (units/yr)" value={arAutoUnitsYr.toLocaleString()} color="var(--ok)"/>
+          <Result label="Capacity Increase" value={((arAutoUnitsYr/arManualUnitsYr-1)*100).toFixed(0)+'%'} color="var(--acc)"/>
+        </div>
+      </div>}
+
+      {calcTab==='convert'&&<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Length</div>
+          <CalcField label="Feet" value={uc.ft} onChange={v=>setUc(u=>({...u,ft:+v}))} unit="ft"/>
+          <Result label="Inches" value={(uc.ft*12).toFixed(4)+'"'}/>
+          <Result label="Millimeters" value={(uc.ft*304.8).toFixed(2)+' mm'}/>
+          <Result label="Meters" value={(uc.ft*0.3048).toFixed(4)+' m'}/>
+          <Result label="Centimeters" value={(uc.ft*30.48).toFixed(2)+' cm'}/>
+        </div>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Fractions → Decimal</div>
+          {[['1/16',0.0625],['1/8',0.125],['3/16',0.1875],['1/4',0.25],['5/16',0.3125],['3/8',0.375],['7/16',0.4375],['1/2',0.5],['9/16',0.5625],['5/8',0.625],['11/16',0.6875],['3/4',0.75],['7/8',0.875]].map(([f,d])=>(
+            <div key={f} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:'1px solid var(--bdr)',fontSize:11}}>
+              <span style={{fontFamily:'monospace',color:'var(--muted)'}}>{f}"</span>
+              <span style={{fontFamily:'monospace'}}>{d}"</span>
+              <span style={{fontFamily:'monospace',color:'var(--acc)'}}>{(d*25.4).toFixed(3)} mm</span>
+            </div>
+          ))}
+        </div>
+        <div className="card">
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Angle</div>
+          {[[22.5,0.392],[30,0.524],[36,0.628],[45,0.785],[60,1.047],[90,1.571]].map(([deg,rad])=>(
+            <div key={deg} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid var(--bdr)',fontSize:12}}>
+              <span style={{fontWeight:600}}>{deg}°</span>
+              <span style={{fontFamily:'monospace',color:'var(--muted)'}}>{rad.toFixed(3)} rad</span>
+              <span style={{fontFamily:'monospace',color:'var(--acc)'}}>{Math.tan(deg*Math.PI/180).toFixed(3)} slope</span>
+            </div>
+          ))}
+          <div style={{marginTop:10,fontSize:10,color:'var(--muted)'}}>Stair rail typically 33–37°</div>
+        </div>
+      </div>}
+    </div>
+  );
+};
+
+// ─── FACILITY MOVE ───────────────────────────────────────────────────────────
+const FacilityMove = ({data, setData}) => {
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const tasks = data.facilityMoveTasks || [];
+  const overview = data.facilityMoveOverview || {currentFacility:'15,000 sq ft — Hayden, ID',newFacility:'',targetDate:'',downtime:'',budget:0,coordinator:'Daniel Jones'};
+  const saveTask = () => {
+    const rec = {...form, id:form.id||'FM-'+uid()};
+    if(!tasks.find(t=>t.id===rec.id)) setData(d=>({...d,facilityMoveTasks:[...(d.facilityMoveTasks||[]),rec]}));
+    else setData(d=>({...d,facilityMoveTasks:(d.facilityMoveTasks||[]).map(t=>t.id===rec.id?rec:t)}));
+    setModal(null);
+  };
+  const totalBudget = tasks.reduce((a,b)=>a+(b.estimated||0),0);
+  const totalActual = tasks.reduce((a,b)=>a+(b.actual||0),0);
+  const complete = tasks.filter(t=>t.status==='Complete').length;
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Facility Move Planner</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}>
+            <span className="chip">{complete}/{tasks.length} tasks complete</span>
+            <span className="chip" style={{color:'var(--warn)'}}>Budget: {fmt$(totalBudget)}</span>
+            {totalActual>0&&<span className="chip" style={{color:totalActual>totalBudget?'var(--err)':'var(--ok)'}}>Actual: {fmt$(totalActual)}</span>}
+          </div>
+        </div>
+        <button className="btn btn-p" onClick={()=>{setForm({id:'',category:'',description:'',estimated:0,actual:0,vendor:'',status:'Pending',dueDate:'',notes:''});setModal('task');}}>+ Add Task</button>
+      </div>
+      <div className="card" style={{marginBottom:16}}>
+        <div className="hd" style={{fontSize:13,marginBottom:12}}>Move Overview</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+          {[
+            {l:'Current Facility',v:overview.currentFacility},
+            {l:'New Facility',v:overview.newFacility||'TBD'},
+            {l:'Target Move Date',v:overview.targetDate||'TBD'},
+            {l:'Est. Downtime',v:overview.downtime||'TBD'},
+            {l:'Move Budget',v:fmt$(overview.budget||0)},
+            {l:'Coordinator',v:overview.coordinator},
+          ].map(f=>(
+            <div key={f.l} style={{background:'var(--s2)',borderRadius:5,padding:'8px 12px'}}>
+              <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:2}}>{f.l}</div>
+              <div style={{fontSize:13,fontWeight:600}}>{f.v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {tasks.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No tasks yet — add move budget items and tasks</div>}
+      {tasks.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>Category</th><th>Description</th><th style={{textAlign:'right'}}>Est. Cost</th><th style={{textAlign:'right'}}>Actual</th><th style={{textAlign:'right'}}>Variance</th><th>Vendor</th><th>Status</th><th>Due</th><th/></tr></thead>
+          <tbody>{tasks.map((t,i)=>(
+            <tr key={i}>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{t.category}</td>
+              <td style={{fontWeight:500}}>{t.description}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{t.estimated?fmt$(t.estimated):'—'}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{t.actual?fmt$(t.actual):'—'}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',color:(t.actual||0)>(t.estimated||0)?'var(--err)':'var(--ok)'}}>{t.estimated&&t.actual?fmt$(t.actual-t.estimated):'—'}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{t.vendor||'—'}</td>
+              <td><Badge s={t.status||'Pending'}/></td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{t.dueDate||'—'}</td>
+              <td><div style={{display:'flex',gap:4}}>
+                <button className="btn btn-g btn-xs" onClick={()=>{setForm({...t});setModal('task');}}>Edit</button>
+                <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,facilityMoveTasks:(d.facilityMoveTasks||[]).filter(x=>x.id!==t.id)}))}>×</button>
+              </div></td>
+            </tr>
+          ))}
+          <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+            <td colSpan={2} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',paddingLeft:12}}>TOTAL</td>
+            <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{fmt$(totalBudget)}</td>
+            <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{totalActual?fmt$(totalActual):'—'}</td>
+            <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:totalActual>totalBudget?'var(--err)':'var(--ok)'}}>{totalActual?fmt$(totalActual-totalBudget):'—'}</td>
+            <td colSpan={4}></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>}
+      {modal==='task'&&<Modal title="Move Task" onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="Category"><input value={form.category||''} placeholder="Equipment, Labor, Permits..." onChange={e=>setForm(f=>({...f,category:e.target.value}))}/></Field>
+          <Field label="Vendor / Contractor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field>
+          <Field label="Estimated Cost ($)"><input type="number" step="100" value={form.estimated||''} onChange={e=>setForm(f=>({...f,estimated:+e.target.value}))}/></Field>
+          <Field label="Actual Cost ($)"><input type="number" step="100" value={form.actual||''} onChange={e=>setForm(f=>({...f,actual:+e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Pending'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Pending','In Progress','Complete','On Hold','Cancelled'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Due Date"><input type="date" value={form.dueDate||''} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></Field>
+        </div>
+        <Field label="Description" style={{marginTop:8}}><input value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:12}}><button className="btn btn-p" onClick={saveTask}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+    </div>
+  );
+};
+
+// ─── EMPLOYEE REVIEWS ────────────────────────────────────────────────────────
+const EmployeeReviews = ({data, setData}) => {
+  const [erTab, setErTab] = useState('reviews');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const reviews = data.employeeReviews || [];
+  const employees = ['Amber','Jace','Michael','Nick'];
+  const competencies = ['Production Output','Quality of Work','Attendance & Punctuality','Safety Compliance','Initiative & Problem Solving','Teamwork & Communication','Equipment Care'];
+  const quarters = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026','Annual 2026'];
+  const ratingColors = {5:'var(--ok)',4:'var(--ok)',3:'var(--warn)',2:'var(--err)',1:'var(--err)'};
+  const save = () => {
+    const rec = {...form, id:form.id||'ER-'+uid()};
+    if(!reviews.find(r=>r.id===rec.id)) setData(d=>({...d,employeeReviews:[...(d.employeeReviews||[]),rec]}));
+    else setData(d=>({...d,employeeReviews:(d.employeeReviews||[]).map(r=>r.id===rec.id?rec:r)}));
+    setModal(null);
+  };
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Employee Reviews</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Quarterly performance scoring — Amber, Jace, Michael, Nick</div>
+        </div>
+        <button className="btn btn-p" onClick={()=>{setForm({id:'',employee:'Amber',quarter:'Q1 2026',competency:'Production Output',rating:3,notes:''});setModal('edit');}}>+ Add Review Score</button>
+      </div>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['reviews','matrix'].map(t=><button key={t} className={'tab'+(erTab===t?' on':'')} onClick={()=>setErTab(t)}>{t==='matrix'?'Score Matrix':'Review Log'}</button>)}
+      </div>
+      {erTab==='reviews'&&<>
+        {reviews.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No reviews entered yet</div>}
+        {reviews.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
+          <table>
+            <thead><tr><th>Employee</th><th>Quarter</th><th>Competency</th><th style={{textAlign:'center'}}>Rating</th><th>Notes</th><th/></tr></thead>
+            <tbody>{reviews.map((r,i)=>(
+              <tr key={i}>
+                <td style={{fontWeight:600}}>{r.employee}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{r.quarter}</td>
+                <td style={{fontSize:11}}>{r.competency}</td>
+                <td style={{textAlign:'center'}}>
+                  <span style={{background:(ratingColors[r.rating]||'var(--muted)')+'22',color:ratingColors[r.rating]||'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,padding:'2px 10px',borderRadius:4}}>{r.rating}/5</span>
+                </td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{r.notes||'—'}</td>
+                <td><div style={{display:'flex',gap:4}}>
+                  <button className="btn btn-g btn-xs" onClick={()=>{setForm({...r});setModal('edit');}}>Edit</button>
+                  <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,employeeReviews:(d.employeeReviews||[]).filter(x=>x.id!==r.id)}))}>×</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>}
+      </>}
+      {erTab==='matrix'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead>
+            <tr>
+              <th>Competency</th>
+              {employees.flatMap(e=>quarters.slice(0,2).map(q=><th key={e+q} style={{textAlign:'center',fontSize:9,whiteSpace:'nowrap'}}>{e}<br/>{q}</th>))}
+            </tr>
+          </thead>
+          <tbody>{competencies.map(comp=>(
+            <tr key={comp}>
+              <td style={{fontWeight:600,fontSize:11}}>{comp}</td>
+              {employees.flatMap(emp=>quarters.slice(0,2).map(q=>{
+                const r = reviews.find(x=>x.employee===emp&&x.quarter===q&&x.competency===comp);
+                return <td key={emp+q} style={{textAlign:'center'}}>
+                  {r?<span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,color:ratingColors[r.rating]||'var(--muted)'}}>{r.rating}</span>:<span style={{color:'var(--dim)',fontSize:11}}>—</span>}
+                </td>;
+              }))}
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>}
+      {modal==='edit'&&<Modal title="Review Score" onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="Employee"><select value={form.employee||'Amber'} onChange={e=>setForm(f=>({...f,employee:e.target.value}))}>{employees.map(e=><option key={e}>{e}</option>)}</select></Field>
+          <Field label="Quarter"><select value={form.quarter||'Q1 2026'} onChange={e=>setForm(f=>({...f,quarter:e.target.value}))}>{quarters.map(q=><option key={q}>{q}</option>)}</select></Field>
+          <Field label="Competency"><select value={form.competency||competencies[0]} onChange={e=>setForm(f=>({...f,competency:e.target.value}))}>{competencies.map(c=><option key={c}>{c}</option>)}</select></Field>
+          <Field label="Rating (1-5)"><select value={form.rating||3} onChange={e=>setForm(f=>({...f,rating:+e.target.value}))}>{[5,4,3,2,1].map(n=><option key={n} value={n}>{n} — {['','Needs Work','Below Avg','Meets Expectations','Above Avg','Outstanding'][n]}</option>)}</select></Field>
+        </div>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:12}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+    </div>
+  );
+};
+
+// ─── PRODUCT CATALOG ─────────────────────────────────────────────────────────
+const ProductCatalog = ({data, setData}) => {
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({});
+  const [catFilter, setCatFilter] = useState('All');
+  const catalog = data.kitCatalog || [
+    {id:'MR-KIT-CABLE-FM-L-BLK-4x42',name:'Cable Kit | FM | Line | BLK | 4ft',category:'Line Railing Kits',mountType:'FASCIA MOUNT',color:'BLACK',size:'4 ft',material:'Aluminum, 316 SS',cogs:372.11,wholesale:558.17,retail:1116.34},
+    {id:'MR-KIT-CABLE-FM-L-BLK-8x42',name:'Cable Kit | FM | Line | BLK | 8ft',category:'Line Railing Kits',mountType:'FASCIA MOUNT',color:'BLACK',size:'8 ft',material:'Aluminum, 316 SS',cogs:465.22,wholesale:697.83,retail:1395.66},
+    {id:'MR-KIT-CABLE-FM-L-BLK-12x42',name:'Cable Kit | FM | Line | BLK | 12ft',category:'Line Railing Kits',mountType:'FASCIA MOUNT',color:'BLACK',size:'12 ft',material:'Aluminum, 316 SS',cogs:558.33,wholesale:837.50,retail:1675.00},
+    {id:'MR-KIT-CABLE-FM-L-BLK-16x42',name:'Cable Kit | FM | Line | BLK | 16ft',category:'Line Railing Kits',mountType:'FASCIA MOUNT',color:'BLACK',size:'16 ft',material:'Aluminum, 316 SS',cogs:651.44,wholesale:977.16,retail:1954.32},
+    {id:'MR-KIT-CABLE-FM-L-BLK-20x42',name:'Cable Kit | FM | Line | BLK | 20ft',category:'Line Railing Kits',mountType:'FASCIA MOUNT',color:'BLACK',size:'20 ft',material:'Aluminum, 316 SS',cogs:744.55,wholesale:1116.83,retail:2233.66},
+    {id:'MR-KIT-CABLE-SM-L-BLK-8x42',name:'Cable Kit | SM | Line | BLK | 8ft',category:'Line Railing Kits',mountType:'SURFACE MOUNT',color:'BLACK',size:'8 ft',material:'Aluminum, 316 SS',cogs:422.40,wholesale:633.60,retail:1267.20},
+    {id:'MR-KIT-CABLE-SM-L-BLK-12x42',name:'Cable Kit | SM | Line | BLK | 12ft',category:'Line Railing Kits',mountType:'SURFACE MOUNT',color:'BLACK',size:'12 ft',material:'Aluminum, 316 SS',cogs:506.88,wholesale:760.32,retail:1520.64},
+    {id:'MR-KIT-STAIR-FM-BLK-42',name:'Stair Kit | FM | BLK | 42"',category:'Stair Kits',mountType:'FASCIA MOUNT',color:'BLACK',size:'42"',material:'Aluminum, 316 SS',cogs:298.50,wholesale:447.75,retail:895.50},
+    {id:'MR-KIT-STAIR-SM-BLK-36',name:'Stair Kit | SM | BLK | 36"',category:'Stair Kits',mountType:'SURFACE MOUNT',color:'BLACK',size:'36"',material:'Aluminum, 316 SS',cogs:265.75,wholesale:398.63,retail:797.25},
+    {id:'36-22-GATE-KIT',name:'Gate Kit 36" x 22"',category:'Gate Kits',mountType:'N/A',color:'BLACK',size:'36"x22"',material:'Aluminum 2x2x1/8',cogs:185.00,wholesale:277.50,retail:555.00},
+    {id:'42-22-GATE-KIT',name:'Gate Kit 42" x 22"',category:'Gate Kits',mountType:'N/A',color:'BLACK',size:'42"x22"',material:'Aluminum 2x2x1/8',cogs:195.00,wholesale:292.50,retail:585.00},
+  ];
+  const cats = ['All',...new Set(catalog.map(c=>c.category))];
+  const filtered = catalog.filter(c => {
+    if(catFilter!=='All'&&c.category!==catFilter) return false;
+    if(search) { const q=search.toLowerCase(); return (c.id||'').toLowerCase().includes(q)||(c.name||'').toLowerCase().includes(q); }
+    return true;
+  });
+  const save = () => {
+    const rec = {...form, cogs:Number(form.cogs||0), wholesale:Number(form.wholesale||0), retail:Number(form.retail||0)};
+    setData(d=>({...d, kitCatalog: (d.kitCatalog||catalog).find(x=>x.id===rec.id) ? (d.kitCatalog||catalog).map(x=>x.id===rec.id?rec:x) : [...(d.kitCatalog||catalog),rec]}));
+    setModal(null);
+  };
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Product Catalog</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}>
+            <span className="chip">{catalog.length} SKUs</span>
+            <span className="chip">{cats.length-1} categories</span>
+          </div>
+        </div>
+        <button className="btn btn-p" onClick={()=>{setForm({id:'',name:'',category:'Line Railing Kits',mountType:'FASCIA MOUNT',color:'BLACK',size:'',material:'Aluminum, 316 SS',cogs:0,wholesale:0,retail:0});setModal('edit');}}>+ Add SKU</button>
+      </div>
+      <StatRow>
+        <StatCard label="Total SKUs" value={catalog.length} icon="🏷️" color="var(--acc)" sub={cats.length-1+' categories'}/>
+        <StatCard label="Avg COGS" value={fmt$(catalog.reduce((a,b)=>a+(b.cogs||0),0)/catalog.length)} icon="📦" color="var(--warn)" sub="Per kit"/>
+        <StatCard label="Avg Wholesale" value={fmt$(catalog.reduce((a,b)=>a+(b.wholesale||0),0)/catalog.length)} icon="💰" color="var(--ok)" sub="Per kit"/>
+        <StatCard label="Avg Margin" value={((1-catalog.reduce((a,b)=>a+(b.cogs||0),0)/catalog.reduce((a,b)=>a+(b.wholesale||0),0))*100).toFixed(0)+'%'} icon="📊" color="var(--acc2)" sub="COGS vs wholesale"/>
+      </StatRow>
+      <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+        <input className="search" placeholder="Search SKU or name…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:200}}/>
+        {cats.map(c=><button key={c} className={'tab'+(catFilter===c?' on':'')} onClick={()=>setCatFilter(c)} style={{fontSize:10,padding:'3px 8px'}}>{c}</button>)}
+      </div>
+      <div className="card" style={{padding:0,overflow:'auto'}}>
+        <table>
+          <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Mount</th><th>Color</th><th>Size</th><th style={{textAlign:'right'}}>COGS</th><th style={{textAlign:'right'}}>Wholesale</th><th style={{textAlign:'right'}}>Retail</th><th style={{textAlign:'right'}}>Margin %</th><th/></tr></thead>
+          <tbody>{filtered.length===0&&<tr><td colSpan={11}><Empty msg="No kits match"/></td></tr>}
+          {filtered.map((c,i)=>{
+            const margin = c.wholesale>0 ? ((1-c.cogs/c.wholesale)*100) : 0;
+            return <tr key={i}>
+              <td className="mono" style={{fontSize:10,color:'var(--acc)',fontWeight:700}}>{c.id}</td>
+              <td style={{fontWeight:500,fontSize:11}}>{c.name}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{c.category}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{c.mountType}</td>
+              <td style={{fontSize:10}}>{c.color}</td>
+              <td style={{fontSize:11,fontFamily:'monospace'}}>{c.size}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--err)'}}>{fmt$(c.cogs)}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--ok)',fontWeight:600}}>{fmt$(c.wholesale)}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--acc)'}}>{fmt$(c.retail)}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:margin>=40?'var(--ok)':margin>=25?'var(--warn)':'var(--err)'}}>{margin.toFixed(0)}%</td>
+              <td><button className="btn btn-g btn-xs" onClick={()=>{setForm({...c});setModal('edit');}}>Edit</button></td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>
+      {modal==='edit'&&<Modal title="Edit SKU" onClose={()=>setModal(null)} lg>
+        <div className="grid2">
+          <Field label="SKU ID"><input value={form.id||''} onChange={e=>setForm(f=>({...f,id:e.target.value}))}/></Field>
+          <Field label="Category"><select value={form.category||'Line Railing Kits'} onChange={e=>setForm(f=>({...f,category:e.target.value}))}>{['Line Railing Kits','Stair Kits','Gate Kits','Specialty','Hardware Kits'].map(c=><option key={c}>{c}</option>)}</select></Field>
+        </div>
+        <Field label="Kit Name" style={{marginTop:8}}><input value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></Field>
+        <div className="grid2" style={{marginTop:8}}>
+          <Field label="Mount Type"><select value={form.mountType||'FASCIA MOUNT'} onChange={e=>setForm(f=>({...f,mountType:e.target.value}))}>{['FASCIA MOUNT','SURFACE MOUNT','CORE DRILL','N/A'].map(m=><option key={m}>{m}</option>)}</select></Field>
+          <Field label="Color"><input value={form.color||''} onChange={e=>setForm(f=>({...f,color:e.target.value}))}/></Field>
+          <Field label="Size"><input value={form.size||''} onChange={e=>setForm(f=>({...f,size:e.target.value}))}/></Field>
+          <Field label="Material"><input value={form.material||''} onChange={e=>setForm(f=>({...f,material:e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginTop:8}}>
+          <Field label="COGS ($)"><input type="number" step="0.01" value={form.cogs||''} onChange={e=>setForm(f=>({...f,cogs:+e.target.value}))}/></Field>
+          <Field label="Wholesale ($)"><input type="number" step="0.01" value={form.wholesale||''} onChange={e=>setForm(f=>({...f,wholesale:+e.target.value}))}/></Field>
+          <Field label="Retail ($)"><input type="number" step="0.01" value={form.retail||''} onChange={e=>setForm(f=>({...f,retail:+e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:12}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+    </div>
+  );
+};
+
+// ─── OPS REFERENCE ───────────────────────────────────────────────────────────
+const OpsReference = () => {
+  const [opsTab, setOpsTab] = useState('daily');
+  const PLAYBOOK = {
+    daily:{label:'Daily',items:[
+      {id:'D-01',task:'Start day with shop meeting — assign work orders for day',owner:'Dir. of Ops',tool:'Whiteboard'},
+      {id:'D-02',task:'List daily goals on whiteboard — update production board',owner:'Dir. of Ops',tool:'Whiteboard'},
+      {id:'D-03',task:'Review/adjust time punches for previous day',owner:'Dir. of Ops',tool:'Gusto'},
+      {id:'D-04',task:'Monitor shop progress and adjust for issues',owner:'Dir. of Ops',tool:'Floor Walk'},
+      {id:'D-05',task:'Update ERP — order statuses, inventory movements',owner:'Dir. of Ops',tool:'This ERP'},
+      {id:'D-06',task:'End-of-day shift handoff entry',owner:'Shift Lead',tool:'This ERP'},
+      {id:'D-07',task:'Review next-day orders and pull BOM for tomorrow',owner:'Dir. of Ops',tool:'This ERP'},
+    ]},
+    weekly:{label:'Weekly',items:[
+      {id:'W-01',task:'Review open orders vs due dates — flag any at-risk',owner:'Dir. of Ops',tool:'Orders Page'},
+      {id:'W-02',task:'Cycle count critical inventory items',owner:'Dir. of Ops',tool:'Inventory Page'},
+      {id:'W-03',task:'Review reorder needs and place purchase orders',owner:'Dir. of Ops',tool:'Purchasing Page'},
+      {id:'W-04',task:'Process payroll',owner:'Dir. of Ops',tool:'Gusto'},
+      {id:'W-05',task:'Update KPI scoreboard',owner:'Dir. of Ops',tool:'KPI Page'},
+      {id:'W-06',task:'Review ship cost log — verify all shipments logged',owner:'Dir. of Ops',tool:'Shipping Page'},
+      {id:'W-07',task:'Download ERP backup',owner:'Dir. of Ops',tool:'This ERP (💾 Backup)'},
+    ]},
+    monthly:{label:'Monthly',items:[
+      {id:'M-01',task:'Full inventory count — all categories',owner:'Dir. of Ops',tool:'Inventory Page'},
+      {id:'M-02',task:'Enter monthly P&L data',owner:'Dir. of Ops',tool:'Finance Page'},
+      {id:'M-03',task:'Review vendor scorecards — update ratings',owner:'Dir. of Ops',tool:'Shop Reference'},
+      {id:'M-04',task:'Review employee efficiency metrics',owner:'Dir. of Ops',tool:'People Page'},
+      {id:'M-05',task:'Review and update automation roadmap progress',owner:'Dir. of Ops',tool:'Automation Page'},
+      {id:'M-06',task:'Review scrap & waste log — identify root causes',owner:'Dir. of Ops',tool:'People Page'},
+      {id:'M-07',task:'Customer issue review — close out resolved items',owner:'Dir. of Ops',tool:'Customers Page'},
+    ]},
+    standards:{label:'Standards',items:[
+      {id:'S-01',task:'Post height tolerance: ±1/8" from spec',owner:'QC',tool:'Caliper'},
+      {id:'S-02',task:'Powder coat DFT: 2.0–3.0 mil target',owner:'Powder Room',tool:'DFT Gauge'},
+      {id:'S-03',task:'Weld visual inspection: no porosity, undercut, or cold lap',owner:'Welder',tool:'Visual + Light'},
+      {id:'S-04',task:'Hole placement tolerance: ±1/16" from CNC program',owner:'CNC Operator',tool:'Caliper'},
+      {id:'S-05',task:'Cable tension: 200–250 lbs per run (check with tensiometer)',owner:'Assembly',tool:'Tensiometer'},
+      {id:'S-06',task:'All sharp edges deburred before powder coat',owner:'Grinding',tool:'File/Scotch-Brite'},
+      {id:'S-07',task:'Every order ships with packing list matching BOM',owner:'Shipping',tool:'This ERP'},
+    ]},
+  };
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div><div className="hd" style={{fontSize:22}}>Operations Reference</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Daily, weekly, and monthly operating procedures + quality standards</div>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {Object.entries(PLAYBOOK).map(([k,v])=>(
+          <button key={k} className={'tab'+(opsTab===k?' on':'')} onClick={()=>setOpsTab(k)}>{v.label}</button>
+        ))}
+      </div>
+      {Object.entries(PLAYBOOK).map(([k,v])=>opsTab===k&&(
+        <div key={k} className="card" style={{padding:0,overflow:'auto'}}>
+          <table>
+            <thead><tr><th style={{width:60}}>#</th><th>Task / Procedure</th><th>Owner</th><th>Tool / System</th></tr></thead>
+            <tbody>{v.items.map((item,i)=>(
+              <tr key={i}>
+                <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{item.id}</td>
+                <td style={{fontWeight:500}}>{item.task}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{item.owner}</td>
+                <td><span style={{background:'var(--s3)',borderRadius:3,padding:'2px 8px',fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--acc)',letterSpacing:'.05em'}}>{item.tool}</span></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+
+// ─── PROCESS COST ANALYSIS ───────────────────────────────────────────────────
+const ProcessCostAnalysis = () => {
+  const [pcaTab, setPcaTab] = useState('dashboard');
+  const [selectedProduct, setSelectedProduct] = useState('42" Surface Line');
+  const [workers, setWorkers] = useState({cutting:1,drilling:1,cnc:1,welding:2,pcprep:1,pccoat:1,assembly:1,qc:1,packaging:1});
+  const [sectionsPerMonth, setSectionsPerMonth] = useState(200);
+  const [goalsStation, setGoalsStation] = useState('cutting');
+
+  // ── Global Assumptions ────────────────────────────────────────────────────
+  const G = {
+    prodHrs: 9,
+    shiftsPerDay: 1,
+    daysPerWeek: 5,
+    daysPerMonth: 22,
+    overheadRate: 0.35,
+    electricityKwh: 0.089,
+    shopBurden: 12.50,
+  };
+
+  // ── Labor Rates ───────────────────────────────────────────────────────────
+  const RATES = {
+    cutting:    {role:'Material Handler / Saw Operator', wage:23, burdened:31.05},
+    drilling:   {role:'Drill Press Operator',            wage:23, burdened:31.05},
+    cnc:        {role:'CNC Operator',                    wage:26, burdened:35.10},
+    welding:    {role:'Welder / Fabricator (TIG)',       wage:24, burdened:32.40},
+    pcprep:     {role:'Grinder / Finisher (PC Prep)',    wage:23, burdened:31.05},
+    pccoat:     {role:'Powder Coat Technician',          wage:23, burdened:31.05},
+    qc:         {role:'QC Inspector',                    wage:26, burdened:35.10},
+    packaging:  {role:'Packaging / Shipping',            wage:26, burdened:35.10},
+    assembly:   {role:'Assembly Technician',             wage:23, burdened:31.05},
+  };
+
+  // ── Product Reference Table ───────────────────────────────────────────────
+  const PRODUCTS = {
+    '20ft Top Rail':     {lenIn:240, lf:20, holes:0,  secPerHole:0,  stairCut:false, angleSec:0, weldIn:0,  rackQty:12, isStair:false, isRail:true},
+    '42" Fascia Line':   {lenIn:42,  lf:3.5,holes:13, secPerHole:5,  stairCut:false, angleSec:0, weldIn:8,  rackQty:44, isStair:false, isRail:false},
+    '42" Surface Line':  {lenIn:42,  lf:3.5,holes:13, secPerHole:5,  stairCut:false, angleSec:0, weldIn:8,  rackQty:44, isStair:false, isRail:false},
+    '42" Fascia Stair':  {lenIn:42,  lf:3.5,holes:12, secPerHole:12, stairCut:true,  angleSec:4, weldIn:8,  rackQty:44, isStair:true,  isRail:false},
+    '42" Surface Stair': {lenIn:42,  lf:3.5,holes:12, secPerHole:12, stairCut:true,  angleSec:4, weldIn:8,  rackQty:44, isStair:true,  isRail:false},
+    '36" Fascia Line':   {lenIn:36,  lf:3,  holes:11, secPerHole:5,  stairCut:false, angleSec:0, weldIn:8,  rackQty:44, isStair:false, isRail:false},
+    '36" Surface Line':  {lenIn:36,  lf:3,  holes:11, secPerHole:5,  stairCut:false, angleSec:0, weldIn:8,  rackQty:44, isStair:false, isRail:false},
+    '36" Fascia Stair':  {lenIn:36,  lf:3,  holes:10, secPerHole:12, stairCut:true,  angleSec:4, weldIn:8,  rackQty:44, isStair:true,  isRail:false},
+    '36" Surface Stair': {lenIn:36,  lf:3,  holes:10, secPerHole:12, stairCut:true,  angleSec:4, weldIn:8,  rackQty:44, isStair:true,  isRail:false},
+  };
+
+  const P = PRODUCTS[selectedProduct];
+
+  // ── Per-product cost calculations ────────────────────────────────────────
+  const calc = (product) => {
+    const p = PRODUCTS[product];
+    const R = RATES;
+
+    // 1. CUTTING
+    const cutBaseMin = 5.75 + 0.083 + (p.stairCut ? 0.067 : 0);
+    const cutMin = cutBaseMin;
+    const cutLabor = (cutMin/60) * R.cutting.burdened;
+    const cutConsumable = 0.2461;
+    const cutEnergy = (cutMin/60) * 1.6 * G.electricityKwh;
+    const cutDeprec = 0.02683;
+    const cutTotal = cutLabor + cutConsumable + cutEnergy + cutDeprec;
+    const cutPcsDay = Math.floor((G.prodHrs * 60) / cutMin);
+
+    // 2. MANUAL DRILLING
+    const drillMin = p.holes > 0 ? 1.5 + (p.holes * p.secPerHole / 60) : 0;
+    const drillLabor = (drillMin/60) * R.drilling.burdened;
+    const drillConsumable = p.holes > 0 ? 0.0799 : 0;
+    const drillEnergy = (drillMin/60) * 0.75 * G.electricityKwh;
+    const drillDeprec = p.holes > 0 ? 0.0035 : 0;
+    const drillTotal = drillLabor + drillConsumable + drillEnergy + drillDeprec;
+    const drillPcsDay = drillMin > 0 ? Math.floor((G.prodHrs * 60) / drillMin) : 0;
+
+    // 3. CNC MACHINING
+    const cncMin = p.isRail ? 0 : 37;
+    const cncLabor = (cncMin/60) * R.cnc.burdened;
+    const cncConsumable = p.isRail ? 0 : 1.6388;
+    const cncEnergy = (cncMin/60) * 7.5 * G.electricityKwh;
+    const cncDeprec = p.isRail ? 0 : 31.2208;
+    const cncTotal = cncLabor + cncConsumable + cncEnergy + cncDeprec;
+    const cncPcsDay = cncMin > 0 ? Math.floor((G.prodHrs * 60) / cncMin) : 0;
+
+    // 4. WELDING
+    const weldMin = p.weldIn > 0 ? 3.0 + (p.weldIn / 8) * 2.5 : 0;
+    const weldLabor = (weldMin/60) * R.welding.burdened;
+    const weldConsumable = p.weldIn > 0 ? 1.595 : 0;
+    const weldEnergy = (weldMin/60) * 0.44 * G.electricityKwh;
+    const weldDeprec = p.weldIn > 0 ? 0.0787 : 0;
+    const weldTotal = weldLabor + weldConsumable + weldEnergy + weldDeprec;
+    const weldPcsDay = weldMin > 0 ? Math.floor((G.prodHrs * 60) / weldMin) : 0;
+
+    // 5. POWDER COAT PREP
+    const pcpMin = p.isRail ? 5.0 : 41.5;
+    const pcpLabor = (pcpMin/60) * R.pcprep.burdened;
+    const pcpConsumable = p.isRail ? 0.5 : 5.0669;
+    const pcpEnergy = (pcpMin/60) * 0.5 * G.electricityKwh;
+    const pcpDeprec = p.isRail ? 0.1 : 3.3403;
+    const pcpTotal = pcpLabor + pcpConsumable + pcpEnergy + pcpDeprec;
+    const pcpPcsDay = Math.floor((G.prodHrs * 60) / pcpMin);
+
+    // 6. POWDER COATING
+    const batchCycleMin = 22 + 10 + 35 + 3 + 60 + 3 + 30 + 22 + 22;  // total batch cycle
+    const pcMin = batchCycleMin / p.rackQty;
+    const pcLabor = (pcMin/60) * R.pccoat.burdened;
+    const pcConsumable = 1.2294 / (44/p.rackQty);
+    const pcEnergy = (pcMin/60) * 48 * G.electricityKwh;
+    const pcDeprec = 0.1944;
+    const pcTotal = pcLabor + pcConsumable + pcEnergy + pcDeprec;
+    const pcPcsDay = Math.floor((G.prodHrs * 60) / pcMin);
+
+    // 7. QUALITY CONTROL
+    const qcMin = 25;
+    const qcLabor = (qcMin/60) * R.qc.burdened;
+    const qcConsumable = 0.99;
+    const qcEnergy = (qcMin/60) * 0.1 * G.electricityKwh;
+    const qcDeprec = 0.8494;
+    const qcTotal = qcLabor + qcConsumable + qcEnergy + qcDeprec;
+    const qcPcsDay = Math.floor((G.prodHrs * 60) / qcMin);
+
+    // 8. PACKAGING
+    const pkgMin = 54;
+    const pkgLabor = (pkgMin/60) * R.packaging.burdened;
+    const pkgConsumable = 37.0575;
+    const pkgEnergy = (pkgMin/60) * 0.05 * G.electricityKwh;
+    const pkgDeprec = 2.7044;
+    const pkgTotal = pkgLabor + pkgConsumable + pkgEnergy + pkgDeprec;
+    const pkgPcsDay = Math.floor((G.prodHrs * 60) / pkgMin);
+
+    const stations = [
+      {key:'cutting',  name:'1. Material Cutting',      min:cutMin,  labor:cutLabor,  consumable:cutConsumable, energy:cutEnergy,  deprec:cutDeprec,  total:cutTotal,  pcsDay:cutPcsDay},
+      {key:'drilling', name:'1B. Manual Drilling',       min:drillMin,labor:drillLabor,consumable:drillConsumable,energy:drillEnergy,deprec:drillDeprec,total:drillTotal,pcsDay:drillPcsDay},
+      {key:'cnc',      name:'2. CNC Machining',          min:cncMin,  labor:cncLabor,  consumable:cncConsumable, energy:cncEnergy,  deprec:cncDeprec,  total:cncTotal,  pcsDay:cncPcsDay},
+      {key:'welding',  name:'3. Welding (TIG)',           min:weldMin, labor:weldLabor, consumable:weldConsumable,energy:weldEnergy, deprec:weldDeprec, total:weldTotal, pcsDay:weldPcsDay},
+      {key:'pcprep',   name:'4. Powder Coat Prep',       min:pcpMin,  labor:pcpLabor,  consumable:pcpConsumable, energy:pcpEnergy,  deprec:pcpDeprec,  total:pcpTotal,  pcsDay:pcpPcsDay},
+      {key:'pccoat',   name:'5. Powder Coating',         min:pcMin,   labor:pcLabor,   consumable:pcConsumable,  energy:pcEnergy,   deprec:pcDeprec,   total:pcTotal,   pcsDay:pcPcsDay},
+      {key:'qc',       name:'7. Quality Control',        min:qcMin,   labor:qcLabor,   consumable:qcConsumable,  energy:qcEnergy,   deprec:qcDeprec,   total:qcTotal,   pcsDay:qcPcsDay},
+      {key:'packaging',name:'8. Packaging & Shipping',   min:pkgMin,  labor:pkgLabor,  consumable:pkgConsumable, energy:pkgEnergy,  deprec:pkgDeprec,  total:pkgTotal,  pcsDay:pkgPcsDay},
+    ];
+    const bottleneck = [...stations].sort((a,b)=>b.min-a.min)[0];
+    return {stations, bottleneck};
+  };
+
+  const {stations, bottleneck} = calc(selectedProduct);
+  const totalMin = stations.reduce((a,b)=>a+b.min,0);
+  const totalLabor = stations.reduce((a,b)=>a+b.labor,0);
+  const totalConsumable = stations.reduce((a,b)=>a+b.consumable,0);
+  const totalEnergy = stations.reduce((a,b)=>a+b.energy,0);
+  const totalDeprec = stations.reduce((a,b)=>a+b.deprec,0);
+  const totalCost = stations.reduce((a,b)=>a+b.total,0);
+
+  // ── Station Task Data (hardcoded from Excel) ──────────────────────────────
+  const STATION_DATA = {
+    cutting: {
+      title:'1. Material Cutting', rate:31.05, rateNote:'Material Handler / Saw Operator $23/hr burdened',
+      tasks:[
+        {task:'Pull work order & verify material spec', min:1.5, notes:'Per piece — verify spec/alloy'},
+        {task:'Retrieve stock from rack',              min:2.0, notes:'Crane for 20ft, manual for posts'},
+        {task:'Inspect raw material',                  min:1.0, notes:'Check dents, scratches'},
+        {task:'Measure & mark cut line',               min:1.0, notes:'Single cut line per piece'},
+        {task:'Set up saw / verify blade & fence',     min:0.5, notes:'One-time per batch — amortized'},
+        {task:'Make cut (MEASURED: 5 sec per cut)',    min:0.083,notes:'MEASURED: 5 sec actual cut time'},
+        {task:'Stair angle cut (if stair post)',       min:P.stairCut?0.067:0, notes:'MEASURED: 4 sec — 0 if not stair'},
+        {task:'Deburr cut ends',                       min:0.5, notes:'File both cut ends'},
+        {task:'Verify cut length',                     min:0.25,notes:'Quick tape measure check'},
+        {task:'Stage piece for next process',          min:0.25,notes:'Place on cart with order tag'},
+      ],
+      consumables:[
+        {item:'Cold Saw Blade (amortized)', unit:'each', qty:0.001,  cost:185,  total:0.185, notes:'~1000 cuts/blade'},
+        {item:'Cutting Fluid (mist)',        unit:'oz',   qty:0.02,   cost:0.18, total:0.0036,notes:'Mist per cut'},
+        {item:'Deburring Blade',             unit:'each', qty:0.005,  cost:3.50, total:0.0175,notes:'~200 pieces/blade'},
+        {item:'Shop Rags',                   unit:'each', qty:0.5,    cost:0.08, total:0.04,  notes:'0.5 rag/piece'},
+      ],
+      equipment:[
+        {equip:'Cold Saw',         purchase:4500,  life:10, annualDep:450, kW:1.5},
+        {equip:'Deburring Station',purchase:450,   life:5,  annualDep:90,  kW:0.1},
+      ],
+    },
+    drilling: {
+      title:'1B. Manual Drilling', rate:31.05, rateNote:'Drill Press Operator $23/hr burdened',
+      tasks:[
+        {task:'Pull piece from cutting staging',       min:0.5,  notes:'Transfer from cutting output'},
+        {task:'Clamp piece in drill press vise',       min:0.5,  notes:'MEASURED: 30 sec to set up vise'},
+        {task:'Set drill press to correct speed/feed', min:0.25, notes:'RPM chart posted — one-time per batch'},
+        {task:'Drill each hole (per holes × sec/hole)',min:Math.round(P.holes*P.secPerHole/60*1000)/1000, notes:`${P.holes} holes × ${P.secPerHole} sec = ${P.holes*P.secPerHole} sec total`},
+        {task:'Deburr all holes',                      min:0.5,  notes:'Countersink bit or deburr tool'},
+        {task:'Blow off chips',                        min:0.25, notes:'Compressed air quick blow'},
+        {task:'Verify hole pattern & dimensions',      min:0.25, notes:'Spot check vs drawing'},
+      ],
+      consumables:[
+        {item:'HSS Drill Bits (picket holes)', unit:'each', qty:0.05,  cost:4.50, total:0.225,  notes:'~20 sections/bit'},
+        {item:'HSS Drill Bits (post holes)',   unit:'each', qty:0.10,  cost:5.75, total:0.575,  notes:'~10 sections/bit'},
+        {item:'Countersink Bit (HSS)',         unit:'each', qty:0.02,  cost:8.50, total:0.17,   notes:'~50 sections/bit'},
+        {item:'Deburring Blades',              unit:'each', qty:0.05,  cost:3.50, total:0.175,  notes:'~20 sections/blade'},
+        {item:'Compressed Air',               unit:'kWh',  qty:0.05,  cost:0.089,total:0.00445,notes:'~5HP compressor'},
+      ],
+      equipment:[
+        {equip:'Drill Press', purchase:1800, life:15, annualDep:120, kW:0.75},
+      ],
+    },
+    cnc: {
+      title:'2. CNC Machining', rate:35.10, rateNote:'CNC Operator $26/hr burdened',
+      tasks:[
+        {task:'Load CNC program for order / part',      min:2,   notes:'Select program or load from USB'},
+        {task:'Install / verify tooling',               min:4,   notes:'Tool length offset, collet inspection'},
+        {task:'Load fixture onto CNC table',            min:3,   notes:'Bolt down jig, align stops'},
+        {task:'Load first workpiece into fixture',      min:1.5, notes:'Clamp profile, verify seating'},
+        {task:'Run first piece (prove out)',            min:3,   notes:'Slow feed first pass to verify'},
+        {task:'Inspect first piece',                    min:2,   notes:'Calipers, go/no-go gauges'},
+        {task:'Run top rail — drill picket holes',      min:4,   notes:'12-16 holes per 8ft section'},
+        {task:'Run bottom rail — drill picket holes',   min:4,   notes:'Mirror pattern of top rail'},
+        {task:'Route / mill post connection profiles',  min:3,   notes:'Slot cuts for post brackets'},
+        {task:'Drill mounting holes in posts',          min:2.5, notes:'Anchor bolt pattern per spec'},
+        {task:'Chamfer / countersink holes',            min:2,   notes:'Countersink bit, CNC or hand'},
+        {task:'Unload parts, blow off chips',           min:2,   notes:'Compressed air cleanup'},
+        {task:'Verify all dimensions against drawing',  min:2,   notes:'Spot-check critical dims'},
+        {task:'Log tool wear / update tool life count', min:1,   notes:'Track cuts/tool for replacement'},
+        {task:'Stage parts for welding station',        min:1,   notes:'Transfer cart with order tag'},
+      ],
+      consumables:[
+        {item:'Carbide Drill Bits 3/16"',  unit:'each', qty:0.0167, cost:12.50, total:0.20875, notes:'~60 sections/bit'},
+        {item:'Carbide Drill Bits 1/4"',   unit:'each', qty:0.025,  cost:14.75, total:0.36875, notes:'~40 sections/bit'},
+        {item:'End Mill 1/4" 2-flute',     unit:'each', qty:0.010,  cost:22.00, total:0.22,    notes:'~100 sections/end mill'},
+        {item:'End Mill 3/8" 2-flute',     unit:'each', qty:0.0083, cost:28.50, total:0.23655, notes:'~120 sections/end mill'},
+        {item:'Countersink Bit 82° carbide',unit:'each',qty:0.005,  cost:18.00, total:0.09,    notes:'~200 sections/bit'},
+        {item:'CNC Cutting Fluid (flood)',  unit:'gal',  qty:0.015,  cost:32.00, total:0.48,    notes:'0.015 gal/section; recirculating'},
+        {item:'Compressed Air',            unit:'kWh',  qty:0.25,   cost:0.089, total:0.02225, notes:'~5HP compressor for blowoff'},
+      ],
+      equipment:[
+        {equip:'Laguna Swift CNC Router', purchase:28000, life:10, annualDep:2800, kW:7.5},
+        {equip:'Air Compressor',          purchase:2800,  life:15, annualDep:187,  kW:3.7},
+      ],
+    },
+    welding: {
+      title:'3. Welding & Fabrication (TIG)', rate:32.40, rateNote:'Welder/Fabricator TIG $24/hr burdened',
+      tasks:[
+        {task:'Check work order / weld drawing',        min:0.5, notes:'Per piece — verify joint type, filler'},
+        {task:'Align item in fixture & clamp',          min:1.0, notes:'MEASURED: 1 min to align in fixture'},
+        {task:'Tack weld (2-3 tacks)',                  min:0.5, notes:'Quick tacks to hold before full weld'},
+        {task:`Full weld — ${P.weldIn} weld inches`,   min:Math.round((P.weldIn/8)*2.5*100)/100, notes:'MEASURED: 2.5 min per 8" weld on 2×2'},
+        {task:'QC weld — visual inspection',            min:0.5, notes:'Check penetration, porosity, undercut'},
+        {task:'Remove from fixture & stage',            min:0.5, notes:'Unclamp, place on rack for next station'},
+      ],
+      consumables:[
+        {item:'Argon Gas (100%)',      unit:'cu.ft.',qty:2.5,  cost:0.065, total:0.1625, notes:'~2.5 cu ft per piece at 15 CFH'},
+        {item:'Filler Rod — 4043',     unit:'rod',   qty:1.5,  cost:0.42,  total:0.63,   notes:'~1.5 rods per piece'},
+        {item:'Filler Rod — 5356',     unit:'rod',   qty:0.75, cost:0.48,  total:0.36,   notes:'Structural joints'},
+        {item:'Tungsten Electrode',    unit:'each',  qty:0.05, cost:3.85,  total:0.1925, notes:'~20 pieces/electrode'},
+        {item:'Acetone (weld prep)',   unit:'oz',    qty:0.5,  cost:0.09,  total:0.045,  notes:'IPA/acetone wipe before weld'},
+        {item:'TIG Torch Kit (amort)', unit:'kit',   qty:0.005,cost:18.50, total:0.0925, notes:'Consumable tip/collet wear'},
+        {item:'Welding Gloves (amort)',unit:'pair',  qty:0.033,cost:22.00, total:0.726,  notes:'~30 pieces/pair'},
+      ],
+      equipment:[
+        {equip:'TIG Welder #1 (Miller Dynasty)', purchase:4800, life:10, annualDep:480, kW:3.5},
+        {equip:'TIG Welder #2 (Miller Dynasty)', purchase:4800, life:10, annualDep:480, kW:3.5},
+        {equip:'Welding Fixture / Table',        purchase:1200, life:10, annualDep:120, kW:0},
+      ],
+    },
+    pcprep: {
+      title:'4. Powder Coat Prep (Grinding/Sanding)', rate:31.05, rateNote:'Grinder/Finisher $23/hr burdened',
+      tasks:[
+        {task:'Retrieve piece from welding staging',     min:0.5,  notes:'Check weld quality on receipt'},
+        {task:'Grind weld seam(s) flush',                min:8.0,  notes:'Angle grinder + flap disc — per weld'},
+        {task:'Blend grind area with Scotch-Brite',      min:6.0,  notes:'120-grit blend for uniform surface'},
+        {task:'Deburr all holes & edges',                min:3.0,  notes:'Deburr tool + file — all features'},
+        {task:'Inspect surface for defects',             min:3.0,  notes:'Check scratches, pits, toolmarks'},
+        {task:'IPA/acetone wipe-down',                   min:4.0,  notes:'Remove all oils, fingerprints'},
+        {task:'Mask threads/bearing surfaces',           min:4.0,  notes:'Silicone plugs + high-temp tape'},
+        {task:'Apply etch primer if required',           min:4.0,  notes:'2-part etch or conversion coating'},
+        {task:'Final surface inspection before PC',      min:3.0,  notes:'Reject if any contamination found'},
+        {task:'Stage on PC rack / hang',                 min:3.0,  notes:'Proper orientation for uniform coat'},
+        {task:'Fill out PC traveler card',               min:1.0,  notes:'Color, customer, order # tag'},
+      ],
+      consumables:[
+        {item:'Flap Disc 4.5" 40-grit',      unit:'each', qty:0.05,  cost:3.50,  total:0.175,  notes:'~20 pieces/disc'},
+        {item:'Flap Disc 4.5" 80-grit',      unit:'each', qty:0.05,  cost:3.50,  total:0.175,  notes:'~20 pieces/disc'},
+        {item:'Scotch-Brite Pad 7447',       unit:'each', qty:0.1,   cost:3.20,  total:0.32,   notes:'~10 pieces/pad'},
+        {item:'Deburr/Carbide Burr (amort)', unit:'each', qty:0.033, cost:12.00, total:0.396,  notes:'~30 pieces/tool'},
+        {item:'IPA / Acetone Solvent',       unit:'oz',   qty:2.0,   cost:0.085, total:0.17,   notes:'~2 oz/piece for full wipe'},
+        {item:'High-Temp Masking Tape',      unit:'ft',   qty:1.5,   cost:0.18,  total:0.27,   notes:'Mask holes, threads'},
+        {item:'Silicone Masking Plugs',      unit:'each', qty:4.0,   cost:0.25,  total:1.00,   notes:'Reusable — amortized ~10 uses'},
+        {item:'Nitrile Gloves',              unit:'pair', qty:2.0,   cost:0.18,  total:0.36,   notes:'Change gloves after solvent wipe'},
+      ],
+      equipment:[
+        {equip:'Angle Grinder 4.5"',  purchase:180,  life:5, annualDep:36, kW:1.0},
+        {equip:'Bench Grinder',       purchase:350,  life:10,annualDep:35, kW:0.75},
+        {equip:'Air Die Grinder',     purchase:220,  life:7, annualDep:31, kW:0.37},
+      ],
+    },
+    pccoat: {
+      title:'5. Powder Coating', rate:31.05, rateNote:'Powder Coat Technician $23/hr burdened',
+      tasks:[
+        {task:'Pre-inspection — verify surface clean',   min:0.5,   notes:'Per piece — reject to prep if issues'},
+        {task:'Load piece onto rack',                    min:0.5,   notes:'MEASURED: 30 sec load per piece'},
+        {task:'Mask areas not to be coated',             min:0.75,  notes:'Silicone plugs + high-temp tape'},
+        {task:'Gun setup (amort. by rack qty)',          min:Math.round(10/P.rackQty*1000)/1000, notes:`10 min setup ÷ ${P.rackQty} rack qty`},
+        {task:'Spray (amort. by rack qty)',              min:Math.round(35/P.rackQty*1000)/1000, notes:`35 min spray ÷ ${P.rackQty} rack qty`},
+        {task:'Push rack into oven (amort.)',            min:Math.round(3/P.rackQty*1000)/1000,  notes:'3 min ÷ rack qty'},
+        {task:'BAKE — cure in oven (amort.)',            min:Math.round(60/P.rackQty*1000)/1000, notes:'MEASURED: 60 min bake ÷ rack qty'},
+        {task:'Remove rack from oven (amort.)',          min:Math.round(3/P.rackQty*1000)/1000,  notes:'3 min ÷ rack qty'},
+        {task:'Cool down before handling (amort.)',      min:Math.round(30/P.rackQty*1000)/1000, notes:'~30 min cool ÷ rack qty'},
+        {task:'Unload piece from rack',                  min:0.5,   notes:'MEASURED: 30 sec unload per piece'},
+        {task:'Remove masking',                          min:0.5,   notes:'Pull plugs, tape — per piece'},
+        {task:'Final inspect — DFT, adhesion, color',   min:0.75,  notes:'DFT gauge, visual, color chip'},
+        {task:'Touch-up / re-spray rejects (avg 5%)',   min:0.30,  notes:'~5% rejection rate; spot re-spray'},
+        {task:'Stage piece for next process',           min:0.25,  notes:'Protective spacing on cart'},
+      ],
+      consumables:[
+        {item:'Powder Coat Material (avg)',  unit:'lb',   qty:0.029, cost:4.50,  total:0.1305, notes:'~2.33 sqft/post ÷ 80 sqft/lb'},
+        {item:'High-Temp Masking Tape',     unit:'ft',   qty:1.0,   cost:0.18,  total:0.18,   notes:'Mask holes, threads'},
+        {item:'Silicone Masking Plugs',     unit:'each', qty:3.0,   cost:0.25,  total:0.75,   notes:'Reusable — amortized'},
+        {item:'Nitrile Gloves',             unit:'pair', qty:1.0,   cost:0.18,  total:0.18,   notes:'One pair per rack operation'},
+        {item:'IPA Final Wipe',             unit:'oz',   qty:0.5,   cost:0.085, total:0.0425, notes:'Final wipe before spray'},
+      ],
+      equipment:[
+        {equip:'Powder Coat Oven (full size)', purchase:12000, life:15, annualDep:800,  kW:24.0},
+        {equip:'Powder Coat Gun (Nordson)',    purchase:2200,  life:10, annualDep:220,  kW:0.5},
+        {equip:'Air Compressor (PC)',          purchase:2800,  life:15, annualDep:187,  kW:3.7},
+      ],
+      batchRef:[
+        {step:'Load rack (44 posts × 30 sec)', batchMin:22, operator:'ACTIVE', source:'MEASURED'},
+        {step:'Gun setup (no color swap)',      batchMin:10, operator:'ACTIVE', source:'MEASURED'},
+        {step:'Spray rack (44 × 42" posts)',    batchMin:35, operator:'ACTIVE', source:'MEASURED'},
+        {step:'Push rack into oven',            batchMin:3,  operator:'ACTIVE', source:'MEASURED'},
+        {step:'BAKE (cure @ 400°F)',            batchMin:60, operator:'IDLE',   source:'MEASURED'},
+        {step:'Remove rack from oven',          batchMin:3,  operator:'ACTIVE', source:'MEASURED'},
+        {step:'Cool down',                      batchMin:30, operator:'IDLE',   source:'ESTIMATED'},
+        {step:'Unload rack (44 × 30 sec)',      batchMin:22, operator:'ACTIVE', source:'MEASURED'},
+        {step:'Remove masking + DFT inspect',   batchMin:22, operator:'ACTIVE', source:'MEASURED'},
+      ],
+    },
+    qc: {
+      title:'7. Quality Control & Inspection', rate:35.10, rateNote:'QC Inspector $26/hr burdened',
+      tasks:[
+        {task:'Pull work order & BOM from batch',       min:1.0,  notes:'Verify correct order / piece'},
+        {task:'Dimensional inspection — height/length', min:3.0,  notes:'Tape measure + caliper; ±1/16" tol'},
+        {task:'Powder coat inspection',                 min:3.0,  notes:'DFT gauge (2.0-3.0 mil), visual'},
+        {task:'Color verification',                     min:1.0,  notes:'Compare to Cardinal color chip'},
+        {task:'Weld inspection — visual',               min:3.0,  notes:'No porosity, undercut, cold lap'},
+        {task:'Hole pattern / placement check',         min:2.0,  notes:'Caliper check critical dims'},
+        {task:'Hardware completeness check',            min:2.0,  notes:'Count fasteners vs BOM'},
+        {task:'Surface finish / scratch check',         min:3.0,  notes:'Reject if visible defects > tol'},
+        {task:'Document result in QC log',             min:2.0,  notes:'Pass/fail + measurements logged'},
+        {task:'Apply QC pass sticker / label',          min:1.0,  notes:'Green sticker or stamp'},
+        {task:'Stage for packaging (pass only)',        min:2.0,  notes:'Place in outgoing rack'},
+        {task:'Route rejections for rework',            min:1.0,  notes:'Tag failure reason, return to station'},
+      ],
+      consumables:[
+        {item:'DFT Gauge Batteries (amort)',  unit:'each', qty:0.001,  cost:8.00,  total:0.008,  notes:'~1000 uses/battery set'},
+        {item:'QC Labels / Stickers',         unit:'each', qty:1.0,    cost:0.04,  total:0.04,   notes:'Pass label per piece'},
+        {item:'Calibration Check Fluid',      unit:'oz',   qty:0.01,   cost:12.00, total:0.12,   notes:'Monthly DFT calibration'},
+        {item:'Inspection Forms / Paper',     unit:'sheet',qty:0.25,   cost:0.05,  total:0.0125, notes:'1 form per 4 pieces'},
+        {item:'Sharpies / Markers',           unit:'each', qty:0.01,   cost:1.50,  total:0.015,  notes:'Mark rejects'},
+      ],
+      equipment:[
+        {equip:'DFT Gauge (PosiTector)',      purchase:850,  life:10, annualDep:85,  kW:0},
+        {equip:'Digital Caliper Set',         purchase:280,  life:10, annualDep:28,  kW:0},
+        {equip:'Inspection Table / Lighting', purchase:1200, life:15, annualDep:80,  kW:0.1},
+      ],
+    },
+    packaging: {
+      title:'8. Packaging & Shipping', rate:35.10, rateNote:'Packaging/Shipping $26/hr burdened',
+      tasks:[
+        {task:'Pull order from QC pass staging',       min:2.0,  notes:'Match order tag to packing list'},
+        {task:'Wrap each piece in poly tubing',        min:5.0,  notes:'6-mil poly — full coverage'},
+        {task:'Apply foam/bubble on ends',             min:3.0,  notes:'Corner & end protection'},
+        {task:'Bundle sections together',              min:4.0,  notes:'Strap, edge protectors, foam'},
+        {task:'Build custom crate/box if required',    min:8.0,  notes:'LTL shipments — wood crate'},
+        {task:'Generate packing list & labels',        min:3.0,  notes:'ERP packing list + ship label'},
+        {task:'Apply all shipping labels',             min:2.0,  notes:'Ship label, packing list, order ID'},
+        {task:'Weigh & measure shipment',              min:3.0,  notes:'LTL: freight class, dimensions'},
+        {task:'Palletize if LTL freight',              min:8.0,  notes:'Stretch wrap, pallet, secure'},
+        {task:'Photograph shipment',                   min:2.0,  notes:'Proof of packaging per quality SOP'},
+        {task:'Schedule carrier pickup / book BOL',   min:5.0,  notes:'Call carrier or portal booking'},
+        {task:'Update ERP — shipped + tracking',       min:2.0,  notes:'Enter tracking, mark shipped'},
+        {task:'File packing list in order folder',     min:1.0,  notes:'Archive for warranty reference'},
+      ],
+      consumables:[
+        {item:'6-Mil Poly Tubing 6"×1000ft (amort)', unit:'roll', qty:0.001, cost:42.00, total:0.042,  notes:'~1000 pieces per roll'},
+        {item:'Stretch Wrap 80 gauge (amort)',        unit:'roll', qty:0.005, cost:28.00, total:0.14,   notes:'~200 pieces per roll'},
+        {item:'Strapping / Banding (amort)',          unit:'roll', qty:0.002, cost:35.00, total:0.07,   notes:'~500 pieces per roll'},
+        {item:'Edge Protectors (cardboard)',          unit:'each', qty:4.0,   cost:0.22,  total:0.88,   notes:'4 corners per bundle'},
+        {item:'Foam End Caps (pair)',                 unit:'pair', qty:1.0,   cost:0.85,  total:0.85,   notes:'Both ends of each piece'},
+        {item:'Packing Tape 2" (amort)',              unit:'roll', qty:0.01,  cost:4.80,  total:0.048,  notes:'~100 packages per roll'},
+        {item:'Shipping Label Paper (amort)',         unit:'sheet',qty:0.1,   cost:0.35,  total:0.035,  notes:'~10 labels/sheet'},
+        {item:'BOL / Packing List Paper',             unit:'sheet',qty:2.0,   cost:0.05,  total:0.10,   notes:'2 copies per shipment'},
+        {item:'Wood Lumber for Crate 2×4 (amort)',   unit:'ft',   qty:3.0,   cost:0.65,  total:1.95,   notes:'Simple 4-board crate per piece'},
+        {item:'Crating Nails / Screws (amort)',       unit:'lb',   qty:0.05,  cost:2.80,  total:0.14,   notes:'Fasteners for crate assembly'},
+        {item:'Pallet (amort)',                       unit:'each', qty:0.033, cost:12.00, total:0.396,  notes:'~30 pieces per pallet avg'},
+      ],
+      equipment:[
+        {equip:'Pallet Jack',          purchase:1200,  life:10, annualDep:120,  kW:0},
+        {equip:'Freight Scale',        purchase:950,   life:10, annualDep:95,   kW:0.01},
+        {equip:'Label Printer',        purchase:650,   life:7,  annualDep:93,   kW:0.05},
+        {equip:'Stretch Wrap Machine', purchase:1400,  life:10, annualDep:140,  kW:0.5},
+      ],
+    },
+  };
+
+  // ── Consumables Master ────────────────────────────────────────────────────
+  const CONSUMABLES_ALL = [
+    {item:'Cold Saw Blade (14" carbide)',  process:'Cutting',   unit:'each', qtyPerSec:0.0033, unitCost:185,   costPerSec:0.6105},
+    {item:'Cutting Fluid',                process:'Cutting',   unit:'oz',   qtyPerSec:0.5,    unitCost:0.18,  costPerSec:0.09},
+    {item:'Deburring Blades',             process:'Cutting',   unit:'each', qtyPerSec:0.05,   unitCost:3.5,   costPerSec:0.175},
+    {item:'HSS Drill Bits (picket holes)',process:'Drilling',  unit:'each', qtyPerSec:0.05,   unitCost:4.5,   costPerSec:0.225},
+    {item:'HSS Drill Bits (post holes)',  process:'Drilling',  unit:'each', qtyPerSec:0.10,   unitCost:5.75,  costPerSec:0.575},
+    {item:'Countersink Bit (HSS)',        process:'Drilling',  unit:'each', qtyPerSec:0.02,   unitCost:8.5,   costPerSec:0.17},
+    {item:'Carbide Drill Bits 3/16"',     process:'CNC',       unit:'each', qtyPerSec:0.0167, unitCost:12.5,  costPerSec:0.209},
+    {item:'Carbide Drill Bits 1/4"',      process:'CNC',       unit:'each', qtyPerSec:0.025,  unitCost:14.75, costPerSec:0.369},
+    {item:'End Mill 1/4" carbide',        process:'CNC',       unit:'each', qtyPerSec:0.010,  unitCost:22,    costPerSec:0.22},
+    {item:'End Mill 3/8" carbide',        process:'CNC',       unit:'each', qtyPerSec:0.0083, unitCost:28.5,  costPerSec:0.237},
+    {item:'CNC Cutting Fluid (flood)',    process:'CNC',       unit:'gal',  qtyPerSec:0.015,  unitCost:32,    costPerSec:0.48},
+    {item:'Argon Gas (100%)',             process:'Welding',   unit:'cu.ft',qtyPerSec:15,     unitCost:0.065, costPerSec:0.975},
+    {item:'Filler Rod — 4043',            process:'Welding',   unit:'rod',  qtyPerSec:8,      unitCost:0.42,  costPerSec:3.36},
+    {item:'Filler Rod — 5356',            process:'Welding',   unit:'rod',  qtyPerSec:4,      unitCost:0.48,  costPerSec:1.92},
+    {item:'Tungsten Electrode',           process:'Welding',   unit:'each', qtyPerSec:0.25,   unitCost:3.85,  costPerSec:0.963},
+    {item:'Acetone (weld prep)',           process:'Welding',   unit:'oz',   qtyPerSec:3,      unitCost:0.09,  costPerSec:0.27},
+    {item:'Flap Disc 4.5" 40-grit',       process:'PC Prep',   unit:'each', qtyPerSec:0.05,   unitCost:3.5,   costPerSec:0.175},
+    {item:'Scotch-Brite Pad 7447',        process:'PC Prep',   unit:'each', qtyPerSec:0.1,    unitCost:3.2,   costPerSec:0.32},
+    {item:'IPA / Acetone Solvent',        process:'PC Prep',   unit:'oz',   qtyPerSec:2,      unitCost:0.085, costPerSec:0.17},
+    {item:'High-Temp Masking Tape',       process:'PC Prep',   unit:'ft',   qtyPerSec:1.5,    unitCost:0.18,  costPerSec:0.27},
+    {item:'Powder Coat Material (avg)',   process:'PC Coat',   unit:'lb',   qtyPerSec:0.029,  unitCost:4.5,   costPerSec:0.131},
+    {item:'6-Mil Poly Tubing (amort)',    process:'Packaging', unit:'roll', qtyPerSec:0.001,  unitCost:42,    costPerSec:0.042},
+    {item:'Stretch Wrap (amort)',         process:'Packaging', unit:'roll', qtyPerSec:0.005,  unitCost:28,    costPerSec:0.14},
+    {item:'Edge Protectors',             process:'Packaging', unit:'each', qtyPerSec:4,      unitCost:0.22,  costPerSec:0.88},
+    {item:'Pallet (amort)',               process:'Packaging', unit:'each', qtyPerSec:0.033,  unitCost:12,    costPerSec:0.396},
+  ];
+
+  // ── Goals data per station ────────────────────────────────────────────────
+  const GOALS = {
+    cutting:  {title:'Material Cutting',    cycleMin:7.08,  targetEff:0.85, workers:1},
+    drilling: {title:'Manual Drilling',     cycleMin:2.77,  targetEff:0.85, workers:1},
+    cnc:      {title:'CNC Machining',       cycleMin:37,    targetEff:0.80, workers:1},
+    welding:  {title:'Welding (TIG)',        cycleMin:5.5,   targetEff:0.85, workers:2},
+    pcprep:   {title:'Powder Coat Prep',    cycleMin:41.5,  targetEff:0.85, workers:1},
+    pccoat:   {title:'Powder Coating',      cycleMin:7.25,  targetEff:0.90, workers:1},
+    qc:       {title:'Quality Control',     cycleMin:25,    targetEff:0.85, workers:1},
+    packaging:{title:'Packaging & Shipping',cycleMin:54,    targetEff:0.80, workers:1},
+  };
+
+  const prodMinsPerDay = G.prodHrs * 60;
+  const bottleneckStation = [...stations].sort((a,b)=>b.min-a.min)[0];
+  const systemOutputPerDay = Math.floor(prodMinsPerDay / bottleneckStation.min);
+
+  const tabs = [
+    ['dashboard','📊 Dashboard'],['cutting','✂ Cutting'],['drilling','🔩 Drilling'],
+    ['cnc','⚙ CNC'],['welding','🔥 Welding'],['pcprep','🔧 PC Prep'],
+    ['pccoat','🎨 PC Coat'],['qc','✅ QC'],['packaging','📦 Packaging'],
+    ['daily','📈 Daily Output'],['consumables','🧰 Consumables'],['goals','🎯 Goals'],
+  ];
+
+  const Cell = ({v, align='right', bold=false, color}) => (
+    <td style={{textAlign:align, fontFamily:'monospace', fontSize:11, fontWeight:bold?700:400, color:color||'inherit', whiteSpace:'nowrap', padding:'5px 10px'}}>
+      {v}
+    </td>
+  );
+
+  const renderStationDetail = (key) => {
+    const sd = STATION_DATA[key];
+    if(!sd) return <div style={{padding:20,color:'var(--muted)'}}>Station detail coming soon</div>;
+    const totalMin = sd.tasks.reduce((a,b)=>a+b.min,0);
+    const totalLabor = (totalMin/60)*sd.rate;
+    const totalConsumable = sd.consumables.reduce((a,b)=>a+b.total,0);
+    return (
+      <div>
+        <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,padding:'8px 14px',marginBottom:14,fontSize:11,color:'var(--acc)'}}>
+          <strong>{sd.title}</strong> — {sd.rateNote}
+        </div>
+        {/* Task Breakdown */}
+        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Task Breakdown — Per Piece</div>
+        <div className="card" style={{padding:0,overflow:'auto',marginBottom:16}}>
+          <table>
+            <thead><tr>
+              <th>#</th><th>Task / Step</th>
+              <th style={{textAlign:'right'}}>Min</th>
+              <th style={{textAlign:'right'}}>Hrs</th>
+              <th style={{textAlign:'right'}}>Labor Cost ($)</th>
+              <th>Notes / Source</th>
+            </tr></thead>
+            <tbody>
+              {sd.tasks.filter(t=>t.min>0).map((t,i)=>(
+                <tr key={i}>
+                  <td className="mono" style={{color:'var(--muted)',fontSize:11,width:30}}>{i+1}</td>
+                  <td style={{fontWeight:500}}>{t.task}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{t.min.toFixed(3)}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--muted)'}}>{(t.min/60).toFixed(4)}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--warn)'}}>${((t.min/60)*sd.rate).toFixed(4)}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td>
+                </tr>
+              ))}
+              <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+                <td colSpan={2} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',paddingLeft:12}}>TASK TOTALS (per piece)</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{totalMin.toFixed(3)}</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{(totalMin/60).toFixed(4)}</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>${totalLabor.toFixed(4)}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Consumables */}
+        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Consumables & Materials (per piece)</div>
+        <div className="card" style={{padding:0,overflow:'auto',marginBottom:16}}>
+          <table>
+            <thead><tr><th>Consumable Item</th><th>Unit</th><th style={{textAlign:'right'}}>Qty/Piece</th><th style={{textAlign:'right'}}>Unit Cost ($)</th><th style={{textAlign:'right'}}>Cost/Piece ($)</th><th>Notes</th></tr></thead>
+            <tbody>
+              {sd.consumables.map((c,i)=>(
+                <tr key={i}>
+                  <td style={{fontWeight:500}}>{c.item}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{c.unit}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace'}}>{c.qty}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace'}}>${c.cost.toFixed(2)}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>${c.total.toFixed(4)}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{c.notes}</td>
+                </tr>
+              ))}
+              <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+                <td colSpan={4} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',paddingLeft:12}}>CONSUMABLES TOTAL</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>${totalConsumable.toFixed(4)}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Equipment */}
+        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Equipment Depreciation & Energy (per piece)</div>
+        <div className="card" style={{padding:0,overflow:'auto',marginBottom:key==='pccoat'?16:0}}>
+          <table>
+            <thead><tr><th>Equipment</th><th style={{textAlign:'right'}}>Purchase ($)</th><th style={{textAlign:'right'}}>Life (yr)</th><th style={{textAlign:'right'}}>Annual Dep ($)</th><th style={{textAlign:'right'}}>Usage (hrs/pc)</th><th style={{textAlign:'right'}}>Dep $/Pc</th><th style={{textAlign:'right'}}>kW</th><th style={{textAlign:'right'}}>Energy $/Pc</th></tr></thead>
+            <tbody>
+              {sd.equipment.map((e,i)=>{
+                const hrsPerPc = totalMin/60;
+                const depPerPc = (e.annualDep / 2000) * hrsPerPc;
+                const energyPerPc = hrsPerPc * e.kW * G.electricityKwh;
+                return (
+                  <tr key={i}>
+                    <td style={{fontWeight:500}}>{e.equip}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace'}}>${e.purchase.toLocaleString()}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace'}}>{e.life}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace'}}>${e.annualDep.toLocaleString()}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace'}}>{hrsPerPc.toFixed(4)}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--acc)'}}>${depPerPc.toFixed(4)}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace'}}>{e.kW}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--acc)'}}>${energyPerPc.toFixed(5)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PC Coat Batch Reference */}
+        {key==='pccoat'&&sd.batchRef&&<>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',margin:'16px 0 8px'}}>Full Rack Batch Cycle Reference</div>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <table>
+              <thead><tr><th>Step</th><th style={{textAlign:'right'}}>Batch Time (min)</th><th>Operator</th><th>Source</th></tr></thead>
+              <tbody>
+                {sd.batchRef.map((b,i)=>(
+                  <tr key={i}>
+                    <td style={{fontWeight:500}}>{b.step}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{b.batchMin}</td>
+                    <td><span style={{background:b.operator==='ACTIVE'?'rgba(16,185,129,.2)':'rgba(99,102,241,.2)',color:b.operator==='ACTIVE'?'var(--ok)':'#818cf8',borderRadius:3,padding:'2px 8px',fontSize:10,fontWeight:700}}>{b.operator}</span></td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{b.source}</td>
+                  </tr>
+                ))}
+                <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+                  <td style={{fontFamily:'Barlow Condensed',fontWeight:700,paddingLeft:12}}>TOTAL BATCH CYCLE</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{sd.batchRef.reduce((a,b)=>a+b.batchMin,0)} min</td>
+                  <td colSpan={2} style={{fontSize:11,color:'var(--muted)'}}>{P.rackQty} pcs/rack = {(sd.batchRef.reduce((a,b)=>a+b.batchMin,0)/P.rackQty).toFixed(2)} min/pc</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>}
+      </div>
+    );
+  };
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Process Cost Analysis</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Per-piece cost & time analysis — every calculation is for ONE individual piece</div>
+        </div>
+        {/* Product Selector */}
+        <div style={{display:'flex',alignItems:'center',gap:10,background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:8,padding:'8px 16px'}}>
+          <span style={{fontSize:10,fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--warn)',whiteSpace:'nowrap'}}>★ Selected Product</span>
+          <select value={selectedProduct} onChange={e=>setSelectedProduct(e.target.value)} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,color:'var(--warn)',background:'transparent',border:'none',outline:'none',cursor:'pointer'}}>
+            {Object.keys(PRODUCTS).map(p=><option key={p}>{p}</option>)}
+          </select>
+          <span style={{fontSize:10,color:'var(--muted)'}}>← Change to update all</span>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:4,marginBottom:14,flexWrap:'wrap'}}>
+        {tabs.map(([k,l])=>(
+          <button key={k} className={'tab'+(pcaTab===k?' on':'')} onClick={()=>setPcaTab(k)} style={{fontSize:10,padding:'4px 8px'}}>{l}</button>
+        ))}
+      </div>
+
+      {/* ── DASHBOARD ─────────────────────────────────────────────────────── */}
+      {pcaTab==='dashboard'&&<div>
+        {/* KPI Cards */}
+        <StatRow>
+          <StatCard label="Total Cost / Piece" value={fmt$(totalCost)} icon="💰" color="var(--acc)" sub={totalMin.toFixed(1)+' min total'}/>
+          <StatCard label="Total Labor / Piece" value={fmt$(totalLabor)} icon="👷" color="var(--warn)" sub={(totalLabor/totalCost*100).toFixed(0)+'% of total cost'}/>
+          <StatCard label="Consumables / Piece" value={fmt$(totalConsumable)} icon="🔩" color="#f97316" sub={(totalConsumable/totalCost*100).toFixed(0)+'% of total cost'}/>
+          <StatCard label="System Output / Day" value={systemOutputPerDay+' pcs'} icon="⚙️" color={systemOutputPerDay<20?'var(--err)':'var(--ok)'} sub={'Bottleneck: '+bottleneckStation.name.split('.').slice(1).join('.')}/>
+        </StatRow>
+
+        {/* Global Assumptions */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:10}}>Global Assumptions</div>
+            {[
+              {p:'Productive Hours per Shift',v:'9.0',u:'hrs',n:'10-hr shift minus breaks'},
+              {p:'Shifts per Day',v:'1',u:'shifts',n:''},
+              {p:'Working Days per Week',v:'5',u:'days',n:''},
+              {p:'Working Days per Month',v:'22',u:'days',n:''},
+              {p:'Overhead Rate',v:'35%',u:'',n:'Facility, insurance, admin'},
+              {p:'Electricity $/kWh',v:'$0.089',u:'',n:'Idaho Power commercial'},
+              {p:'Shop Hourly Burden',v:'$12.50/hr',u:'',n:'Rent, utilities, insurance'},
+            ].map((r,i)=>(
+              <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:'1px solid var(--bdr)',fontSize:11}}>
+                <span style={{color:'var(--muted)'}}>{r.p}</span>
+                <span style={{fontFamily:'monospace',fontWeight:700,color:'var(--txt)'}}>{r.v} <span style={{color:'var(--muted)',fontWeight:400}}>{r.u}</span></span>
+              </div>
+            ))}
+          </div>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:10}}>Labor Rates by Role</div>
+            {Object.entries(RATES).map(([k,r],i)=>(
+              <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:'1px solid var(--bdr)',fontSize:11}}>
+                <span style={{color:'var(--muted)',flex:1}}>{r.role}</span>
+                <span style={{fontFamily:'monospace',color:'var(--muted)',marginRight:12}}>${r.wage}/hr</span>
+                <span style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)'}}>${r.burdened.toFixed(2)}/hr burdened</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Product Properties */}
+        <div className="card" style={{marginBottom:16}}>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--warn)',marginBottom:10}}>
+            Selected Product Properties — {selectedProduct}
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
+            {[
+              {l:'Length (in)',v:P.lenIn+'"'},
+              {l:'Length (LF)',v:P.lf+' LF'},
+              {l:'Drill Holes',v:P.holes+' holes'},
+              {l:'Sec / Hole',v:P.secPerHole+' sec'},
+              {l:'Stair Cut?',v:P.stairCut?'Yes':'No',c:P.stairCut?'var(--warn)':undefined},
+              {l:'Angle Cut',v:P.angleSec+' sec'},
+              {l:'Weld Inches',v:P.weldIn+'"'},
+              {l:'PC Rack Qty',v:P.rackQty+' pcs/rack'},
+              {l:'Is Stair?',v:P.isStair?'Yes':'No',c:P.isStair?'var(--warn)':undefined},
+              {l:'Is Rail?',v:P.isRail?'Yes':'No'},
+            ].map(f=>(
+              <div key={f.l} style={{background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
+                <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:2}}>{f.l}</div>
+                <div style={{fontSize:13,fontFamily:'Barlow Condensed',fontWeight:700,color:f.c||'var(--txt)'}}>{f.v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Cost Summary Table */}
+        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>
+          Process Cost & Time Summary — Per Piece — {selectedProduct}
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table style={{minWidth:800}}>
+            <thead>
+              <tr style={{background:'var(--s3)'}}>
+                <th style={{textAlign:'left'}}>Process Station</th>
+                <th style={{textAlign:'right'}}>Time (min)</th>
+                <th style={{textAlign:'right'}}>Labor Cost ($)</th>
+                <th style={{textAlign:'right'}}>Consumable ($)</th>
+                <th style={{textAlign:'right'}}>Energy ($)</th>
+                <th style={{textAlign:'right'}}>Depreciation ($)</th>
+                <th style={{textAlign:'right',fontWeight:700,color:'var(--warn)'}}>Total Cost ($)</th>
+                <th style={{textAlign:'right'}}>Pcs/Day</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stations.map((s,i)=>{
+                const isBottle = s.key === bottleneckStation.key;
+                return (
+                  <tr key={i} style={{background:isBottle?'rgba(239,68,68,.06)':undefined}}>
+                    <td style={{fontWeight:600, color:isBottle?'var(--err)':undefined, paddingLeft:12}}>
+                      {s.name}
+                      {isBottle&&<span style={{marginLeft:8,fontSize:9,background:'rgba(239,68,68,.2)',color:'var(--err)',borderRadius:3,padding:'1px 5px',fontWeight:700}}>BOTTLENECK</span>}
+                    </td>
+                    <Cell v={s.min.toFixed(2)} color={s.min>30?'var(--err)':s.min>15?'var(--warn)':undefined}/>
+                    <Cell v={'$'+s.labor.toFixed(4)}/>
+                    <Cell v={'$'+s.consumable.toFixed(4)}/>
+                    <Cell v={'$'+s.energy.toFixed(5)}/>
+                    <Cell v={'$'+s.deprec.toFixed(4)}/>
+                    <Cell v={'$'+s.total.toFixed(4)} bold color='var(--warn)'/>
+                    <Cell v={s.pcsDay>0?s.pcsDay:'—'} color={s.pcsDay>0&&s.pcsDay<10?'var(--err)':undefined}/>
+                  </tr>
+                );
+              })}
+              <tr style={{borderTop:'3px solid var(--bdr2)',background:'var(--s2)'}}>
+                <td style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.08em',textTransform:'uppercase',paddingLeft:12}}>TOTAL PER PIECE</td>
+                <Cell v={totalMin.toFixed(2)} bold/>
+                <Cell v={'$'+totalLabor.toFixed(4)} bold/>
+                <Cell v={'$'+totalConsumable.toFixed(4)} bold/>
+                <Cell v={'$'+totalEnergy.toFixed(5)} bold/>
+                <Cell v={'$'+totalDeprec.toFixed(4)} bold/>
+                <Cell v={'$'+totalCost.toFixed(4)} bold color='var(--warn)'/>
+                <td></td>
+              </tr>
+              <tr style={{background:'rgba(239,68,68,.06)'}}>
+                <td colSpan={8} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,padding:'8px 12px',color:'var(--err)'}}>
+                  ⚠ BOTTLENECK STATION: {bottleneckStation.name} — {bottleneckStation.min.toFixed(2)} min/piece → {systemOutputPerDay} pieces/day system maximum
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Cost breakdown visual */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginTop:16}}>
+          {[
+            {l:'Labor Cost',v:totalLabor,pct:totalLabor/totalCost,c:'var(--warn)'},
+            {l:'Consumables',v:totalConsumable,pct:totalConsumable/totalCost,c:'#f97316'},
+            {l:'Depreciation',v:totalDeprec,pct:totalDeprec/totalCost,c:'#818cf8'},
+            {l:'Energy',v:totalEnergy,pct:totalEnergy/totalCost,c:'var(--ok)'},
+          ].map(m=>(
+            <div key={m.l} className="card" style={{textAlign:'center'}}>
+              <div style={{fontSize:9,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>{m.l}</div>
+              <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,color:m.c}}>{fmt$(m.v)}</div>
+              <div style={{background:'var(--s3)',borderRadius:99,height:6,marginTop:8,overflow:'hidden'}}>
+                <div style={{background:m.c,height:'100%',width:(m.pct*100)+'%',borderRadius:99}}/>
+              </div>
+              <div style={{fontSize:10,color:m.c,marginTop:4,fontWeight:700}}>{(m.pct*100).toFixed(1)}% of total</div>
+            </div>
+          ))}
+        </div>
+      </div>}
+
+      {/* ── STATION TABS ──────────────────────────────────────────────────── */}
+      {pcaTab==='cutting'&&renderStationDetail('cutting')}
+      {pcaTab==='drilling'&&renderStationDetail('drilling')}
+      {pcaTab==='cnc'&&renderStationDetail('cnc')}
+      {pcaTab==='welding'&&renderStationDetail('welding')}
+      {pcaTab==='pcprep'&&renderStationDetail('pcprep')}
+      {pcaTab==='pccoat'&&renderStationDetail('pccoat')}
+      {pcaTab==='qc'&&renderStationDetail('qc')}
+      {pcaTab==='packaging'&&renderStationDetail('packaging')}
+
+      {/* ── DAILY OUTPUT ──────────────────────────────────────────────────── */}
+      {pcaTab==='daily'&&<div>
+        <StatRow>
+          <StatCard label="System Output/Day" value={systemOutputPerDay+' pcs'} icon="📊" color={systemOutputPerDay<15?'var(--err)':'var(--ok)'} sub="Bottleneck-limited"/>
+          <StatCard label="Bottleneck Station" value={bottleneckStation.name.split('. ')[1]||bottleneckStation.name} icon="⚠️" color="var(--err)" sub={bottleneckStation.min.toFixed(1)+' min/pc'}/>
+          <StatCard label="Monthly Capacity" value={systemOutputPerDay*G.daysPerMonth+' pcs'} icon="📅" color="var(--acc)" sub={G.daysPerMonth+' working days'}/>
+          <StatCard label="Annual Capacity" value={Math.floor(systemOutputPerDay*G.daysPerMonth*12).toLocaleString()+' pcs'} icon="🏭" color="var(--warn)" sub="Current configuration"/>
+        </StatRow>
+
+        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Single-Worker Station Analysis</div>
+        <div className="card" style={{padding:0,overflow:'auto',marginBottom:16}}>
+          <table style={{minWidth:800}}>
+            <thead><tr>
+              <th>Process Station</th>
+              <th style={{textAlign:'right'}}>Time/Pc (min)</th>
+              <th style={{textAlign:'right'}}>Pcs/Hour</th>
+              <th style={{textAlign:'right'}}>Pcs/Day</th>
+              <th style={{textAlign:'right'}}>Labor $/Day</th>
+              <th style={{textAlign:'right'}}>Consumable $/Day</th>
+              <th style={{textAlign:'right'}}>Total $/Day</th>
+            </tr></thead>
+            <tbody>{stations.map((s,i)=>{
+              const isBottle = s.key === bottleneckStation.key;
+              const pcsHr = s.min>0?(60/s.min):0;
+              const pcsDay = s.min>0?Math.floor(prodMinsPerDay/s.min):0;
+              const laborDay = pcsDay * s.labor;
+              const consumeDay = pcsDay * s.consumable;
+              const totalDay = pcsDay * s.total;
+              return (
+                <tr key={i} style={{background:isBottle?'rgba(239,68,68,.06)':undefined}}>
+                  <td style={{fontWeight:600,color:isBottle?'var(--err)':undefined,paddingLeft:12}}>
+                    {s.name}{isBottle&&<span style={{marginLeft:8,fontSize:9,background:'rgba(239,68,68,.2)',color:'var(--err)',borderRadius:3,padding:'1px 5px',fontWeight:700}}>BOTTLENECK</span>}
+                  </td>
+                  <Cell v={s.min.toFixed(2)} color={s.min>30?'var(--err)':s.min>15?'var(--warn)':undefined}/>
+                  <Cell v={pcsHr.toFixed(2)}/>
+                  <Cell v={pcsDay} color={isBottle?'var(--err)':undefined} bold={isBottle}/>
+                  <Cell v={'$'+laborDay.toFixed(2)}/>
+                  <Cell v={'$'+consumeDay.toFixed(2)}/>
+                  <Cell v={'$'+totalDay.toFixed(2)} bold/>
+                </tr>
+              );
+            })}</tbody>
+          </table>
+        </div>
+
+        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Multi-Worker Scenario Modeling</div>
+        <div style={{marginBottom:10,fontSize:11,color:'var(--muted)'}}>Adjust workers per station to model throughput improvements. Welding already runs 2 workers.</div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table style={{minWidth:900}}>
+            <thead><tr>
+              <th>Station</th>
+              <th style={{textAlign:'center'}}>Workers</th>
+              <th style={{textAlign:'right'}}>Eff. Time/Pc (min)</th>
+              <th style={{textAlign:'right'}}>Pcs/Day</th>
+              <th style={{textAlign:'right'}}>Daily Labor Cost</th>
+              <th style={{textAlign:'right'}}>Daily Total Cost</th>
+            </tr></thead>
+            <tbody>{stations.map((s,i)=>{
+              const w = workers[s.key]||1;
+              const effMin = s.min/w;
+              const pcsDay = Math.floor(prodMinsPerDay/effMin);
+              const laborDay = pcsDay * s.labor;
+              const totalDay = pcsDay * s.total;
+              const isNewBottle = effMin === Math.max(...stations.map(x=>x.min/(workers[x.key]||1)));
+              return (
+                <tr key={i} style={{background:isNewBottle?'rgba(239,68,68,.06)':undefined}}>
+                  <td style={{fontWeight:600,color:isNewBottle?'var(--err)':undefined,paddingLeft:12}}>
+                    {s.name}{isNewBottle&&<span style={{marginLeft:8,fontSize:9,background:'rgba(239,68,68,.2)',color:'var(--err)',borderRadius:3,padding:'1px 5px',fontWeight:700}}>NEW BOTTLENECK</span>}
+                  </td>
+                  <td style={{textAlign:'center'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                      <button onClick={()=>setWorkers(ww=>({...ww,[s.key]:Math.max(1,w-1)}))} style={{background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:4,width:24,height:24,cursor:'pointer',color:'var(--txt)',fontWeight:700}}>−</button>
+                      <span style={{fontFamily:'monospace',fontWeight:700,width:20,textAlign:'center'}}>{w}</span>
+                      <button onClick={()=>setWorkers(ww=>({...ww,[s.key]:Math.min(5,w+1)}))} style={{background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:4,width:24,height:24,cursor:'pointer',color:'var(--txt)',fontWeight:700}}>+</button>
+                    </div>
+                  </td>
+                  <Cell v={effMin.toFixed(2)} color={isNewBottle?'var(--err)':undefined}/>
+                  <Cell v={pcsDay} bold={isNewBottle} color={isNewBottle?'var(--err)':undefined}/>
+                  <Cell v={'$'+laborDay.toFixed(2)}/>
+                  <Cell v={'$'+totalDay.toFixed(2)} bold/>
+                </tr>
+              );
+            })}
+            <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+              <td colSpan={3} style={{fontFamily:'Barlow Condensed',fontWeight:700,paddingLeft:12}}>SYSTEM OUTPUT WITH CURRENT WORKERS</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--ok)',paddingRight:10}}>
+                {Math.floor(prodMinsPerDay/Math.max(...stations.map(x=>x.min/(workers[x.key]||1))))} pcs/day
+              </td>
+              <td colSpan={2}></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>}
+
+      {/* ── CONSUMABLES MASTER ────────────────────────────────────────────── */}
+      {pcaTab==='consumables'&&<div>
+        <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:14}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>Estimated sections/month:</span>
+          <input type="number" value={sectionsPerMonth} onChange={e=>setSectionsPerMonth(+e.target.value)} style={{width:80,textAlign:'center',fontFamily:'monospace',fontWeight:700}}/>
+          <span style={{fontSize:11,color:'var(--muted)'}}>Monthly total: <strong style={{color:'var(--warn)'}}>${(CONSUMABLES_ALL.reduce((a,b)=>a+b.costPerSec*sectionsPerMonth,0)).toFixed(2)}</strong></span>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table>
+            <thead><tr>
+              <th>Consumable Item</th><th>Process</th><th>Unit</th>
+              <th style={{textAlign:'right'}}>Qty/Section</th>
+              <th style={{textAlign:'right'}}>Unit Cost ($)</th>
+              <th style={{textAlign:'right'}}>Cost/Section ($)</th>
+              <th style={{textAlign:'right'}}>Monthly Qty ({sectionsPerMonth} sec)</th>
+              <th style={{textAlign:'right'}}>Monthly Cost ($)</th>
+            </tr></thead>
+            <tbody>
+              {CONSUMABLES_ALL.map((c,i)=>(
+                <tr key={i}>
+                  <td style={{fontWeight:500}}>{c.item}</td>
+                  <td><span style={{background:'var(--s3)',borderRadius:3,padding:'1px 7px',fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--acc)',letterSpacing:'.05em'}}>{c.process}</span></td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{c.unit}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace'}}>{c.qtyPerSec}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace'}}>${c.unitCost.toFixed(2)}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:600,color:'var(--warn)'}}>${c.costPerSec.toFixed(3)}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace'}}>{(c.qtyPerSec*sectionsPerMonth).toFixed(1)}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>${(c.costPerSec*sectionsPerMonth).toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+                <td colSpan={7} style={{fontFamily:'Barlow Condensed',fontWeight:700,paddingLeft:12}}>MONTHLY TOTAL ({sectionsPerMonth} sections)</td>
+                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)',paddingRight:10}}>
+                  ${CONSUMABLES_ALL.reduce((a,b)=>a+b.costPerSec*sectionsPerMonth,0).toFixed(2)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>}
+
+      {/* ── GOALS ─────────────────────────────────────────────────────────── */}
+      {pcaTab==='goals'&&<div>
+        <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+          {Object.entries(GOALS).map(([k,g])=>(
+            <button key={k} className={'tab'+(goalsStation===k?' on':'')} onClick={()=>setGoalsStation(k)} style={{fontSize:10}}>
+              {g.title}
+            </button>
+          ))}
+        </div>
+        {Object.entries(GOALS).map(([k,g])=>{
+          if(goalsStation!==k) return null;
+          const theoreticalPerHr = 60 / g.cycleMin;
+          const targetPerHr = theoreticalPerHr * g.targetEff;
+          const targetPerDay = targetPerHr * G.prodHrs;
+          const targetPerWeek = targetPerDay * G.daysPerWeek;
+          const targetPerMonth = targetPerDay * G.daysPerMonth;
+          return (
+            <div key={k}>
+              <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,padding:'10px 16px',marginBottom:16,fontSize:11,color:'var(--acc)'}}>
+                <strong>{g.title}</strong> — Cycle time: {g.cycleMin} min/pc · {g.workers} worker(s) · {(g.targetEff*100).toFixed(0)}% efficiency target
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+                {[
+                  {l:'Theoretical Rate',v:theoreticalPerHr.toFixed(2)+' pcs/hr',c:'var(--muted)'},
+                  {l:'Target Rate ('+Math.round(g.targetEff*100)+'% eff)',v:targetPerHr.toFixed(2)+' pcs/hr',c:'var(--warn)'},
+                  {l:'Daily Goal',v:Math.round(targetPerDay)+' pcs',c:'var(--ok)'},
+                  {l:'Monthly Goal',v:Math.round(targetPerMonth)+' pcs',c:'var(--acc)'},
+                ].map(m=>(
+                  <div key={m.l} className="card" style={{textAlign:'center'}}>
+                    <div style={{fontSize:9,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>{m.l}</div>
+                    <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,color:m.c}}>{m.v}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:12}}>Production Goal Breakdown</div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}}>
+                  {[
+                    {p:'Cycle Time per Unit',    v:g.cycleMin+' min',      n:'Total time per piece at this station'},
+                    {p:'Efficiency Factor',       v:(g.targetEff*100)+'%',  n:'Accounts for micro-breaks, minor delays'},
+                    {p:'Productive Hours/Shift', v:G.prodHrs+' hrs',        n:'10-hr shift minus breaks'},
+                    {p:'Hourly Goal',            v:Math.ceil(targetPerHr)+' pcs/hr',n:'Rounded up — target to communicate'},
+                    {p:'Daily Goal',             v:Math.round(targetPerDay)+' pcs', n:G.prodHrs+' hrs × '+targetPerHr.toFixed(2)+' pcs/hr'},
+                    {p:'Weekly Goal',            v:Math.round(targetPerWeek)+' pcs',n:G.daysPerWeek+' days × daily goal'},
+                    {p:'Monthly Goal',           v:Math.round(targetPerMonth)+' pcs',n:G.daysPerMonth+' days × daily goal'},
+                    {p:'Annual Goal',            v:Math.round(targetPerMonth*12).toLocaleString()+' pcs',n:'Monthly × 12'},
+                  ].map(r=>(
+                    <div key={r.p} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 10px',background:'var(--s2)',borderRadius:5}}>
+                      <div>
+                        <div style={{fontSize:11,fontWeight:600}}>{r.p}</div>
+                        <div style={{fontSize:10,color:'var(--muted)'}}>{r.n}</div>
+                      </div>
+                      <span style={{fontFamily:'Barlow Condensed',fontSize:18,fontWeight:700,color:'var(--warn)'}}>{r.v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>}
+
+    </div>
+  );
+};
+
 const PrintCenter = ({data}) => {
   const docs = [
     {cat:'Shop Floor',items:[
@@ -33978,6 +35938,8 @@ const PAGES = {
   sister:Sister, people:People, automation:Automation,
   shopref:ShopRef, orders:Orders, workorders:WorkOrders, orderimport:OrderImport, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
   queueanalyzer:QueueAnalyzer, hotqueue:HotRushQueue, workbookgen:WorkbookGenerator, orderanalyzer:OrderAnalyzer,
+  buildschedule:BuildSchedule, processtracker:ProcessTracker, processcost:ProcessCostAnalysis, shifthandoff:ShiftHandoff, calculators:Calculators,
+  facilitymove:FacilityMove, employeereviews:EmployeeReviews, productcatalog:ProductCatalog, opsreference:OpsReference,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
@@ -33987,6 +35949,8 @@ const TITLES = {
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
   shopref:'Shop Reference', orders:'Orders', workorders:'Work Orders', orderimport:'Order Import', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
   queueanalyzer:'Queue Analyzer', hotqueue:'Hot / Rush Queue', workbookgen:'Workbook Generator', orderanalyzer:'Order Analyzer',
+  buildschedule:'Build Schedule', processtracker:'Process Tracker', processcost:'Process Cost Analysis', shifthandoff:'Shift Handoff', calculators:'Shop Calculators',
+  facilitymove:'Facility Move', employeereviews:'Employee Reviews', productcatalog:'Product Catalog', opsreference:'Ops Reference',
 };
 
 // Load SheetJS globally on app start
