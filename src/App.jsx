@@ -26148,7 +26148,7 @@ const Dashboard = ({data,setPage}) => {
   const salesRev=data.salesOrders.filter(o=>o.type==='order').reduce((a,b)=>a+b.total,0);
   const jobRev=(data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0);
   const displayRev=salesRev>0?salesRev:jobRev;
-  const totalFreight=(data.shipCostLog||[]).reduce((a,b)=>a+(b.totalCost||0),0);
+  const totalFreight=(data.shipCostLog||[]).reduce((a,b)=>a+(b.totalCost||0),0)+(data.shipments||[]).reduce((a,b)=>a+(b.totalCost||0),0);
   const miscSpend=(data.miscCharges||[]).reduce((a,b)=>a+(b.amount||0),0);
   const latestKPI=(data.kpiWeekly||[]).slice(-1)[0]||{};
   const arOwed=data.invoices.filter(i=>i.status!=='Paid'&&i.status!=='Cancelled').reduce((a,b)=>a+b.amount,0);
@@ -26198,7 +26198,7 @@ const Dashboard = ({data,setPage}) => {
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
         <StatCard label="On-Time Delivery" value={latestKPI.onTimeDeliveryPct?latestKPI.onTimeDeliveryPct+'%':'—'} icon="🎯" color={latestKPI.onTimeDeliveryPct>=95?'var(--ok)':latestKPI.onTimeDeliveryPct>=85?'var(--warn)':'var(--err)'} sub={"Week of "+latestKPI.weekEnding||'No data'}/>
-        <StatCard label="YTD Freight Spend" value={fmt$(totalFreight)} icon="🚚" color="var(--acc)" sub={(data.shipCostLog||[]).length+" shipments"}/>
+        <StatCard label="YTD Freight Spend" value={fmt$(totalFreight)} icon="🚚" color="var(--acc)" sub={((data.shipCostLog||[]).length+(data.shipments||[]).filter(s=>s.totalCost>0).length)+" shipments"}/>
         <StatCard label="Misc Charges YTD" value={fmt$(miscSpend)} icon="🧾" color="var(--acc2)" sub={(data.miscCharges||[]).length+" charges"}/>
         <StatCard label="Scrap Cost YTD" value={fmt$((data.scrapWaste||[]).reduce((a,b)=>a+(b.cost||0),0))} icon="🗑️" color="var(--err)" sub={(data.scrapWaste||[]).length+" events"}/>
       </div>
@@ -27884,22 +27884,70 @@ const Shipping = ({data, setData}) => {
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
   const statuses=['Ready to Ship','Shipped','In Transit','Delivered','Exception'];
-  const carriers=['R+L Carriers','XPO Logistics','Old Dominion','FedEx Freight','UPS Freight','Local Delivery'];
-  const open=(row=null)=>{setForm(row?{...row}:{id:`SHP-${uid()}`,orderId:'',customer:'',carrier:'R+L Carriers',tracking:'',status:'Ready to Ship',shipped:'',delivered:'',weight:'',dims:'',totalCost:0,notes:''});setModal(row?'edit':'new');};
-  const save=()=>{const rec={...form,totalCost:Number(form.totalCost||0)};if(modal==='new')setData(d=>({...d,shipments:[...d.shipments,rec]}));else setData(d=>({...d,shipments:d.shipments.map(s=>s.id===rec.id?rec:s)}));setModal(null);};
+  const carriers=['ABF Freight','Estes Freight','FedEx Freight','Old Dominion','R+L Carriers','UPS Ground','UPS 2-Day','UPS Next-Day','XPO Logistics','Local Delivery','Other'];
+  const open=(row=null)=>{setForm(row?{...row}:{id:`SHP-${uid()}`,orderId:'',customer:'',carrier:'ABF Freight',tracking:'',status:'Ready to Ship',shipped:'',delivered:'',weight:'',dims:'',totalCost:0,notes:''});setModal(row?'edit':'new');};
+  const save=()=>{const rec={...form,totalCost:Number(form.totalCost||0),weight:Number(form.weight||0)};if(modal==='new')setData(d=>({...d,shipments:[...d.shipments,rec]}));else setData(d=>({...d,shipments:d.shipments.map(s=>s.id===rec.id?rec:s)}));setModal(null);};
   const del=id=>setData(d=>({...d,shipments:d.shipments.filter(s=>s.id!==id)}));
+
+  // ── Compute live analytics from ALL shipment sources ─────────────────────
+  const allShipments = [...(data.shipCostLog||[]).map(s=>({
+    ...s, id:s.poRef||s.tracking, customer:s.customer, carrier:s.carrier,
+    totalCost:s.totalCost||0, weight:s.weight||0, dims:s.dims||'',
+    shipped:s.date, month:s.month||s.date?.substring(0,7),
+    status:'Delivered',
+  })), ...(data.shipments||[])];
+
+  // Carrier analysis — computed live
+  const carrierStats = {};
+  allShipments.forEach(s => {
+    const c = s.carrier||'Other';
+    if(!carrierStats[c]) carrierStats[c] = {carrier:c, count:0, spend:0, delivered:0, total:0};
+    carrierStats[c].count++;
+    carrierStats[c].spend += s.totalCost||0;
+    if(s.status==='Delivered') carrierStats[c].delivered++;
+    carrierStats[c].total++;
+  });
+  const carrierAnalysis = Object.values(carrierStats)
+    .filter(c=>c.count>0)
+    .sort((a,b)=>b.spend-a.spend)
+    .map(c=>({...c, avgCost:c.count?c.spend/c.count:0, onTimePct:c.total?Math.round(c.delivered/c.total*100):0}));
+
+  // Monthly summary — computed live
+  const monthMap = {};
+  allShipments.forEach(s => {
+    const raw = s.month||s.date||'';
+    // Normalize to "Mon YYYY" format
+    let key = raw;
+    let label = raw;
+    if(raw && raw.match(/^\d{4}-\d{2}/)) {
+      const d = new Date(raw+'T12:00:00');
+      key = raw.substring(0,7);
+      label = d.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+    }
+    if(!key) return;
+    if(!monthMap[key]) monthMap[key] = {key, month:label, total:0, carriers:{}};
+    monthMap[key].total += s.totalCost||0;
+    const c = (s.carrier||'Other').toLowerCase();
+    const ckey = c.includes('abf')||c.includes('freight')?'abf':
+                 c.includes('ups')?'ups':
+                 c.includes('fedex')?'fedex':
+                 c.includes('estes')?'estes':
+                 c.includes('old dom')||c.includes('odfl')?'oldDom':
+                 c.includes('r+l')||c.includes('r&l')?'rl':
+                 c.includes('xpo')?'xpo':'other';
+    monthMap[key].carriers[ckey] = (monthMap[key].carriers[ckey]||0) + (s.totalCost||0);
+  });
+  const monthlySummary = Object.values(monthMap).sort((a,b)=>a.key.localeCompare(b.key));
   return (
     <div className="fade-up">
       {(()=>{
-        const shipLog=data.shipCostLog||[];
-        const shipments=data.shipments||[];
-        const totalShipSpend=shipLog.reduce((a,b)=>a+(b.totalCost||0),0)+shipments.reduce((a,b)=>a+(b.totalCost||0),0);
-        const totalCount=shipLog.length+shipments.filter(s=>s.totalCost>0).length;
-        const inTransit=shipments.filter(s=>s.status==='Shipped'||s.status==='In Transit');
-        const avgCost=totalCount?totalShipSpend/totalCount:0;
-        const carrierSet=[...new Set([...shipLog.map(s=>s.carrier),...shipments.map(s=>s.carrier)].filter(Boolean))];
+        const totalSpend = allShipments.reduce((a,b)=>a+(b.totalCost||0),0);
+        const withCost = allShipments.filter(s=>s.totalCost>0);
+        const avgCost = withCost.length ? totalSpend/withCost.length : 0;
+        const inTransit = (data.shipments||[]).filter(s=>s.status==='Shipped'||s.status==='In Transit');
+        const carrierSet = [...new Set(allShipments.map(s=>s.carrier).filter(Boolean))];
         return <StatRow>
-          <StatCard label="Total Freight Spend" value={fmt$(totalShipSpend)} icon="🚚" color="var(--acc)" sub={totalCount+" shipments logged"}/>
+          <StatCard label="Total Freight Spend" value={fmt$(totalSpend)} icon="🚚" color="var(--acc)" sub={allShipments.length+" total shipments"}/>
           <StatCard label="In Transit" value={inTransit.length} icon="📦" color={inTransit.length>0?'var(--warn)':'var(--ok)'} sub="Active shipments"/>
           <StatCard label="Avg Cost / Shipment" value={fmt$(avgCost)} icon="📊" color="var(--acc2)" sub="All carriers combined"/>
           <StatCard label="Carriers Used" value={carrierSet.length} icon="🏢" color="var(--muted)" sub={carrierSet.slice(0,2).join(', ')||'None logged'}/>
@@ -27914,19 +27962,21 @@ const Shipping = ({data, setData}) => {
         {['log','analysis','monthly'].map(t=><button key={t} className={'tab'+(shipTab===t?' on':'')} onClick={()=>setShipTab(t)}>{t==='log'?'Ship Log':t==='analysis'?'Carrier Analysis':'Monthly Summary'}</button>)}
       </div>
       {shipTab==='log'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>Shipment #</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Delivered</th><th style={{textAlign:'right'}}>Cost</th><th/></tr></thead>
+        <table style={{minWidth:1100}}><thead><tr><th>Shipment #</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th><th>Delivered</th><th style={{textAlign:'right'}}>Weight</th><th style={{textAlign:'center'}}>Dims (in)</th><th style={{textAlign:'right'}}>Cost</th><th/></tr></thead>
           <tbody>
-            {(data.shipments||[]).length===0&&<tr><td colSpan={10}><Empty msg="No shipments"/></td></tr>}
+            {(data.shipments||[]).length===0&&<tr><td colSpan={12}><Empty msg="No shipments"/></td></tr>}
             {(data.shipments||[]).map(s=>(
               <tr key={s.id}>
                 <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{s.id}</td>
-                <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{s.orderId}</td>
+                <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{s.orderId||'—'}</td>
                 <td style={{fontWeight:500}}>{s.customer}</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{s.carrier}</td>
+                <td style={{fontSize:11}}>{s.carrier}</td>
                 <td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{s.tracking||'—'}</td>
                 <td><Badge s={s.status}/></td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(s.shipped)}</td>
-                <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)'}}>{fmtD(s.delivered)}</td>
+                <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtD(s.shipped)}</td>
+                <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)',whiteSpace:'nowrap'}}>{fmtD(s.delivered)}</td>
+                <td style={{fontFamily:'monospace',textAlign:'right',color:'var(--muted)'}}>{s.weight>0?s.weight+' lbs':'—'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10.5,textAlign:'center',color:'var(--muted)'}}>{s.dims||'—'}</td>
                 <td style={{fontFamily:'monospace',fontWeight:600,textAlign:'right',color:s.totalCost>0?'var(--warn)':'var(--muted)'}}>{s.totalCost>0?fmt$(s.totalCost):'—'}</td>
                 <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
               </tr>
@@ -27935,35 +27985,63 @@ const Shipping = ({data, setData}) => {
         </table>
       </div>}
       {shipTab==='analysis'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>Carrier</th><th>Total Shipments</th><th>Total Spend</th><th>Avg Cost/Ship</th><th>Avg Transit (days)</th><th>Damage Claims</th><th>On-Time %</th><th>Rating</th><th>Notes</th></tr></thead>
-          <tbody>{(data.shippingAnalysis||[]).length===0&&<tr><td colSpan={9}><Empty msg="No carrier analysis — comes from ship log data"/></td></tr>}
-          {(data.shippingAnalysis||[]).map((c,i)=>(
+        <div style={{padding:'8px 14px',fontSize:11,color:'var(--muted)',borderBottom:'1px solid var(--bdr)'}}>
+          Live analysis from {allShipments.length} shipments across all sources
+        </div>
+        <table><thead><tr><th>Carrier</th><th style={{textAlign:'right'}}>Shipments</th><th style={{textAlign:'right'}}>Total Spend</th><th style={{textAlign:'right'}}>Avg/Shipment</th><th style={{textAlign:'right'}}>Delivered</th><th style={{textAlign:'right'}}>On-Time %</th></tr></thead>
+          <tbody>{carrierAnalysis.length===0&&<tr><td colSpan={6}><Empty msg="No shipment data yet"/></td></tr>}
+          {carrierAnalysis.map((c,i)=>(
             <tr key={i}>
               <td style={{fontWeight:700}}>{c.carrier}</td>
-              <td style={{textAlign:'center'}}>{c.totalShipments||'—'}</td>
-              <td style={{fontFamily:'monospace',fontWeight:600}}>{c.totalSpend?'$'+c.totalSpend.toLocaleString():'—'}</td>
-              <td style={{fontFamily:'monospace'}}>{c.avgCostPerShipment?'$'+c.avgCostPerShipment:'—'}</td>
-              <td style={{textAlign:'center'}}>{c.avgTransitDays||'—'}</td>
-              <td style={{textAlign:'center',color:(c.damageClaims||0)>0?'var(--err)':''}}>{c.damageClaims||'0'}</td>
-              <td style={{textAlign:'center',color:c.onTimeRate>=0.95?'var(--ok)':c.onTimeRate>=0.85?'var(--warn)':'var(--err)'}}>{c.onTimeRate?Math.round(c.onTimeRate*100)+'%':'—'}</td>
-              <td style={{textAlign:'center',fontWeight:700,color:c.rating>=4?'var(--ok)':c.rating>=3?'var(--warn)':'var(--err)'}}>{c.rating||'—'}/5</td>
-              <td style={{fontSize:10,color:'var(--muted)'}}>{c.notes}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{c.count}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(c.spend)}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{fmt$(c.avgCost)}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--ok)'}}>{c.delivered}/{c.total}</td>
+              <td style={{textAlign:'right',fontWeight:700,color:c.onTimePct>=95?'var(--ok)':c.onTimePct>=80?'var(--warn)':'var(--err)'}}>{c.onTimePct}%</td>
             </tr>
-          ))}</tbody>
+          ))}
+          {carrierAnalysis.length>0&&(
+            <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+              <td style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase'}}>TOTAL</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{allShipments.length}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(allShipments.reduce((a,b)=>a+(b.totalCost||0),0))}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{fmt$(allShipments.filter(s=>s.totalCost>0).length?allShipments.reduce((a,b)=>a+(b.totalCost||0),0)/allShipments.filter(s=>s.totalCost>0).length:0)}</td>
+              <td colSpan={2}></td>
+            </tr>
+          )}
+          </tbody>
         </table>
       </div>}
       {shipTab==='monthly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th>Month</th><th>FedEx</th><th>UPS</th><th>ABF</th><th>Estes</th><th>Old Dom</th><th>R+L</th><th>XPO</th><th>Other</th><th>TOTAL</th></tr></thead>
-          <tbody>{(data.shipMonthlySummary||[]).length===0&&<tr><td colSpan={10}><Empty msg="No monthly shipping summary"/></td></tr>}
-          {(data.shipMonthlySummary||[]).map((m,i)=>(
-            <tr key={i}>
-              <td style={{fontWeight:600}}>{m.month}</td>
-              {[m.fedex,m.ups,m.abf,m.estes,m.oldDom,m.rl,m.xpo,m.other].map((v,j)=>(
-                <td key={j} style={{fontFamily:'monospace',color:(v||0)>0?'var(--txt)':'var(--dim)'}}>{(v||0)>0?'$'+v.toLocaleString():'—'}</td>
+        <div style={{padding:'8px 14px',fontSize:11,color:'var(--muted)',borderBottom:'1px solid var(--bdr)'}}>
+          Auto-computed from all shipments — {monthlySummary.length} months
+        </div>
+        <table><thead><tr><th>Month</th><th style={{textAlign:'right'}}>ABF</th><th style={{textAlign:'right'}}>UPS</th><th style={{textAlign:'right'}}>FedEx</th><th style={{textAlign:'right'}}>Estes</th><th style={{textAlign:'right'}}>Old Dom</th><th style={{textAlign:'right'}}>R+L</th><th style={{textAlign:'right'}}>XPO</th><th style={{textAlign:'right'}}>Other</th><th style={{textAlign:'right'}}>TOTAL</th></tr></thead>
+          <tbody>{monthlySummary.length===0&&<tr><td colSpan={10}><Empty msg="No shipment data yet"/></td></tr>}
+          {monthlySummary.map((m,i)=>{
+            const c = m.carriers||{};
+            return (
+              <tr key={i}>
+                <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{m.month}</td>
+                {['abf','ups','fedex','estes','oldDom','rl','xpo','other'].map(k=>(
+                  <td key={k} style={{fontFamily:'monospace',textAlign:'right',color:(c[k]||0)>0?'var(--txt)':'var(--dim)'}}>{(c[k]||0)>0?fmt$(c[k]):'—'}</td>
+                ))}
+                <td style={{fontFamily:'monospace',fontWeight:700,textAlign:'right',color:'var(--acc)'}}>{fmt$(m.total)}</td>
+              </tr>
+            );
+          })}
+          {monthlySummary.length>0&&(
+            <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
+              <td style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase'}}>TOTAL</td>
+              {['abf','ups','fedex','estes','oldDom','rl','xpo','other'].map(k=>(
+                <td key={k} style={{fontFamily:'monospace',fontWeight:700,textAlign:'right'}}>
+                  {(()=>{const t=monthlySummary.reduce((a,m)=>a+(m.carriers?.[k]||0),0);return t>0?fmt$(t):'—';})()}
+                </td>
               ))}
-              <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--acc)'}}>{m.total?'$'+m.total.toLocaleString():'—'}</td>
+              <td style={{fontFamily:'monospace',fontWeight:700,textAlign:'right',color:'var(--acc)'}}>{fmt$(monthlySummary.reduce((a,m)=>a+(m.total||0),0))}</td>
             </tr>
-          ))}</tbody>
+          )}
+          </tbody>
         </table>
       </div>}
       {modal&&<Modal title={modal==='new'?'New Shipment':'Edit Shipment'} onClose={()=>setModal(null)} lg>
@@ -28067,16 +28145,15 @@ const Shipping = ({data, setData}) => {
         <div>
           <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>Carrier Performance</div>
           <div className="card" style={{padding:0,overflow:'auto'}}>
-            <table><thead><tr><th>Carrier</th><th>Shipments</th><th>Spend</th><th>Avg/Ship</th><th>On-Time</th><th>Rating</th></tr></thead>
-              <tbody>{(data.shippingAnalysis||[]).length===0&&<tr><td colSpan={6}><Empty msg="No carrier data"/></td></tr>}
-              {(data.shippingAnalysis||[]).map((c,i)=>(
+            <table><thead><tr><th>Carrier</th><th style={{textAlign:'right'}}>Ships</th><th style={{textAlign:'right'}}>Spend</th><th style={{textAlign:'right'}}>Avg</th><th style={{textAlign:'right'}}>On-Time</th></tr></thead>
+              <tbody>{carrierAnalysis.length===0&&<tr><td colSpan={5}><Empty msg="Enter shipment data to see carrier stats"/></td></tr>}
+              {carrierAnalysis.slice(0,8).map((c,i)=>(
                 <tr key={i}>
-                  <td style={{fontWeight:600}}>{c.carrier}</td>
-                  <td style={{textAlign:'center'}}>{c.totalShipments||'—'}</td>
-                  <td style={{fontWeight:700,color:'var(--warn)'}}>{c.totalSpend?fmt$(c.totalSpend):'—'}</td>
-                  <td>{c.avgCostPerShipment?fmt$(c.avgCostPerShipment):'—'}</td>
-                  <td style={{color:'var(--ok)'}}>{c.onTimeRate?c.onTimeRate+'%':'—'}</td>
-                  <td style={{color:'var(--acc)',fontWeight:700}}>{c.rating?c.rating+'/5':'—'}</td>
+                  <td style={{fontWeight:600,fontSize:12}}>{c.carrier}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace'}}>{c.count}</td>
+                  <td style={{textAlign:'right',fontWeight:700,color:'var(--warn)'}}>{fmt$(c.spend)}</td>
+                  <td style={{textAlign:'right',fontFamily:'monospace'}}>{fmt$(c.avgCost)}</td>
+                  <td style={{textAlign:'right',fontWeight:700,color:c.onTimePct>=95?'var(--ok)':c.onTimePct>=80?'var(--warn)':'var(--err)'}}>{c.onTimePct}%</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -28085,18 +28162,21 @@ const Shipping = ({data, setData}) => {
         <div>
           <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>Monthly Freight Spend</div>
           <div className="card" style={{padding:0,overflow:'auto'}}>
-            <table><thead><tr><th>Month</th><th>ABF</th><th>UPS</th><th>FedEx</th><th>R+L</th><th>Total</th></tr></thead>
-              <tbody>{(data.shipMonthlySummary||[]).length===0&&<tr><td colSpan={6}><Empty msg="No monthly data"/></td></tr>}
-              {(data.shipMonthlySummary||[]).map((m,i)=>(
-                <tr key={i}>
-                  <td style={{fontWeight:600}}>{m.month}</td>
-                  <td>{m.abf?fmt$(m.abf):'—'}</td>
-                  <td>{m.ups?fmt$(m.ups):'—'}</td>
-                  <td>{m.fedex?fmt$(m.fedex):'—'}</td>
-                  <td>{m.rl?fmt$(m.rl):'—'}</td>
-                  <td style={{fontWeight:700,color:'var(--warn)'}}>{m.total?fmt$(m.total):'—'}</td>
-                </tr>
-              ))}</tbody>
+            <table><thead><tr><th>Month</th><th style={{textAlign:'right'}}>ABF</th><th style={{textAlign:'right'}}>UPS</th><th style={{textAlign:'right'}}>FedEx</th><th style={{textAlign:'right'}}>R+L</th><th style={{textAlign:'right'}}>Total</th></tr></thead>
+              <tbody>{monthlySummary.length===0&&<tr><td colSpan={6}><Empty msg="No shipment data"/></td></tr>}
+              {monthlySummary.slice(-6).map((m,i)=>{
+                const c=m.carriers||{};
+                return (
+                  <tr key={i}>
+                    <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{m.month}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.abf||0)>0?'var(--txt)':'var(--dim)'}}>{c.abf?fmt$(c.abf):'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.ups||0)>0?'var(--txt)':'var(--dim)'}}>{c.ups?fmt$(c.ups):'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.fedex||0)>0?'var(--txt)':'var(--dim)'}}>{c.fedex?fmt$(c.fedex):'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.rl||0)>0?'var(--txt)':'var(--dim)'}}>{c.rl?fmt$(c.rl):'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(m.total)}</td>
+                  </tr>
+                );
+              })}</tbody>
             </table>
           </div>
         </div>
