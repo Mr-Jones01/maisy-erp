@@ -32187,13 +32187,33 @@ const OrderImport = ({data, setData}) => {
     document.head.appendChild(s);
   });
 
+  // Convert Excel workbook to readable text for Claude extraction
+  const excelToText = (buffer) => {
+    const XLSX = window.XLSX;
+    if(!XLSX) throw new Error('SheetJS not loaded');
+    const wb = XLSX.read(new Uint8Array(buffer), {type:'array', cellDates:true});
+    let text = '';
+    // Read all sheets, skip empty ones
+    for(const sheetName of wb.SheetNames) {
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      const nonEmpty = rows.filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+      if(nonEmpty.length === 0) continue;
+      text += `\n[Sheet: ${sheetName}]\n`;
+      for(const row of nonEmpty.slice(0, 60)) { // limit rows per sheet
+        const vals = row.map(c => String(c === null || c === undefined ? '' : c).trim()).filter(c=>c);
+        if(vals.length) text += vals.join(' | ') + '\n';
+      }
+    }
+    return text.trim();
+  };
+
   const parseExcel = async (buffer) => {
     const XLSX = await loadSheetJS();
     if(!XLSX) throw new Error('SheetJS failed to load');
-    const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-    return rows;
+    // Convert to text and extract single order using Claude
+    const text = excelToText(buffer);
+    return text; // return raw text, will be sent to Claude
   };
 
   // ── Parse PDF or image with Claude AI ─────────────────────────────────────
@@ -32282,36 +32302,109 @@ Return ONLY the JSON object, no other text.`;
     }
   };
 
+  // ── Parse text content (from Excel) with Claude ──────────────────────────
+  const parseWithClaudeText = async (text, filename) => {
+    if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
+    const prompt = `You are reading a railing order form for Maisy Railing (custom aluminum railing, Hayden ID). The content below was extracted from an Excel order file. Extract ALL order information and return it as a single JSON object. Use empty string or 0 if not found.
+
+Fields to extract:
+{
+  "customer": "customer/company name",
+  "project": "project name or job name",
+  "contactName": "contact person",
+  "phone": "phone number",
+  "email": "email address",
+  "shipTo": "shipping address",
+  "city": "city",
+  "state": "state (default ID if not found)",
+  "zip": "zip code",
+  "orderDate": "YYYY-MM-DD format",
+  "dueDate": "YYYY-MM-DD format",
+  "productType": "Cable Rail, Glass Rail, Stair Rail, or Specialty",
+  "mountType": "Fascia or Surface",
+  "railType": "Cable, Glass, or Frameless",
+  "height": "36 or 42",
+  "color": "powder coat color code or name",
+  "lineQty": 0,
+  "stairQty": 0,
+  "cornerQty": 0,
+  "topRailQty": 0,
+  "cableFootage": 0,
+  "runCount": 0,
+  "stairRunCount": 0,
+  "totalLinearFt": 0,
+  "orderType": "New Order, Re-Work, Warranty, or Rush",
+  "salesPerson": "sales rep name",
+  "po": "PO number",
+  "orderTotal": 0,
+  "deposit": 0,
+  "notes": "any special instructions or notes"
+}
+
+Excel file content:
+${text.slice(0, 4000)}
+
+Return ONLY the JSON object, no other text.`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':aiApiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    if(!res.ok) {
+      const errJson = await res.json().catch(()=>({}));
+      throw new Error('API error: ' + (errJson.error?.message || 'HTTP '+res.status));
+    }
+    const json = await res.json();
+    const rawText = json.content?.[0]?.text || '{}';
+    try {
+      return JSON.parse(rawText.replace(/```json|```/g,'').trim());
+    } catch(e) {
+      throw new Error('Could not parse response: ' + rawText.slice(0,100));
+    }
+  };
+
   // ── Map parsed row to draft order ─────────────────────────────────────────
   const rowToDraft = (row, sourceFile) => ({
     id: 'DRAFT-'+uid(),
     sourceFile,
     importedAt: now(),
     status: 'pending',
-    customer:     row.customer || row.Customer || row['Customer Name'] || '',
-    project:      row.project  || row.Project  || row['Job Name'] || row['Project Name'] || '',
-    contactName:  row.contactName || row['Contact'] || '',
-    phone:        row.phone || row.Phone || '',
-    email:        row.email || row.Email || '',
-    shipTo:       row.shipTo || row['Ship To'] || row.Address || '',
-    city:         row.city || row.City || '',
-    state:        row.state || row.State || 'ID',
-    zip:          row.zip || row.Zip || '',
-    orderDate:    row.orderDate || row['Order Date'] || now(),
-    dueDate:      row.dueDate || row['Due Date'] || row['Ship Date'] || '',
-    productType:  row.productType || row['Product Type'] || row.Product || 'Cable Rail',
-    color:        row.color || row.Color || '',
-    lineQty:      Number(row.lineQty || row['Line Posts'] || row['Line Qty'] || 0),
-    stairQty:     Number(row.stairQty || row['Stair Posts'] || row['Stair Qty'] || 0),
-    cornerQty:    Number(row.cornerQty || row['Corner Posts'] || row['Corner Qty'] || 0),
-    topRailQty:   Number(row.topRailQty || row['Top Rail'] || 0),
-    lengths:      String(row.lengths || row.Lengths || row['Cut Lengths'] || ''),
-    orderType:    row.orderType || row['Order Type'] || 'New Order',
-    salesPerson:  row.salesPerson || row.Rep || row['Sales Rep'] || row['Salesperson'] || '',
-    po:           row.po || row.PO || row['PO Number'] || row['Customer PO'] || '',
-    notes:        row.notes || row.Notes || row.Comments || '',
-    orderTotal:   Number(row.orderTotal || row.Total || row['Order Total'] || 0),
-    deposit:      Number(row.deposit || row.Deposit || 0),
+    customer:       row.customer || row.Customer || row['Customer Name'] || '',
+    project:        row.project  || row.Project  || row['Job Name'] || row['Project Name'] || '',
+    contactName:    row.contactName || row['Contact'] || '',
+    phone:          row.phone || row.Phone || '',
+    email:          row.email || row.Email || '',
+    shipTo:         row.shipTo || row['Ship To'] || row.Address || '',
+    city:           row.city || row.City || '',
+    state:          row.state || row.State || 'ID',
+    zip:            row.zip || row.Zip || '',
+    orderDate:      row.orderDate || row['Order Date'] || now(),
+    dueDate:        row.dueDate || row['Due Date'] || row['Ship Date'] || '',
+    productType:    row.productType || row['Product Type'] || row.Product || 'Cable Rail',
+    mountType:      row.mountType || row['Mount Type'] || row['Mount'] || '',
+    railType:       row.railType || row['Rail Type'] || '',
+    height:         row.height || row.Height || '',
+    color:          row.color || row.Color || '',
+    lineQty:        Number(row.lineQty || row['Line Posts'] || row['Line Qty'] || 0),
+    stairQty:       Number(row.stairQty || row['Stair Posts'] || row['Stair Qty'] || 0),
+    cornerQty:      Number(row.cornerQty || row['Corner Posts'] || row['Corner Qty'] || 0),
+    topRailQty:     Number(row.topRailQty || row['Top Rail'] || 0),
+    cableFootage:   Number(row.cableFootage || row['Cable Footage'] || row['Cable Ft'] || 0),
+    runCount:       Number(row.runCount || row['Runs'] || row['Run Count'] || 0),
+    stairRunCount:  Number(row.stairRunCount || row['Stair Runs'] || 0),
+    totalLinearFt:  Number(row.totalLinearFt || row['Total Linear Ft'] || row['Total Linear'] || 0),
+    lengths:        String(row.lengths || row.Lengths || row['Cut Lengths'] || ''),
+    orderType:      row.orderType || row['Order Type'] || 'New Order',
+    salesPerson:    row.salesPerson || row.Rep || row['Sales Rep'] || row['Salesperson'] || '',
+    po:             row.po || row.PO || row['PO Number'] || row['Customer PO'] || '',
+    notes:          row.notes || row.Notes || row.Comments || '',
+    orderTotal:     Number(row.orderTotal || row.Total || row['Order Total'] || 0),
+    deposit:        Number(row.deposit || row.Deposit || 0),
   });
 
   // ── Check OneDrive for new files ──────────────────────────────────────────
@@ -32361,8 +32454,11 @@ Return ONLY the JSON object, no other text.`;
 
       let draftsToAdd = [];
       if(/\.xlsx?$/i.test(qItem.name)) {
-        const rows = await parseExcel(buffer);
-        draftsToAdd = rows.filter(r=>Object.values(r).some(v=>v)).map(r=>rowToDraft(r, qItem.name));
+        // Convert Excel to text, use Claude to extract single order (prevents 1-row-per-draft)
+        const xlsxText = await parseExcel(buffer);
+        if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
+        const extracted = await parseWithClaudeText(xlsxText, qItem.name);
+        draftsToAdd = [rowToDraft(extracted, qItem.name)];
       } else {
         const extracted = await parseWithClaude(buffer, qItem.name);
         draftsToAdd = [rowToDraft(extracted, qItem.name)];
@@ -32412,8 +32508,10 @@ Return ONLY the JSON object, no other text.`;
         const buffer = await file.arrayBuffer();
         let draftsToAdd = [];
         if(/\.xlsx?$/i.test(file.name)) {
-          const rows = await parseExcel(buffer);
-          draftsToAdd = rows.filter(r=>Object.values(r).some(v=>v)).map(r=>rowToDraft(r, file.name));
+          const xlsxText = await parseExcel(buffer);
+          if(!aiApiKey) throw new Error('No API key — add Anthropic API key in Setup tab');
+          const extracted = await parseWithClaudeText(xlsxText, file.name);
+          draftsToAdd = [rowToDraft(extracted, file.name)];
         } else {
           const extracted = await parseWithClaude(buffer, file.name);
           draftsToAdd = [rowToDraft(extracted, file.name)];
@@ -32496,10 +32594,11 @@ Return ONLY the JSON object, no other text.`;
                   <td>
                     {q.status==='pending'&&<span style={{background:'rgba(245,158,11,.2)',color:'var(--warn)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>Pending</span>}
                     {q.status==='processing'&&<span style={{background:'rgba(0,229,255,.15)',color:'var(--acc)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>Processing...</span>}
-                    {q.status==='error'&&<span style={{background:'rgba(239,68,68,.15)',color:'var(--err)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}} title={q.error}>Error</span>}
+                    {q.status==='error'&&<div><span style={{background:'rgba(239,68,68,.15)',color:'var(--err)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>Error</span>{q.error&&<div style={{fontSize:9,color:'var(--err)',marginTop:2,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={q.error}>{q.error}</div>}</div>}
                   </td>
                   <td><div style={{display:'flex',gap:4}}>
                     {q.status==='pending'&&<button className="btn btn-p btn-xs" onClick={()=>processFile(q)} disabled={!!parsing}>Parse</button>}
+                    {q.status==='error'&&<button className="btn btn-warn btn-xs" onClick={()=>{setData(d=>({...d,importQueue:(d.importQueue||[]).map(x=>x.id===q.id?{...x,status:'pending',error:null}:x)}));}} title="Reset to pending and try again">↻ Retry</button>}
                     <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,importQueue:(d.importQueue||[]).filter(x=>x.id!==q.id)}))}>×</button>
                   </div></td>
                 </tr>
