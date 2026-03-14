@@ -26760,8 +26760,8 @@ const Inventory = ({data, setData, user}) => {
         <StatCard label="Critical / Zero Stock" value={criticalItems.length} icon="⚠️" color={criticalItems.length>0?'var(--err)':'var(--ok)'} sub={low.length+" below reorder point"}/>
       </StatRow>
       {low.length>0&&<div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span><span><strong>Low Stock:</strong> {low.map(i=>`${i.name} (${i.qty} ${i.unit})`).join(' · ')}</span></div>}
-      <div style={{display:'flex',gap:6,marginBottom:16}}>
-        {['items','glass','consumables','cyclecount','adjustments','bom','import'].map(t=><button key={t} className={'tab'+(invTab===t?' on':'')} onClick={()=>setInvTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t}</button>)}
+      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
+        {['items','glass','consumables','cyclecount','adjustments','bom','reorder','import'].map(t=><button key={t} className={'tab'+(invTab===t?' on':'')} onClick={()=>setInvTab(t)} style={{textTransform:'capitalize'}}>{t==='bom'?'Bill of Materials':t==='import'?'CSV Import':t==='glass'?'Glass Inventory':t==='reorder'?'🛒 Reorder Needs':t}</button>)}
       </div>
 
       {/* ITEMS TAB */}
@@ -26899,7 +26899,78 @@ const Inventory = ({data, setData, user}) => {
       </>}
 
       {/* ADJUSTMENTS TAB */}
-      {invTab==='adjustments'&&<>
+      {invTab==='reorder'&&(()=>{
+        const openOrders = (data.orders||[]).filter(o=>!['Completed','Shipped','Invoiced','Cancelled'].includes(o.status));
+        const totalNeeded = {};
+        openOrders.forEach(order => {
+          const bom = calcBOM(order);
+          bom.forEach(item => {
+            if(!totalNeeded[item.inventoryId]) totalNeeded[item.inventoryId] = {...item, neededQty:0, orders:[]};
+            totalNeeded[item.inventoryId].neededQty += item.qty;
+            totalNeeded[item.inventoryId].orders.push(order.id);
+          });
+        });
+        const needList = Object.values(totalNeeded).map(item => {
+          const inv = (data.inventory||[]).find(i=>i.id===item.inventoryId);
+          const onHand = inv?.qty||0;
+          const shortage = item.neededQty - onHand;
+          const reorderQty = Math.ceil(Math.max(item.neededQty*1.5, (inv?.reorderQty||0)));
+          return {...item, onHand, shortage, reorderQty, invName:inv?.name||item.name, unit:inv?.unit||item.unit, vendor:inv?.vendor||'—', status:shortage>0?'SHORT':onHand<=(inv?.reorder||0)?'LOW':'OK'};
+        }).sort((a,b)=>b.shortage-a.shortage);
+        const shorts=needList.filter(i=>i.status==='SHORT');
+        const lows=needList.filter(i=>i.status==='LOW');
+        return (
+          <div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
+              <div style={{background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.25)',borderRadius:8,padding:'12px 16px',textAlign:'center'}}>
+                <div style={{fontSize:28,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--err)'}}>{shorts.length}</div>
+                <div style={{fontSize:10,color:'var(--err)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Items Short</div>
+              </div>
+              <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.25)',borderRadius:8,padding:'12px 16px',textAlign:'center'}}>
+                <div style={{fontSize:28,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--warn)'}}>{lows.length}</div>
+                <div style={{fontSize:10,color:'var(--warn)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Items Low</div>
+              </div>
+              <div style={{background:'rgba(16,185,129,.08)',border:'1px solid rgba(16,185,129,.25)',borderRadius:8,padding:'12px 16px',textAlign:'center'}}>
+                <div style={{fontSize:28,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--ok)'}}>{openOrders.length}</div>
+                <div style={{fontSize:10,color:'var(--ok)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Open Orders</div>
+              </div>
+            </div>
+            {needList.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)',fontSize:13}}>No open orders — add orders to see reorder needs</div>}
+            {needList.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
+              <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)',display:'flex',justifyContent:'space-between'}}>
+                <span>Materials needed across {openOrders.length} open orders — auto-calculated from BOM</span>
+                <span style={{color:shorts.length>0?'var(--err)':'var(--muted)'}}>{shorts.length} short · {lows.length} low</span>
+              </div>
+              <table style={{minWidth:860}}>
+                <thead><tr>
+                  <th>Status</th><th>Item</th>
+                  <th style={{textAlign:'right'}}>On Hand</th>
+                  <th style={{textAlign:'right'}}>Total Needed</th>
+                  <th style={{textAlign:'right'}}>Shortage</th>
+                  <th style={{textAlign:'right'}}>Order Qty</th>
+                  <th>Unit</th><th>Orders</th>
+                </tr></thead>
+                <tbody>
+                  {needList.map((item,i)=>(
+                    <tr key={i} style={{background:item.status==='SHORT'?'rgba(239,68,68,.04)':item.status==='LOW'?'rgba(245,158,11,.04)':undefined}}>
+                      <td><span style={{background:item.status==='SHORT'?'rgba(239,68,68,.2)':item.status==='LOW'?'rgba(245,158,11,.2)':'rgba(16,185,129,.2)',color:item.status==='SHORT'?'var(--err)':item.status==='LOW'?'var(--warn)':'var(--ok)',borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{item.status}</span></td>
+                      <td style={{fontWeight:600,fontSize:12}}>{item.invName}</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:item.onHand<=0?'var(--err)':item.onHand<item.neededQty?'var(--warn)':'var(--ok)'}}>{item.onHand}</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{item.neededQty}</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:item.shortage>0?'var(--err)':'var(--dim)'}}>{item.shortage>0?item.shortage:'—'}</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--acc)'}}>{item.shortage>0?item.reorderQty:item.status==='LOW'?(item.reorderQty||'—'):'—'}</td>
+                      <td style={{fontSize:11,color:'var(--muted)'}}>{item.unit}</td>
+                      <td style={{fontSize:10,color:'var(--muted)'}} title={[...new Set(item.orders)].join(', ')}>{[...new Set(item.orders)].length} order(s)</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>}
+          </div>
+        );
+      })()}
+
+            {invTab==='adjustments'&&<>
         <div className="card" style={{marginBottom:16}}>
           <div className="hd" style={{fontSize:14,marginBottom:14}}>New Adjustment</div>
           <div className="grid2" style={{marginBottom:12}}>
@@ -30457,6 +30528,89 @@ const KPIDashboard = ({data,setData}) => {
 
 
 
+// ─── BOM ENGINE ──────────────────────────────────────────────────────────────
+// Calculates materials needed for an order based on quantities
+// Returns array of {inventoryId, sku, name, qty, unit, cat}
+const calcBOM = (order) => {
+  const {
+    lineQty=0, stairQty=0, cornerQty=0, topRailQty=0,
+    totalLinearFt=0, cableFootage=0, runCount=0, stairRunCount=0,
+    productType='', railType='', mountType=''
+  } = order;
+
+  const totalPosts = Number(lineQty)+Number(stairQty)+Number(cornerQty);
+  const linFt = Number(totalLinearFt) || 0;
+  const cabFt = Number(cableFootage) || (linFt * 11); // ~11 runs avg if not specified
+  const isCable = !productType.toLowerCase().includes('glass') && !railType.toLowerCase().includes('glass');
+  const isGlass = productType.toLowerCase().includes('glass') || railType.toLowerCase().includes('glass');
+  const isFascia = mountType.toLowerCase().includes('fascia') || mountType === '';
+  const isSurface = mountType.toLowerCase().includes('surface');
+
+  const items = [];
+  const add = (id, name, qty, unit, cat) => {
+    if(qty > 0) items.push({inventoryId:id, sku:id, name, qty:Math.ceil(qty), unit, cat});
+  };
+
+  // ── ALUMINUM TUBE (posts — 42" = 3.5ft each, 36" = 3ft each) ───────────
+  const postFt = (Number(lineQty)*3.5) + (Number(stairQty)*3.5) + (Number(cornerQty)*3.5);
+  if(postFt > 0) add('RM-001','6061-T6 Tube 1"x3"x1/8"', postFt, 'FT', 'Aluminum');
+
+  // ── TOP RAIL (1"x2" tube — runs) ────────────────────────────────────────
+  const railFt = linFt || (Number(topRailQty)*10);
+  if(railFt > 0) add('RM-006','6061-T6 Tube 1"x2"x1/8"', railFt * 1.05, 'FT', 'Aluminum'); // 5% waste
+
+  // ── CABLE ────────────────────────────────────────────────────────────────
+  if(isCable) {
+    const totalCableFt = cabFt > 0 ? cabFt : (linFt * 11);
+    add('AI-001','1/8" Cable SS', totalCableFt * 1.1, 'FT', 'Cable'); // 10% extra for cuts
+
+    // Swage assemblies: 2 per cable run (one each end), ~11 runs avg
+    const cableRuns = Number(runCount)*11 + Number(stairRunCount)*11 || Math.ceil(totalCableFt/linFt || 0)*2 || 22;
+    const swageCount = cableRuns * 2;
+    add('AI-015','Swage Assembly - 1/8"', swageCount, 'EA', 'Hardware');
+    add('AI-009','Swage Washer Small 1/4"', swageCount, 'EA', 'Hardware');
+    add('AI-010','Swage Washer Large 1/4"', swageCount, 'EA', 'Hardware');
+    add('AI-011','Swage Nut 1/4" NC Hex', swageCount, 'EA', 'Hardware');
+    add('AI-012','Tensioner Body 1/8" Cable', Math.ceil(swageCount/2), 'EA', 'Hardware');
+    add('AI-013','Swage Acorn Nut 1/4" SS', Math.ceil(swageCount/2), 'EA', 'Hardware');
+  }
+
+  // ── FASTENERS — LAG BOLTS (fascia: 2 per post, surface: 4 per post) ────
+  const lagsPerPost = isSurface ? 4 : 2;
+  if(totalPosts > 0) {
+    add('AI-005','Lag Bolt SS 3/8"x5"', totalPosts*lagsPerPost, 'EA', 'Hardware');
+    add('AI-008','Lag Bolt Washer 7/16"', totalPosts*lagsPerPost, 'EA', 'Hardware');
+  }
+
+  // ── SELF-TAP SCREWS (4 per post for base plate) ─────────────────────────
+  if(totalPosts > 0) {
+    add('AI-002','#11 Self-Tap Screw Pan Head', totalPosts*4, 'EA', 'Hardware');
+  }
+
+  // ── POST SCREWS (cable tensioner set screws, 2 per line post) ──────────
+  if(Number(lineQty) > 0) {
+    add('AI-004','Post Screw 3/16"x2-7/8"', Number(lineQty)*2, 'EA', 'Hardware');
+  }
+
+  // ── HANDRAIL END CAPS (2 per run) ───────────────────────────────────────
+  if(Number(runCount) > 0 || Number(topRailQty) > 0) {
+    const runs = Number(runCount)||Number(topRailQty)||1;
+    add('AI-019','Handrail End Cap 3"x1" Black', runs*2, 'EA', 'Hardware');
+  }
+
+  // ── ANGLE WASHERS (stair posts only, 2 per stair post) ──────────────────
+  if(Number(stairQty) > 0) {
+    add('AI-014','Swage Angle Washer 1/4"x57°', Number(stairQty)*2*11, 'EA', 'Hardware');
+  }
+
+  // ── PACKAGING ────────────────────────────────────────────────────────────
+  if(totalPosts > 0 || linFt > 0) {
+    items.push({inventoryId:'AI-021', sku:'AI-021', name:'Poly Tubing Roll 6"x1000ft', qty:1, unit:'EA', cat:'Packaging', note:'Shared roll'});
+  }
+
+  return items;
+};
+
 const Orders = ({data, setData}) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -30498,14 +30652,47 @@ const Orders = ({data, setData}) => {
   const statusCounts={};statuses.forEach(s=>{statusCounts[s]=orders.filter(o=>o.status===s).length;});
   const typeCounts={};orderTypes.forEach(t=>{typeCounts[t]=orders.filter(o=>o.orderType===t).length;});
 
-  const newOrder=()=>setForm({id:'ORD-'+String(orders.length+1).padStart(4,'0'),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:''});
+  const newOrder=()=>setForm({id:'ORD-'+String(orders.length+1).padStart(4,'0'),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',mountType:'',railType:'Cable',height:'42',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,cableFootage:0,runCount:0,stairRunCount:0,totalLinearFt:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:'',invDeducted:false});
 
   const save=()=>{
-    const rec={...form,orderTotal:Number(form.orderTotal||0),deposit:Number(form.deposit||0),balance:Number(form.balance||0),lineQty:Number(form.lineQty||0),stairQty:Number(form.stairQty||0),cornerQty:Number(form.cornerQty||0),topRailQty:Number(form.topRailQty||0)};
+    const rec={...form,
+      orderTotal:Number(form.orderTotal||0),deposit:Number(form.deposit||0),balance:Number(form.balance||0),
+      lineQty:Number(form.lineQty||0),stairQty:Number(form.stairQty||0),cornerQty:Number(form.cornerQty||0),
+      topRailQty:Number(form.topRailQty||0),cableFootage:Number(form.cableFootage||0),
+      runCount:Number(form.runCount||0),stairRunCount:Number(form.stairRunCount||0),
+      totalLinearFt:Number(form.totalLinearFt||0)
+    };
+    const existingOrder = orders.find(o=>o.id===rec.id);
     const is3BD = (rec.customer||'').toUpperCase().includes('3BD') || (rec.salesPerson||'').toUpperCase().includes('3BD');
-    const isNew = !orders.find(o=>o.id===rec.id);
-    if(isNew)setData(d=>({...d,orders:[...(d.orders||[]),rec]}));
+    const isNew = !existingOrder;
+    const wasInProd = existingOrder?.status === 'In Production';
+    const nowInProd = rec.status === 'In Production';
+
+    if(isNew) setData(d=>({...d,orders:[...(d.orders||[]),rec]}));
     else setData(d=>({...d,orders:(d.orders||[]).map(o=>o.id===rec.id?rec:o)}));
+
+    // Deduct inventory when order first moves to In Production
+    if(nowInProd && !wasInProd && !rec.invDeducted) {
+      const bom = calcBOM(rec);
+      if(bom.length > 0) {
+        const adjLogs = bom.map(item => ({
+          id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
+          type:'remove', qty:item.qty, reason:'Order '+rec.id+' — '+rec.customer+' moved to In Production',
+          date:now(), user:'System (BOM)'
+        }));
+        setData(d => ({
+          ...d,
+          orders: (d.orders||[]).map(o=>o.id===rec.id?{...o,invDeducted:true}:o),
+          inventory: d.inventory.map(inv => {
+            const bomItem = bom.find(b=>b.inventoryId===inv.id);
+            if(!bomItem) return inv;
+            return {...inv, qty: (inv.qty||0) - bomItem.qty};
+          }),
+          adjustmentLog: [...adjLogs, ...(d.adjustmentLog||[])],
+        }));
+      }
+    }
+
     if(is3BD && isNew){
       const ofEntry={id:'OF-'+uid(),orderNo:rec.id,date:rec.date||now(),project:rec.customer||'',description:(rec.productType||'')+(rec.color?' — '+rec.color:''),location:'HAYDEN - BELLEVUE',amount:rec.orderTotal||0,notes:rec.notes||'',source:'3BD',type:'Transfer to Bellevue',status:'Pending',orderType:rec.orderType||'',salesPerson:rec.salesPerson||'',attachments:[]};
       setData(d=>({...d,orderFulfillment:[...(d.orderFulfillment||[]),ofEntry]}));
@@ -30697,6 +30884,26 @@ const Orders = ({data, setData}) => {
           {form.color&&<div style={{marginTop:4,fontSize:11,color:'var(--muted)'}}>Selected: <strong style={{color:'var(--txt)'}}>{form.color}</strong></div>}
         </Field>
         <div style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginTop:10}}>
+          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>Rail Specs</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:10}}>
+            <Field label="Mount Type">
+              <select value={form.mountType||''} onChange={e=>setForm(f=>({...f,mountType:e.target.value}))}>
+                <option value="">— Select —</option>
+                <option>Fascia</option><option>Surface</option><option>Core Drill</option><option>Other</option>
+              </select>
+            </Field>
+            <Field label="Rail Type">
+              <select value={form.railType||''} onChange={e=>setForm(f=>({...f,railType:e.target.value}))}>
+                <option value="">— Select —</option>
+                <option>Cable</option><option>Glass Framed</option><option>Glass Frameless</option><option>Stair Only</option>
+              </select>
+            </Field>
+            <Field label="Height">
+              <select value={form.height||'42'} onChange={e=>setForm(f=>({...f,height:e.target.value}))}>
+                <option value="36">36"</option><option value="42">42"</option><option value="Custom">Custom</option>
+              </select>
+            </Field>
+          </div>
           <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>Post Quantities</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
             <Field label="Line Posts"><input type="number" min="0" value={form.lineQty||''} onChange={e=>setForm(f=>({...f,lineQty:+e.target.value}))}/></Field>
@@ -30704,7 +30911,42 @@ const Orders = ({data, setData}) => {
             <Field label="Corner Posts"><input type="number" min="0" value={form.cornerQty||''} onChange={e=>setForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
             <Field label="Top Rail Qty"><input type="number" min="0" value={form.topRailQty||''} onChange={e=>setForm(f=>({...f,topRailQty:+e.target.value}))}/></Field>
           </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:10}}>
+            <Field label="Total Linear Ft"><input type="number" min="0" step="0.5" value={form.totalLinearFt||''} placeholder="0" onChange={e=>setForm(f=>({...f,totalLinearFt:+e.target.value}))}/></Field>
+            <Field label="Run Count"><input type="number" min="0" value={form.runCount||''} placeholder="0" onChange={e=>setForm(f=>({...f,runCount:+e.target.value}))}/></Field>
+            <Field label="Stair Run Count"><input type="number" min="0" value={form.stairRunCount||''} placeholder="0" onChange={e=>setForm(f=>({...f,stairRunCount:+e.target.value}))}/></Field>
+            <Field label="Cable Footage (ft)"><input type="number" min="0" value={form.cableFootage||''} placeholder="auto-calc" onChange={e=>setForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
+          </div>
         </div>
+        {/* Live BOM Preview */}
+        {(()=>{
+          const bom = calcBOM(form);
+          if(!bom.length) return null;
+          return (
+            <div style={{background:'rgba(16,185,129,.06)',border:'1px solid rgba(16,185,129,.2)',borderRadius:6,padding:'10px 14px',marginTop:10}}>
+              <div style={{fontSize:10,color:'var(--ok)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>
+                📦 Materials Required ({bom.length} items) — deducted from inventory when status → In Production
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'2px 12px'}}>
+                {bom.map((item,i)=>{
+                  const inv = (data.inventory||[]).find(x=>x.id===item.inventoryId);
+                  const onHand = inv?.qty||0;
+                  const sufficient = onHand >= item.qty;
+                  return (
+                    <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'3px 0',borderBottom:'1px solid rgba(16,185,129,.1)'}}>
+                      <span style={{fontSize:10,color:'var(--txt)'}}>{item.name}</span>
+                      <div style={{display:'flex',gap:8,alignItems:'center',whiteSpace:'nowrap'}}>
+                        <span style={{fontSize:10,fontFamily:'monospace',fontWeight:700,color:sufficient?'var(--ok)':'var(--err)'}}>Need: {item.qty} {item.unit}</span>
+                        <span style={{fontSize:9,color:sufficient?'var(--muted)':'var(--err)'}}>On hand: {onHand}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {form.invDeducted&&<div style={{marginTop:6,fontSize:10,color:'var(--warn)',fontWeight:700}}>⚠ Inventory already deducted for this order</div>}
+            </div>
+          );
+        })()}
         <Field label="Lengths (free-form — e.g. 12x10ft, 6x8ft, 4x4ft)" style={{marginTop:10}}>
           <input value={form.lengths||''} placeholder="e.g. 12x10ft, 6x8ft, 4x4ft — fully customizable" onChange={e=>setForm(f=>({...f,lengths:e.target.value}))}/>
         </Field>
