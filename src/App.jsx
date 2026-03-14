@@ -25208,6 +25208,14 @@ const INIT = {
 
 // ─── QUEUE ANALYZER ──────────────────────────────────────────────────────────────
 const QueueAnalyzer = ({data, setData}) => {
+  // Load SheetJS on mount
+  useEffect(() => {
+    if(!window.XLSX) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      document.head.appendChild(s);
+    }
+  }, []);
   const [orders,   setOrders]   = useState([]);
   const [tags,     setTags]     = useState({});
   const [fileName, setFileName] = useState('');
@@ -25696,7 +25704,7 @@ const WorkbookGenerator = ({data, setData}) => {
   };
 
   const generateWB = () => {
-    const XLSX=window.XLSX; if(!XLSX){alert('SheetJS not loaded');return;}
+    const XLSX=window.XLSX; if(!XLSX){alert('SheetJS not loaded — refresh the page and try again');return;}
     const wb=XLSX.utils.book_new();
     const sc=(ws,r,c,v)=>{const ref=XLSX.utils.encode_cell({r,c});ws[ref]={v,t:typeof v==='number'?'n':'s'};};
     for(const order of wbgOrders){
@@ -32170,9 +32178,18 @@ const OrderImport = ({data, setData}) => {
   };
 
   // ── Parse Excel with SheetJS ───────────────────────────────────────────────
+  const loadSheetJS = () => new Promise((resolve, reject) => {
+    if(window.XLSX) { resolve(window.XLSX); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => resolve(window.XLSX);
+    s.onerror = () => reject(new Error('Failed to load SheetJS'));
+    document.head.appendChild(s);
+  });
+
   const parseExcel = async (buffer) => {
-    const XLSX = window.XLSX;
-    if(!XLSX) throw new Error('SheetJS not loaded');
+    const XLSX = await loadSheetJS();
+    if(!XLSX) throw new Error('SheetJS failed to load');
     const wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
@@ -32180,10 +32197,29 @@ const OrderImport = ({data, setData}) => {
   };
 
   // ── Parse PDF or image with Claude AI ─────────────────────────────────────
+  // Safe base64 encode that handles large files without stack overflow
+  const toBase64 = (buffer) => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunk = 8192;
+    for(let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  };
+
   const parseWithClaude = async (buffer, filename) => {
     const isPDF = /\.pdf$/i.test(filename);
     const isImage = /\.(png|jpg|jpeg)$/i.test(filename);
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
+    if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
+
+    // Check file size — warn if over 4MB base64 encoded (~3MB raw)
+    if(buffer.byteLength > 3 * 1024 * 1024) {
+      throw new Error('File too large (' + (buffer.byteLength/1024/1024).toFixed(1) + 'MB) — Anthropic limit is ~4MB. Try a smaller file.');
+    }
+
+    const base64 = toBase64(buffer);
     const mediaType = isPDF ? 'application/pdf' : filename.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
 
     const prompt = `You are reading a railing order form for Maisy Railing. Extract ALL order information you can find and return it as a single JSON object with these fields (use empty string if not found):
@@ -32215,11 +32251,11 @@ const OrderImport = ({data, setData}) => {
 }
 Return ONLY the JSON object, no other text.`;
 
+    // PDFs use document type, images use image type
     const msgContent = isPDF
-      ? [{type:'document', source:{type:'base64', media_type:mediaType, data:base64}}, {type:'text', text:prompt}]
+      ? [{type:'document', source:{type:'base64', media_type:'application/pdf', data:base64}}, {type:'text', text:prompt}]
       : [{type:'image', source:{type:'base64', media_type:mediaType, data:base64}}, {type:'text', text:prompt}];
 
-    if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':aiApiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -32229,13 +32265,20 @@ Return ONLY the JSON object, no other text.`;
         messages:[{role:'user', content:msgContent}]
       })
     });
+
+    if(!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const errMsg = errJson.error?.message || errJson.error?.type || ('HTTP ' + res.status);
+      throw new Error('API error: ' + errMsg);
+    }
+
     const json = await res.json();
     const text = json.content?.[0]?.text || '{}';
     try {
       const clean = text.replace(/```json|```/g,'').trim();
       return JSON.parse(clean);
     } catch(e) {
-      throw new Error('Could not parse Claude response: ' + text.slice(0,100));
+      throw new Error('Could not parse response: ' + text.slice(0,120));
     }
   };
 
@@ -32943,6 +32986,15 @@ const TITLES = {
   shopref:'Shop Reference', orders:'Orders', orderimport:'Order Import', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
   queueanalyzer:'Queue Analyzer', hotqueue:'Hot / Rush Queue', workbookgen:'Workbook Generator', orderanalyzer:'Order Analyzer',
 };
+
+// Load SheetJS globally on app start
+if(typeof window !== 'undefined' && !window.XLSX && !window.__xlsxLoading) {
+  window.__xlsxLoading = true;
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = () => { window.__xlsxLoading = false; };
+  document.head.appendChild(s);
+}
 
 export default function MaisyERP() {
   const [user,  setUser]  = useState(null);
