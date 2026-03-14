@@ -30584,8 +30584,11 @@ const calcBOM = (order) => {
   const mountFascia = isFascia || (!isFascia && !isSurface);
   const is36 = (height||'').includes('36');
   const postFtEach = is36 ? 3.0 : 3.5;
-  const isBlack = (color||'').toLowerCase().includes('black') || (color||'').toLowerCase().includes('bk');
   const notesLower = (notes||'').toLowerCase();
+  // Black hardware ONLY when customer explicitly requests it in notes
+  const isBlack = notesLower.includes('black hardware') || notesLower.includes('black cable') ||
+                  notesLower.includes('all black') || notesLower.includes('blk hardware') ||
+                  notesLower.includes('black swage') || notesLower.includes('black fastener');
   const useLargeWashers = notesLower.includes('large wash');
   const isCable = !(productType||'').toLowerCase().includes('glass') && !(railType||'').toLowerCase().includes('glass');
 
@@ -30778,7 +30781,7 @@ const Orders = ({data, setData}) => {
   const statusCounts={};statuses.forEach(s=>{statusCounts[s]=orders.filter(o=>o.status===s).length;});
   const typeCounts={};orderTypes.forEach(t=>{typeCounts[t]=orders.filter(o=>o.orderType===t).length;});
 
-  const newOrder=()=>setForm({bom:[],id:(()=>{const nums=(data.orders||[]).map(o=>parseInt((o.id||'').replace('ORD-',''))||0);const next=Math.max(1999,...nums)+1;return 'ORD-'+String(next);})(),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',mountType:'',railType:'Cable',height:'42',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,rail8ft:0,rail12ft:0,rail20ft:0,stairRail8ft:0,stairRail12ft:0,stairRail20ft:0,railCapQty:0,swageQty:0,angleWasherQty:0,cableFootage:0,lagQty:0,postScrewQty:0,selfTapQty:0,angleBracketQty:0,glassPanelQty:0,glassClampQty:0,topRailQty:0,totalLinearFt:0,runCount:0,stairRunCount:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:'',invDeducted:false});
+  const newOrder=()=>setForm({bom:[],id:(()=>{const nums=(data.orders||[]).map(o=>parseInt((o.id||'').replace('ORD-',''))||0);const next=Math.max(1999,...nums)+1;return 'ORD-'+String(next);})(),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',mountType:'',railType:'Cable',height:'42',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,rail8ft:0,rail12ft:0,rail20ft:0,stairRail8ft:0,stairRail12ft:0,stairRail20ft:0,railCapQty:0,swageQty:0,angleWasherQty:0,cableFootage:0,lagQty:0,postScrewQty:0,selfTapQty:0,angleBracketQty:0,glassPanelQty:0,glassClampQty:0,stairAngles:[],topRailQty:0,totalLinearFt:0,runCount:0,stairRunCount:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:'',invDeducted:false});
 
   const save=()=>{
     const rec={...form,
@@ -31068,6 +31071,34 @@ const Orders = ({data, setData}) => {
             <Field label="Self Tap (ea)"><input type="number" min="0" value={form.selfTapQty||''} placeholder="auto (4/post)" onChange={e=>setForm(f=>({...f,selfTapQty:+e.target.value}))}/></Field>
             <Field label="Angle Brackets"><input type="number" min="0" value={form.angleBracketQty||''} placeholder="0" onChange={e=>setForm(f=>({...f,angleBracketQty:+e.target.value}))}/></Field>
           </div>
+          {/* Stair Angles — multiple runs, each with its own angle */}
+          {(()=>{
+            const angles = form.stairAngles||[];
+            const addAngle = () => setForm(f=>({...f,stairAngles:[...(f.stairAngles||[]),{angle:'33°',qty:1,notes:''}]}));
+            const removeAngle = (i) => setForm(f=>({...f,stairAngles:(f.stairAngles||[]).filter((_,j)=>j!==i)}));
+            const updateAngle = (i,key,val) => setForm(f=>({...f,stairAngles:(f.stairAngles||[]).map((a,j)=>j===i?{...a,[key]:val}:a)}));
+            return (
+              <div style={{marginTop:10,background:'rgba(245,158,11,.06)',border:'1px solid rgba(245,158,11,.2)',borderRadius:6,padding:'10px 14px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <div style={{fontSize:10,color:'var(--warn)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>
+                    Stair Angles <span style={{fontWeight:400,textTransform:'none',letterSpacing:0,color:'var(--muted)'}}>— add one entry per stair run with a different angle</span>
+                  </div>
+                  <button className="btn btn-sm" style={{border:'1px solid var(--warn)',color:'var(--warn)',fontSize:11}} onClick={addAngle}>+ Add Stair Angle</button>
+                </div>
+                {angles.length===0&&<div style={{fontSize:11,color:'var(--dim)',fontStyle:'italic'}}>No stair angles entered — click + Add Stair Angle if order includes stairs</div>}
+                {angles.map((a,i)=>(
+                  <div key={i} style={{display:'grid',gridTemplateColumns:'120px 80px 1fr 32px',gap:8,marginBottom:6,alignItems:'end'}}>
+                    <Field label={i===0?'Angle':''}><select value={a.angle||'33°'} onChange={e=>updateAngle(i,'angle',e.target.value)}>
+                      {['27°','28°','30°','33°','35°','36°','37°','38°','40°','42°','45°','Custom'].map(deg=><option key={deg}>{deg}</option>)}
+                    </select></Field>
+                    <Field label={i===0?'Qty Posts':''}><input type="number" min="1" value={a.qty||''} placeholder="1" onChange={e=>updateAngle(i,'qty',+e.target.value)}/></Field>
+                    <Field label={i===0?'Notes (run #, location, etc)':''}><input value={a.notes||''} placeholder="e.g. Back stairs, Run 3" onChange={e=>updateAngle(i,'notes',e.target.value)}/></Field>
+                    <button onClick={()=>removeAngle(i)} style={{background:'rgba(239,68,68,.15)',border:'1px solid rgba(239,68,68,.3)',borderRadius:4,color:'var(--err)',cursor:'pointer',fontSize:14,height:32,alignSelf:'end'}}>×</button>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
         {/* Live BOM Preview */}
         {(()=>{
@@ -32834,6 +32865,8 @@ Return ONLY the JSON object, no other text.`;
     angleBracketQty:  Number(row.angleBracketQty || row['Angle Brackets'] || row['Angle Bracket'] || 0),
     glassPanelQty:    Number(row.glassPanelQty || row['Deck Glass'] || row['Glass Panels'] || 0),
     glassClampQty:    Number(row.glassClampQty || row['Glass Clamps'] || row['Glass Clamp'] || 0),
+    // Stair angles — array of {angle, qty} objects e.g. [{angle:'33°', qty:2},{angle:'37°', qty:1}]
+    stairAngles:      row.stairAngles || [],
     // Legacy/fallback fields
     topRailQty:       Number(row.topRailQty || row['Top Rail'] || 0),
     totalLinearFt:    Number(row.totalLinearFt || row['Total Linear Ft'] || row['Total Linear'] || 0),
@@ -33228,7 +33261,20 @@ Return ONLY the JSON object, no other text.`;
                     </div>
                   </div>
 
-                  {/* Row 5: Notes */}
+                  {/* Row 5: Stair Angles */}
+                  {(d.stairAngles||[]).length>0&&<div style={{background:'rgba(245,158,11,.06)',border:'1px solid rgba(245,158,11,.2)',borderRadius:5,padding:'6px 10px'}}>
+                    <div style={{fontSize:9,color:'var(--warn)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700,marginBottom:6}}>Stair Angles ({(d.stairAngles||[]).length} run{(d.stairAngles||[]).length!==1?'s':''})</div>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                      {(d.stairAngles||[]).map((a,i)=>(
+                        <div key={i} style={{background:'rgba(245,158,11,.15)',borderRadius:4,padding:'4px 10px',fontSize:11,fontWeight:700}}>
+                          <span style={{color:'var(--warn)',fontSize:14,fontFamily:'Barlow Condensed'}}>{a.angle}</span>
+                          <span style={{color:'var(--muted)',fontWeight:400,marginLeft:6,fontSize:10}}>× {a.qty} post{a.qty!==1?'s':''}{a.notes?' — '+a.notes:''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>}
+
+                  {/* Row 6: Notes */}
                   {d.notes&&<div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.15)',borderRadius:5,padding:'6px 10px'}}>
                     <div style={{fontSize:9,color:'var(--acc)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700,marginBottom:2}}>Notes from file</div>
                     <div style={{fontSize:11,color:'var(--muted)'}}>{d.notes}</div>
@@ -33415,6 +33461,32 @@ Return ONLY the JSON object, no other text.`;
           <Field label="Self Tap"><input type="number" min="0" value={draftForm.selfTapQty||''} placeholder="auto" onChange={e=>setDraftForm(f=>({...f,selfTapQty:+e.target.value}))}/></Field>
           <Field label="Angle Brackets"><input type="number" min="0" value={draftForm.angleBracketQty||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,angleBracketQty:+e.target.value}))}/></Field>
         </div>
+        {/* Stair Angles */}
+        {(()=>{
+          const angles = draftForm.stairAngles||[];
+          const addAngle = () => setDraftForm(f=>({...f,stairAngles:[...(f.stairAngles||[]),{angle:'33°',qty:1,notes:''}]}));
+          const removeAngle = (i) => setDraftForm(f=>({...f,stairAngles:(f.stairAngles||[]).filter((_,j)=>j!==i)}));
+          const updateAngle = (i,key,val) => setDraftForm(f=>({...f,stairAngles:(f.stairAngles||[]).map((a,j)=>j===i?{...a,[key]:val}:a)}));
+          return (
+            <div style={{background:'rgba(245,158,11,.06)',border:'1px solid rgba(245,158,11,.2)',borderRadius:6,padding:'10px 14px',marginBottom:8}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <div style={{fontSize:10,color:'var(--warn)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Stair Angles</div>
+                <button className="btn btn-sm" style={{border:'1px solid var(--warn)',color:'var(--warn)',fontSize:11}} onClick={addAngle}>+ Add</button>
+              </div>
+              {angles.length===0&&<div style={{fontSize:11,color:'var(--dim)',fontStyle:'italic'}}>No stair angles — add if order includes stairs at specific angles</div>}
+              {angles.map((a,i)=>(
+                <div key={i} style={{display:'grid',gridTemplateColumns:'120px 80px 1fr 32px',gap:8,marginBottom:6,alignItems:'end'}}>
+                  <Field label={i===0?'Angle':''}><select value={a.angle||'33°'} onChange={e=>updateAngle(i,'angle',e.target.value)}>
+                    {['27°','28°','30°','33°','35°','36°','37°','38°','40°','42°','45°','Custom'].map(deg=><option key={deg}>{deg}</option>)}
+                  </select></Field>
+                  <Field label={i===0?'Qty':''}><input type="number" min="1" value={a.qty||''} placeholder="1" onChange={e=>updateAngle(i,'qty',+e.target.value)}/></Field>
+                  <Field label={i===0?'Notes':''}><input value={a.notes||''} placeholder="Run #, location..." onChange={e=>updateAngle(i,'notes',e.target.value)}/></Field>
+                  <button onClick={()=>removeAngle(i)} style={{background:'rgba(239,68,68,.15)',border:'1px solid rgba(239,68,68,.3)',borderRadius:4,color:'var(--err)',cursor:'pointer',fontSize:14,height:32,alignSelf:'end'}}>×</button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         <Field label="Lengths (e.g. 12x10ft, 6x8ft)"><input value={draftForm.lengths||''} onChange={e=>setDraftForm(f=>({...f,lengths:e.target.value}))}/></Field>
 
         {/* Dates & Financials */}
@@ -33850,6 +33922,7 @@ ${order.notes ? `<div class="section">
   <div class="section-title">Notes / Special Instructions</div>
   <div style="border:1px solid #e5e7eb;border-radius:5px;padding:10px 12px;font-size:12px;background:#fffbeb;">${order.notes}</div>
 </div>` : ''}
+${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware')||n.includes('black cable')||n.includes('all black')||n.includes('blk hardware')||n.includes('black swage')){ return `<div class="section"><div style="background:#7f1d1d;color:#fca5a5;border:2px solid #ef4444;border-radius:6px;padding:12px 16px;font-weight:900;font-size:13px;letter-spacing:.06em;text-transform:uppercase">⚠ BLACK HARDWARE — Customer requested per order notes. Use: black cable, black swages, black angle washers.</div></div>`; } return ''; })()}
 
 <!-- Footer -->
 <div class="footer">
