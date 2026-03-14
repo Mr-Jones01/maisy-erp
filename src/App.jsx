@@ -32860,44 +32860,154 @@ Return ONLY the JSON object, no other text.`;
           <div style={{fontSize:12}}>Parsed orders appear here for your review before going live.</div>
         </div>}
         {drafts.length>0&&<>
-          <div style={{marginBottom:10,fontSize:12,color:'var(--muted)'}}>Review each draft carefully — AI parsing is accurate but always worth a quick check before confirming.</div>
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {drafts.map((d,i)=>(
-              <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'16px',borderLeft:'4px solid var(--warn)'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+          <div style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{fontSize:12,color:'var(--muted)'}}>{drafts.length} draft{drafts.length!==1?'s':''} waiting — verify every field against the original file before confirming</div>
+            <div style={{display:'flex',gap:6}}>
+              <span style={{fontSize:10,background:'rgba(245,158,11,.2)',color:'var(--warn)',borderRadius:3,padding:'2px 8px',fontWeight:700}}>⚠ Amber = empty/zero — check original</span>
+              <span style={{fontSize:10,background:'rgba(239,68,68,.2)',color:'var(--err)',borderRadius:3,padding:'2px 8px',fontWeight:700}}>✕ Red = suspicious value</span>
+            </div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:16}}>
+            {drafts.map((d,i)=>{
+              // Flag suspicious values
+              const flags = [];
+              if(!d.customer) flags.push('customer');
+              if(!d.productType||d.productType==='Cable Rail'&&!d.lineQty&&!d.stairQty) flags.push('quantities');
+              if(d.orderTotal>50000) flags.push('total-high');
+              if(d.orderTotal>0&&d.orderTotal<100) flags.push('total-low');
+
+              const Field2 = ({label, value, type='text', warn=false, err=false}) => {
+                const empty = value===''||value===0||value===null||value===undefined||value==='—';
+                const bg = err?'rgba(239,68,68,.12)':warn?'rgba(245,158,11,.1)':empty?'rgba(245,158,11,.07)':'var(--s2)';
+                const bc = err?'rgba(239,68,68,.4)':warn?'rgba(245,158,11,.35)':empty?'rgba(245,158,11,.2)':'transparent';
+                return (
+                  <div style={{background:bg,border:'1px solid '+bc,borderRadius:5,padding:'5px 9px'}}>
+                    <div style={{fontSize:9,color:empty?'var(--warn)':err?'var(--err)':'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700}}>{label}{empty?' ⚠':''}</div>
+                    <div style={{fontSize:12,fontWeight:600,marginTop:1,color:empty?'var(--warn)':err?'var(--err)':'var(--txt)'}}>{empty?'—':String(value)}</div>
+                  </div>
+                );
+              };
+
+              return (
+              <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,overflow:'hidden',borderLeft:'4px solid '+(flags.length>0?'var(--err)':'var(--warn)')}}>
+                {/* Header */}
+                <div style={{padding:'12px 16px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--s2)'}}>
                   <div>
-                    <div style={{fontWeight:700,fontSize:14}}>{d.customer||'Unknown Customer'}</div>
-                    <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{d.project||'—'} · Imported from: {d.sourceFile} · {d.importedAt}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{fontWeight:700,fontSize:15,color:!d.customer?'var(--err)':'var(--txt)'}}>{d.customer||'⚠ NO CUSTOMER'}</span>
+                      {flags.length>0&&<span style={{fontSize:9,background:'rgba(239,68,68,.2)',color:'var(--err)',borderRadius:3,padding:'2px 7px',fontWeight:700,letterSpacing:'.06em'}}>{flags.length} FLAG{flags.length!==1?'S':''}</span>}
+                    </div>
+                    <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>
+                      📁 {d.sourceFile} · Parsed {d.importedAt} · {d.orderType||'Unknown type'}
+                    </div>
                   </div>
                   <div style={{display:'flex',gap:6}}>
-                    <button className="btn btn-p btn-sm" onClick={()=>{setDraftForm({...d});setDraftModal(d.id);}}>Review & Confirm</button>
+                    <button className="btn btn-p btn-sm" onClick={()=>{setDraftForm({...d});setDraftModal(d.id);}}>✏ Edit & Confirm</button>
                     <button className="btn btn-d btn-sm" onClick={()=>discardDraft(d.id)}>Discard</button>
                   </div>
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
-                  {[
-                    {l:'Product',v:d.productType},
-                    {l:'Color',v:d.color},
-                    {l:'Order Type',v:d.orderType},
-                    {l:'Sales Rep',v:d.salesPerson},
-                    {l:'Line Posts',v:d.lineQty||'—'},
-                    {l:'Stair Posts',v:d.stairQty||'—'},
-                    {l:'Corner Posts',v:d.cornerQty||'—'},
-                    {l:'Top Rail',v:d.topRailQty||'—'},
-                    {l:'Ship To',v:[d.city,d.state].filter(Boolean).join(', ')||'—'},
-                    {l:'Due Date',v:d.dueDate||'—'},
-                    {l:'Total',v:d.orderTotal?fmt$(d.orderTotal):'—'},
-                    {l:'Deposit',v:d.deposit?fmt$(d.deposit):'—'},
-                  ].map(f=>(
-                    <div key={f.l} style={{background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
-                      <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em'}}>{f.l}</div>
-                      <div style={{fontSize:12,fontWeight:600,marginTop:2}}>{f.v||'—'}</div>
+
+                <div style={{padding:'12px 16px',display:'flex',flexDirection:'column',gap:12}}>
+
+                  {/* Row 1: Customer Info */}
+                  <div>
+                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Customer Info</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:6}}>
+                      <Field2 label="Customer" value={d.customer}/>
+                      <Field2 label="Project" value={d.project}/>
+                      <Field2 label="Contact" value={d.contactName}/>
+                      <Field2 label="Phone" value={d.phone}/>
+                      <Field2 label="Email" value={d.email}/>
+                      <Field2 label="PO #" value={d.po}/>
                     </div>
-                  ))}
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6,marginTop:6}}>
+                      <Field2 label="Ship To" value={d.shipTo}/>
+                      <Field2 label="City" value={d.city}/>
+                      <Field2 label="State" value={d.state}/>
+                      <Field2 label="Zip" value={d.zip}/>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Rail Specs */}
+                  <div>
+                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Rail Specs</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:6}}>
+                      <Field2 label="Product Type" value={d.productType}/>
+                      <Field2 label="Mount Type" value={d.mountType}/>
+                      <Field2 label="Rail Type" value={d.railType}/>
+                      <Field2 label="Height" value={d.height}/>
+                      <Field2 label="Color" value={d.color}/>
+                      <Field2 label="Order Type" value={d.orderType}/>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Quantities */}
+                  <div>
+                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Quantities</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:6}}>
+                      <Field2 label="Line Posts" value={d.lineQty||0} warn={!d.lineQty&&!d.stairQty}/>
+                      <Field2 label="Stair Posts" value={d.stairQty||0}/>
+                      <Field2 label="Corner Posts" value={d.cornerQty||0}/>
+                      <Field2 label="Top Rail Qty" value={d.topRailQty||0}/>
+                      <Field2 label="Total Lin. Ft" value={d.totalLinearFt||0}/>
+                      <Field2 label="Run Count" value={d.runCount||0}/>
+                      <Field2 label="Stair Runs" value={d.stairRunCount||0}/>
+                      <Field2 label="Cable Footage" value={d.cableFootage||0}/>
+                    </div>
+                    {d.lengths&&<div style={{marginTop:6,background:'var(--s2)',borderRadius:5,padding:'5px 9px'}}>
+                      <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700}}>Lengths</div>
+                      <div style={{fontSize:12,fontWeight:600,marginTop:1}}>{d.lengths}</div>
+                    </div>}
+                  </div>
+
+                  {/* Row 4: Dates & Financials */}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                    <div>
+                      <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Dates</div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+                        <Field2 label="Order Date" value={d.orderDate}/>
+                        <Field2 label="Due Date" value={d.dueDate}/>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Financials</div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+                        <Field2 label="Order Total" value={d.orderTotal?fmt$(d.orderTotal):0} err={d.orderTotal>50000} warn={d.orderTotal>0&&d.orderTotal<50}/>
+                        <Field2 label="Deposit" value={d.deposit?fmt$(d.deposit):0}/>
+                        <Field2 label="Sales Rep" value={d.salesPerson}/>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 5: Notes */}
+                  {d.notes&&<div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.15)',borderRadius:5,padding:'6px 10px'}}>
+                    <div style={{fontSize:9,color:'var(--acc)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700,marginBottom:2}}>Notes from file</div>
+                    <div style={{fontSize:11,color:'var(--muted)'}}>{d.notes}</div>
+                  </div>}
+
+                  {/* BOM Preview */}
+                  {(()=>{
+                    const bom = calcBOM(d);
+                    if(!bom.length) return null;
+                    const totalPosts = (d.lineQty||0)+(d.stairQty||0)+(d.cornerQty||0);
+                    if(!totalPosts && !(d.totalLinearFt||d.runCount)) return null;
+                    return (
+                      <div style={{background:'rgba(16,185,129,.05)',border:'1px solid rgba(16,185,129,.2)',borderRadius:5,padding:'8px 10px'}}>
+                        <div style={{fontSize:9,color:'var(--ok)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700,marginBottom:6}}>📦 Calculated BOM ({bom.length} items)</div>
+                        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                          {bom.map((item,j)=>{
+                            const inv=(data.inventory||[]).find(x=>x.id===item.inventoryId);
+                            const ok=(inv?.qty||0)>=item.qty;
+                            return <span key={j} style={{fontSize:9,padding:'2px 7px',borderRadius:3,background:ok?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)',color:ok?'var(--ok)':'var(--err)',fontWeight:600}}>{item.qty} × {item.name}</span>;
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                 </div>
-                {d.notes&&<div style={{marginTop:8,fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>Notes: {d.notes}</div>}
               </div>
-            ))}
+            );})}
           </div>
         </>}
       </>}
@@ -32994,30 +33104,77 @@ Return ONLY the JSON object, no other text.`;
         </table>
       </div>}
 
-      {draftModal&&<Modal title="Review Draft Order" onClose={()=>setDraftModal(null)} lg>
+      {draftModal&&<Modal title="Edit & Confirm Draft Order" onClose={()=>setDraftModal(null)} lg>
         <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.25)',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>
-          Imported from: {draftForm.sourceFile} — review all fields before confirming
+          📁 {draftForm.sourceFile} — correct any fields before confirming to create a live order
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+
+        {/* Customer */}
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Customer Info</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:10}}>
           <Field label="Customer *"><input value={draftForm.customer||''} onChange={e=>setDraftForm(f=>({...f,customer:e.target.value}))}/></Field>
           <Field label="Project"><input value={draftForm.project||''} onChange={e=>setDraftForm(f=>({...f,project:e.target.value}))}/></Field>
-          <Field label="Sales Rep"><input value={draftForm.salesPerson||''} onChange={e=>setDraftForm(f=>({...f,salesPerson:e.target.value}))}/></Field>
+          <Field label="PO #"><input value={draftForm.po||''} onChange={e=>setDraftForm(f=>({...f,po:e.target.value}))}/></Field>
+          <Field label="Contact Name"><input value={draftForm.contactName||''} onChange={e=>setDraftForm(f=>({...f,contactName:e.target.value}))}/></Field>
+          <Field label="Phone"><input value={draftForm.phone||''} onChange={e=>setDraftForm(f=>({...f,phone:e.target.value}))}/></Field>
+          <Field label="Email"><input value={draftForm.email||''} onChange={e=>setDraftForm(f=>({...f,email:e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:12}}>
+          <Field label="Ship To / Address"><input value={draftForm.shipTo||''} onChange={e=>setDraftForm(f=>({...f,shipTo:e.target.value}))}/></Field>
+          <Field label="City"><input value={draftForm.city||''} onChange={e=>setDraftForm(f=>({...f,city:e.target.value}))}/></Field>
+          <Field label="State"><input value={draftForm.state||''} onChange={e=>setDraftForm(f=>({...f,state:e.target.value}))}/></Field>
+          <Field label="Zip"><input value={draftForm.zip||''} onChange={e=>setDraftForm(f=>({...f,zip:e.target.value}))}/></Field>
+        </div>
+
+        {/* Rail Specs */}
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Rail Specs</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
           <Field label="Product Type"><select value={draftForm.productType||'Cable Rail'} onChange={e=>setDraftForm(f=>({...f,productType:e.target.value}))}>{['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Mount Type"><select value={draftForm.mountType||''} onChange={e=>setDraftForm(f=>({...f,mountType:e.target.value}))}><option value="">— Select —</option>{['Fascia','Surface','Core Drill','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Rail Type"><select value={draftForm.railType||''} onChange={e=>setDraftForm(f=>({...f,railType:e.target.value}))}><option value="">— Select —</option>{['Cable','Glass Framed','Glass Frameless','Stair Only'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Height"><select value={draftForm.height||'42'} onChange={e=>setDraftForm(f=>({...f,height:e.target.value}))}><option value="36">36"</option><option value="42">42"</option><option value="Custom">Custom</option></select></Field>
           <Field label="Color"><input value={draftForm.color||''} onChange={e=>setDraftForm(f=>({...f,color:e.target.value}))}/></Field>
           <Field label="Order Type"><select value={draftForm.orderType||'New Order'} onChange={e=>setDraftForm(f=>({...f,orderType:e.target.value}))}>{['New Order','Re-Work','Warranty','Sample','Rush'].map(t=><option key={t}>{t}</option>)}</select></Field>
-          <Field label="Line Posts"><input type="number" value={draftForm.lineQty||''} onChange={e=>setDraftForm(f=>({...f,lineQty:+e.target.value}))}/></Field>
-          <Field label="Stair Posts"><input type="number" value={draftForm.stairQty||''} onChange={e=>setDraftForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
-          <Field label="Corner Posts"><input type="number" value={draftForm.cornerQty||''} onChange={e=>setDraftForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
-          <Field label="Lengths"><input value={draftForm.lengths||''} placeholder="12x10ft, 6x8ft" onChange={e=>setDraftForm(f=>({...f,lengths:e.target.value}))}/></Field>
-          <Field label="Due Date"><input type="date" value={draftForm.dueDate||''} onChange={e=>setDraftForm(f=>({...f,dueDate:e.target.value}))}/></Field>
-          <Field label="Customer PO"><input value={draftForm.po||''} onChange={e=>setDraftForm(f=>({...f,po:e.target.value}))}/></Field>
-          <Field label="Ship To City"><input value={draftForm.city||''} onChange={e=>setDraftForm(f=>({...f,city:e.target.value}))}/></Field>
-          <Field label="State"><input value={draftForm.state||''} onChange={e=>setDraftForm(f=>({...f,state:e.target.value}))}/></Field>
-          <Field label="Email"><input value={draftForm.email||''} onChange={e=>setDraftForm(f=>({...f,email:e.target.value}))}/></Field>
-          <Field label="Order Total ($)"><input type="number" step="0.01" value={draftForm.orderTotal||''} onChange={e=>setDraftForm(f=>({...f,orderTotal:+e.target.value,balance:(+e.target.value)-(f.deposit||0)}))}/></Field>
-          <Field label="Deposit ($)"><input type="number" step="0.01" value={draftForm.deposit||''} onChange={e=>setDraftForm(f=>({...f,deposit:+e.target.value,balance:(f.orderTotal||0)-(+e.target.value)}))}/></Field>
         </div>
+
+        {/* Quantities */}
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Quantities</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:8}}>
+          <Field label="Line Posts"><input type="number" min="0" value={draftForm.lineQty||''} onChange={e=>setDraftForm(f=>({...f,lineQty:+e.target.value}))}/></Field>
+          <Field label="Stair Posts"><input type="number" min="0" value={draftForm.stairQty||''} onChange={e=>setDraftForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
+          <Field label="Corner Posts"><input type="number" min="0" value={draftForm.cornerQty||''} onChange={e=>setDraftForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
+          <Field label="Top Rail Qty"><input type="number" min="0" value={draftForm.topRailQty||''} onChange={e=>setDraftForm(f=>({...f,topRailQty:+e.target.value}))}/></Field>
+          <Field label="Total Linear Ft"><input type="number" min="0" step="0.5" value={draftForm.totalLinearFt||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,totalLinearFt:+e.target.value}))}/></Field>
+          <Field label="Run Count"><input type="number" min="0" value={draftForm.runCount||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,runCount:+e.target.value}))}/></Field>
+          <Field label="Stair Run Count"><input type="number" min="0" value={draftForm.stairRunCount||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,stairRunCount:+e.target.value}))}/></Field>
+          <Field label="Cable Footage"><input type="number" min="0" value={draftForm.cableFootage||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
+        </div>
+        <Field label="Lengths (e.g. 12x10ft, 6x8ft)"><input value={draftForm.lengths||''} onChange={e=>setDraftForm(f=>({...f,lengths:e.target.value}))}/></Field>
+
+        {/* Dates & Financials */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:10}}>
+          <div>
+            <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Dates & Rep</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <Field label="Order Date"><input type="date" value={draftForm.orderDate||''} onChange={e=>setDraftForm(f=>({...f,orderDate:e.target.value}))}/></Field>
+              <Field label="Due Date"><input type="date" value={draftForm.dueDate||''} onChange={e=>setDraftForm(f=>({...f,dueDate:e.target.value}))}/></Field>
+            </div>
+            <Field label="Sales Rep" style={{marginTop:8}}><input value={draftForm.salesPerson||''} onChange={e=>setDraftForm(f=>({...f,salesPerson:e.target.value}))}/></Field>
+          </div>
+          <div>
+            <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Financials</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <Field label="Order Total ($)"><input type="number" step="0.01" value={draftForm.orderTotal||''} onChange={e=>setDraftForm(f=>({...f,orderTotal:+e.target.value,balance:(+e.target.value)-(f.deposit||0)}))}/></Field>
+              <Field label="Deposit ($)"><input type="number" step="0.01" value={draftForm.deposit||''} onChange={e=>setDraftForm(f=>({...f,deposit:+e.target.value,balance:(f.orderTotal||0)-(+e.target.value)}))}/></Field>
+            </div>
+            <div style={{marginTop:8,padding:'6px 10px',background:'var(--s2)',borderRadius:5,fontSize:11}}>
+              Balance: <strong style={{color:'var(--warn)'}}>{fmt$((draftForm.orderTotal||0)-(draftForm.deposit||0))}</strong>
+            </div>
+          </div>
+        </div>
+
         <Field label="Notes" style={{marginTop:10}}><textarea rows={2} value={draftForm.notes||''} onChange={e=>setDraftForm(f=>({...f,notes:e.target.value}))}/></Field>
+
         <div style={{display:'flex',gap:8,marginTop:14}}>
           <button className="btn btn-p" onClick={confirmDraft} disabled={!draftForm.customer}>✓ Confirm — Create Order</button>
           <button className="btn" onClick={()=>setDraftModal(null)}>Cancel</button>
