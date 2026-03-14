@@ -116,10 +116,10 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer'],
-  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue'],
+  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','workorders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer'],
+  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue','workorders'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
-  shop:   ['dashboard','todo','production','orders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
+  shop:   ['dashboard','todo','production','orders','workorders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
 };
 
 const BADGE = {
@@ -26078,6 +26078,7 @@ const NAVS = [
   {section:'Operations'},
   {id:'orders',icon:'📋',label:'Orders'},
   {id:'orderimport',icon:'📥',label:'Order Import'},
+  {id:'workorders',icon:'🏗',label:'Work Orders'},
   {id:'sales',icon:'◈',label:'Sales & Quotes'},
   {id:'production',icon:'◎',label:'Production'},
   {id:'queueanalyzer',icon:'📊',label:'Queue Analyzer'},
@@ -30531,81 +30532,137 @@ const KPIDashboard = ({data,setData}) => {
 // ─── BOM ENGINE ──────────────────────────────────────────────────────────────
 // Calculates materials needed for an order based on quantities
 // Returns array of {inventoryId, sku, name, qty, unit, cat}
+// ─── BOM ENGINE v2 — Rules from Maisy_Railing_Materials_ALL_ORDERS_17.xlsx ────
+// POST ALUMINUM: 3.5ft/post @ 42in, 3.0ft/post @ 36in (RM-001 — all post types)
+// TOP RAIL: 8ft/12ft/20ft pieces — Deck Top & Stair Top = same material RM-006
+// LAGS: fascia=2/post, surface=0. LAG WASHERS: 1 per lag (always)
+// POST SCREWS: surface=4/post, fascia=0
+// SELF TAP: 4/post (all types)
+// SWAGES: entered directly as complete assemblies (AI-015 std, AI-016 black)
+// ANGLE WASHERS: same qty as swages (unless notes say large washers→AI-010)
+//   BUT only include when stair posts exist (stair cable needs angle entry)
+// CABLE: entered directly as footage
+// DERIVED ALU: surface posts→4×1/4 flatbar(RM-004)+2×1/8 flatbar(RM-002) @4in/post
+//   fascia posts→2×1/8 flatbar(RM-002) @4in/post, corner→angle iron pieces
 const calcBOM = (order) => {
   const {
-    lineQty=0, stairQty=0, cornerQty=0, topRailQty=0,
-    totalLinearFt=0, cableFootage=0, runCount=0, stairRunCount=0,
-    productType='', railType='', mountType=''
+    lineQty=0, stairQty=0, cornerQty=0,
+    rail8ft=0, rail12ft=0, rail20ft=0,        // top rail pieces by length
+    stairRail8ft=0, stairRail12ft=0, stairRail20ft=0, // stair rail pieces
+    swageQty=0, cableFootage=0, railCapQty=0,
+    angleWasherQty=0,                          // explicit from order if provided
+    mountType='', height='42', notes='', color='',
+    productType='', railType=''
   } = order;
 
-  const totalPosts = Number(lineQty)+Number(stairQty)+Number(cornerQty);
-  const linFt = Number(totalLinearFt) || 0;
-  const cabFt = Number(cableFootage) || (linFt * 11); // ~11 runs avg if not specified
-  const isCable = !productType.toLowerCase().includes('glass') && !railType.toLowerCase().includes('glass');
-  const isGlass = productType.toLowerCase().includes('glass') || railType.toLowerCase().includes('glass');
-  const isFascia = mountType.toLowerCase().includes('fascia') || mountType === '';
-  const isSurface = mountType.toLowerCase().includes('surface');
+  const lp = Number(lineQty)||0;
+  const sp = Number(stairQty)||0;
+  const cp = Number(cornerQty)||0;
+  const totalPosts = lp + sp + cp;
+  const swages = Number(swageQty)||0;
+  const cable = Number(cableFootage)||0;
+  const railCaps = Number(railCapQty)||0;
+
+  const isFascia = (mountType||'').toLowerCase().includes('fascia');
+  const isSurface = (mountType||'').toLowerCase().includes('surface');
+  // Default to fascia if not specified (most common order type)
+  const mountFascia = isFascia || (!isFascia && !isSurface);
+  const is36 = (height||'').includes('36');
+  const postFtEach = is36 ? 3.0 : 3.5;
+  const isBlack = (color||'').toLowerCase().includes('black') || (color||'').toLowerCase().includes('bk');
+  const notesLower = (notes||'').toLowerCase();
+  const useLargeWashers = notesLower.includes('large wash');
+  const isCable = !(productType||'').toLowerCase().includes('glass') && !(railType||'').toLowerCase().includes('glass');
 
   const items = [];
-  const add = (id, name, qty, unit, cat) => {
-    if(qty > 0) items.push({inventoryId:id, sku:id, name, qty:Math.ceil(qty), unit, cat});
+  const add = (id, name, qty, unit, cat, note='') => {
+    const q = typeof qty === 'number' ? qty : Number(qty)||0;
+    if(q > 0) items.push({inventoryId:id, sku:id, name, qty:Math.ceil(q*10)/10, unit, cat, note});
   };
 
-  // ── ALUMINUM TUBE (posts — 42" = 3.5ft each, 36" = 3ft each) ───────────
-  const postFt = (Number(lineQty)*3.5) + (Number(stairQty)*3.5) + (Number(cornerQty)*3.5);
-  if(postFt > 0) add('RM-001','6061-T6 Tube 1"x3"x1/8"', postFt, 'FT', 'Aluminum');
+  // ── 1. POST ALUMINUM (RM-001) — 1"x3"x1/8" tube, all post types same material
+  const postAlumFt = totalPosts * postFtEach;
+  if(postAlumFt > 0) add('RM-001', '6061-T6 Tube 1"x3"x1/8" (Post Alum)', postAlumFt, 'FT', 'Aluminum',
+    `${totalPosts} posts × ${postFtEach}ft`);
 
-  // ── TOP RAIL (1"x2" tube — runs) ────────────────────────────────────────
-  const railFt = linFt || (Number(topRailQty)*10);
-  if(railFt > 0) add('RM-006','6061-T6 Tube 1"x2"x1/8"', railFt * 1.05, 'FT', 'Aluminum'); // 5% waste
-
-  // ── CABLE ────────────────────────────────────────────────────────────────
-  if(isCable) {
-    const totalCableFt = cabFt > 0 ? cabFt : (linFt * 11);
-    add('AI-001','1/8" Cable SS', totalCableFt * 1.1, 'FT', 'Cable'); // 10% extra for cuts
-
-    // Swage assemblies: 2 per cable run (one each end), ~11 runs avg
-    const cableRuns = Number(runCount)*11 + Number(stairRunCount)*11 || Math.ceil(totalCableFt/linFt || 0)*2 || 22;
-    const swageCount = cableRuns * 2;
-    add('AI-015','Swage Assembly - 1/8"', swageCount, 'EA', 'Hardware');
-    add('AI-009','Swage Washer Small 1/4"', swageCount, 'EA', 'Hardware');
-    add('AI-010','Swage Washer Large 1/4"', swageCount, 'EA', 'Hardware');
-    add('AI-011','Swage Nut 1/4" NC Hex', swageCount, 'EA', 'Hardware');
-    add('AI-012','Tensioner Body 1/8" Cable', Math.ceil(swageCount/2), 'EA', 'Hardware');
-    add('AI-013','Swage Acorn Nut 1/4" SS', Math.ceil(swageCount/2), 'EA', 'Hardware');
+  // ── 2. TOP RAIL (RM-006) — 1"x2"x1/8" tube — Deck Top & Stair Top = SAME material
+  const r8  = (Number(rail8ft)||0)  + (Number(stairRail8ft)||0);
+  const r12 = (Number(rail12ft)||0) + (Number(stairRail12ft)||0);
+  const r20 = (Number(rail20ft)||0) + (Number(stairRail20ft)||0);
+  const totalRailFt = (r8*8) + (r12*12) + (r20*20);
+  if(totalRailFt > 0) {
+    const railNote = [r8&&`${r8}×8ft`, r12&&`${r12}×12ft`, r20&&`${r20}×20ft`].filter(Boolean).join(', ');
+    add('RM-006', '6061-T6 Tube 1"x2"x1/8" (Top Rail)', totalRailFt, 'FT', 'Aluminum', railNote);
   }
 
-  // ── FASTENERS — LAG BOLTS (fascia: 2 per post, surface: 4 per post) ────
-  const lagsPerPost = isSurface ? 4 : 2;
+  // ── 3. CABLE (AI-001 standard, or black variant)
+  if(cable > 0 && isCable) {
+    const cableId = isBlack ? 'AI-016' : 'AI-001';
+    const cableName = isBlack ? '1/8" Cable Black SS316' : '1/8" Cable SS316';
+    add(cableId, cableName, cable, 'FT', 'Cable');
+  }
+
+  // ── 4. SWAGES — complete assemblies (AI-015 std, AI-016 black noted separately)
+  if(swages > 0 && isCable) {
+    const swageId = isBlack ? 'AI-016' : 'AI-015';
+    const swageName = isBlack ? 'Swage Assembly 1/8" Black SS316' : 'Swage Assembly 1/8" SS316';
+    add(swageId, swageName, swages, 'EA', 'Hardware', 'Complete assemblies');
+
+    // ── 5. ANGLE WASHERS — same qty as swages, ONLY when stair posts exist
+    //    Unless notes say "large washers" → use AI-010 (large washer)
+    if(sp > 0) {
+      const explicitAW = Number(angleWasherQty)||0;
+      const awQty = explicitAW > 0 ? explicitAW : swages; // user rule: same as swages
+      const awId = useLargeWashers ? 'AI-010' : 'AI-014';
+      const awName = useLargeWashers ? 'Swage Washer Large 5/8" OD SS316' : 'Swage Angle Washer 1/4"×57° SS316';
+      add(awId, awName, awQty, 'EA', 'Hardware',
+        useLargeWashers ? 'Large washers per notes' : '1:1 with swages (stair sections)');
+    }
+  }
+
+  // ── 6. RAIL CAPS (AI-019)
+  if(railCaps > 0) add('AI-019', 'Handrail End Cap 3"×1" Black', railCaps, 'EA', 'Hardware');
+
+  // ── 7. LAGS (AI-005) — fascia=2/post, surface=0 + LAG WASHERS 1:1
+  if(mountFascia && totalPosts > 0) {
+    const lagCount = totalPosts * 2;
+    add('AI-005', 'Lag Bolt SS 3/8"×5"', lagCount, 'EA', 'Hardware', `${totalPosts} posts × 2`);
+    add('AI-008', 'Lag Bolt Washer 7/16" SS', lagCount, 'EA', 'Hardware', '1 per lag');
+  }
+
+  // ── 8. POST SCREWS (AI-004) — surface=4/post, fascia=0
+  if(isSurface && totalPosts > 0) {
+    add('AI-004', 'Post Screw 3/16"×2-7/8" Lock Head', totalPosts*4, 'EA', 'Hardware', `${totalPosts} posts × 4`);
+  }
+
+  // ── 9. SELF TAP (AI-002) — 4/post all types
   if(totalPosts > 0) {
-    add('AI-005','Lag Bolt SS 3/8"x5"', totalPosts*lagsPerPost, 'EA', 'Hardware');
-    add('AI-008','Lag Bolt Washer 7/16"', totalPosts*lagsPerPost, 'EA', 'Hardware');
+    add('AI-002', '#11 Self-Tap Screw Sq Drive Pan Head', totalPosts*4, 'EA', 'Hardware', `${totalPosts} posts × 4`);
   }
 
-  // ── SELF-TAP SCREWS (4 per post for base plate) ─────────────────────────
+  // ── 10. DERIVED ALUMINUM — flat bar for post base plates
   if(totalPosts > 0) {
-    add('AI-002','#11 Self-Tap Screw Pan Head', totalPosts*4, 'EA', 'Hardware');
+    const barFt = Math.ceil((totalPosts * 4) / 12 * 10) / 10; // 4" per post → ft, 1 decimal
+    if(isSurface) {
+      // Surface: needs 4×1/4 flat bar + 2×1/8 flat bar
+      add('RM-004', '6061-T6 Bar 1/4"×4" (Surface Base)', barFt, 'FT', 'Aluminum', `${totalPosts} posts × 4"`);
+      add('RM-002', '6061-T6 Bar 1/8"×2" (Surface Base)', barFt, 'FT', 'Aluminum', `${totalPosts} posts × 4"`);
+    } else {
+      // Fascia: 2×1/8 flat bar for fascia channel
+      add('RM-002', '6061-T6 Bar 1/8"×2" (Fascia Channel)', barFt, 'FT', 'Aluminum', `${totalPosts} posts × 4"`);
+    }
+    // Corner posts: need angle iron pieces
+    if(cp > 0) {
+      const cornerAngle1 = Math.ceil((cp * 2 * 2) / 12 * 10) / 10; // 2 pcs × 2" each
+      const cornerAngle2 = Math.ceil((cp * 2 * 5) / 12 * 10) / 10; // 2 pcs × 5" each
+      add('RM-009', '6061-T6 Angle 1.5"×1.5"×1/8" (Corner)', cornerAngle1, 'FT', 'Aluminum', `${cp} corners × 2pcs × 2"`);
+      add('RM-015', '6061-T6 Angle 2"×4"×1/4" (Corner)', cornerAngle2, 'FT', 'Aluminum', `${cp} corners × 2pcs × 5"`);
+    }
   }
 
-  // ── POST SCREWS (cable tensioner set screws, 2 per line post) ──────────
-  if(Number(lineQty) > 0) {
-    add('AI-004','Post Screw 3/16"x2-7/8"', Number(lineQty)*2, 'EA', 'Hardware');
-  }
-
-  // ── HANDRAIL END CAPS (2 per run) ───────────────────────────────────────
-  if(Number(runCount) > 0 || Number(topRailQty) > 0) {
-    const runs = Number(runCount)||Number(topRailQty)||1;
-    add('AI-019','Handrail End Cap 3"x1" Black', runs*2, 'EA', 'Hardware');
-  }
-
-  // ── ANGLE WASHERS (stair posts only, 2 per stair post) ──────────────────
-  if(Number(stairQty) > 0) {
-    add('AI-014','Swage Angle Washer 1/4"x57°', Number(stairQty)*2*11, 'EA', 'Hardware');
-  }
-
-  // ── PACKAGING ────────────────────────────────────────────────────────────
-  if(totalPosts > 0 || linFt > 0) {
-    items.push({inventoryId:'AI-021', sku:'AI-021', name:'Poly Tubing Roll 6"x1000ft', qty:1, unit:'EA', cat:'Packaging', note:'Shared roll'});
+  // ── 11. POWDER COAT — flag color for powder room (not deducted, just flagged)
+  if(totalPosts > 0 && color) {
+    items.push({inventoryId:'PC-FLAG', sku:'PC-FLAG', name:`Powder Coat: ${color}`, qty:totalPosts, unit:'Posts', cat:'Powder Coat', note:'Flag for powder room — verify color stock'});
   }
 
   return items;
@@ -30652,24 +30709,31 @@ const Orders = ({data, setData}) => {
   const statusCounts={};statuses.forEach(s=>{statusCounts[s]=orders.filter(o=>o.status===s).length;});
   const typeCounts={};orderTypes.forEach(t=>{typeCounts[t]=orders.filter(o=>o.orderType===t).length;});
 
-  const newOrder=()=>setForm({id:(()=>{const nums=(data.orders||[]).map(o=>parseInt((o.id||'').replace('ORD-',''))||0);const next=Math.max(1999,...nums)+1;return 'ORD-'+String(next);})(),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',mountType:'',railType:'Cable',height:'42',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,cableFootage:0,runCount:0,stairRunCount:0,totalLinearFt:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:'',invDeducted:false});
+  const newOrder=()=>setForm({bom:[],id:(()=>{const nums=(data.orders||[]).map(o=>parseInt((o.id||'').replace('ORD-',''))||0);const next=Math.max(1999,...nums)+1;return 'ORD-'+String(next);})(),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',mountType:'',railType:'Cable',height:'42',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,rail8ft:0,rail12ft:0,rail20ft:0,stairRail8ft:0,stairRail12ft:0,stairRail20ft:0,railCapQty:0,swageQty:0,angleWasherQty:0,cableFootage:0,lagQty:0,postScrewQty:0,selfTapQty:0,angleBracketQty:0,glassPanelQty:0,glassClampQty:0,topRailQty:0,totalLinearFt:0,runCount:0,stairRunCount:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:'',invDeducted:false});
 
   const save=()=>{
     const rec={...form,
       orderTotal:Number(form.orderTotal||0),deposit:Number(form.deposit||0),balance:Number(form.balance||0),
       lineQty:Number(form.lineQty||0),stairQty:Number(form.stairQty||0),cornerQty:Number(form.cornerQty||0),
       topRailQty:Number(form.topRailQty||0),cableFootage:Number(form.cableFootage||0),
+      rail8ft:Number(form.rail8ft||0),rail12ft:Number(form.rail12ft||0),rail20ft:Number(form.rail20ft||0),
+      stairRail8ft:Number(form.stairRail8ft||0),stairRail12ft:Number(form.stairRail12ft||0),
+      swageQty:Number(form.swageQty||0),railCapQty:Number(form.railCapQty||0),
+      angleWasherQty:Number(form.angleWasherQty||0),lagQty:Number(form.lagQty||0),
+      postScrewQty:Number(form.postScrewQty||0),selfTapQty:Number(form.selfTapQty||0),
       runCount:Number(form.runCount||0),stairRunCount:Number(form.stairRunCount||0),
       totalLinearFt:Number(form.totalLinearFt||0)
     };
+    const bom = calcBOM(rec);
     const existingOrder = orders.find(o=>o.id===rec.id);
     const is3BD = (rec.customer||'').toUpperCase().includes('3BD') || (rec.salesPerson||'').toUpperCase().includes('3BD');
     const isNew = !existingOrder;
     const wasInProd = existingOrder?.status === 'In Production';
     const nowInProd = rec.status === 'In Production';
 
-    if(isNew) setData(d=>({...d,orders:[...(d.orders||[]),rec]}));
-    else setData(d=>({...d,orders:(d.orders||[]).map(o=>o.id===rec.id?rec:o)}));
+    const recWithBOM = {...rec, bom, bomGeneratedAt:now()};
+    if(isNew) setData(d=>({...d,orders:[...(d.orders||[]),recWithBOM]}));
+    else setData(d=>({...d,orders:(d.orders||[]).map(o=>o.id===rec.id?recWithBOM:o)}));
 
     // Deduct inventory when order first moves to In Production
     if(nowInProd && !wasInProd && !rec.invDeducted) {
@@ -30904,18 +30968,36 @@ const Orders = ({data, setData}) => {
               </select>
             </Field>
           </div>
-          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>Post Quantities</div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+          {/* Posts */}
+          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Posts</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}}>
             <Field label="Line Posts"><input type="number" min="0" value={form.lineQty||''} onChange={e=>setForm(f=>({...f,lineQty:+e.target.value}))}/></Field>
             <Field label="Stair Posts"><input type="number" min="0" value={form.stairQty||''} onChange={e=>setForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
             <Field label="Corner Posts"><input type="number" min="0" value={form.cornerQty||''} onChange={e=>setForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
-            <Field label="Top Rail Qty"><input type="number" min="0" value={form.topRailQty||''} onChange={e=>setForm(f=>({...f,topRailQty:+e.target.value}))}/></Field>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:10}}>
-            <Field label="Total Linear Ft"><input type="number" min="0" step="0.5" value={form.totalLinearFt||''} placeholder="0" onChange={e=>setForm(f=>({...f,totalLinearFt:+e.target.value}))}/></Field>
-            <Field label="Run Count"><input type="number" min="0" value={form.runCount||''} placeholder="0" onChange={e=>setForm(f=>({...f,runCount:+e.target.value}))}/></Field>
-            <Field label="Stair Run Count"><input type="number" min="0" value={form.stairRunCount||''} placeholder="0" onChange={e=>setForm(f=>({...f,stairRunCount:+e.target.value}))}/></Field>
-            <Field label="Cable Footage (ft)"><input type="number" min="0" value={form.cableFootage||''} placeholder="auto-calc" onChange={e=>setForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
+          {/* Top Rail — Deck Top & Stair Top = same material (RM-006 1x2 tube) */}
+          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Top Rail Pieces <span style={{color:'var(--acc)',fontWeight:400,textTransform:'none',letterSpacing:0}}>— Deck Top + Stair Top = same 1×2 aluminum</span></div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:6}}>
+            <Field label="Deck 8ft"><input type="number" min="0" value={form.rail8ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,rail8ft:+e.target.value}))}/></Field>
+            <Field label="Deck 12ft"><input type="number" min="0" value={form.rail12ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,rail12ft:+e.target.value}))}/></Field>
+            <Field label="Deck 20ft"><input type="number" min="0" value={form.rail20ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,rail20ft:+e.target.value}))}/></Field>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}}>
+            <Field label="Stair 8ft"><input type="number" min="0" value={form.stairRail8ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,stairRail8ft:+e.target.value}))}/></Field>
+            <Field label="Stair 12ft"><input type="number" min="0" value={form.stairRail12ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,stairRail12ft:+e.target.value}))}/></Field>
+            <Field label="Stair 20ft"><input type="number" min="0" value={form.stairRail20ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,stairRail20ft:+e.target.value}))}/></Field>
+          </div>
+          {/* Hardware — enter directly from order sheet */}
+          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Hardware <span style={{color:'var(--acc)',fontWeight:400,textTransform:'none',letterSpacing:0}}>— enter directly from order sheet</span></div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+            <Field label="Swages (ea)"><input type="number" min="0" value={form.swageQty||''} placeholder="0" onChange={e=>setForm(f=>({...f,swageQty:+e.target.value}))}/></Field>
+            <Field label="Cable (ft)"><input type="number" min="0" value={form.cableFootage||''} placeholder="0" onChange={e=>setForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
+            <Field label="Rail Caps (ea)"><input type="number" min="0" value={form.railCapQty||''} placeholder="0" onChange={e=>setForm(f=>({...f,railCapQty:+e.target.value}))}/></Field>
+            <Field label="Angle Washers"><input type="number" min="0" value={form.angleWasherQty||''} placeholder="= swages if stairs" onChange={e=>setForm(f=>({...f,angleWasherQty:+e.target.value}))}/></Field>
+            <Field label="Lags (ea)"><input type="number" min="0" value={form.lagQty||''} placeholder="auto (2/post fascia)" onChange={e=>setForm(f=>({...f,lagQty:+e.target.value}))}/></Field>
+            <Field label="Post Screws"><input type="number" min="0" value={form.postScrewQty||''} placeholder="auto (4/post surface)" onChange={e=>setForm(f=>({...f,postScrewQty:+e.target.value}))}/></Field>
+            <Field label="Self Tap (ea)"><input type="number" min="0" value={form.selfTapQty||''} placeholder="auto (4/post)" onChange={e=>setForm(f=>({...f,selfTapQty:+e.target.value}))}/></Field>
+            <Field label="Angle Brackets"><input type="number" min="0" value={form.angleBracketQty||''} placeholder="0" onChange={e=>setForm(f=>({...f,angleBracketQty:+e.target.value}))}/></Field>
           </div>
         </div>
         {/* Live BOM Preview */}
@@ -32548,9 +32630,21 @@ Return ONLY the JSON object, no other text.`;
   // ── Parse text content (from Excel) with Claude ──────────────────────────
   const parseWithClaudeText = async (text, filename) => {
     if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
-    const prompt = `You are reading a railing order form for Maisy Railing (custom aluminum railing, Hayden ID). The content below was extracted from an Excel order file. Extract ALL order information and return it as a single JSON object. Use empty string or 0 if not found.
+    const prompt = `You are reading a railing order form for Maisy Railing (custom aluminum railing, Hayden ID). The content below was extracted from an Excel order file.
 
-Fields to extract:
+IMPORTANT MATERIAL RULES for Maisy Railing orders:
+- "Deck Top" and "Stair Top" are both the same top rail aluminum material (1x2 tube), just different lengths
+- Top rail pieces come in 8ft, 12ft, and 20ft lengths — capture each count separately
+- Swages are complete cable termination assemblies — capture total count as-is
+- Angle washers (also called "swage washers") — capture count if listed
+- Rail caps = handrail end caps — capture count
+- Lags = lag bolts — capture count
+- Post screws = post base plate screws — capture count
+- Self tap = self-tapping screws — capture count
+- Cable footage = total cable length in feet
+
+Extract ALL order information and return as a single JSON object. Use empty string or 0 if not found.
+
 {
   "customer": "customer/company name",
   "project": "project name or job name",
@@ -32564,28 +32658,42 @@ Fields to extract:
   "orderDate": "YYYY-MM-DD format",
   "dueDate": "YYYY-MM-DD format",
   "productType": "Cable Rail, Glass Rail, Stair Rail, or Specialty",
-  "mountType": "Fascia or Surface",
-  "railType": "Cable, Glass, or Frameless",
-  "height": "36 or 42",
-  "color": "powder coat color code or name",
+  "mountType": "Fascia or Surface (look for 'Fascia Cable', 'Surface Cable' etc)",
+  "railType": "Cable, Glass Framed, or Glass Frameless",
+  "height": "36 or 42 (post height in inches)",
+  "color": "powder coat color code or name (e.g. BK 303 Matte Black)",
   "lineQty": 0,
   "stairQty": 0,
   "cornerQty": 0,
-  "topRailQty": 0,
+  "rail8ft": 0,
+  "rail12ft": 0,
+  "rail20ft": 0,
+  "stairRail8ft": 0,
+  "stairRail12ft": 0,
+  "stairRail20ft": 0,
+  "railCapQty": 0,
+  "swageQty": 0,
+  "angleWasherQty": 0,
   "cableFootage": 0,
-  "runCount": 0,
-  "stairRunCount": 0,
+  "lagQty": 0,
+  "postScrewQty": 0,
+  "selfTapQty": 0,
+  "angleBracketQty": 0,
+  "glassPanelQty": 0,
+  "glassClampQty": 0,
+  "deckLength": "deck run lengths e.g. 11ft or 58ft",
+  "stairLength": "stair run length if applicable",
   "totalLinearFt": 0,
   "orderType": "New Order, Re-Work, Warranty, or Rush",
   "salesPerson": "sales rep name",
   "po": "PO number",
   "orderTotal": 0,
   "deposit": 0,
-  "notes": "any special instructions or notes"
+  "notes": "special instructions, color notes, large washers, no lags, etc"
 }
 
 Excel file content:
-${text.slice(0, 4000)}
+${text.slice(0, 5000)}
 
 Return ONLY the JSON object, no other text.`;
 
@@ -32617,37 +32725,58 @@ Return ONLY the JSON object, no other text.`;
     sourceFile,
     importedAt: now(),
     status: 'pending',
-    customer:       row.customer || row.Customer || row['Customer Name'] || '',
-    project:        row.project  || row.Project  || row['Job Name'] || row['Project Name'] || '',
-    contactName:    row.contactName || row['Contact'] || '',
-    phone:          row.phone || row.Phone || '',
-    email:          row.email || row.Email || '',
-    shipTo:         row.shipTo || row['Ship To'] || row.Address || '',
-    city:           row.city || row.City || '',
-    state:          row.state || row.State || 'ID',
-    zip:            row.zip || row.Zip || '',
-    orderDate:      row.orderDate || row['Order Date'] || now(),
-    dueDate:        row.dueDate || row['Due Date'] || row['Ship Date'] || '',
-    productType:    row.productType || row['Product Type'] || row.Product || 'Cable Rail',
-    mountType:      row.mountType || row['Mount Type'] || row['Mount'] || '',
-    railType:       row.railType || row['Rail Type'] || '',
-    height:         row.height || row.Height || '',
-    color:          row.color || row.Color || '',
-    lineQty:        Number(row.lineQty || row['Line Posts'] || row['Line Qty'] || 0),
-    stairQty:       Number(row.stairQty || row['Stair Posts'] || row['Stair Qty'] || 0),
-    cornerQty:      Number(row.cornerQty || row['Corner Posts'] || row['Corner Qty'] || 0),
-    topRailQty:     Number(row.topRailQty || row['Top Rail'] || 0),
-    cableFootage:   Number(row.cableFootage || row['Cable Footage'] || row['Cable Ft'] || 0),
-    runCount:       Number(row.runCount || row['Runs'] || row['Run Count'] || 0),
-    stairRunCount:  Number(row.stairRunCount || row['Stair Runs'] || 0),
-    totalLinearFt:  Number(row.totalLinearFt || row['Total Linear Ft'] || row['Total Linear'] || 0),
-    lengths:        String(row.lengths || row.Lengths || row['Cut Lengths'] || ''),
-    orderType:      row.orderType || row['Order Type'] || 'New Order',
-    salesPerson:    row.salesPerson || row.Rep || row['Sales Rep'] || row['Salesperson'] || '',
-    po:             row.po || row.PO || row['PO Number'] || row['Customer PO'] || '',
-    notes:          row.notes || row.Notes || row.Comments || '',
-    orderTotal:     Number(row.orderTotal || row.Total || row['Order Total'] || 0),
-    deposit:        Number(row.deposit || row.Deposit || 0),
+    customer:         row.customer || row.Customer || row['Customer Name'] || '',
+    project:          row.project  || row.Project  || row['Job Name'] || row['Project Name'] || '',
+    contactName:      row.contactName || row['Contact'] || '',
+    phone:            row.phone || row.Phone || '',
+    email:            row.email || row.Email || '',
+    shipTo:           row.shipTo || row['Ship To'] || row.Address || '',
+    city:             row.city || row.City || '',
+    state:            row.state || row.State || 'ID',
+    zip:              row.zip || row.Zip || '',
+    orderDate:        row.orderDate || row['Order Date'] || now(),
+    dueDate:          row.dueDate || row['Due Date'] || row['Ship Date'] || '',
+    productType:      row.productType || row['Product Type'] || row.Product || 'Cable Rail',
+    mountType:        row.mountType || row['Mount Type'] || row['Mount'] || '',
+    railType:         row.railType || row['Rail Type'] || '',
+    height:           String(row.height || row.Height || row['Post Height'] || '42'),
+    color:            row.color || row.Color || '',
+    deckLength:       row.deckLength || row['Deck Length'] || '',
+    stairLength:      row.stairLength || row['Stair Length'] || '',
+    // Post quantities
+    lineQty:          Number(row.lineQty || row['Line Posts'] || row['Line Post'] || 0),
+    stairQty:         Number(row.stairQty || row['Stair Posts'] || row['Stair Post'] || 0),
+    cornerQty:        Number(row.cornerQty || row['Corner Posts'] || row['Corner Post'] || 0),
+    // Top rail by length (Deck Top + Stair Top = same material RM-006)
+    rail8ft:          Number(row.rail8ft || row['8ft Deck Top'] || row['8 Deck Top'] || 0),
+    rail12ft:         Number(row.rail12ft || row['12ft Deck Top'] || row['12 Deck Top'] || row['12ft Stair Top'] || 0),
+    rail20ft:         Number(row.rail20ft || row['20ft Deck Top'] || row['20 Deck Top'] || 0),
+    stairRail8ft:     Number(row.stairRail8ft || row['8ft Stair Top'] || row['8 Stair Top'] || 0),
+    stairRail12ft:    Number(row.stairRail12ft || row['12 Stair Top'] || 0),
+    stairRail20ft:    Number(row.stairRail20ft || row['20ft Stair Top'] || 0),
+    // Hardware — captured directly from order
+    railCapQty:       Number(row.railCapQty || row['Rail Caps'] || row['Rail Cap'] || 0),
+    swageQty:         Number(row.swageQty || row['Swages'] || row['Swage'] || 0),
+    angleWasherQty:   Number(row.angleWasherQty || row['Angle Washers'] || row['Angle Washer'] || 0),
+    cableFootage:     Number(row.cableFootage || row['Cable'] || row['Cable Footage'] || row['Cable (ft)'] || 0),
+    lagQty:           Number(row.lagQty || row['Lags'] || row['Lag'] || 0),
+    postScrewQty:     Number(row.postScrewQty || row['Post Screws'] || row['Post Screw'] || 0),
+    selfTapQty:       Number(row.selfTapQty || row['Self Tap'] || row['Self-Tap'] || 0),
+    angleBracketQty:  Number(row.angleBracketQty || row['Angle Brackets'] || row['Angle Bracket'] || 0),
+    glassPanelQty:    Number(row.glassPanelQty || row['Deck Glass'] || row['Glass Panels'] || 0),
+    glassClampQty:    Number(row.glassClampQty || row['Glass Clamps'] || row['Glass Clamp'] || 0),
+    // Legacy/fallback fields
+    topRailQty:       Number(row.topRailQty || row['Top Rail'] || 0),
+    totalLinearFt:    Number(row.totalLinearFt || row['Total Linear Ft'] || row['Total Linear'] || 0),
+    runCount:         Number(row.runCount || row['Runs'] || row['Run Count'] || 0),
+    stairRunCount:    Number(row.stairRunCount || row['Stair Runs'] || 0),
+    lengths:          String(row.lengths || row.Lengths || row['Cut Lengths'] || ''),
+    orderType:        row.orderType || row['Order Type'] || 'New Order',
+    salesPerson:      row.salesPerson || row.Rep || row['Sales Rep'] || row['Salesperson'] || '',
+    po:               row.po || row.PO || row['PO Number'] || row['Customer PO'] || '',
+    notes:            row.notes || row.Notes || row.Comments || '',
+    orderTotal:       Number(row.orderTotal || row.Total || row['Order Total'] || 0),
+    deposit:          Number(row.deposit || row.Deposit || 0),
   });
 
   // ── Check OneDrive for new files ──────────────────────────────────────────
@@ -32748,19 +32877,22 @@ Return ONLY the JSON object, no other text.`;
 
   // ── Confirm draft → create real order ────────────────────────────────────
   const confirmDraft = () => {
+    const bom = calcBOM(draftForm);
     const newOrder = {
       ...draftForm,
       id: (()=>{const nums=(data.orders||[]).map(o=>parseInt((o.id||'').replace('ORD-',''))||0);const next=Math.max(1999,...nums)+1;return 'ORD-'+String(next);})(),
       status: 'New',
       balance: Number(draftForm.orderTotal||0) - Number(draftForm.deposit||0),
       source: 'OneDrive Import',
+      bom,          // store BOM with order for work order generation
+      bomGeneratedAt: now(),
     };
     setData(d => ({
       ...d,
       orders: [...(d.orders||[]), newOrder],
       orderDrafts: (d.orderDrafts||[]).filter(dr=>dr.id!==draftForm.id),
     }));
-    addLog(draftForm.sourceFile, 'Confirmed', 'Created order '+newOrder.id+' for '+newOrder.customer);
+    addLog(draftForm.sourceFile, 'Confirmed', 'Created order '+newOrder.id+' for '+newOrder.customer+' — BOM: '+bom.length+' items');
     setDraftModal(null);
   };
 
@@ -32976,19 +33108,34 @@ Return ONLY the JSON object, no other text.`;
 
                   {/* Row 3: Quantities */}
                   <div>
-                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Quantities</div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:6}}>
-                      <Field2 label="Line Posts" value={d.lineQty||0} warn={!d.lineQty&&!d.stairQty}/>
+                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Posts</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:8}}>
+                      <Field2 label="Line Posts" value={d.lineQty||0} warn={!d.lineQty&&!d.stairQty&&!d.cornerQty}/>
                       <Field2 label="Stair Posts" value={d.stairQty||0}/>
                       <Field2 label="Corner Posts" value={d.cornerQty||0}/>
-                      <Field2 label="Top Rail Qty" value={d.topRailQty||0}/>
-                      <Field2 label="Total Lin. Ft" value={d.totalLinearFt||0}/>
-                      <Field2 label="Run Count" value={d.runCount||0}/>
-                      <Field2 label="Stair Runs" value={d.stairRunCount||0}/>
-                      <Field2 label="Cable Footage" value={d.cableFootage||0}/>
+                    </div>
+                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Top Rail <span style={{color:'var(--muted)',fontWeight:400,textTransform:'none',letterSpacing:0}}>— Deck + Stair = same material</span></div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:6,marginBottom:8}}>
+                      <Field2 label="Deck 8ft"   value={d.rail8ft||0}/>
+                      <Field2 label="Deck 12ft"  value={d.rail12ft||0}/>
+                      <Field2 label="Deck 20ft"  value={d.rail20ft||0}/>
+                      <Field2 label="Stair 8ft"  value={d.stairRail8ft||0}/>
+                      <Field2 label="Stair 12ft" value={d.stairRail12ft||0}/>
+                      <Field2 label="Stair 20ft" value={d.stairRail20ft||0}/>
+                    </div>
+                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Hardware</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:6}}>
+                      <Field2 label="Swages"         value={d.swageQty||0} warn={!d.swageQty&&(d.lineQty||d.stairQty)>0}/>
+                      <Field2 label="Cable (ft)"     value={d.cableFootage||0} warn={!d.cableFootage&&(d.lineQty||d.stairQty)>0}/>
+                      <Field2 label="Rail Caps"      value={d.railCapQty||0}/>
+                      <Field2 label="Angle Washers"  value={d.angleWasherQty||0}/>
+                      <Field2 label="Lags"           value={d.lagQty||0}/>
+                      <Field2 label="Post Screws"    value={d.postScrewQty||0}/>
+                      <Field2 label="Self Tap"       value={d.selfTapQty||0}/>
+                      <Field2 label="Angle Brackets" value={d.angleBracketQty||0}/>
                     </div>
                     {d.lengths&&<div style={{marginTop:6,background:'var(--s2)',borderRadius:5,padding:'5px 9px'}}>
-                      <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700}}>Lengths</div>
+                      <div style={{fontSize:9,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700}}>Lengths / Notes</div>
                       <div style={{fontSize:12,fontWeight:600,marginTop:1}}>{d.lengths}</div>
                     </div>}
                   </div>
@@ -33171,16 +33318,33 @@ Return ONLY the JSON object, no other text.`;
         </div>
 
         {/* Quantities */}
-        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Quantities</div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:8}}>
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Posts</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}}>
           <Field label="Line Posts"><input type="number" min="0" value={draftForm.lineQty||''} onChange={e=>setDraftForm(f=>({...f,lineQty:+e.target.value}))}/></Field>
           <Field label="Stair Posts"><input type="number" min="0" value={draftForm.stairQty||''} onChange={e=>setDraftForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
           <Field label="Corner Posts"><input type="number" min="0" value={draftForm.cornerQty||''} onChange={e=>setDraftForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
-          <Field label="Top Rail Qty"><input type="number" min="0" value={draftForm.topRailQty||''} onChange={e=>setDraftForm(f=>({...f,topRailQty:+e.target.value}))}/></Field>
-          <Field label="Total Linear Ft"><input type="number" min="0" step="0.5" value={draftForm.totalLinearFt||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,totalLinearFt:+e.target.value}))}/></Field>
-          <Field label="Run Count"><input type="number" min="0" value={draftForm.runCount||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,runCount:+e.target.value}))}/></Field>
-          <Field label="Stair Run Count"><input type="number" min="0" value={draftForm.stairRunCount||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,stairRunCount:+e.target.value}))}/></Field>
-          <Field label="Cable Footage"><input type="number" min="0" value={draftForm.cableFootage||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
+        </div>
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Top Rail <span style={{color:'var(--muted)',fontWeight:400}}>— Deck + Stair = same material</span></div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:6}}>
+          <Field label="Deck 8ft"><input type="number" min="0" value={draftForm.rail8ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,rail8ft:+e.target.value}))}/></Field>
+          <Field label="Deck 12ft"><input type="number" min="0" value={draftForm.rail12ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,rail12ft:+e.target.value}))}/></Field>
+          <Field label="Deck 20ft"><input type="number" min="0" value={draftForm.rail20ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,rail20ft:+e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}}>
+          <Field label="Stair 8ft"><input type="number" min="0" value={draftForm.stairRail8ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,stairRail8ft:+e.target.value}))}/></Field>
+          <Field label="Stair 12ft"><input type="number" min="0" value={draftForm.stairRail12ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,stairRail12ft:+e.target.value}))}/></Field>
+          <Field label="Stair 20ft"><input type="number" min="0" value={draftForm.stairRail20ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,stairRail20ft:+e.target.value}))}/></Field>
+        </div>
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Hardware <span style={{color:'var(--muted)',fontWeight:400}}>— from order sheet</span></div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:8}}>
+          <Field label="Swages"><input type="number" min="0" value={draftForm.swageQty||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,swageQty:+e.target.value}))}/></Field>
+          <Field label="Cable (ft)"><input type="number" min="0" value={draftForm.cableFootage||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
+          <Field label="Rail Caps"><input type="number" min="0" value={draftForm.railCapQty||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,railCapQty:+e.target.value}))}/></Field>
+          <Field label="Angle Washers"><input type="number" min="0" value={draftForm.angleWasherQty||''} placeholder="= swages if stairs" onChange={e=>setDraftForm(f=>({...f,angleWasherQty:+e.target.value}))}/></Field>
+          <Field label="Lags"><input type="number" min="0" value={draftForm.lagQty||''} placeholder="auto" onChange={e=>setDraftForm(f=>({...f,lagQty:+e.target.value}))}/></Field>
+          <Field label="Post Screws"><input type="number" min="0" value={draftForm.postScrewQty||''} placeholder="auto" onChange={e=>setDraftForm(f=>({...f,postScrewQty:+e.target.value}))}/></Field>
+          <Field label="Self Tap"><input type="number" min="0" value={draftForm.selfTapQty||''} placeholder="auto" onChange={e=>setDraftForm(f=>({...f,selfTapQty:+e.target.value}))}/></Field>
+          <Field label="Angle Brackets"><input type="number" min="0" value={draftForm.angleBracketQty||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,angleBracketQty:+e.target.value}))}/></Field>
         </div>
         <Field label="Lengths (e.g. 12x10ft, 6x8ft)"><input value={draftForm.lengths||''} onChange={e=>setDraftForm(f=>({...f,lengths:e.target.value}))}/></Field>
 
@@ -33420,6 +33584,287 @@ const LegacyOrders = ({data,setData}) => {
   );
 };
 
+const WorkOrders = ({data, setData}) => {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [woTab, setWoTab] = useState('list');
+  const [selected, setSelected] = useState(null);
+
+  const orders = (data.orders||[]).filter(o => {
+    if(statusFilter !== 'All' && o.status !== statusFilter) return false;
+    if(search) {
+      const q = search.toLowerCase();
+      return (o.id||'').toLowerCase().includes(q) ||
+             (o.customer||'').toLowerCase().includes(q) ||
+             (o.project||'').toLowerCase().includes(q);
+    }
+    return true;
+  }).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+  const openStatuses = ['Confirmed','In Production','Ready to Ship'];
+
+  const printWO = (order) => {
+    const bom = order.bom && order.bom.length > 0 ? order.bom : calcBOM(order);
+    const totalPosts = (order.lineQty||0)+(order.stairQty||0)+(order.cornerQty||0);
+
+    const bomRows = bom.filter(i=>i.inventoryId!=='PC-FLAG').map(item => {
+      const inv = (data.inventory||[]).find(i=>i.id===item.inventoryId);
+      const onHand = inv?.qty||0;
+      const ok = onHand >= item.qty;
+      return `
+        <tr style="border-bottom:1px solid #e5e7eb">
+          <td style="padding:7px 10px;font-size:11px;font-weight:600">${item.name}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:12px;font-weight:700">${item.qty}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">${item.unit}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">${item.note||'—'}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;font-weight:700;color:${ok?'#065f46':'#991b1b'}">${onHand}</td>
+          <td style="padding:7px 10px;text-align:center">
+            <div style="width:16px;height:16px;border:2px solid #d1d5db;border-radius:3px;display:inline-block"></div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    const powderCoat = bom.find(i=>i.inventoryId==='PC-FLAG');
+    const railPieces = [
+      (order.rail8ft||0)>0   ? `${order.rail8ft}× 8ft`   : '',
+      (order.rail12ft||0)>0  ? `${order.rail12ft}× 12ft`  : '',
+      (order.rail20ft||0)>0  ? `${order.rail20ft}× 20ft`  : '',
+      (order.stairRail8ft||0)>0  ? `${order.stairRail8ft}× Stair 8ft`  : '',
+      (order.stairRail12ft||0)>0 ? `${order.stairRail12ft}× Stair 12ft` : '',
+      (order.stairRail20ft||0)>0 ? `${order.stairRail20ft}× Stair 20ft` : '',
+    ].filter(Boolean).join(', ');
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Work Order — ${order.id}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Arial',sans-serif;font-size:12px;color:#1a1a2e;background:#fff;padding:24px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a1a2e;padding-bottom:14px;margin-bottom:18px}
+  .logo{font-size:22px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+  .wo-id{font-size:28px;font-weight:900;color:#1a1a2e;letter-spacing:.02em}
+  .section{margin-bottom:16px}
+  .section-title{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .field{background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:7px 10px}
+  .field-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px}
+  .field-val{font-size:13px;font-weight:700;color:#1a1a2e}
+  .field-val.big{font-size:16px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:#1a1a2e;color:#fff;padding:7px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  th.center{text-align:center}
+  tr:nth-child(even){background:#f9fafb}
+  .badge{display:inline-block;padding:3px 10px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .badge-prod{background:#fef3c7;color:#92400e}
+  .badge-conf{background:#dbeafe;color:#1e40af}
+  .checklist-row{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid #e5e7eb}
+  .checklist-box{width:18px;height:18px;border:2px solid #d1d5db;border-radius:3px;flex-shrink:0}
+  .station-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+  .station{border:1px solid #e5e7eb;border-radius:5px;padding:10px 8px;text-align:center}
+  .station-name{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;margin-bottom:6px}
+  .station-check{width:28px;height:28px;border:2px solid #d1d5db;border-radius:4px;margin:0 auto 4px}
+  .station-init{font-size:9px;color:#9ca3af;margin-top:2px}
+  .footer{border-top:2px solid #1a1a2e;margin-top:20px;padding-top:10px;display:flex;justify-content:space-between;font-size:10px;color:#6b7280}
+  @media print{body{padding:12px}.no-print{display:none}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">🏗 Maisy Railing</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:2px">Hayden, Idaho · Custom Aluminum Railing</div>
+    <div style="margin-top:8px"><span class="badge badge-${order.status==='In Production'?'prod':'conf'}">${order.status}</span></div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.1em;text-transform:uppercase">Work Order</div>
+    <div class="wo-id">${order.id}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:4px">Generated: ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+    ${order.dueDate ? `<div style="font-size:11px;font-weight:700;color:#dc2626;margin-top:2px">Due: ${order.dueDate}</div>` : ''}
+  </div>
+</div>
+
+<!-- Customer & Order Info -->
+<div class="section">
+  <div class="section-title">Order Information</div>
+  <div class="grid3">
+    <div class="field"><div class="field-label">Customer</div><div class="field-val big">${order.customer||'—'}</div></div>
+    <div class="field"><div class="field-label">Project</div><div class="field-val">${order.project||'—'}</div></div>
+    <div class="field"><div class="field-label">PO #</div><div class="field-val">${order.po||'—'}</div></div>
+    <div class="field"><div class="field-label">Product Type</div><div class="field-val">${order.productType||'—'}</div></div>
+    <div class="field"><div class="field-label">Mount / Rail</div><div class="field-val">${[order.mountType,order.railType].filter(Boolean).join(' — ')||'—'}</div></div>
+    <div class="field"><div class="field-label">Post Height</div><div class="field-val">${order.height||'—'}"</div></div>
+  </div>
+</div>
+
+<!-- Powder Coat -->
+<div class="section">
+  <div class="section-title">Powder Coat Color</div>
+  <div style="background:#1a1a2e;color:#fff;padding:12px 16px;border-radius:6px;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:3px">Color Code / Name</div>
+      <div style="font-size:20px;font-weight:900;letter-spacing:.04em">${order.color||'NOT SPECIFIED'}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:9px;opacity:.7;margin-bottom:3px">Total Posts to Coat</div>
+      <div style="font-size:28px;font-weight:900">${totalPosts}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Post Quantities -->
+<div class="section">
+  <div class="section-title">Post Quantities</div>
+  <div class="grid3">
+    <div class="field"><div class="field-label">Line Posts</div><div class="field-val big">${order.lineQty||0}</div></div>
+    <div class="field"><div class="field-label">Stair Posts</div><div class="field-val big">${order.stairQty||0}</div></div>
+    <div class="field"><div class="field-label">Corner Posts</div><div class="field-val big">${order.cornerQty||0}</div></div>
+  </div>
+  ${railPieces ? `<div style="margin-top:8px" class="field"><div class="field-label">Top Rail Pieces</div><div class="field-val">${railPieces}</div></div>` : ''}
+  ${order.lengths ? `<div style="margin-top:6px" class="field"><div class="field-label">Cut Lengths / Notes</div><div class="field-val">${order.lengths}</div></div>` : ''}
+</div>
+
+<!-- BOM Pick List -->
+<div class="section">
+  <div class="section-title">Materials Pick List — Pull from Inventory</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Item / Material</th>
+        <th class="center">Qty Needed</th>
+        <th class="center">Unit</th>
+        <th>Notes / Derivation</th>
+        <th class="center">On Hand</th>
+        <th class="center">✓ Pulled</th>
+      </tr>
+    </thead>
+    <tbody>${bomRows}</tbody>
+  </table>
+</div>
+
+<!-- Production Checklist -->
+<div class="section">
+  <div class="section-title">Production Station Sign-Off</div>
+  <div class="station-grid">
+    ${['CNC Cut','CNC Drill','Welding','Powder Coat','Assembly','QC Inspect','Packaging','Ship Ready'].map(s=>`
+      <div class="station">
+        <div class="station-name">${s}</div>
+        <div class="station-check"></div>
+        <div class="station-init">Initial: _______</div>
+        <div style="font-size:8px;color:#9ca3af;margin-top:2px">Date: ________</div>
+      </div>`).join('')}
+  </div>
+</div>
+
+<!-- Notes -->
+${order.notes ? `<div class="section">
+  <div class="section-title">Notes / Special Instructions</div>
+  <div style="border:1px solid #e5e7eb;border-radius:5px;padding:10px 12px;font-size:12px;background:#fffbeb;">${order.notes}</div>
+</div>` : ''}
+
+<!-- Footer -->
+<div class="footer">
+  <div>Maisy Railing · Hayden, Idaho · Director of Operations: Daniel Jones · (208) 603-8149</div>
+  <div>Order ${order.id} · ${order.customer} · Printed ${new Date().toLocaleDateString()}</div>
+</div>
+
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'width=900,height=700');
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => win.print(), 800);
+  };
+
+  return (
+    <div className="fade-up">
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Work Orders</div>
+          <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
+            <span className="chip">{(data.orders||[]).filter(o=>o.status==='In Production').length} in production</span>
+            <span className="chip">{(data.orders||[]).filter(o=>o.status==='Confirmed').length} confirmed</span>
+            <span className="chip">{(data.orders||[]).filter(o=>o.status==='Ready to Ship').length} ready to ship</span>
+          </div>
+        </div>
+      </div>
+
+      <StatRow>
+        <StatCard label="In Production"   value={(data.orders||[]).filter(o=>o.status==='In Production').length}   icon="⚙️" color="#f59e0b" sub="Active builds"/>
+        <StatCard label="Confirmed"        value={(data.orders||[]).filter(o=>o.status==='Confirmed').length}        icon="✅" color="var(--acc)" sub="Ready to start"/>
+        <StatCard label="Ready to Ship"    value={(data.orders||[]).filter(o=>o.status==='Ready to Ship').length}    icon="📦" color="var(--ok)" sub="Awaiting shipment"/>
+        <StatCard label="With Stored BOM"  value={(data.orders||[]).filter(o=>o.bom&&o.bom.length>0).length}        icon="📋" color="var(--acc2)" sub="Work order ready"/>
+      </StatRow>
+
+      {/* Filters */}
+      <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+        <input className="search" placeholder="Search order #, customer, project…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:220}}/>
+        {['All','Confirmed','In Production','Ready to Ship','New','Quoted'].map(s=>(
+          <button key={s} className={'tab'+(statusFilter===s?' on':'')} onClick={()=>setStatusFilter(s)} style={{fontSize:10,padding:'3px 8px'}}>{s}</button>
+        ))}
+      </div>
+
+      {/* Order list */}
+      <div className="card" style={{padding:0,overflow:'auto'}}>
+        <table style={{minWidth:800}}>
+          <thead>
+            <tr>
+              <th>Order #</th><th>Customer</th><th>Project</th>
+              <th>Product</th><th>Mount</th><th>Color</th>
+              <th style={{textAlign:'center'}}>Posts</th>
+              <th>Status</th><th>Due</th>
+              <th style={{textAlign:'center'}}>BOM</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.length===0&&<tr><td colSpan={11}><Empty msg="No orders match filters"/></td></tr>}
+            {orders.map(o=>{
+              const totalPosts=(o.lineQty||0)+(o.stairQty||0)+(o.cornerQty||0);
+              const hasBOM = o.bom && o.bom.length > 0;
+              const isOverdue = o.dueDate && o.dueDate < now() && !['Completed','Shipped','Invoiced','Cancelled'].includes(o.status);
+              return (
+                <tr key={o.id} style={{background:selected?.id===o.id?'rgba(0,229,255,.06)':undefined}}>
+                  <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.id}</td>
+                  <td style={{fontWeight:600}}>{o.customer}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{o.project||'—'}</td>
+                  <td style={{fontSize:11}}>{o.productType||'—'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{o.mountType||'—'}</td>
+                  <td style={{fontSize:10,color:'var(--muted)'}}>{o.color||'—'}</td>
+                  <td style={{textAlign:'center',fontWeight:700,fontFamily:'monospace'}}>{totalPosts||'—'}</td>
+                  <td><span style={{background:{'New':'var(--acc)','Confirmed':'var(--warn)','In Production':'#f59e0b','Ready to Ship':'var(--ok)','Completed':'var(--muted)'}[o.status]||'var(--s3)',color:o.status==='New'?'#000':'#fff',borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.05em',textTransform:'uppercase',whiteSpace:'nowrap'}}>{o.status}</span></td>
+                  <td style={{fontSize:11,color:isOverdue?'var(--err)':'var(--muted)',fontWeight:isOverdue?700:400,whiteSpace:'nowrap'}}>{o.dueDate||'—'}</td>
+                  <td style={{textAlign:'center'}}>
+                    {hasBOM
+                      ? <span style={{color:'var(--ok)',fontWeight:700,fontSize:12}}>✓</span>
+                      : <span style={{color:'var(--dim)',fontSize:11}}>—</span>}
+                  </td>
+                  <td>
+                    <button className="btn btn-p btn-sm" onClick={()=>printWO(o)}>
+                      🖨 Print Work Order
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{marginTop:14,padding:'10px 14px',background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,fontSize:11,color:'var(--muted)'}}>
+        💡 <strong style={{color:'var(--acc)'}}>Work orders generate automatically</strong> from the BOM stored on each order. 
+        Orders confirmed from Order Import will have a complete BOM. 
+        Manually entered orders need quantities filled in to generate an accurate BOM. 
+        The printed work order includes the full pick list, station sign-off checkboxes, and powder coat callout.
+      </div>
+    </div>
+  );
+};
+
 const PrintCenter = ({data}) => {
   const docs = [
     {cat:'Shop Floor',items:[
@@ -33531,7 +33976,7 @@ const PAGES = {
   invoicing:Invoicing, purchasing:Purchasing, finance:Finance,
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
-  shopref:ShopRef, orders:Orders, orderimport:OrderImport, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
+  shopref:ShopRef, orders:Orders, workorders:WorkOrders, orderimport:OrderImport, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
   queueanalyzer:QueueAnalyzer, hotqueue:HotRushQueue, workbookgen:WorkbookGenerator, orderanalyzer:OrderAnalyzer,
 };
 const TITLES = {
@@ -33540,7 +33985,7 @@ const TITLES = {
   invoicing:'Invoicing & A/R', purchasing:'Purchasing', finance:'Finance & P&L',
   jobcost:'Job Costing', customers:'Customers', autopo:'Auto Reorder',
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
-  shopref:'Shop Reference', orders:'Orders', orderimport:'Order Import', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
+  shopref:'Shop Reference', orders:'Orders', workorders:'Work Orders', orderimport:'Order Import', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
   queueanalyzer:'Queue Analyzer', hotqueue:'Hot / Rush Queue', workbookgen:'Workbook Generator', orderanalyzer:'Order Analyzer',
 };
 
