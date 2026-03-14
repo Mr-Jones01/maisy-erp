@@ -28,7 +28,7 @@ const G = () => (
     }
     html,body,#root{height:100%;overflow:hidden;background:var(--bg)}
     .app{display:flex;height:100vh;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);overflow:hidden}
-    ::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+    ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--s2);border-radius:4px}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:4px;border:2px solid var(--s2)}::-webkit-scrollbar-thumb:hover{background:var(--muted)}::-webkit-scrollbar-corner{background:var(--s2)}
     .hd{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.03em}
     .mono{font-family:'JetBrains Mono',monospace}
     table{width:100%;border-collapse:collapse}
@@ -30816,7 +30816,7 @@ const Orders = ({data, setData}) => {
                 <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'—'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'—'}</td>
                 <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'—'}</td>
-                <td><span style={{background:statusColors[o.status]||'var(--muted)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.status}</span></td>
+                <td><select value={o.status} onChange={e=>{const newStatus=e.target.value;const wasInProd=o.status==='In Production';const nowInProd=newStatus==='In Production';setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,status:newStatus}:x)}));if(nowInProd&&!wasInProd&&!o.invDeducted){const bom=calcBOM(o);if(bom.length>0){setData(d=>({...d,inventory:d.inventory.map(inv=>{const b=bom.find(b=>b.inventoryId===inv.id);return b?{...inv,qty:(inv.qty||0)-b.qty}:inv;}),adjustmentLog:[{id:'ADJ-'+uid(),inventoryId:'',itemName:'BOM deduction',type:'remove',qty:0,reason:'Order '+o.id+' moved to In Production',date:now(),user:'System'},...(d.adjustmentLog||[])],orders:(d.orders||[]).map(x=>x.id===o.id?{...x,invDeducted:true}:x)}));}}}} style={{background:statusColors[o.status]||'var(--s2)',color:statusColors[o.status]?'#fff':'var(--txt)',border:'none',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none',fontFamily:'Barlow Condensed',letterSpacing:'.05em',textTransform:'uppercase'}}>{statuses.map(s=><option key={s} value={s}>{s}</option>)}</select></td>
                 <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'—'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap',color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||''}</td>
