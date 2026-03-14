@@ -30652,7 +30652,7 @@ const Orders = ({data, setData}) => {
   const statusCounts={};statuses.forEach(s=>{statusCounts[s]=orders.filter(o=>o.status===s).length;});
   const typeCounts={};orderTypes.forEach(t=>{typeCounts[t]=orders.filter(o=>o.orderType===t).length;});
 
-  const newOrder=()=>setForm({id:'ORD-'+String(orders.length+1).padStart(4,'0'),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',mountType:'',railType:'Cable',height:'42',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,cableFootage:0,runCount:0,stairRunCount:0,totalLinearFt:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:'',invDeducted:false});
+  const newOrder=()=>setForm({id:(()=>{const nums=(data.orders||[]).map(o=>parseInt((o.id||'').replace('ORD-',''))||0);const next=Math.max(1999,...nums)+1;return 'ORD-'+String(next);})(),date:now(),dueDate:'',customer:'',po:'',shipTo:'',project:'',productType:'Cable Rail',mountType:'',railType:'Cable',height:'42',orderType:'New Order',description:'',lineQty:0,stairQty:0,cornerQty:0,topRailQty:0,cableFootage:0,runCount:0,stairRunCount:0,totalLinearFt:0,lengths:'',color:'Matte Black',status:'New',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',priority:3,notes:'',invDeducted:false});
 
   const save=()=>{
     const rec={...form,
@@ -32345,6 +32345,7 @@ const OrderImport = ({data, setData}) => {
   const [parsing, setParsing] = useState(null);
   const [draftModal, setDraftModal] = useState(null);
   const [aiApiKey, setAiApiKey] = useState(() => { try { return sessionStorage.getItem('maisy_ai_key')||''; } catch(e){ return ''; } });
+  const [forceModal, setForceModal] = useState(false);
   const [draftForm, setDraftForm] = useState({});
   const [fileInput, setFileInput] = useState(null);
 
@@ -32680,6 +32681,32 @@ Return ONLY the JSON object, no other text.`;
     setChecking(false);
   };
 
+  // ── Force re-scan ALL files ignoring import history ─────────────────────
+  const forceRescan = async () => {
+    if(!od.accessToken) return;
+    setChecking(true);
+    try {
+      const files = await fetchOneDriveFiles();
+      // Map ALL files — ignore import log and existing queue
+      setData(d => ({
+        ...d,
+        importQueue: files.map(f => ({
+          id: f.id, name: f.name, size: f.size,
+          modified: f.lastModifiedDateTime,
+          folder: f.folderPath || '',
+          status: 'pending'
+        })),
+        importLog: [{id:'IMP-'+uid(), ts:now(), file:'Force Re-scan', fileId:null, status:'Info',
+          detail: files.length + ' files loaded — all import history bypassed. Duplicate orders will NOT be auto-detected on confirm.'
+        }, ...(d.importLog||[]).slice(0,99)],
+        oneDriveSettings:{...(d.oneDriveSettings||{}), lastCheck:now()}
+      }));
+    } catch(e) {
+      addLog('Force Re-scan', 'Error', e.message);
+    }
+    setChecking(false);
+  };
+
   // ── Process a single file from the queue ─────────────────────────────────
   const processFile = async (qItem) => {
     setParsing(qItem.id);
@@ -32723,7 +32750,7 @@ Return ONLY the JSON object, no other text.`;
   const confirmDraft = () => {
     const newOrder = {
       ...draftForm,
-      id: 'ORD-'+String((data.orders||[]).length+1).padStart(4,'0'),
+      id: (()=>{const nums=(data.orders||[]).map(o=>parseInt((o.id||'').replace('ORD-',''))||0);const next=Math.max(1999,...nums)+1;return 'ORD-'+String(next);})(),
       status: 'New',
       balance: Number(draftForm.orderTotal||0) - Number(draftForm.deposit||0),
       source: 'OneDrive Import',
@@ -32798,7 +32825,9 @@ Return ONLY the JSON object, no other text.`;
             📂 Upload File
             <input type="file" accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg" multiple style={{display:'none'}} onChange={handleManualUpload}/>
           </label>
-          {od.accessToken && <button className="btn btn-p" onClick={checkOneDrive} disabled={checking}>{checking?'Scanning folders...':'⟳ Scan All Folders'}</button>}
+          {queue.length>0&&<button className="btn" style={{border:'1px solid var(--bdr)',color:'var(--muted)',fontSize:11}} onClick={()=>{if(window.confirm('Clear all '+queue.length+' files from the import queue? This does not delete anything from OneDrive or Orders.'))setData(d=>({...d,importQueue:[]}))}}>✕ Clear Queue ({queue.length})</button>}
+          {od.accessToken && <button className="btn btn-p" onClick={checkOneDrive} disabled={checking}>{checking?'Scanning...':'⟳ Scan New Files'}</button>}
+          {od.accessToken && <button className="btn" style={{border:'1px solid var(--warn)',color:'var(--warn)',fontSize:11}} onClick={()=>setForceModal(true)} disabled={checking}>⚠ Force Re-Import All</button>}
         </div>
       </div>
 
@@ -32848,8 +32877,12 @@ Return ONLY the JSON object, no other text.`;
             </tbody>
           </table>
         </div>}
-        {queue.filter(q=>q.status==='pending').length>1&&<div style={{marginTop:10,display:'flex',justifyContent:'flex-end'}}>
-          <button className="btn btn-p" onClick={()=>queue.filter(q=>q.status==='pending').forEach(q=>processFile(q))} disabled={!!parsing}>Parse All Pending</button>
+        {queue.length>0&&<div style={{marginTop:10,display:'flex',gap:8,justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{display:'flex',gap:8}}>
+            {queue.filter(q=>q.status==='error').length>0&&<button className="btn btn-warn btn-sm" onClick={()=>setData(d=>({...d,importQueue:(d.importQueue||[]).map(q=>q.status==='error'?{...q,status:'pending',error:null}:q)}))}>↻ Retry All Errors ({queue.filter(q=>q.status==='error').length})</button>}
+            <button className="btn btn-sm" style={{border:'1px solid var(--bdr)',color:'var(--muted)'}} onClick={()=>{if(window.confirm('Remove all '+queue.length+' files from queue?'))setData(d=>({...d,importQueue:[]}))}}>✕ Clear All ({queue.length})</button>
+          </div>
+          {queue.filter(q=>q.status==='pending').length>1&&<button className="btn btn-p btn-sm" onClick={()=>queue.filter(q=>q.status==='pending').forEach(q=>processFile(q))} disabled={!!parsing}>▶ Parse All Pending ({queue.filter(q=>q.status==='pending').length})</button>}
         </div>}
       </>}
 
@@ -33181,6 +33214,32 @@ Return ONLY the JSON object, no other text.`;
           <button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{discardDraft(draftForm.id);setDraftModal(null);}}>Discard Draft</button>
         </div>
       </Modal>}
+
+      {/* ── Force Re-Import Warning Modal ─────────────────────────────────── */}
+      {forceModal&&(
+        <div className="overlay" onClick={e=>{if(e.target.className==='overlay')setForceModal(false);}}>
+          <div className="modal" style={{maxWidth:480}}>
+            <div style={{textAlign:'center',padding:'10px 0 6px'}}>
+              <div style={{fontSize:42,marginBottom:8}}>⚠️</div>
+              <div className="hd" style={{fontSize:18,color:'var(--warn)'}}>Force Re-Import All Files</div>
+            </div>
+            <div style={{background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.25)',borderRadius:6,padding:'12px 14px',margin:'16px 0',fontSize:12,lineHeight:1.7}}>
+              <strong style={{color:'var(--err)'}}>This will replace your entire import queue</strong> with ALL files from OneDrive — including files you already imported, files you discarded, and files from previous months.<br/><br/>
+              It does <strong>NOT</strong> create duplicate orders automatically — you still review and confirm each draft individually.<br/><br/>
+              Use this when you need to re-import a file you discarded or when the queue got out of sync.
+            </div>
+            <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:6,padding:'10px 14px',marginBottom:16,fontSize:11,color:'var(--warn)'}}>
+              💡 <strong>Repeat customers are fine</strong> — the ERP tracks orders by Order ID, not by customer name. Same customer, different month = different order number = no conflict.
+            </div>
+            <div style={{display:'flex',gap:10}}>
+              <button className="btn btn-g" style={{flex:1}} onClick={()=>setForceModal(false)}>Cancel</button>
+              <button className="btn" style={{flex:1,background:'rgba(239,68,68,.15)',border:'1px solid rgba(239,68,68,.4)',color:'var(--err)',fontWeight:700}} onClick={()=>{setForceModal(false);forceRescan();}}>
+                ⚠ Yes, Re-Import All Files
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
