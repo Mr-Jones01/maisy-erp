@@ -32872,9 +32872,14 @@ export default function MaisyERP() {
   const [saved, setSaved] = useState(false);
 
   useEffect(()=>{(async()=>{try{
-    const r=await window.storage.get('maisy_erp_v4');
-    if(r?.value){
-      const stored=normalizeData(JSON.parse(r.value));
+    // Use localStorage (works on Vercel) with window.storage fallback (Claude artifacts)
+    let savedValue = null;
+    try { savedValue = localStorage.getItem('maisy_erp_v4'); } catch(e) {}
+    if(!savedValue && window.storage) {
+      try { const r = await window.storage.get('maisy_erp_v4'); savedValue = r?.value || null; } catch(e) {}
+    }
+    if(savedValue){
+      const stored=normalizeData(JSON.parse(savedValue));
       // Merge: for any INIT key with data that stored has empty, use INIT value
       Object.keys(INIT).forEach(k=>{
         if(Array.isArray(INIT[k])&&INIT[k].length>0){
@@ -32886,7 +32891,11 @@ export default function MaisyERP() {
       setData(stored);
     }
   }catch(e){}})();},[]);
-  useEffect(()=>{if(!data)return;const t=setTimeout(async()=>{try{await window.storage.set('maisy_erp_v4',JSON.stringify(data));setSaved(true);setTimeout(()=>setSaved(false),1600);}catch(e){}},900);return()=>clearTimeout(t);},[data]);
+  useEffect(()=>{if(!data)return;const t=setTimeout(async()=>{try{
+    const serialized = JSON.stringify(data);
+    try { localStorage.setItem('maisy_erp_v4', serialized); } catch(e) {}
+    if(window.storage) { try { await window.storage.set('maisy_erp_v4', serialized); } catch(e) {} }
+    setSaved(true);setTimeout(()=>setSaved(false),1600);}catch(e){}},900);return()=>clearTimeout(t);},[data]);
 
   const [backupModal, setBackupModal] = useState(false);
   const importRef = useRef();
