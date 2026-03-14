@@ -30716,7 +30716,7 @@ const Orders = ({data, setData}) => {
     setEmailModal(null);
   };
   const sortBy=f=>{if(sortField===f)setSortDir(d=>d==='asc'?'desc':'asc');else{setSortField(f);setSortDir('asc');}};
-  const SortTh=({f,label})=><th onClick={()=>sortBy(f)} style={{cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>{label}{sortField===f?(sortDir==='asc'?' ▲':' ▼'):''}</th>;
+  const SortTh=({f,label,style:sx})=><th onClick={()=>sortBy(f)} style={{cursor:'pointer',userSelect:'none',whiteSpace:'nowrap',...(sx||{})}}>{label}{sortField===f?(sortDir==='asc'?' ▲':' ▼'):''}</th>;
 
   return (
     <div className="fade-up">
@@ -30782,7 +30782,7 @@ const Orders = ({data, setData}) => {
             <th title="Top Rail Qty">Top Rail</th>
             <th>Lengths</th>
             <th>Color</th>
-            <SortTh f="status"     label="Status"/>
+            <SortTh f="status"     label="Status" style={{minWidth:140}}/>
             <SortTh f="orderTotal" label="Total"/>
             <SortTh f="balance"    label="Balance"/>
             <th>Notes</th>
@@ -30816,7 +30816,7 @@ const Orders = ({data, setData}) => {
                 <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'—'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'—'}</td>
                 <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'—'}</td>
-                <td><select value={o.status} onChange={e=>{const newStatus=e.target.value;const wasInProd=o.status==='In Production';const nowInProd=newStatus==='In Production';setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,status:newStatus}:x)}));if(nowInProd&&!wasInProd&&!o.invDeducted){const bom=calcBOM(o);if(bom.length>0){setData(d=>({...d,inventory:d.inventory.map(inv=>{const b=bom.find(b=>b.inventoryId===inv.id);return b?{...inv,qty:(inv.qty||0)-b.qty}:inv;}),adjustmentLog:[{id:'ADJ-'+uid(),inventoryId:'',itemName:'BOM deduction',type:'remove',qty:0,reason:'Order '+o.id+' moved to In Production',date:now(),user:'System'},...(d.adjustmentLog||[])],orders:(d.orders||[]).map(x=>x.id===o.id?{...x,invDeducted:true}:x)}));}}}} style={{background:statusColors[o.status]||'var(--s2)',color:statusColors[o.status]?'#fff':'var(--txt)',border:'none',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none',fontFamily:'Barlow Condensed',letterSpacing:'.05em',textTransform:'uppercase'}}>{statuses.map(s=><option key={s} value={s}>{s}</option>)}</select></td>
+                <td><select value={o.status} onChange={e=>{const newStatus=e.target.value;const wasInProd=o.status==='In Production';const nowInProd=newStatus==='In Production';setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,status:newStatus}:x)}));if(nowInProd&&!wasInProd&&!o.invDeducted){const bom=calcBOM(o);if(bom.length>0){setData(d=>({...d,inventory:d.inventory.map(inv=>{const b=bom.find(b=>b.inventoryId===inv.id);return b?{...inv,qty:(inv.qty||0)-b.qty}:inv;}),adjustmentLog:[{id:'ADJ-'+uid(),inventoryId:'',itemName:'BOM deduction',type:'remove',qty:0,reason:'Order '+o.id+' moved to In Production',date:now(),user:'System'},...(d.adjustmentLog||[])],orders:(d.orders||[]).map(x=>x.id===o.id?{...x,invDeducted:true}:x)}));}}}} style={{background:statusColors[o.status]||'var(--s2)',color:statusColors[o.status]?'#fff':'var(--txt)',border:'none',borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none',fontFamily:'Barlow Condensed',letterSpacing:'.05em',textTransform:'uppercase',width:140,minWidth:140}}>{statuses.map(s=><option key={s} value={s}>{s}</option>)}</select></td>
                 <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'—'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap',color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||''}</td>
