@@ -32014,6 +32014,7 @@ const OrderImport = ({data, setData}) => {
   const [checking, setChecking] = useState(false);
   const [parsing, setParsing] = useState(null);
   const [draftModal, setDraftModal] = useState(null);
+  const [aiApiKey, setAiApiKey] = useState(() => { try { return sessionStorage.getItem('maisy_ai_key')||''; } catch(e){ return ''; } });
   const [draftForm, setDraftForm] = useState({});
   const [fileInput, setFileInput] = useState(null);
 
@@ -32138,11 +32139,12 @@ Return ONLY the JSON object, no other text.`;
       ? [{type:'document', source:{type:'base64', media_type:mediaType, data:base64}}, {type:'text', text:prompt}]
       : [{type:'image', source:{type:'base64', media_type:mediaType, data:base64}}, {type:'text', text:prompt}];
 
+    if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','x-api-key':aiApiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'claude-sonnet-4-6',
         max_tokens:1000,
         messages:[{role:'user', content:msgContent}]
       })
@@ -32442,6 +32444,12 @@ Return ONLY the JSON object, no other text.`;
           <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,lineHeight:1.6}}>
             Connect your Microsoft 365 / OneDrive account to automatically pull order files from your orders folder.
           </div>
+          <Field label="Anthropic API Key (for PDF/Image parsing)" style={{marginBottom:14}}>
+            <div style={{display:'flex',gap:8}}>
+              <input type="password" value={aiApiKey} onChange={e=>{setAiApiKey(e.target.value);try{sessionStorage.setItem('maisy_ai_key',e.target.value);}catch(ex){}}} placeholder="sk-ant-... (required to parse PDFs and images)" style={{flex:1,fontFamily:'monospace',fontSize:11}}/>
+            </div>
+            <div style={{fontSize:9,color:'var(--muted)',marginTop:3}}>Stored in session only — not saved to disk. Re-enter after refresh. Excel files parse without a key.</div>
+          </Field>
           <Field label="Tenant ID">
             <input value={od.tenantId||'common'} onChange={e=>saveOD({tenantId:e.target.value})} placeholder="common"/>
           </Field>
