@@ -94,9 +94,9 @@ const G = () => (
     .skill-cell{width:28px;height:28px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .15s}
     @media print{.no-print{display:none!important}.print-only{display:block!important}body{background:#fff!important;color:#000!important}}
     .print-only{display:none}
-    .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
+    .login-wrap{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;background:var(--bg);position:relative;overflow-y:auto;padding:20px 0}
     .login-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(0,229,255,.07),transparent)}
-    .login-box{background:var(--s1);border:1px solid var(--bdr2);border-radius:12px;padding:36px;width:420px;box-shadow:0 32px 80px rgba(0,0,0,.7);animation:fadeUp .3s ease}
+    .login-box{background:var(--s1);border:1px solid var(--bdr2);border-radius:12px;padding:28px 32px;width:420px;box-shadow:0 32px 80px rgba(0,0,0,.7);animation:fadeUp .3s ease;max-height:92vh;overflow-y:auto;overscroll-behavior:contain}
     .login-input{background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:11px 13px;border-radius:6px;font-size:14px;outline:none;width:100%;transition:border-color .15s}
     .login-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,229,255,.08)}
     .role-admin{color:#f97316;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3)}
@@ -26322,7 +26322,7 @@ const Login = ({ onLogin }) => {
   return (
     <div className="login-wrap">
       <div className="login-box fade-up">
-        <div style={{textAlign:'center',marginBottom:28}}>
+        <div style={{textAlign:'center',marginBottom:16}}>
           <div style={{width:52,height:52,background:'linear-gradient(135deg,var(--acc),var(--acc2))',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px'}}>
             <span className="hd" style={{fontSize:24,color:'#000'}}>M</span>
           </div>
@@ -26355,7 +26355,7 @@ const Login = ({ onLogin }) => {
         <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Quick Sign-In — Click to log in instantly</div>
         {DEMO_USERS.map(u=>(
           <div key={u.email} onClick={()=>{ setErr(''); onLogin(u); }}
-            style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'var(--s2)',borderRadius:6,marginBottom:6,cursor:'pointer',border:'1px solid var(--bdr)',transition:'all .15s'}}
+            style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'7px 12px',background:'var(--s2)',borderRadius:6,marginBottom:5,cursor:'pointer',border:'1px solid var(--bdr)',transition:'all .15s'}}
             onMouseOver={e=>{e.currentTarget.style.borderColor='var(--acc)';e.currentTarget.style.background='rgba(0,229,255,.06)';}}
             onMouseOut={e=>{e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.background='var(--s2)';}}>
             <div>
