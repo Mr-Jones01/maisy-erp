@@ -102,6 +102,7 @@ const G = () => (
     .role-admin{color:#f97316;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3)}
     .role-office{color:#a78bfa;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3)}
     .role-shop{color:#34d399;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3)}
+    .role-shopqueue{color:#fb923c;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.3)}
     .ref-table td,.ref-table th{padding:6px 10px;font-size:11.5px}
     .calc-box{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:18px}
   `}</style>
@@ -109,10 +110,11 @@ const G = () => (
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 const DEMO_USERS = [
-  { email:'admin@maisyrailing.com',  password:'Maisy2026$',  role:'admin',  name:'Daniel Jones',    title:'Director of Operations' },
-  { email:'rocky@maisyrailing.com',  password:'Maisy2026$',  role:'owner',  name:'Rocky',           title:'Owner' },
-  { email:'office@maisyrailing.com', password:'Maisy2026$', role:'office', name:'Office Staff',     title:'Office' },
-  { email:'shop@maisyrailing.com',   password:'Maisy2026$',   role:'shop',   name:'Shop Floor',       title:'Production' },
+  { email:'admin@maisyrailing.com',    password:'Maisy2026$',    role:'admin',      name:'Daniel Jones',  title:'Director of Operations' },
+  { email:'rocky@maisyrailing.com',    password:'Maisy2026$',    role:'owner',      name:'Rocky',         title:'Owner' },
+  { email:'office@maisyrailing.com',   password:'Maisy2026$',    role:'office',     name:'Office Staff',  title:'Office' },
+  { email:'shop@maisyrailing.com',     password:'Maisy2026$',    role:'shop',       name:'Shop Floor',    title:'Production' },
+  { email:'shopqueue@maisyrailing.com',password:'MaisyQueue26!', role:'shopqueue',  name:'Shop Queue',    title:'Queue Viewer', defaultPage:'hotqueue' },
 ];
 
 const ROLE_ACCESS = {
@@ -120,6 +122,7 @@ const ROLE_ACCESS = {
   owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue','workorders'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
   shop:   ['dashboard','todo','production','orders','workorders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
+  shopqueue: ['hotqueue','queueanalyzer'],
 };
 
 const BADGE = {
@@ -25236,7 +25239,22 @@ const QueueAnalyzer = ({data, setData}) => {
   const [error,    setError]    = useState('');
   const [search,   setSearch]   = useState('');
   const [sFilter,  setSFilter]  = useState('All');
+  // Per-column filters
+  const [fTag,       setFTag]      = useState('All');
+  const [fDate,      setFDate]     = useState('');
+  const [fPri,       setFPri]      = useState('All');
+  const [fSource,    setFSource]   = useState('All');
+  const [fDelivery,  setFDelivery] = useState('All');
+  const [fLocation,  setFLocation] = useState('');
+  const [fOrderNum,  setFOrderNum] = useState('');
+  const [fDays,      setFDays]     = useState('All');
+  const [sortCol,    setSortCol]   = useState('');
+  const [sortDir,    setSortDir]   = useState('asc');
   const fileRef = useRef();
+
+  const clearFilters = () => { setSearch(''); setSFilter('All'); setFTag('All'); setFDate(''); setFPri('All'); setFSource('All'); setFDelivery('All'); setFLocation(''); setFOrderNum(''); setFDays('All'); };
+  const doSort = (col) => { if(sortCol===col){setSortDir(d=>d==='asc'?'desc':'asc');}else{setSortCol(col);setSortDir('asc');} };
+  const SortInd = ({col}) => sortCol===col ? (sortDir==='asc'?' ▲':' ▼') : '';
 
   // Inline status change — updates persisted order status
   const updateOrderStatus = (uid, newStatus) => {
@@ -25334,9 +25352,40 @@ const QueueAnalyzer = ({data, setData}) => {
   };
 
   const outstanding = orders.filter(o => o.isOutstanding).filter(o => {
-    if (search && !o.customer.toLowerCase().includes(search.toLowerCase()) && !(o.orderNum||'').toLowerCase().includes(search.toLowerCase())) return false;
-    if (sFilter !== 'All' && o.status !== sFilter) return false;
+    if (search    && !o.customer.toLowerCase().includes(search.toLowerCase()) && !(o.orderNum||'').toLowerCase().includes(search.toLowerCase()) && !(o.notes||'').toLowerCase().includes(search.toLowerCase())) return false;
+    if (sFilter   !== 'All' && o.status !== sFilter) return false;
+    if (fTag      !== 'All') {
+      if (fTag === 'FLAGGED' && !o.isFlagged && !tags[o.uid]) return false;
+      if (fTag !== 'FLAGGED' && tags[o.uid] !== fTag) return false;
+    }
+    if (fDate     && o.dateLabel !== 'All' && !(o.dateLabel||'').includes(fDate)) return false;
+    if (fPri      !== 'All' && String(o.priority) !== fPri) return false;
+    if (fSource   !== 'All' && (o.leadSource||'') !== fSource) return false;
+    if (fDelivery !== 'All' && (o.delivery||'') !== fDelivery) return false;
+    if (fLocation && !(o.location||'').toLowerCase().includes(fLocation.toLowerCase())) return false;
+    if (fOrderNum && !(o.orderNum||'').toLowerCase().includes(fOrderNum.toLowerCase())) return false;
+    if (fDays     !== 'All') {
+      if (fDays === '>14' && !(o.age != null && o.age > 14)) return false;
+      if (fDays === '>7'  && !(o.age != null && o.age > 7))  return false;
+      if (fDays === '0-7' && !(o.age != null && o.age <= 7)) return false;
+    }
     return true;
+  }).sort((a,b) => {
+    if (!sortCol) return 0;
+    let av, bv;
+    if (sortCol==='date')    { av=a.date||0; bv=b.date||0; }
+    else if (sortCol==='pri') { av=a.priority; bv=b.priority; }
+    else if (sortCol==='days'){ av=a.age??999; bv=b.age??999; }
+    else if (sortCol==='customer') { av=(a.customer||'').toLowerCase(); bv=(b.customer||'').toLowerCase(); }
+    else if (sortCol==='status')   { av=a.status; bv=b.status; }
+    else if (sortCol==='source')   { av=(a.leadSource||''); bv=(b.leadSource||''); }
+    else if (sortCol==='delivery') { av=(a.delivery||''); bv=(b.delivery||''); }
+    else if (sortCol==='location') { av=(a.location||''); bv=(b.location||''); }
+    else if (sortCol==='orderNum') { av=(a.orderNum||''); bv=(b.orderNum||''); }
+    else return 0;
+    if (av < bv) return sortDir==='asc' ? -1 : 1;
+    if (av > bv) return sortDir==='asc' ?  1 : -1;
+    return 0;
   });
   const completed  = orders.filter(o => o.isFulfilled);
 
@@ -25421,19 +25470,87 @@ const QueueAnalyzer = ({data, setData}) => {
       )}
 
       <div className="card" style={{marginBottom:16}}>
-        <div className="section-hd" style={{marginBottom:10}}>
-          <div className="hd" style={{fontSize:13}}>Outstanding Orders <span style={{color:'var(--warn)',fontSize:12}}>({outstanding.length})</span></div>
-          <div style={{display:'flex',gap:8}}>
-            <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search customer / order#" style={{width:200}}/>
-            <select className="search" value={sFilter} onChange={e=>setSFilter(e.target.value)} style={{width:160}}>
-              <option>All</option>
-              {[...new Set(orders.filter(o=>o.isOutstanding).map(o=>o.status))].map(s=><option key={s}>{s}</option>)}
-            </select>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,flexWrap:'wrap',gap:8}}>
+          <div className="hd" style={{fontSize:13}}>Outstanding Orders <span style={{color:'var(--warn)',fontSize:12}}>({outstanding.length} of {orders.filter(o=>o.isOutstanding).length})</span></div>
+          <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
+            <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Global search…" style={{width:180}}/>
+            <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={clearFilters}>✕ Clear Filters</button>
           </div>
         </div>
         <div style={{overflowX:'auto'}}>
-          <table>
-            <thead><tr><th>Tag</th><th>Status</th><th>Date</th><th>Pri</th><th>Customer</th><th>Source</th><th>Fulfillment</th><th>Location</th><th>Order #</th><th>Days</th><th>Notes</th></tr></thead>
+          <table style={{minWidth:1100}}>
+            <thead>
+              {/* Sort header row */}
+              <tr>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('tag')}>Tag<SortInd col="tag"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('status')}>Status<SortInd col="status"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('date')}>Date<SortInd col="date"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('pri')}>Pri<SortInd col="pri"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('customer')}>Customer<SortInd col="customer"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('source')}>Source<SortInd col="source"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('delivery')}>Fulfillment<SortInd col="delivery"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('location')}>Location<SortInd col="location"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('orderNum')}>Order #<SortInd col="orderNum"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('days')}>Days<SortInd col="days"/></th>
+                <th>Notes</th>
+              </tr>
+              {/* Filter row */}
+              <tr style={{background:'var(--s2)'}}>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fTag} onChange={e=>setFTag(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    <option value="HOT">🔥 HOT</option>
+                    <option value="RUSH">⚡ RUSH</option>
+                    <option value="FLAGGED">🟡 Flagged</option>
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={sFilter} onChange={e=>setSFilter(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {[...new Set(orders.filter(o=>o.isOutstanding).map(o=>o.status))].sort().map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={fDate} onChange={e=>setFDate(e.target.value)} placeholder="e.g. Jan" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fPri} onChange={e=>setFPri(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {[1,2,3,4,5].map(n=><option key={n} value={String(n)}>{n}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fSource} onChange={e=>setFSource(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {[...new Set(orders.map(o=>o.leadSource).filter(Boolean))].sort().map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fDelivery} onChange={e=>setFDelivery(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {[...new Set(orders.map(o=>o.delivery).filter(Boolean))].sort().map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={fLocation} onChange={e=>setFLocation(e.target.value)} placeholder="Search…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={fOrderNum} onChange={e=>setFOrderNum(e.target.value)} placeholder="Search…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fDays} onChange={e=>setFDays(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    <option value="0-7">0–7 days</option>
+                    <option value=">7">&gt;7 days</option>
+                    <option value=">14">&gt;14 days</option>
+                  </select>
+                </td>
+                <td></td>
+              </tr>
+            </thead>
             <tbody>
               {outstanding.map(o=>{
                 const sc=SS[o.status]||SS['Unknown'];
@@ -25497,13 +25614,26 @@ const QueueAnalyzer = ({data, setData}) => {
 
 // ─── HOT RUSH QUEUE ──────────────────────────────────────────────────────────────
 const HotRushQueue = ({data, setData}) => {
-  const [search,  setSearch]  = useState('');
-  const [tagF,    setTagF]    = useState('All');
-  const [statusF, setStatusF] = useState('All');
-  const [editId,  setEditId]  = useState(null);
-  const [form,    setForm]    = useState({});
-  const [addOpen, setAddOpen] = useState(false);
+  const [search,   setSearch]   = useState('');
+  const [tagF,     setTagF]     = useState('All');
+  const [statusF,  setStatusF]  = useState('All');
+  const [fDate,    setFDate]    = useState('');
+  const [fDays,    setFDays]    = useState('All');
+  const [fPri,     setFPri]     = useState('All');
+  const [fSource,  setFSource]  = useState('All');
+  const [fDelivery,setFDelivery]= useState('All');
+  const [fLocation,setFLocation]= useState('');
+  const [fOrderNum,setFOrderNum]= useState('');
+  const [sortCol,  setSortCol]  = useState('tag');
+  const [sortDir,  setSortDir]  = useState('asc');
+  const [editId,   setEditId]   = useState(null);
+  const [form,     setForm]     = useState({});
+  const [addOpen,  setAddOpen]  = useState(false);
   const jsonRef = useRef();
+
+  const clearFilters = () => { setSearch(''); setTagF('All'); setStatusF('All'); setFDate(''); setFDays('All'); setFPri('All'); setFSource('All'); setFDelivery('All'); setFLocation(''); setFOrderNum(''); };
+  const doSort = (col) => { if(sortCol===col){setSortDir(d=>d==='asc'?'desc':'asc');}else{setSortCol(col);setSortDir('asc');} };
+  const SI = ({col}) => sortCol===col ? (sortDir==='asc'?' ▲':' ▼') : '';
 
   const hq = data.hotqueue || [];
 
@@ -25546,13 +25676,42 @@ const HotRushQueue = ({data, setData}) => {
   const SS2 = {'New Order Processing':{c:'#8E44AD'},'In Production':{c:'#3A5BA0'},'Production Complete':{c:'#F39C12'},'On Hold':{c:'#E74C3C'},'Shipped':{c:'#1E8449'},'Delivered':{c:'#1E8449'},'Completed':{c:'#1E8449'},'CSR':{c:'#555'}};
 
   const filtered = hq.filter(o => {
-    if (search && !o.customer?.toLowerCase().includes(search.toLowerCase()) && !(o.orderNum||'').toLowerCase().includes(search.toLowerCase())) return false;
-    if (tagF !== 'All' && o.tag !== tagF) return false;
-    if (statusF !== 'All' && o.status !== statusF) return false;
+    if (search    && !o.customer?.toLowerCase().includes(search.toLowerCase()) && !(o.orderNum||'').toLowerCase().includes(search.toLowerCase()) && !(o.notes||'').toLowerCase().includes(search.toLowerCase())) return false;
+    if (tagF      !== 'All' && o.tag !== tagF) return false;
+    if (statusF   !== 'All' && o.status !== statusF) return false;
+    if (fDate     && !(o.dateLabel||'').toLowerCase().includes(fDate.toLowerCase())) return false;
+    if (fDays     !== 'All') {
+      const a2 = age(o.dateISO);
+      if (fDays === '>14' && !(a2 != null && a2 > 14)) return false;
+      if (fDays === '>7'  && !(a2 != null && a2 > 7))  return false;
+      if (fDays === '0-7' && !(a2 != null && a2 <= 7)) return false;
+    }
+    if (fPri      !== 'All' && String(o.priority||'') !== fPri) return false;
+    if (fSource   !== 'All' && (o.leadSource||'') !== fSource) return false;
+    if (fDelivery !== 'All' && (o.delivery||'') !== fDelivery) return false;
+    if (fLocation && !(o.location||'').toLowerCase().includes(fLocation.toLowerCase())) return false;
+    if (fOrderNum && !(o.orderNum||'').toLowerCase().includes(fOrderNum.toLowerCase())) return false;
     return true;
   }).sort((a,b) => {
     const tp = {HOT:0,RUSH:1,FLAGGED:2};
-    return (tp[a.tag]??3) - (tp[b.tag]??3) || (a.priority||5)-(b.priority||5);
+    let av, bv;
+    if (!sortCol || sortCol==='tag') {
+      const r = (tp[a.tag]??3)-(tp[b.tag]??3) || (a.priority||5)-(b.priority||5);
+      return sortDir==='asc' ? r : -r;
+    }
+    if (sortCol==='status')   { av=a.status||''; bv=b.status||''; }
+    else if (sortCol==='date')  { av=a.dateISO||''; bv=b.dateISO||''; }
+    else if (sortCol==='days')  { av=age(a.dateISO)??999; bv=age(b.dateISO)??999; }
+    else if (sortCol==='pri')   { av=a.priority||5; bv=b.priority||5; }
+    else if (sortCol==='customer') { av=(a.customer||'').toLowerCase(); bv=(b.customer||'').toLowerCase(); }
+    else if (sortCol==='source')   { av=(a.leadSource||''); bv=(b.leadSource||''); }
+    else if (sortCol==='delivery') { av=(a.delivery||''); bv=(b.delivery||''); }
+    else if (sortCol==='location') { av=(a.location||''); bv=(b.location||''); }
+    else if (sortCol==='orderNum') { av=(a.orderNum||''); bv=(b.orderNum||''); }
+    else return 0;
+    if (av < bv) return sortDir==='asc' ? -1 : 1;
+    if (av > bv) return sortDir==='asc' ?  1 : -1;
+    return 0;
   });
 
   const FormFields = () => (
@@ -25603,15 +25762,9 @@ const HotRushQueue = ({data, setData}) => {
           <div className="hd" style={{fontSize:18}}>Hot / Rush Queue</div>
           <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{hq.length} orders tracked</div>
         </div>
-        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-          <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{width:180}}/>
-          <select className="search" value={tagF} onChange={e=>setTagF(e.target.value)} style={{width:130}}>
-            <option>All</option><option>HOT</option><option>RUSH</option><option>FLAGGED</option>
-          </select>
-          <select className="search" value={statusF} onChange={e=>setStatusF(e.target.value)} style={{width:160}}>
-            <option>All</option>
-            {statuses.map(s=><option key={s}>{s}</option>)}
-          </select>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+          <input className="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Global search…" style={{width:180}}/>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={clearFilters}>✕ Clear Filters</button>
           <input ref={jsonRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>importJSON(e.target.files[0])}/>
           <button className="btn btn-g btn-sm" onClick={()=>jsonRef.current.click()}>📥 Import JSON</button>
           <button className="btn btn-p btn-sm" onClick={()=>{setAddOpen(true);setForm({});}}>+ Add Order</button>
@@ -25635,8 +25788,79 @@ const HotRushQueue = ({data, setData}) => {
         </div>
       ) : (
         <div className="card" style={{overflowX:'auto'}}>
-          <table>
-            <thead><tr><th>Tag</th><th>Status</th><th>Date</th><th>Days</th><th>Pri</th><th>Customer</th><th>Source</th><th>Fulfillment</th><th>Ship To</th><th>Order #</th><th>Notes</th><th>Actions</th></tr></thead>
+          <table style={{minWidth:1200}}>
+            <thead>
+              <tr>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('tag')}>Tag<SI col="tag"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('status')}>Status<SI col="status"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('date')}>Date<SI col="date"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('days')}>Days<SI col="days"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('pri')}>Pri<SI col="pri"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('customer')}>Customer<SI col="customer"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('source')}>Source<SI col="source"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('delivery')}>Fulfillment<SI col="delivery"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('location')}>Ship To<SI col="location"/></th>
+                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('orderNum')}>Order #<SI col="orderNum"/></th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+              <tr style={{background:'var(--s2)'}}>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={tagF} onChange={e=>setTagF(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    <option value="HOT">🔥 HOT</option>
+                    <option value="RUSH">⚡ RUSH</option>
+                    <option value="FLAGGED">🟡 Flagged</option>
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={statusF} onChange={e=>setStatusF(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {statuses.map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={fDate} onChange={e=>setFDate(e.target.value)} placeholder="e.g. Jan" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fDays} onChange={e=>setFDays(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    <option value="0-7">0–7d</option>
+                    <option value=">7">&gt;7d</option>
+                    <option value=">14">&gt;14d</option>
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fPri} onChange={e=>setFPri(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {[1,2,3,4,5].map(n=><option key={n} value={String(n)}>{n}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fSource} onChange={e=>setFSource(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {[...new Set(hq.map(o=>o.leadSource).filter(Boolean))].sort().map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <select value={fDelivery} onChange={e=>setFDelivery(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
+                    <option value="All">All</option>
+                    {[...new Set(hq.map(o=>o.delivery).filter(Boolean))].sort().map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={fLocation} onChange={e=>setFLocation(e.target.value)} placeholder="Search…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td style={{padding:'4px 6px'}}>
+                  <input value={fOrderNum} onChange={e=>setFOrderNum(e.target.value)} placeholder="Search…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/>
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+            </thead>
             <tbody>
               {filtered.map(o => {
                 const a = age(o.dateISO);
@@ -36169,7 +36393,7 @@ export default function MaisyERP() {
   const [backupModal, setBackupModal] = useState(false);
   const importRef = useRef();
 
-  const handleLogin=(u)=>{setUser(u);setPage('dashboard');};
+  const handleLogin=(u)=>{setUser(u);setPage(u.defaultPage||'dashboard');};
   const handleLogout=()=>{setUser(null);setAiOpen(false);};
 
   // ── Export full data snapshot as JSON ──────────────────────────────────────
@@ -36226,6 +36450,44 @@ export default function MaisyERP() {
   const PageComp=PAGES[page]||Dashboard;
   const access=ROLE_ACCESS[user.role]||[];
   const alerts=data.invoices.filter(i=>i.status==='Overdue').length+data.inventory.filter(i=>i.qty<=i.reorder).length+data.todos.filter(t=>t.priority==='Critical'&&t.status!=='Done').length;
+
+  // ── Shopqueue role: stripped-down layout — only Hot/Rush Queue + Queue Analyzer ──
+  if(user.role==='shopqueue') {
+    const SQPageComp = PAGES[page] || HotRushQueue;
+    return (
+      <>
+        <G/>
+        <div className="app">
+          <div className="main" style={{marginLeft:0}}>
+            <div className="topbar">
+              <div style={{display:'flex',gap:6,flex:1}}>
+                <button onClick={()=>setPage('hotqueue')}
+                  className={'btn btn-sm'+(page==='hotqueue'?' btn-p':'')}
+                  style={{fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',fontSize:12}}>
+                  🔥 Hot / Rush Queue
+                </button>
+                <button onClick={()=>setPage('queueanalyzer')}
+                  className={'btn btn-sm'+(page==='queueanalyzer'?' btn-p':'')}
+                  style={{fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',fontSize:12}}>
+                  📊 Queue Analyzer
+                </button>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:11,color:'var(--muted)'}}>{user.name}</span>
+                <span className={`badge role-${user.role}`} style={{fontSize:9}}>Shop Queue</span>
+                <div style={{width:1,height:18,background:'var(--bdr)',margin:'0 4px'}}/>
+                <button onClick={handleLogout} style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',borderRadius:5,padding:'5px 10px',cursor:'pointer',fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}}
+                  onMouseOver={e=>e.target.style.color='var(--err)'} onMouseOut={e=>e.target.style.color='var(--muted)'}>Sign Out</button>
+              </div>
+            </div>
+            <div className="content">
+              <SQPageComp data={data} setData={setData} user={user} setPage={setPage}/>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
