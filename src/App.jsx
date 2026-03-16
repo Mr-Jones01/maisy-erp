@@ -26310,21 +26310,13 @@ const Login = ({ onLogin }) => {
   const emailRef = useRef();
   const passRef  = useRef();
 
-  // Always read directly from DOM — bypasses browser autocomplete conflicts entirely
+  // Manual sign in — reads from DOM refs (uncontrolled inputs)
   const submit = () => {
     const e = (emailRef.current?.value || '').trim().toLowerCase();
     const p = (passRef.current?.value  || '');
     const u = DEMO_USERS.find(u => u.email === e && u.password === p);
     if (u) { setErr(''); onLogin(u); }
     else setErr('Invalid email or password.');
-  };
-
-  // Quick-fill: set DOM values directly — no React state, no events, just works
-  const quickFill = (u) => {
-    if (emailRef.current) emailRef.current.value = u.email;
-    if (passRef.current)  passRef.current.value  = u.password;
-    setErr('');
-    passRef.current?.focus();
   };
 
   return (
@@ -26342,19 +26334,17 @@ const Login = ({ onLogin }) => {
           <input ref={emailRef} className="login-input" type="email"
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
             onKeyDown={e=>e.key==='Enter'&&submit()}
-            placeholder="you@maisyrailing.com" autoFocus
-            defaultValue=""/>
+            placeholder="you@maisyrailing.com" autoFocus defaultValue=""/>
         </div>
         <div style={{marginBottom:20}}>
           <label>Password</label>
           <div style={{position:'relative'}}>
             <input ref={passRef} className="login-input"
               type={show?'text':'password'}
-              autoComplete="off"
+              autoComplete="new-password"
               onKeyDown={e=>e.key==='Enter'&&submit()}
-              placeholder="••••••••••"
-              defaultValue=""/>
-            <button onClick={()=>{setShow(s=>!s);}} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em'}}>
+              placeholder="••••••••••" defaultValue=""/>
+            <button onClick={()=>setShow(s=>!s)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em'}}>
               {show?'HIDE':'SHOW'}
             </button>
           </div>
@@ -26362,17 +26352,20 @@ const Login = ({ onLogin }) => {
         {err&&<div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',borderRadius:5,padding:'8px 12px',fontSize:12,color:'var(--err)',marginBottom:14}}>{err}</div>}
         <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onClick={submit}>Sign In →</button>
         <div className="divider" style={{margin:'20px 0 14px'}}/>
-        <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Quick Sign-In</div>
+        <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Quick Sign-In — Click to log in instantly</div>
         {DEMO_USERS.map(u=>(
-          <div key={u.email} onClick={()=>quickFill(u)}
-            style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--s2)',borderRadius:5,marginBottom:5,cursor:'pointer',border:'1px solid var(--bdr)',transition:'border-color .15s'}}
-            onMouseOver={e=>e.currentTarget.style.borderColor='var(--acc)'}
-            onMouseOut={e=>e.currentTarget.style.borderColor='var(--bdr)'}>
+          <div key={u.email} onClick={()=>{ setErr(''); onLogin(u); }}
+            style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'var(--s2)',borderRadius:6,marginBottom:6,cursor:'pointer',border:'1px solid var(--bdr)',transition:'all .15s'}}
+            onMouseOver={e=>{e.currentTarget.style.borderColor='var(--acc)';e.currentTarget.style.background='rgba(0,229,255,.06)';}}
+            onMouseOut={e=>{e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.background='var(--s2)';}}>
             <div>
-              <div style={{fontSize:12,fontWeight:600}}>{u.name}</div>
-              <div style={{fontSize:10,color:'var(--muted)',marginTop:1}}>{u.email}</div>
+              <div style={{fontSize:13,fontWeight:700}}>{u.name}</div>
+              <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>{u.email}</div>
             </div>
-            <span className={`badge role-${u.role}`} style={{fontSize:9,flexShrink:0}}>{u.role}</span>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span className={`badge role-${u.role}`} style={{fontSize:9}}>{u.role}</span>
+              <span style={{fontSize:11,color:'var(--acc)',fontFamily:'Barlow Condensed',fontWeight:700}}>→</span>
+            </div>
           </div>
         ))}
       </div>
