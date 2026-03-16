@@ -27980,9 +27980,37 @@ const Shipping = ({data, setData}) => {
   const [form,setForm]=useState({});
   const statuses=['Ready to Ship','Shipped','In Transit','Delivered','Exception'];
   const carriers=['ABF Freight','Estes Freight','FedEx Freight','Old Dominion','R+L Carriers','UPS Ground','UPS 2-Day','UPS Next-Day','XPO Logistics','Local Delivery','Other'];
-  const open=(row=null)=>{setForm(row?{...row}:{id:`SHP-${uid()}`,orderId:'',customer:'',carrier:'ABF Freight',tracking:'',status:'Ready to Ship',shipped:'',delivered:'',weight:'',dims:'',totalCost:0,notes:''});setModal(row?'edit':'new');};
-  const save=()=>{const rec={...form,totalCost:Number(form.totalCost||0),weight:Number(form.weight||0)};if(modal==='new')setData(d=>({...d,shipments:[...d.shipments,rec]}));else setData(d=>({...d,shipments:d.shipments.map(s=>s.id===rec.id?rec:s)}));setModal(null);};
-  const del=id=>setData(d=>({...d,shipments:d.shipments.filter(s=>s.id!==id)}));
+  const open=(row=null, idx=null)=>{
+    if(row) {
+      // Ensure every entry has a truly unique id before editing
+      const safeId = (row.id && row.id !== 'N/A' && row.id !== '') ? row.id : `SHP-${uid()}`;
+      setForm({...row, id:safeId, _editIdx:idx});
+      // If we assigned a new id, patch it in storage immediately
+      if(safeId !== row.id) {
+        setData(d=>({...d, shipments:(d.shipments||[]).map((s,i)=>i===idx?{...s,id:safeId}:s)}));
+      }
+    } else {
+      setForm({id:`SHP-${uid()}`,orderId:'',customer:'',carrier:'ABF Freight',tracking:'',status:'Ready to Ship',shipped:'',delivered:'',weight:'',dims:'',totalCost:0,notes:''});
+    }
+    setModal(row?'edit':'new');
+  };
+  const save=()=>{
+    const {_editIdx, ...rest} = form;
+    const rec = {...rest, totalCost:Number(form.totalCost||0), weight:Number(form.weight||0)};
+    if(modal==='new') {
+      setData(d=>({...d, shipments:[...(d.shipments||[]), rec]}));
+    } else {
+      // Use index-based replacement — immune to duplicate id bugs
+      if(_editIdx !== null && _editIdx !== undefined) {
+        setData(d=>({...d, shipments:(d.shipments||[]).map((s,i)=>i===_editIdx?rec:s)}));
+      } else {
+        // Fallback: id match (safe since we guaranteed unique id on open)
+        setData(d=>({...d, shipments:(d.shipments||[]).map(s=>s.id===rec.id?rec:s)}));
+      }
+    }
+    setModal(null);
+  };
+  const del=id=>setData(d=>({...d,shipments:(d.shipments||[]).filter(s=>s.id!==id)}));
 
   // ── Compute live analytics from ALL shipment sources ─────────────────────
   const allShipments = [...(data.shipCostLog||[]).map(s=>({
@@ -28073,7 +28101,7 @@ const Shipping = ({data, setData}) => {
                 <td style={{fontFamily:'monospace',textAlign:'right',color:'var(--muted)'}}>{s.weight>0?s.weight+' lbs':'—'}</td>
                 <td style={{fontFamily:'monospace',fontSize:10.5,textAlign:'center',color:'var(--muted)'}}>{s.dims||'—'}</td>
                 <td style={{fontFamily:'monospace',fontWeight:600,textAlign:'right',color:s.totalCost>0?'var(--warn)':'var(--muted)'}}>{s.totalCost>0?fmt$(s.totalCost):'—'}</td>
-                <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
+                <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s, (data.shipments||[]).indexOf(s))}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
               </tr>
             ))}
           </tbody>
@@ -35949,6 +35977,14 @@ const normalizeData = (d) => {
   if (!d) return d;
   if (!d.inventory) d.inventory = [...(d.rawMaterials||[]).map(i=>({...i,sku:i.id,type:'Raw Material'})),...(d.assemblyItems||[]).map(i=>({...i,sku:i.id,type:'Assembly'})),...(d.shopConsumables||[]).map(i=>({...i,sku:i.id,type:'Consumable'}))];
   if (!d.shipments) d.shipments = (d.shipCostLog||[]).map((s,i)=>({...s,id:s.poRef||s.tracking||`SHP-${i+1}`,status:'Delivered'}));
+  // Sanitize: ensure every shipment has a unique non-blank id
+  const shipIds = new Set();
+  d.shipments = (d.shipments||[]).map((s,i)=>{
+    const badId = !s.id || s.id === 'N/A' || s.id === '' || shipIds.has(s.id);
+    const safeId = badId ? `SHP-${Date.now()}-${i}` : s.id;
+    shipIds.add(safeId);
+    return badId ? {...s, id:safeId} : s;
+  });
   if (!d.laborRates) d.laborRates = d.laborProcesses||[];
   if (!d.purchaseOrders) d.purchaseOrders = d.purchaseLog||[];
   if (!d.bom) d.bom = [];
