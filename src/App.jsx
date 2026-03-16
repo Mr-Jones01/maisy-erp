@@ -25221,13 +25221,37 @@ const QueueAnalyzer = ({data, setData}) => {
       document.head.appendChild(s);
     }
   }, []);
-  const [orders,   setOrders]   = useState([]);
-  const [tags,     setTags]     = useState({});
-  const [fileName, setFileName] = useState('');
+
+  // Persist to data.queueAnalyzer so it survives navigation — only reset on explicit new file upload
+  const qa = data.queueAnalyzer || {orders:[], tags:{}, fileName:''};
+  const orders   = qa.orders   || [];
+  const tags     = qa.tags     || {};
+  const fileName = qa.fileName || '';
+
+  const setOrders   = (fn) => setData(d => {const prev=d.queueAnalyzer||{orders:[],tags:{},fileName:''};const next=typeof fn==='function'?fn(prev.orders):fn;return{...d,queueAnalyzer:{...prev,orders:next}};});
+  const setTags     = (fn) => setData(d => {const prev=d.queueAnalyzer||{orders:[],tags:{},fileName:''};const next=typeof fn==='function'?fn(prev.tags):fn;return{...d,queueAnalyzer:{...prev,tags:next}};});
+  const setFileName = (v)  => setData(d => {const prev=d.queueAnalyzer||{orders:[],tags:{},fileName:''};return{...d,queueAnalyzer:{...prev,fileName:v}};});
+  const clearAll    = ()   => setData(d => ({...d,queueAnalyzer:{orders:[],tags:{},fileName:''}}));
+
   const [error,    setError]    = useState('');
   const [search,   setSearch]   = useState('');
   const [sFilter,  setSFilter]  = useState('All');
   const fileRef = useRef();
+
+  // Inline status change — updates persisted order status
+  const updateOrderStatus = (uid, newStatus) => {
+    setData(d => {
+      const prev = d.queueAnalyzer || {orders:[], tags:{}, fileName:''};
+      const fulfilled = ['Completed','Delivered','Shipped'];
+      const updatedOrders = (prev.orders||[]).map(o => {
+        if(o.uid !== uid) return o;
+        const isFulfilled = fulfilled.some(s => newStatus.toLowerCase().includes(s.toLowerCase()));
+        return {...o, status:newStatus, isFulfilled, isOutstanding:!isFulfilled,
+          isFlagged: !isFulfilled && o.age != null && o.age > 14 && ['In Production','New Order Processing'].includes(newStatus)};
+      });
+      return {...d, queueAnalyzer:{...prev, orders:updatedOrders}};
+    });
+  };
 
   const SM = {'Completed':'Completed','Production Complete':'Production Complete','In Production':'In Production','New Order Processing':'New Order Processing','On Hold':'On Hold','Shipped':'Shipped','Delivered':'Delivered','CSR':'CSR','QYIO':'On Hold'};
   const SS = {'New Order Processing':{c:'#8E44AD',l:'New Order'},'In Production':{c:'#3A5BA0',l:'In Production'},'Production Complete':{c:'#F39C12',l:'Prod Complete'},'On Hold':{c:'#E74C3C',l:'On Hold'},'Shipped':{c:'#1E8449',l:'Shipped'},'Delivered':{c:'#1E8449',l:'Delivered'},'Completed':{c:'#1E8449',l:'Completed'},'CSR':{c:'#555',l:'CSR'},'Unknown':{c:'#555',l:'Unknown'}};
@@ -25286,7 +25310,7 @@ const QueueAnalyzer = ({data, setData}) => {
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
         const parsed = parseWB(wb);
         if (!parsed.length) { setError('No data rows found.'); return; }
-        setOrders(parsed); setTags({}); setFileName(file.name);
+        setData(d => ({...d, queueAnalyzer:{orders:parsed, tags:{}, fileName:file.name}}));
       } catch(err) { setError('Error: ' + err.message); }
     };
     r.readAsArrayBuffer(file);
@@ -25339,6 +25363,7 @@ const QueueAnalyzer = ({data, setData}) => {
       <div style={{fontSize:40,opacity:.3}}>📊</div>
       <div className="hd" style={{fontSize:22,color:'var(--txt)'}}>Queue Analyzer</div>
       <div style={{fontSize:13,color:'var(--muted)',textAlign:'center',maxWidth:400}}>Upload your production queue Excel file (needs a <span style={{color:'var(--acc)'}}>"Form Responses 1"</span> sheet) to analyze orders, track status, and push hot/rush items to the queue.</div>
+      <div style={{fontSize:11,color:'var(--muted)',textAlign:'center',maxWidth:380,marginTop:-8}}>Your queue data and any status changes you make are saved automatically — they will still be here when you come back.</div>
       {error && <div style={{color:'var(--err)',fontSize:12,background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'8px 14px'}}>{error}</div>}
       <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e=>handleFile(e.target.files[0])}/>
       <button className="btn btn-p" style={{fontSize:14,padding:'10px 28px'}} onClick={()=>fileRef.current.click()}>📂 Upload Queue Excel</button>
@@ -25353,7 +25378,7 @@ const QueueAnalyzer = ({data, setData}) => {
           <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{fileName}</div>
         </div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-          <button className="btn btn-g btn-sm" onClick={()=>{setOrders([]);setTags({});setFileName('');setError('');}}>↩ New File</button>
+          <button className="btn btn-g btn-sm" onClick={()=>{clearAll();setError('');}}>↩ New File</button>
           {Object.values(tags).filter(Boolean).length + orders.filter(o=>o.isFlagged&&!tags[o.uid]).length > 0 && (
             <button className="btn btn-ok btn-sm" onClick={pushToHotQueue}>🔥 Push {Object.values(tags).filter(Boolean).length + orders.filter(o=>o.isFlagged&&!tags[o.uid]).length} to Hot Queue</button>
           )}
@@ -25422,7 +25447,17 @@ const QueueAnalyzer = ({data, setData}) => {
                         {tagBtn(o.uid,'FLAGGED','🟡','#eab308')}
                       </div>
                     </td>
-                    <td><span style={{background:`${sc.c}22`,color:sc.c,border:`1px solid ${sc.c}44`,padding:'2px 7px',borderRadius:3,fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{sc.l}</span></td>
+                    <td>
+                      <select
+                        value={o.status}
+                        onChange={e=>updateOrderStatus(o.uid, e.target.value)}
+                        style={{background:`${sc.c}22`,color:sc.c,border:`1px solid ${sc.c}66`,padding:'3px 6px',borderRadius:3,fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.04em',cursor:'pointer',outline:'none',minWidth:110}}
+                      >
+                        {['New Order Processing','In Production','Production Complete','On Hold','CSR','Shipped','Delivered','Completed'].map(s=>(
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td style={{whiteSpace:'nowrap',fontSize:11}}>{o.dateLabel}</td>
                     <td style={{color:o.priority===1?'var(--err)':o.priority<=3?'var(--warn)':'var(--muted)',fontWeight:700}}>{o.priority}</td>
                     <td style={{fontWeight:600}}>{o.customer}</td>
