@@ -26305,8 +26305,44 @@ const OrderAnalyzer = ({data}) => {
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────────
 const Login = ({ onLogin }) => {
-  const [email,setEmail]=useState('');const [pass,setPass]=useState('');const [err,setErr]=useState('');const [show,setShow]=useState(false);
-  const submit=()=>{const u=DEMO_USERS.find(u=>u.email===email.trim().toLowerCase()&&u.password===pass);if(u){setErr('');onLogin(u);}else setErr('Invalid email or password.');};
+  const [email,setEmail]=useState('');
+  const [pass,setPass]=useState('');
+  const [err,setErr]=useState('');
+  const [show,setShow]=useState(false);
+  const emailRef = useRef();
+  const passRef  = useRef();
+
+  // Read from both React state AND actual DOM value (handles browser autocomplete)
+  const getVals = () => ({
+    e: (email.trim() || emailRef.current?.value?.trim() || '').toLowerCase(),
+    p: pass || passRef.current?.value || '',
+  });
+
+  const submit = () => {
+    const {e, p} = getVals();
+    const u = DEMO_USERS.find(u => u.email === e && u.password === p);
+    if (u) { setErr(''); onLogin(u); }
+    else setErr('Invalid email or password.');
+  };
+
+  // Quick-fill: update React state AND directly set DOM value + fire input event
+  const quickFill = (u) => {
+    setEmail(u.email);
+    setPass(u.password);
+    setErr('');
+    // Force DOM update for browser-controlled inputs
+    if (emailRef.current) {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      nativeInputValueSetter.call(emailRef.current, u.email);
+      emailRef.current.dispatchEvent(new Event('input', {bubbles:true}));
+    }
+    if (passRef.current) {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      nativeInputValueSetter.call(passRef.current, u.password);
+      passRef.current.dispatchEvent(new Event('input', {bubbles:true}));
+    }
+  };
+
   return (
     <div className="login-wrap">
       <div className="login-box fade-up">
@@ -26317,16 +26353,39 @@ const Login = ({ onLogin }) => {
           <div className="hd" style={{fontSize:26}}>MAISY ERP</div>
           <div style={{fontSize:11,color:'var(--muted)',letterSpacing:'.14em',textTransform:'uppercase',marginTop:3}}>Maisy Railing · Hayden, Idaho</div>
         </div>
-        <div style={{marginBottom:14}}><label>Email Address</label><input className="login-input" type="email" value={email} onChange={e=>{setEmail(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="you@maisyrailing.com" autoFocus/></div>
-        <div style={{marginBottom:20}}><label>Password</label><div style={{position:'relative'}}><input className="login-input" type={show?'text':'password'} value={pass} onChange={e=>{setPass(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="••••••••••"/><button onClick={()=>setShow(s=>!s)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em'}}>{show?'HIDE':'SHOW'}</button></div></div>
+        <div style={{marginBottom:14}}>
+          <label>Email Address</label>
+          <input ref={emailRef} className="login-input" type="email" autoComplete="username"
+            value={email} onChange={e=>{setEmail(e.target.value);setErr('');}}
+            onKeyDown={e=>e.key==='Enter'&&submit()}
+            placeholder="you@maisyrailing.com" autoFocus/>
+        </div>
+        <div style={{marginBottom:20}}>
+          <label>Password</label>
+          <div style={{position:'relative'}}>
+            <input ref={passRef} className="login-input" type={show?'text':'password'} autoComplete="current-password"
+              value={pass} onChange={e=>{setPass(e.target.value);setErr('');}}
+              onKeyDown={e=>e.key==='Enter'&&submit()}
+              placeholder="••••••••••"/>
+            <button onClick={()=>setShow(s=>!s)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em'}}>
+              {show?'HIDE':'SHOW'}
+            </button>
+          </div>
+        </div>
         {err&&<div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',borderRadius:5,padding:'8px 12px',fontSize:12,color:'var(--err)',marginBottom:14}}>{err}</div>}
-        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onClick={()=>submit()}>Sign In →</button>
+        <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:14}} onClick={submit}>Sign In →</button>
         <div className="divider" style={{margin:'20px 0 14px'}}/>
-        <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Demo Credentials</div>
+        <div style={{fontSize:10.5,color:'var(--muted)',marginBottom:8,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Quick Sign-In</div>
         {DEMO_USERS.map(u=>(
-          <div key={u.email} onClick={()=>{setEmail(u.email);setPass(u.password);setErr('');}} style={{display:'flex',justifyContent:'space-between',padding:'6px 10px',background:'var(--s2)',borderRadius:4,marginBottom:5,cursor:'pointer',border:'1px solid var(--bdr)'}}>
-            <div style={{fontSize:11.5}}>{u.email}</div>
-            <span className={`badge role-${u.role}`} style={{fontSize:9}}>{u.role}</span>
+          <div key={u.email} onClick={()=>quickFill(u)}
+            style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--s2)',borderRadius:5,marginBottom:5,cursor:'pointer',border:'1px solid var(--bdr)',transition:'border-color .15s'}}
+            onMouseOver={e=>e.currentTarget.style.borderColor='var(--acc)'}
+            onMouseOut={e=>e.currentTarget.style.borderColor='var(--bdr)'}>
+            <div>
+              <div style={{fontSize:12,fontWeight:600}}>{u.name}</div>
+              <div style={{fontSize:10,color:'var(--muted)',marginTop:1}}>{u.email}</div>
+            </div>
+            <span className={`badge role-${u.role}`} style={{fontSize:9,flexShrink:0}}>{u.role}</span>
           </div>
         ))}
       </div>
