@@ -27248,7 +27248,7 @@ const Production = ({data, setData, user}) => {
           <div/>
           <div style={{display:'flex',gap:8}}>
             <PrintBtn onClick={()=>printSafetyLog(data)} label="Safety Report"/>
-            <button className="btn btn-p btn-sm" onClick={()=>{setForm({date:now(),time:'',reportedBy:'',type:'Near Miss',location:'',description:'',involved:'',injury:'',firstAid:'No',rootCause:'',corrAction:'',status:'Open'});setModal('safety');}}>+ Log Incident</button>
+            <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'SAF-'+uid(),date:now(),time:'',reportedBy:'',type:'Near Miss',location:'',description:'',involved:'',injury:'',firstAid:'No',rootCause:'',corrAction:'',status:'Open'});setModal('safety');}}>+ Log Incident</button>
           </div>
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
@@ -27267,7 +27267,7 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontSize:10,maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.corrAction}>{s.corrAction}</td>
                 <td><Badge s={s.status||'Open'}/></td>
                 <td><div style={{display:'flex',gap:4}}>
-                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s});setModal('safety');}}>Edit</button>
+                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s,id:s.id||'SAF-'+uid()});setModal('safety');}}>Edit</button>
                   <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,safetyLog:(d.safetyLog||[]).filter((_,j)=>j!==i)}))}>Del</button>
                 </div></td>
               </tr>
@@ -27358,7 +27358,7 @@ const Production = ({data, setData, user}) => {
         <Field label="Corrective Action"><textarea rows={2} value={form.corrAction||''} onChange={e=>setForm(f=>({...f,corrAction:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
           <button className="btn" onClick={()=>setModal(null)}>Cancel</button>
-          <button className="btn btn-p" onClick={()=>{const s={...form};if(!(data.safetyLog||[]).find(x=>x.date===s.date&&x.involved===s.involved))setData(d=>({...d,safetyLog:[...(d.safetyLog||[]),s]}));else setData(d=>({...d,safetyLog:(d.safetyLog||[]).map(x=>x.date===s.date&&x.involved===s.involved?s:x)}));setModal(null);}}>Save</button>
+          <button className="btn btn-p" onClick={()=>{const s={...form,id:form.id||'SAF-'+uid()};if(!(data.safetyLog||[]).find(x=>x.id===s.id))setData(d=>({...d,safetyLog:[...(d.safetyLog||[]),s]}));else setData(d=>({...d,safetyLog:(d.safetyLog||[]).map(x=>x.id===s.id?s:x)}));setModal(null);}}>Save</button>
         </div>
       </Modal>}
 
@@ -29190,7 +29190,7 @@ const People = ({data,setData,user}) => {
       {peopleTab==='facility'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:11,color:'var(--muted)'}}>Facility move & capital projects</span>
-          <button className="btn btn-p btn-sm" onClick={()=>{setForm({category:'',description:'',estCost:0,actualCost:0,vendor:'',status:'Planned',dueDate:'',paid:'No',notes:''});setModal('facility');}}>+ Add Item</button>
+          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'FM-'+uid(),category:'',description:'',estCost:0,actualCost:0,vendor:'',status:'Planned',dueDate:'',paid:'No',notes:''});setModal('facility');}}>+ Add Item</button>
         </div>
         <table><thead><tr><th>Category</th><th>Description</th><th>Est Cost</th><th>Actual</th><th>Variance</th><th>Vendor</th><th>Status</th><th>Due</th><th>Paid?</th><th/></tr></thead>
           <tbody>{(data.facilityMove||[]).length===0&&<tr><td colSpan={10}><Empty msg="No facility items"/></td></tr>}
@@ -29289,6 +29289,33 @@ const People = ({data,setData,user}) => {
         <Field label="Action Taken / Resolution"><textarea rows={2} value={form.action||''} onChange={e=>setForm(f=>({...f,action:e.target.value}))}/></Field>
         <Field label="Issued By"><input value={form.issuedBy||''} onChange={e=>setForm(f=>({...f,issuedBy:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={saveDisc}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
+      </Modal>}
+
+      {modal==='facility'&&<Modal title={form.id&&(data.facilityMove||[]).find(x=>x.id===form.id)?'Edit Facility Item':'Add Facility Item'} onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="Category"><input value={form.category||''} placeholder="Equipment, Permits, Labor..." onChange={e=>setForm(f=>({...f,category:e.target.value}))}/></Field>
+          <Field label="Vendor / Contractor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field>
+          <Field label="Estimated Cost ($)"><input type="number" step="100" value={form.estCost||''} onChange={e=>setForm(f=>({...f,estCost:+e.target.value}))}/></Field>
+          <Field label="Actual Cost ($)"><input type="number" step="100" value={form.actualCost||''} onChange={e=>setForm(f=>({...f,actualCost:+e.target.value}))}/></Field>
+          <Field label="Status"><select value={form.status||'Planned'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Planned','In Progress','Complete','On Hold','Cancelled'].map(s=><option key={s}>{s}</option>)}</select></Field>
+          <Field label="Due Date"><input type="date" value={form.dueDate||''} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))}/></Field>
+          <Field label="Paid?"><select value={form.paid||'No'} onChange={e=>setForm(f=>({...f,paid:e.target.value}))}><option>No</option><option>Yes</option></select></Field>
+        </div>
+        <Field label="Description" style={{marginTop:8}}><input value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></Field>
+        <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
+        <div style={{display:'flex',gap:8,marginTop:12}}>
+          <button className="btn btn-p" onClick={()=>{
+            const rec={...form, id:form.id||'FM-'+uid(), estCost:Number(form.estCost||0), actualCost:Number(form.actualCost||0)};
+            if(!(data.facilityMove||[]).find(x=>x.id===rec.id))
+              setData(d=>({...d,facilityMove:[...(d.facilityMove||[]),rec]}));
+            else
+              setData(d=>({...d,facilityMove:(d.facilityMove||[]).map(x=>x.id===rec.id?rec:x)}));
+            setModal(null);
+          }}>Save</button>
+          <button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button>
+          {form.id&&(data.facilityMove||[]).find(x=>x.id===form.id)&&
+            <button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{setData(d=>({...d,facilityMove:(d.facilityMove||[]).filter(x=>x.id!==form.id)}));setModal(null);}}>Delete</button>}
+        </div>
       </Modal>}
     </div>
   );
