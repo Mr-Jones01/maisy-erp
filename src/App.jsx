@@ -94,15 +94,21 @@ const G = () => (
     .skill-cell{width:28px;height:28px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .15s}
     @media print{.no-print{display:none!important}.print-only{display:block!important}body{background:#fff!important;color:#000!important}}
     .print-only{display:none}
-    .login-wrap{min-height:100vh;display:flex;align-items:stretch;background:#050a0f;position:relative;overflow:hidden}
-    .login-left{flex:1.1;display:flex;flex-direction:column;justify-content:center;padding:60px 64px;position:relative;overflow:hidden;background:linear-gradient(145deg,#060d15 0%,#091825 60%,#0a1f30 100%)}
-    .login-left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 30% 40%,rgba(0,180,255,.07) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(0,229,255,.04) 0%,transparent 50%)}
-    .login-right{width:460px;min-width:400px;background:var(--s1);display:flex;flex-direction:column;justify-content:center;padding:48px 44px;overflow-y:auto;position:relative}
-    .login-right::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--acc),#7c3aed,var(--acc))}
-    .login-input{background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 13px;border-radius:6px;font-size:13px;outline:none;width:100%;transition:border-color .15s;font-family:inherit}
-    .login-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,229,255,.08)}
-    .login-rail-line{height:2px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.3),rgba(0,229,255,.6),rgba(0,229,255,.3),transparent);margin:12px 0;border-radius:99px}
-    @media(max-width:700px){.login-left{display:none}.login-right{width:100%;padding:32px 24px}}
+    .login-wrap{min-height:100vh;display:flex;align-items:stretch;position:relative;overflow:hidden;background:#030810}
+    .login-bg{position:absolute;inset:0;z-index:0}
+    .login-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity 1.2s ease}
+    .login-bg-overlay{position:absolute;inset:0;background:linear-gradient(105deg,rgba(2,8,18,.96) 0%,rgba(2,8,18,.88) 42%,rgba(2,8,18,.55) 70%,rgba(2,8,18,.75) 100%)}
+    .login-photo-grid{position:absolute;right:0;top:0;bottom:0;width:460px;display:grid;grid-template-rows:1fr 1fr 1fr;gap:3px;z-index:0;opacity:.22}
+    .login-photo-tile{background-size:cover;background-position:center;filter:saturate(.7) brightness(.9)}
+    .login-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 72px;position:relative;z-index:2}
+    .login-right{width:460px;min-width:400px;display:flex;flex-direction:column;justify-content:center;padding:52px 48px;position:relative;z-index:2;background:rgba(8,16,32,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-left:1px solid rgba(0,229,255,.1)}
+    .login-right::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.6),rgba(124,58,237,.8),rgba(0,229,255,.6),transparent)}
+    .login-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;padding:11px 14px;border-radius:8px;font-size:13px;outline:none;width:100%;transition:all .15s;font-family:inherit}
+    .login-input:focus{border-color:rgba(0,229,255,.6);box-shadow:0 0 0 3px rgba(0,229,255,.1);background:rgba(255,255,255,.09)}
+    .login-input::placeholder{color:rgba(255,255,255,.3)}
+    @keyframes loginImgFade{0%{opacity:0}100%{opacity:1}}
+    @keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+    @media(max-width:800px){.login-left{display:none}.login-right{width:100%;border-left:none;backdrop-filter:none;background:rgba(5,10,20,.97)}}
     .role-admin{color:#f97316;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3)}
     .role-owner{color:#e879f9;background:rgba(232,121,249,.12);border:1px solid rgba(232,121,249,.3)}
     .role-office{color:#a78bfa;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3)}
@@ -26313,8 +26319,29 @@ const Login = ({ onLogin }) => {
   const [showManual, setShowManual] = useState(false);
   const [err, setErr]   = useState('');
   const [show, setShow] = useState(false);
+  const [imgIdx, setImgIdx] = useState(0);
   const emailRef = useRef();
   const passRef  = useRef();
+
+  // Rotate background image every 6 seconds
+  const BG_IMGS = [
+    'photo-1646775815157-8645b5af4e08',
+    'photo-1558618666-fcd25c85cd64',
+    'photo-1580587771525-78b9dba3b914',
+    'photo-1600607687920-4e2a09cf159d',
+  ];
+  const TILE_IMGS = [
+    'photo-1762245833000-e68bc8efba60',
+    'photo-1760067537204-fe9b55b2f1b0',
+    'photo-1646775815157-8645b5af4e08',
+  ];
+
+  useEffect(() => {
+    const t = setInterval(() => setImgIdx(i => (i+1) % BG_IMGS.length), 7000);
+    return () => clearInterval(t);
+  }, []);
+
+  const imgUrl = (id, w=1920) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
 
   const submit = () => {
     const e = (emailRef.current?.value||'').trim().toLowerCase();
@@ -26323,141 +26350,193 @@ const Login = ({ onLogin }) => {
     if(u){setErr('');onLogin(u);}else setErr('Incorrect email or password.');
   };
 
-  const roleIcon = {admin:'⚙',owner:'★',office:'📋',shop:'🏭',shopqueue:'🔥'};
+  const roleIcon  = {admin:'⚙',owner:'★',office:'📋',shop:'🏭',shopqueue:'🔥'};
   const roleLabel = {admin:'Admin',owner:'Owner',office:'Office',shop:'Shop',shopqueue:'Shop Queue'};
   const roleColor = {admin:'#f97316',owner:'#e879f9',office:'#a78bfa',shop:'#34d399',shopqueue:'#fb923c'};
 
   return (
     <div className="login-wrap">
 
-      {/* ── LEFT PANEL — Branding ─────────────────────────────────────── */}
+      {/* ── Animated full-bleed background ─────────────────────────── */}
+      <div className="login-bg">
+        {BG_IMGS.map((id,i)=>(
+          <div key={id} className="login-bg-img" style={{
+            backgroundImage:`url(${imgUrl(id)})`,
+            opacity: i===imgIdx ? 1 : 0,
+            position:'absolute',inset:0,backgroundSize:'cover',backgroundPosition:'center',
+            transition:'opacity 1.8s ease',
+          }}/>
+        ))}
+        <div className="login-bg-overlay"/>
+        {/* Photo tile strip behind right panel */}
+        <div className="login-photo-grid" style={{right:0,width:460}}>
+          {TILE_IMGS.map((id,i)=>(
+            <div key={i} className="login-photo-tile" style={{backgroundImage:`url(${imgUrl(id,800)})`}}/>
+          ))}
+        </div>
+      </div>
+
+      {/* ── LEFT — Brand panel ─────────────────────────────────────── */}
       <div className="login-left">
-        {/* Decorative railing silhouette */}
-        <svg style={{position:'absolute',bottom:0,left:0,right:0,width:'100%',opacity:.06}} viewBox="0 0 800 200" preserveAspectRatio="none">
-          <rect x="0"   y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="60"  y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="120" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="180" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="240" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="300" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="360" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="420" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="480" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="540" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="600" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="660" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="720" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="780" y="30" width="8" height="170" fill="#00e5ff"/>
-          <rect x="0"   y="30" width="800" height="12" rx="4" fill="#00e5ff"/>
-          <rect x="0"   y="80" width="800" height="8"  rx="3" fill="#00e5ff" opacity=".5"/>
-          <rect x="0"   y="130" width="800" height="8" rx="3" fill="#00e5ff" opacity=".3"/>
-        </svg>
-
-        {/* Logo mark */}
-        <div style={{marginBottom:36,position:'relative'}}>
-          <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:32}}>
-            <div style={{width:56,height:56,background:'linear-gradient(135deg,rgba(0,229,255,.9),rgba(99,102,241,.8))',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 40px rgba(0,229,255,.25)'}}>
-              <span style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:28,color:'#000',letterSpacing:'-1px'}}>M</span>
-            </div>
-            <div>
-              <div style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:32,letterSpacing:'.06em',color:'#fff',lineHeight:1}}>MAISY</div>
-              <div style={{fontFamily:'Barlow Condensed',fontWeight:400,fontSize:14,letterSpacing:'.4em',color:'rgba(0,229,255,.7)',textTransform:'uppercase',marginTop:2}}>RAILING</div>
-            </div>
+        {/* Logo */}
+        <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:52}}>
+          <div style={{width:54,height:54,background:'linear-gradient(135deg,rgba(0,229,255,.9) 0%,rgba(99,102,241,.85) 100%)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 48px rgba(0,229,255,.22),0 0 80px rgba(0,229,255,.08)',flexShrink:0}}>
+            <span style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:30,color:'#030810',letterSpacing:'-1px',lineHeight:1}}>M</span>
           </div>
-
-          <div className="login-rail-line"/>
-
-          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:38,color:'#fff',lineHeight:1.1,marginBottom:16,letterSpacing:'.01em'}}>
-            Built by hand.<br/>
-            <span style={{color:'rgba(0,229,255,.8)'}}>Tracked by data.</span>
+          <div>
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:28,letterSpacing:'.1em',color:'#fff',lineHeight:1,textTransform:'uppercase'}}>Maisy Railing</div>
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:500,fontSize:11,letterSpacing:'.32em',color:'rgba(0,229,255,.55)',textTransform:'uppercase',marginTop:3}}>Hayden · Idaho · Est. 2018</div>
           </div>
-          <div style={{fontSize:14,color:'rgba(255,255,255,.45)',lineHeight:1.7,maxWidth:380}}>
-            Custom aluminum railing — from raw extrusion to your doorstep. Every cut, weld, and coat tracked in one place.
+        </div>
+
+        {/* Slogan */}
+        <div style={{marginBottom:40}}>
+          <div style={{
+            fontFamily:'Barlow Condensed',fontWeight:900,fontSize:58,lineHeight:.95,
+            letterSpacing:'-.01em',color:'#fff',marginBottom:20,
+            textShadow:'0 2px 40px rgba(0,0,0,.6)',
+          }}>
+            Cut.<br/>
+            Weld.<br/>
+            <span style={{
+              backgroundImage:'linear-gradient(90deg,rgba(0,229,255,1) 0%,rgba(99,102,241,1) 50%,rgba(0,229,255,1) 100%)',
+              backgroundSize:'200% auto',
+              WebkitBackgroundClip:'text',
+              WebkitTextFillColor:'transparent',
+              backgroundClip:'text',
+              animation:'shimmer 4s linear infinite',
+            }}>
+              Deliver.
+            </span>
+          </div>
+          <div style={{fontSize:15,color:'rgba(255,255,255,.5)',lineHeight:1.7,maxWidth:340,fontWeight:400}}>
+            Built by hand in Hayden, Idaho — powder coated to perfection and tracked from raw stock to your front door.
           </div>
         </div>
 
         {/* Stats row */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginTop:8,position:'relative'}}>
+        <div style={{display:'flex',gap:24}}>
           {[
-            {label:'Products',val:'Cable · Glass · Picket'},
-            {label:'Location',val:'Hayden, Idaho'},
-            {label:'System',val:'Maisy ERP v5.6'},
+            {val:'100%',label:'American Made'},
+            {val:'42"',label:'Standard Height'},
+            {val:'100%',label:'Powder Coated'},
           ].map(s=>(
-            <div key={s.label} style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.07)',borderRadius:8,padding:'12px 14px'}}>
-              <div style={{fontSize:9,color:'rgba(0,229,255,.6)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',marginBottom:4}}>{s.label}</div>
-              <div style={{fontSize:12,color:'rgba(255,255,255,.75)',fontWeight:600}}>{s.val}</div>
+            <div key={s.label}>
+              <div style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:26,color:'rgba(0,229,255,.9)',lineHeight:1}}>{s.val}</div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginTop:2,fontWeight:700}}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div style={{marginTop:'auto',paddingTop:40,fontSize:11,color:'rgba(255,255,255,.2)',position:'relative'}}>
-          © 2026 Maisy Railing · Confidential Internal System
+        {/* Photo credit */}
+        <div style={{marginTop:'auto',paddingTop:48,fontSize:10,color:'rgba(255,255,255,.15)',letterSpacing:'.06em'}}>
+          Photos courtesy Unsplash · © 2026 Maisy Railing · Internal System
         </div>
       </div>
 
-      {/* ── RIGHT PANEL — Login ───────────────────────────────────────── */}
-      <div className="login-right fade-up">
-        <div style={{marginBottom:28}}>
-          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.18em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Welcome back</div>
-          <div style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:30,color:'var(--txt)',letterSpacing:'.02em',lineHeight:1}}>Select your account</div>
-          <div style={{fontSize:12,color:'var(--muted)',marginTop:6}}>Click your name to sign in instantly</div>
+      {/* ── RIGHT — Login panel ────────────────────────────────────── */}
+      <div className="login-right">
+        <div style={{marginBottom:32}}>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:10,letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(0,229,255,.7)',marginBottom:10}}>Production Operations System</div>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:900,fontSize:28,color:'#fff',letterSpacing:'.01em',lineHeight:1,marginBottom:6}}>Sign In</div>
+          <div style={{fontSize:12,color:'rgba(255,255,255,.38)'}}>Click your account to log in instantly</div>
         </div>
 
-        {/* User cards — PRIMARY login method, no inputs, no autocomplete */}
-        <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:24}}>
+        {/* Instant login cards */}
+        <div style={{display:'flex',flexDirection:'column',gap:7,marginBottom:28}}>
           {DEMO_USERS.map(u=>{
+            const rc = roleColor[u.role]||'#00e5ff';
             const ic = roleIcon[u.role]||'👤';
-            const rc = roleColor[u.role]||'var(--acc)';
             const rl = roleLabel[u.role]||u.role;
             return (
               <button key={u.email}
-                onPointerDown={()=>{ onLogin(u); }}
-                style={{display:'flex',alignItems:'center',gap:14,padding:'13px 16px',background:'var(--s2)',border:`1px solid var(--bdr)`,borderRadius:10,cursor:'pointer',textAlign:'left',width:'100%',transition:'all .15s',outline:'none',fontFamily:'inherit'}}
-                onMouseOver={e=>{e.currentTarget.style.borderColor=rc;e.currentTarget.style.background=`${rc}0d`;e.currentTarget.style.transform='translateX(3px)';}}
-                onMouseOut={e=>{e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.background='var(--s2)';e.currentTarget.style.transform='translateX(0)';}}
+                onPointerDown={()=>onLogin(u)}
+                style={{
+                  display:'flex',alignItems:'center',gap:14,padding:'12px 16px',
+                  background:`rgba(255,255,255,.05)`,
+                  border:`1px solid rgba(255,255,255,.1)`,
+                  borderRadius:10,cursor:'pointer',textAlign:'left',width:'100%',
+                  transition:'all .18s',outline:'none',fontFamily:'inherit',
+                  backdropFilter:'blur(8px)',
+                }}
+                onMouseOver={e=>{
+                  e.currentTarget.style.background=`${rc}12`;
+                  e.currentTarget.style.borderColor=`${rc}55`;
+                  e.currentTarget.style.transform='translateX(4px)';
+                  e.currentTarget.style.boxShadow=`0 4px 24px ${rc}18`;
+                }}
+                onMouseOut={e=>{
+                  e.currentTarget.style.background='rgba(255,255,255,.05)';
+                  e.currentTarget.style.borderColor='rgba(255,255,255,.1)';
+                  e.currentTarget.style.transform='translateX(0)';
+                  e.currentTarget.style.boxShadow='none';
+                }}
               >
-                <div style={{width:40,height:40,borderRadius:10,background:`${rc}18`,border:`1px solid ${rc}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>
+                <div style={{
+                  width:38,height:38,borderRadius:9,
+                  background:`${rc}1a`,border:`1px solid ${rc}44`,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontSize:16,flexShrink:0,
+                }}>
                   {ic}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:700,fontSize:14,color:'var(--txt)'}}>{u.name}</div>
-                  <div style={{fontSize:10,color:'var(--muted)',marginTop:1,textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}>{u.title} · {u.email}</div>
+                  <div style={{fontWeight:700,fontSize:13.5,color:'rgba(255,255,255,.92)',lineHeight:1.2}}>{u.name}</div>
+                  <div style={{fontSize:10,color:'rgba(255,255,255,.35)',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.title}</div>
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
-                  <span style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',padding:'2px 7px',borderRadius:3,background:`${rc}18`,color:rc,border:`1px solid ${rc}33`}}>{rl.toUpperCase()}</span>
-                  <span style={{color:'var(--muted)',fontSize:16,lineHeight:1}}>›</span>
+                  <span style={{
+                    fontSize:8,fontFamily:'Barlow Condensed',fontWeight:800,letterSpacing:'.1em',
+                    padding:'3px 8px',borderRadius:3,
+                    background:`${rc}1a`,color:rc,border:`1px solid ${rc}33`,
+                    textTransform:'uppercase',
+                  }}>{rl}</span>
+                  <span style={{color:'rgba(255,255,255,.25)',fontSize:18,lineHeight:1}}>›</span>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* Manual login — collapsed by default, no interference with cards */}
-        <div style={{borderTop:'1px solid var(--bdr)',paddingTop:16}}>
-          <button onClick={()=>setShowManual(s=>!s)} style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:12,fontFamily:'inherit',display:'flex',alignItems:'center',gap:6,padding:0,marginBottom:showManual?14:0}}>
-            <span style={{fontSize:10,color:showManual?'var(--acc)':'var(--muted)'}}>{showManual?'▲':'▼'}</span>
+        {/* Manual login — collapsed */}
+        <div style={{borderTop:'1px solid rgba(255,255,255,.08)',paddingTop:18}}>
+          <button
+            onClick={()=>setShowManual(s=>!s)}
+            style={{background:'none',border:'none',color:'rgba(255,255,255,.35)',cursor:'pointer',fontSize:12,fontFamily:'inherit',display:'flex',alignItems:'center',gap:6,padding:0,marginBottom:showManual?16:0,transition:'color .15s'}}
+            onMouseOver={e=>e.currentTarget.style.color='rgba(255,255,255,.7)'}
+            onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,.35)'}
+          >
+            <span style={{fontSize:9}}>{showManual?'▲':'▼'}</span>
             Sign in with email & password
           </button>
           {showManual&&<>
             <div style={{marginBottom:10}}>
-              <label style={{display:'block',fontSize:11,color:'var(--muted)',marginBottom:4,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}}>Email</label>
-              <input ref={emailRef} className="login-input" type="text" name="maisy-user"
+              <label style={{display:'block',fontSize:10,color:'rgba(255,255,255,.4)',marginBottom:5,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase'}}>Email</label>
+              <input ref={emailRef} className="login-input" type="text" name="maisy-login-user"
                 autoComplete="off" spellCheck="false"
                 onKeyDown={e=>e.key==='Enter'&&passRef.current?.focus()}
                 placeholder="you@maisyrailing.com"/>
             </div>
             <div style={{marginBottom:14}}>
-              <label style={{display:'block',fontSize:11,color:'var(--muted)',marginBottom:4,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}}>Password</label>
+              <label style={{display:'block',fontSize:10,color:'rgba(255,255,255,.4)',marginBottom:5,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase'}}>Password</label>
               <div style={{position:'relative'}}>
-                <input ref={passRef} className="login-input" type={show?'text':'password'} name="maisy-pass"
+                <input ref={passRef} className="login-input" type={show?'text':'password'} name="maisy-login-pass"
                   autoComplete="new-password"
                   onKeyDown={e=>e.key==='Enter'&&submit()}
                   placeholder="••••••••••"/>
-                <button type="button" onClick={()=>setShow(s=>!s)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.08em'}}>{show?'HIDE':'SHOW'}</button>
+                <button type="button" onClick={()=>setShow(s=>!s)}
+                  style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'rgba(255,255,255,.35)',cursor:'pointer',fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',padding:0}}>
+                  {show?'HIDE':'SHOW'}
+                </button>
               </div>
             </div>
-            {err&&<div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',borderRadius:5,padding:'8px 12px',fontSize:12,color:'var(--err)',marginBottom:10}}>{err}</div>}
-            <button className="btn btn-p" style={{width:'100%',justifyContent:'center',padding:'10px',fontSize:13}} onClick={submit}>Sign In →</button>
+            {err&&<div style={{background:'rgba(239,68,68,.12)',border:'1px solid rgba(239,68,68,.3)',borderRadius:6,padding:'8px 12px',fontSize:12,color:'#fca5a5',marginBottom:12}}>{err}</div>}
+            <button
+              className="btn btn-p"
+              style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:13,borderRadius:8}}
+              onClick={submit}>
+              Sign In →
+            </button>
           </>}
         </div>
       </div>
@@ -26465,7 +26544,7 @@ const Login = ({ onLogin }) => {
   );
 };
 
-// ─── SIDEBAR ─────────────────────────────────────────────────────────────────────
+// ─── SIDEBAR────────────────────────────────────────────────────────
 const NAVS = [
   {section:'Overview'},
   {id:'dashboard',icon:'▦',label:'Dashboard'},
