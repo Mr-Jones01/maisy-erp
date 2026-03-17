@@ -25226,6 +25226,86 @@ const INIT = {
 
 
 // ─── QUEUE ANALYZER ──────────────────────────────────────────────────────────────
+// ─── INFO BANNER ─────────────────────────────────────────────────────────────────
+const INFO_SOURCES = {
+  dashboard:      { icon:'▦',  title:'Command Dashboard',        summary:'Auto-calculated from live ERP data.', details:'KPIs pull from Orders, Invoicing, Inventory, Work Orders, and Shipping. All figures update in real time as data is entered across the system. Nothing here is manually typed — it reflects the current state of all other pages.' },
+  todo:           { icon:'☑',  title:'To-Do / Hot List',         summary:'100% manually entered.', details:'Tasks and hot list items are created and managed by your team. Priority, status, due date, and owner are all set by whoever creates or updates the entry. Nothing auto-populates here.' },
+  orders:         { icon:'📋', title:'Orders',                   summary:'Manually entered + imported from OneDrive.', details:'Orders can be created manually by clicking "+ New Order", or automatically imported from Excel order files stored on OneDrive via the Order Import page. The BOM (Bill of Materials) is auto-calculated when an order is confirmed. Inventory is deducted automatically when status changes to "In Production".' },
+  orderimport:    { icon:'📥', title:'Order Import',             summary:'Auto-parsed from Excel files on OneDrive.', details:'Connects to your Microsoft OneDrive account and scans order folders for Excel files. Each file is parsed by AI (Claude) which extracts customer info, quantities, dimensions, and hardware. You review each draft before confirming. Files must be in the connected OneDrive directory.' },
+  workorders:     { icon:'🏗', title:'Work Orders',              summary:'Manually created and updated.', details:'Work Orders are created manually by admin or shop staff, linked to a Sales Order by Order ID. Station, assigned worker, qty, labor hours, and material cost are all entered by hand. Progress % can be updated by shop staff via slider. Completed WOs roll into Job Costing.' },
+  sales:          { icon:'◈',  title:'Sales & Quotes',           summary:'Manually entered.', details:'Sales orders and quotes are entered manually. Each record includes customer, amount, status, and dates — all typed in by office or sales staff. Revenue totals on the Dashboard pull from confirmed Sales Orders here.' },
+  production:     { icon:'◎',  title:'Production',              summary:'Mixed: Work Orders are manual. Safety/Defect logs are manual. Scrap is manual.', details:'Work Orders tab: Created manually, progress updated by shop staff. Scrap & Waste: Manually logged by station. Safety Log: Manually entered after each incident — required for OSHA records. Defect Log: Manually entered after QC failures. Improvements: Manually submitted by any team member. Shift Handoff: Manually completed by shift lead at end of each shift.' },
+  queueanalyzer:  { icon:'📊', title:'Queue Analyzer',          summary:'Uploaded from Excel — your NetSuite/production queue export.', details:'Upload an Excel file exported from your order management system (needs a "Form Responses 1" sheet). The analyzer auto-parses all rows and calculates age, status, flags overdue items, and generates the monthly breakdown. Status changes you make here are saved and persist until you upload a new file.' },
+  hotqueue:       { icon:'🔥', title:'Hot / Rush Queue',         summary:'Pushed from Queue Analyzer or entered manually.', details:'Items arrive here two ways: (1) Auto-pushed from Queue Analyzer when you flag orders as HOT, RUSH, or FLAGGED and click "Push to Hot Queue", or (2) Manually added by clicking "+ Add Order". Tag, status, and all fields can be edited at any time. This is your live priority board.' },
+  inventory:      { icon:'◉',  title:'Inventory',               summary:'Seeded from your material list. Adjustments manual. Auto-deducted on production.', details:'Starting quantities were loaded from your materials tracker. Inventory is reduced automatically when an Order status changes to "In Production" (based on the BOM). Manual adjustments can be made anytime via the ± button. Reorder points trigger alerts on the Dashboard. The BOM Builder is manually configured per product.' },
+  shipping:       { icon:'◒',  title:'Shipping',                summary:'Mixed: Historical log imported. New entries manual.', details:'Ship Log: Your historical ABF/UPS/Estes shipment records were imported from your GOD Mode Excel file. New shipments are entered manually after booking with the carrier — enter tracking, weight, dims, cost, and status. Carrier Analysis and Monthly Summary are auto-calculated from the log. Ship Calculator uses manually entered package details with live rate estimation.' },
+  salespipeline:  { icon:'📊', title:'Sales Pipeline',          summary:'Manually entered by sales team.', details:'Deals, stages, values, and probability are all entered manually by Kyle or sales staff. Nothing pulls from Orders automatically — this is a forward-looking pipeline for deals not yet converted to orders. Won deals should be manually linked to an Order when they close.' },
+  commissions:    { icon:'💵', title:'Commissions',             summary:'Auto-calculated from Sales Orders + manually configured rates.', details:'Commission rates per rep are set manually in the Rates tab. Earned commissions are calculated automatically from confirmed Sales Orders. Adjustments (bonuses, clawbacks) are entered manually. Payout records are logged manually after payment.' },
+  shipcalc:       { icon:'🚚', title:'Ship Calculator',         summary:'Manual inputs, calculated output.', details:'Enter package dimensions, weight, destination zip, and carrier — the calculator estimates freight cost using your historical rate data. No live carrier API connection. Results are estimates only; actual costs may vary. Use the Ship Log to record actual costs after booking.' },
+  invoicing:      { icon:'◑',  title:'Invoicing & A/R',        summary:'Manually created. Aging auto-calculated.', details:'Invoices are created manually — linked to a Sales Order by ID. Amount, status, issue date, and due date are entered by hand. The system auto-flags Overdue invoices based on due date vs. today. A/R aging buckets (Current, 30, 60, 90+ days) are auto-calculated from invoice dates. Misc Charges are manually logged.' },
+  purchasing:     { icon:'◐',  title:'Purchasing',              summary:'Manually entered. Vendor records maintained here.', details:'Purchase Orders are created manually — vendor, items, quantities, costs, and delivery dates are all typed in. Vendor records are maintained manually. When a PO is received, click "Receive" to update status. Auto Reorder rules (on the Auto Reorder page) can trigger PO suggestions but do not auto-create POs.' },
+  finance:        { icon:'◧',  title:'Finance & P&L',          summary:'Auto-calculated from Invoicing, Purchasing, Shipping, and Misc Charges.', details:'Revenue pulls from paid Invoices. COGS pulls from PO costs + Work Order material costs. Freight expense pulls from the Ship Log. Misc Charges are added from the Invoicing page. Labor Rates are configured manually. All P&L figures are derived — no manual entry required here except labor rate setup and product profitability lines.' },
+  payments:       { icon:'💳', title:'Payments',               summary:'Manually logged after payment received.', details:'Payment records are entered manually when a customer pays — amount, method, date, and linked invoice are all typed in. Payment methods (cards, ACH, etc.) are set up manually in the Methods tab. QuickBooks sync (if connected) can push payment records to QBO.' },
+  quickbooks:     { icon:'📗', title:'QuickBooks',             summary:'Syncs TO QuickBooks from this ERP. OAuth connection required.', details:'Connect via OAuth in the Setup tab using your QBO credentials. Once connected, you can sync Customers, Invoices, and Payments to QuickBooks Online. Data flows one-way: ERP → QBO. The ERP does not pull data from QBO. Sync status and logs are shown in the Activity Log tab.' },
+  taxcenter:      { icon:'🧾', title:'Tax & Compliance',       summary:'Calculated via Avalara AvaTax API. Resale certs manually uploaded.', details:'Sales tax on orders is calculated automatically using the Avalara AvaTax API (requires API credentials in Setup). The tax rate is determined by the ship-to address. Resale Certificates are uploaded and managed manually — attach a PDF or image when adding a cert. The Nexus map shows states where you have tax obligations.' },
+  jobcost:        { icon:'◬',  title:'Job Costing',            summary:'Auto-calculated from Work Orders, Invoicing, and Shipping.', details:'Material cost pulls from Work Order matCost fields. Labor cost is calculated from Work Order labor hours × labor rate. Freight cost pulls from Ship Log entries matched by order. Revenue pulls from linked Invoices. Gross margin is auto-calculated. All inputs must be entered accurately in their respective pages for job cost to be meaningful.' },
+  customers:      { icon:'◫',  title:'Customers',             summary:'Partially seeded. New entries manual.', details:'A starter customer list was loaded from your historical order data. New customers are added manually — contact info, type, and city are all entered by hand. YTD revenue auto-calculates from linked Sales Orders. Customer history shows linked orders and invoices.' },
+  autopo:         { icon:'◩',  title:'Auto Reorder',          summary:'Rules manually configured. Triggers auto-detected from inventory levels.', details:'Auto Reorder Rules are set up manually — choose an inventory item, set a trigger quantity, order quantity, vendor, and cost. The system monitors inventory levels and flags items that have hit their reorder point. Rules do NOT auto-create POs — they surface alerts so you can create the PO manually in Purchasing.' },
+  sister:         { icon:'⊕',  title:'Sister Company',        summary:'Manually entered from 3BD order forms.', details:'Order Fulfillment records (transfers to Bellevue) are manually entered from 3BD order forms — order number, project name, description, amount, and type are all typed in. Borrowed Labor entries are also manual — entered after each cross-company labor event. Totals and analytics auto-calculate from the log.' },
+  people:         { icon:'◍',  title:'People & HR',           summary:'All manually maintained.', details:'Employees: Added manually — name, role, rate, hire date. Training Matrix: Skill levels updated manually per employee. Certifications: Uploaded manually with expiration dates. Equipment: Added manually with PM schedule. Facility Move: Items added manually with budget/actual tracking. Positions: Open roles added manually. Discipline Log: Entries added manually after each event. Efficiency: Tracked manually per employee.' },
+  automation:     { icon:'⊞',  title:'Automation Roadmap',   summary:'Manually maintained by Operations.', details:'Phases, completion percentages, budgets, and station details are all updated manually by the Director of Operations. Phase items are added manually as automation projects progress. The roadmap reflects your 30-month plan — update completion sliders and budget actuals as equipment is procured and installed.' },
+  kpi:            { icon:'◈',  title:'KPI Dashboard',        summary:'Auto-calculated from all ERP data.', details:'All KPI cards pull live from the corresponding data: on-time delivery from Ship Log dates, revenue from Invoicing, inventory turns from Inventory + COGS, defect rate from Defect Log, labor efficiency from Work Orders. Targets are set manually in the configuration. Trend charts auto-generate from historical records.' },
+  buildschedule:  { icon:'📅', title:'Build Schedule',       summary:'Manually built from Orders data.', details:'Schedule entries are created manually — pull the order from your Orders page, set the production date, assign a station, and set priority. The system does not auto-schedule orders. The Bottleneck Analysis auto-calculates from station times in the Process Cost Analysis page.' },
+  processtracker: { icon:'⏱',  title:'Process Tracker',      summary:'Based on your floor-measured time study data.', details:'All task times, labor rates, and production targets were derived from actual floor measurements taken during your time study (Feb-Mar 2026). These are your real numbers — not industry estimates. Update them manually if process times change significantly.' },
+  processcost:    { icon:'💲', title:'Process Cost Analysis', summary:'Calculated from your floor-measured data + live product selector.', details:'All labor rates, task times, consumable costs, and equipment depreciation were loaded from your Process Cost Analysis Excel workbook (v9). The product selector dynamically recalculates all costs, times, and outputs for each product type. Update the underlying data in the Excel file and re-import if your process changes.' },
+  shifthandoff:   { icon:'📋', title:'Shift Handoff',        summary:'Manually completed by shift lead at end of each shift.', details:'The shift lead fills out the handoff log at the end of each shift — who worked, what orders were touched, which stations are down, and any quality or safety issues. This feeds the Production > Shift Handoff tab. Entries are timestamped automatically.' },
+  calculators:    { icon:'🧮', title:'Shop Calculators',     summary:'Manual inputs only — all calculations are instant.', details:'Powder Coat: Enter post count and dimensions to get lbs of powder needed. Material Cost: Enter quantities and unit costs. Labor: Enter hours and rate. Automation ROI: Enter investment, savings, and timeline. Unit Converter: Enter any value to convert between units. Nothing here saves to the ERP — these are standalone reference tools.' },
+  facilitymove:   { icon:'🏗️', title:'Facility Move Planner',summary:'Manually tracked by Operations.', details:'Move tasks and capital items are added manually — category, description, estimated cost, actual cost, vendor, status, and due date are all entered by hand. Budget overview figures are updated manually as actual costs come in. This is a standalone planning tracker, not connected to Purchasing or Finance automatically.' },
+  employeereviews:{ icon:'⭐',  title:'Employee Reviews',    summary:'Manually completed by Director of Operations each quarter.', details:'Competency scores (1-5) for each employee across 7 categories are entered manually by the reviewer. Overall scores and trend charts auto-calculate from the scores entered. Reviews should be completed quarterly — previous scores are retained for trend tracking.' },
+  productcatalog: { icon:'🏷️', title:'Product Catalog',    summary:'Manually maintained by Operations/Sales.', details:'Kit SKUs, descriptions, COGS, wholesale price, and retail price are all entered and maintained manually. Gross margin % auto-calculates from cost vs. price. This catalog is a reference tool — it does not automatically connect to Orders or Invoicing (yet). Use it to ensure pricing is consistent across quotes.' },
+  opsreference:   { icon:'📖', title:'Ops Reference',       summary:'Static reference content — no live data.', details:'This page contains your standard operating procedures, quality standards, and daily/weekly/monthly checklists. All content is hardcoded reference material. To update procedures, contact the Director of Operations to have the ERP updated. This is not a live-edited document.' },
+  shopref:        { icon:'⊟',  title:'Shop Reference',     summary:'Static material specs and reference tables.', details:'Material properties, fastener specs, stair angle calculator, and the inches-to-mm conversion chart are all reference tables loaded from your Shop Reference Guide. The stair angle and raw material calculators use manual inputs. No live data connection — these are lookup tools for the shop floor.' },
+  workbookgen:    { icon:'📑', title:'Workbook Generator',  summary:'Generates Excel workbooks from your current ERP data.', details:'The workbook generator pulls live inventory, pricing, and order data from the ERP to build downloadable Excel files. Select the workbook type, configure options, and download. Output reflects whatever is currently in your ERP — keep your data current for accurate workbooks.' },
+  orderanalyzer:  { icon:'🔍', title:'Order Analyzer',     summary:'Analyzes confirmed Orders from this ERP.', details:'Pulls all confirmed orders from the Orders page and runs analytics — product mix, revenue by customer, lead source breakdown, and monthly trends. All data comes from the Orders you have confirmed in the system. More orders = more accurate analysis.' },
+  srscatalog:     { icon:'⊛',  title:'SRS Catalog',       summary:'Static product and pricing reference.', details:'The SRS (Standard Railing System) catalog contains standard configurations, part numbers, and suggested pricing. Content is maintained by Operations and updated manually. Use this as a quoting reference — not a live price feed.' },
+  legacyorders:   { icon:'◫',  title:'Legacy Orders',     summary:'Historical orders imported from old system.', details:'These orders were migrated from your previous order management system. They are read-only reference records. New orders go in the Orders page. Legacy orders feed into the Order Analyzer for historical trend data.' },
+  printcenter:    { icon:'🖨', title:'Print Center',      summary:'Generates formatted PDFs from live ERP data.', details:'Each print option pulls current data from the corresponding ERP page — Safety Log, QC checklists, Work Orders, Ship Log, etc. Output is always current as of the time you print. No data is manually entered here.' },
+  reports:        { icon:'◪',  title:'Reports',           summary:'Auto-generated from all ERP data. Backup/Restore here.', details:'All report figures are calculated live from your ERP data. The Backup button exports your entire ERP to a JSON file — download it weekly. The Restore function lets you load a previous backup. The Reset function clears all data — use with extreme caution.' },
+};
+
+const InfoBanner = ({pageId}) => {
+  const [open, setOpen] = React.useState(false);
+  const info = INFO_SOURCES[pageId];
+  if(!info) return null;
+  return (
+    <div style={{
+      background:'rgba(0,229,255,.04)',
+      border:'1px solid rgba(0,229,255,.15)',
+      borderRadius:7,
+      padding:'8px 14px',
+      marginBottom:16,
+      display:'flex',
+      alignItems:'flex-start',
+      gap:10,
+    }}>
+      <span style={{fontSize:14,flexShrink:0,marginTop:1}}>ℹ️</span>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+          <span style={{fontSize:11,fontWeight:700,color:'var(--acc)',fontFamily:"Barlow Condensed",letterSpacing:'.06em',textTransform:'uppercase'}}>{info.title}</span>
+          <span style={{fontSize:11,color:'var(--muted)'}}>—</span>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{info.summary}</span>
+          <button
+            onClick={()=>setOpen(o=>!o)}
+            style={{background:'none',border:'none',color:'var(--acc)',cursor:'pointer',fontSize:10,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',padding:'1px 6px',marginLeft:4,opacity:.7}}
+          >{open?'LESS ▲':'MORE ▼'}</button>
+        </div>
+        {open&&<div style={{marginTop:6,fontSize:11,color:'rgba(255,255,255,.55)',lineHeight:1.65,maxWidth:860}}>{info.details}</div>}
+      </div>
+    </div>
+  );
+};
+
+
 const QueueAnalyzer = ({data, setData}) => {
   // Load SheetJS on mount
   useEffect(() => {
@@ -25432,6 +25512,8 @@ const QueueAnalyzer = ({data, setData}) => {
 
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="queueanalyzer"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:18}}>Queue Analyzer</div>
@@ -25768,6 +25850,8 @@ const HotRushQueue = ({data, setData}) => {
         </div>
       )}
 
+
+      <InfoBanner pageId="hotqueue"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:18}}>Hot / Rush Queue</div>
@@ -26008,6 +26092,7 @@ const WorkbookGenerator = ({data, setData}) => {
 
   return (
     <div className="fade-up">
+        <InfoBanner pageId="workbookgen"/>
       {screen==='key' && (
         <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'65vh',gap:20}}>
           <div style={{fontSize:40,opacity:.3}}>📑</div>
@@ -26206,6 +26291,7 @@ const OrderAnalyzer = ({data}) => {
 
   return (
     <div className="fade-up">
+        <InfoBanner pageId="orderanalyzer"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:18}}>Order Analyzer</div>
@@ -26659,6 +26745,7 @@ const Dashboard = ({data,setPage}) => {
   const laborCostTotal=(data.laborRates||[]).reduce((a,b)=>a+b.rateHr,0);
   return (
     <div className="fade-up">
+        <InfoBanner pageId="dashboard"/>
       <div className="section-hd">
         <div className="hd" style={{fontSize:24}}>Command Dashboard</div>
         <div style={{fontSize:11,color:'var(--muted)'}}>{new Date().toLocaleString()}</div>
@@ -27231,6 +27318,7 @@ const Inventory = ({data, setData, user}) => {
   const assemblyVal=(data.assemblyItems||[]).reduce((a,b)=>a+(b.qty||0)*(b.cost||0),0);
   return (
     <div className="fade-up">
+        <InfoBanner pageId="inventory"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Inventory & Materials</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{fmt$(totalVal)}</span><span className="chip" style={{color:low.length?'var(--warn)':undefined}}>{low.length} low stock</span></div>
@@ -27633,6 +27721,8 @@ const Production = ({data, setData, user}) => {
   const scrapYTD=(data.scrapWaste||[]).reduce((a,b)=>a+(b.cost||0),0);
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="production"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Production / Work Orders</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.workOrders.filter(w=>w.status==='In Progress').length} active</span><span className="chip">{data.workOrders.filter(w=>w.status==='Queued').length} queued</span></div></div>
@@ -27991,6 +28081,7 @@ const Purchasing = ({data, setData}) => {
   const openPOs=data.purchaseOrders.filter(p=>!['Received','Cancelled'].includes(p.status));
   return (
     <div className="fade-up">
+        <InfoBanner pageId="purchasing"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Purchasing & Vendors</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.vendors.length} vendors</span><span className="chip" style={{color:readyToReceive.length?'var(--info)':undefined}}>{readyToReceive.length} ready to receive</span></div></div>
@@ -28398,6 +28489,7 @@ const Invoicing = ({data, setData}) => {
   const owed=data.invoices.filter(i=>i.status!=='Paid'&&i.status!=='Cancelled').reduce((a,b)=>a+b.amount,0);
   return (
     <div className="fade-up">
+        <InfoBanner pageId="invoicing"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Invoicing & A/R</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip" style={{color:'var(--ok)'}}>{fmt$(paid)} collected</span><span className="chip" style={{color:owed?'var(--warn)':undefined}}>{fmt$(owed)} owed</span></div></div>
@@ -28532,6 +28624,7 @@ const Shipping = ({data, setData}) => {
   const monthlySummary = Object.values(monthMap).sort((a,b)=>a.key.localeCompare(b.key));
   return (
     <div className="fade-up">
+        <InfoBanner pageId="shipping"/>
       {(()=>{
         const totalSpend = allShipments.reduce((a,b)=>a+(b.totalCost||0),0);
         const withCost = allShipments.filter(s=>s.totalCost>0);
@@ -28878,6 +28971,7 @@ const Customers = ({data, setData}) => {
   const vcOrders=vc?data.salesOrders.filter(o=>o.cusId===vc.id):[];
   return (
     <div className="fade-up">
+        <InfoBanner pageId="customers"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Customers</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.customers.length} accounts</span><span className="chip">{fmt$(data.customers.reduce((a,b)=>a+b.ytd,0))} YTD</span></div></div>
@@ -28956,6 +29050,7 @@ const AutoPO = ({data, setData}) => {
   };
   return (
     <div className="fade-up">
+        <InfoBanner pageId="autopo"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Auto Reorder Rules</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{data.autoPoRules.filter(r=>r.enabled).length} active</span><span className="chip" style={{color:triggered.length?'var(--err)':undefined}}>{triggered.length} triggered</span></div></div>
@@ -29053,6 +29148,7 @@ const Reports = ({data,setData}) => {
   return (
     <>
     <div className="fade-up">
+        <InfoBanner pageId="reports"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Reports & Analytics</div></div>
         <div style={{display:'flex',gap:8}}>
@@ -29201,6 +29297,7 @@ const Finance = ({data,setData}) => {
 
   return(
     <div className="fade-up">
+        <InfoBanner pageId="finance"/>
       {(()=>{
         const pnl=data.monthlyPL||[];
         const revenue=pnl.reduce((a,r)=>a+(r.jan||0)+(r.feb||0)+(r.mar||0)+(r.apr||0)+(r.may||0)+(r.jun||0)+(r.jul||0)+(r.aug||0)+(r.sep||0)+(r.oct||0)+(r.nov||0)+(r.dec||0),0);
@@ -29520,6 +29617,7 @@ const People = ({data,setData,user}) => {
 
   return(
     <div className="fade-up">
+        <InfoBanner pageId="people"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>People & HR</div>
           <div style={{display:'flex',gap:6,marginTop:5}}>
@@ -29827,6 +29925,7 @@ const Automation = ({data,setData}) => {
 
   return(
     <div className="fade-up">
+        <InfoBanner pageId="automation"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Automation Roadmap</div>
           <div style={{display:'flex',gap:6,marginTop:5}}>
@@ -30986,6 +31085,7 @@ const KPIDashboard = ({data,setData}) => {
   const latest = weekly.filter(w=>w.onTimeDeliveryPct||w.wipCount||w.scrapWasteDollar).slice(-1)[0]||{};
   return (
     <div className="fade-up">
+        <InfoBanner pageId="kpi"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>KPI Dashboard</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{weekly.length} weeks logged</span><span className="chip">{targets.length} targets</span></div>
@@ -31380,6 +31480,8 @@ const Orders = ({data, setData}) => {
 
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="orders"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Orders</div>
@@ -31732,6 +31834,7 @@ const SalesPipeline = ({data, setData}) => {
 
   return (
     <div className="fade-up">
+        <InfoBanner pageId="salespipeline"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Sales Pipeline</div>
@@ -31911,6 +32014,7 @@ const Commissions = ({data, setData}) => {
 
   return (
     <div className="fade-up">
+        <InfoBanner pageId="commissions"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Commissions</div>
@@ -32039,6 +32143,7 @@ const Payments = ({data, setData}) => {
 
   return (
     <div className="fade-up">
+        <InfoBanner pageId="payments"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Payments</div>
@@ -33567,6 +33672,8 @@ Return ONLY the JSON object, no other text.`;
 
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="orderimport"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Order Import</div>
@@ -34094,6 +34201,7 @@ const SRSCatalog = ({data,setData}) => {
   };
   return (
     <div className="fade-up">
+        <InfoBanner pageId="srscatalog"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>SRS Catalog</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{catalog.length} SKUs</span><span className="chip">{cats.length-1} categories</span></div>
@@ -34185,6 +34293,7 @@ const LegacyOrders = ({data,setData}) => {
   };
   return (
     <div className="fade-up">
+        <InfoBanner pageId="legacyorders"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Legacy Orders (Pre-2026)</div>
           <div style={{display:'flex',gap:6,marginTop:5}}><span className="chip">{orders.length} orders</span><span className="chip">{Object.keys(byType).length} product types</span></div>
@@ -34250,6 +34359,7 @@ const LegacyOrders = ({data,setData}) => {
 };
 
 const WorkOrders = ({data, setData}) => {
+    <InfoBanner pageId="workorders"/>
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [woTab, setWoTab] = useState('list');
@@ -34581,6 +34691,8 @@ const BuildSchedule = ({data, setData}) => {
 
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="buildschedule"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Build Schedule</div>
           <div style={{display:'flex',gap:6,marginTop:5}}>
@@ -34811,6 +34923,7 @@ const ProcessTracker = ({data}) => {
 
   return (
     <div className="fade-up">
+        <InfoBanner pageId="processtracker"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Process Tracker</div>
@@ -34880,6 +34993,7 @@ const ShiftHandoff = ({data, setData}) => {
   const statusDot = v => <span style={{display:'inline-block',width:8,height:8,borderRadius:'50%',background:(!v||v==='None')?'var(--ok)':'var(--err)',marginRight:5}}/>;
   return (
     <div className="fade-up">
+        <InfoBanner pageId="shifthandoff"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Shift Handoff</div>
           <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>End-of-day production notes for shift leads</div>
@@ -34990,6 +35104,7 @@ const Calculators = () => {
 
   return (
     <div className="fade-up">
+        <InfoBanner pageId="calculators"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Shop Calculators</div>
           <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Interactive calculators for powder coat, material cost, labor, automation ROI, and unit conversion</div>
@@ -35136,6 +35251,8 @@ const FacilityMove = ({data, setData}) => {
   const complete = tasks.filter(t=>t.status==='Complete').length;
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="facilitymove"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Facility Move Planner</div>
           <div style={{display:'flex',gap:6,marginTop:5}}>
@@ -35229,6 +35346,8 @@ const EmployeeReviews = ({data, setData}) => {
   };
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="employeereviews"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Employee Reviews</div>
           <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Quarterly performance scoring — Amber, Jace, Michael, Nick</div>
@@ -35328,6 +35447,7 @@ const ProductCatalog = ({data, setData}) => {
   };
   return (
     <div className="fade-up">
+        <InfoBanner pageId="productcatalog"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Product Catalog</div>
           <div style={{display:'flex',gap:6,marginTop:5}}>
@@ -35435,6 +35555,7 @@ const OpsReference = () => {
   };
   return (
     <div className="fade-up">
+        <InfoBanner pageId="opsreference"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Operations Reference</div>
           <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Daily, weekly, and monthly operating procedures + quality standards</div>
@@ -36045,6 +36166,8 @@ const ProcessCostAnalysis = () => {
 
   return (
     <div className="fade-up">
+
+      <InfoBanner pageId="processcost"/>
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Process Cost Analysis</div>
