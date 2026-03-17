@@ -25274,7 +25274,7 @@ const INFO_SOURCES = {
 };
 
 const InfoBanner = ({pageId}) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const info = INFO_SOURCES[pageId];
   if(!info) return null;
   return (
