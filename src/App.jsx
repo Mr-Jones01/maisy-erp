@@ -129,8 +129,8 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','workorders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer','buildschedule','processtracker','processcost','shifthandoff','calculators','facilitymove','employeereviews','productcatalog','opsreference'],
-  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue','workorders'],
+  admin:  ['dashboard','inventorybellevue','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','workorders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer','buildschedule','processtracker','processcost','shifthandoff','calculators','facilitymove','employeereviews','productcatalog','opsreference'],
+  owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue','workorders','inventorybellevue'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
   shop:   ['dashboard','todo','production','orders','workorders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
   shopqueue: ['hotqueue','queueanalyzer'],
@@ -26644,6 +26644,7 @@ const NAVS = [
   {id:'queueanalyzer',icon:'📊',label:'Queue Analyzer'},
   {id:'hotqueue',icon:'🔥',label:'Hot/Rush Queue'},
   {id:'inventory',icon:'◉',label:'Inventory'},
+  {id:'inventorybellevue',icon:'📍',label:'Inventory Bellevue'},
   {id:'shipping',icon:'◒',label:'Shipping'},
   {section:'Sales Ops'},
   {id:'salespipeline',icon:'📊',label:'Sales Pipeline'},
@@ -27264,8 +27265,61 @@ const Inventory = ({data, setData, user}) => {
   const [bomForm,setBomForm]=useState({id:'',productSku:'',productName:'',items:[]});
   const [bomItem,setBomItem]=useState({inventoryId:'',qty:1,unit:'ft',note:''});
   const cats=['Raw Material','Hardware','Fasteners','Finish','Glass','Other'];
+  // Items tab filters
+  const [fSku,setFSku]=useState('');
+  const [fName,setFName]=useState('');
+  const [fCat,setFCat]=useState('All');
+  const [fStock,setFStock]=useState('All');
+  const [fLoc,setFLoc]=useState('');
+  const [iSort,setISort]=useState('');
+  const [iDir,setIDir]=useState('asc');
+  // Glass tab filters
+  const [gHeight,setGHeight]=useState('All');
+  const [gStatus,setGStatus]=useState('All');
+  // Consumables tab filters
+  const [cName,setCName]=useState('');
+  const [cCat,setCCat]=useState('All');
+  const [cStock,setCStock]=useState('All');
+  // Cycle count filters
+  const [ccLoc,setCcLoc]=useState('');
+  const [ccCat,setCcCat]=useState('');
+  const [ccItem,setCcItem]=useState('');
+  const [ccBy,setCcBy]=useState('');
+  // Adjustments filters
+  const [adjSearch,setAdjSearch]=useState('');
+  const [adjType,setAdjType]=useState('All');
 
-  const filtered=data.inventory.filter(i=>!search||i.name.toLowerCase().includes(search.toLowerCase())||i.sku.toLowerCase().includes(search.toLowerCase()));
+  const doSort=(col)=>{if(iSort===col){setIDir(d=>d==='asc'?'desc':'asc');}else{setISort(col);setIDir('asc');}};
+  const SI=({col})=>iSort===col?(iDir==='asc'?' ▲':' ▼'):'';
+
+  const clearItemFilters=()=>{setFSku('');setFName('');setFCat('All');setFStock('All');setFLoc('');setISort('');setIDir('asc');};
+
+  const filtered=data.inventory.filter(i=>{
+    if(fSku && !i.sku.toLowerCase().includes(fSku.toLowerCase())) return false;
+    if(fName && !i.name.toLowerCase().includes(fName.toLowerCase())) return false;
+    if(fCat!=='All' && i.cat!==fCat) return false;
+    if(fStock==='Low' && i.qty>i.reorder) return false;
+    if(fStock==='OK' && i.qty<=i.reorder) return false;
+    if(fStock==='Zero' && i.qty!==0) return false;
+    if(fLoc && !(i.loc||'').toLowerCase().includes(fLoc.toLowerCase())) return false;
+    if(search && !i.name.toLowerCase().includes(search.toLowerCase()) && !i.sku.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  }).sort((a,b)=>{
+    if(!iSort) return 0;
+    let av,bv;
+    if(iSort==='sku'){av=a.sku;bv=b.sku;}
+    else if(iSort==='name'){av=a.name;bv=b.name;}
+    else if(iSort==='cat'){av=a.cat;bv=b.cat;}
+    else if(iSort==='qty'){av=a.qty;bv=b.qty;}
+    else if(iSort==='reorder'){av=a.reorder;bv=b.reorder;}
+    else if(iSort==='cost'){av=a.cost;bv=b.cost;}
+    else if(iSort==='value'){av=a.qty*a.cost;bv=b.qty*b.cost;}
+    else if(iSort==='loc'){av=(a.loc||'');bv=(b.loc||'');}
+    else return 0;
+    if(av<bv) return iDir==='asc'?-1:1;
+    if(av>bv) return iDir==='asc'?1:-1;
+    return 0;
+  });
   const low=data.inventory.filter(i=>i.qty<=i.reorder);
   const totalVal=data.inventory.reduce((a,b)=>a+(b.qty*b.cost),0);
 
@@ -27339,9 +27393,34 @@ const Inventory = ({data, setData, user}) => {
 
       {/* ITEMS TAB */}
       {invTab==='items'&&<>
-        <input className="search" placeholder="Search…" value={search} onChange={e=>setSearch(e.target.value)} style={{marginBottom:12,width:260}}/>
+        <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input className="search" placeholder="Global search…" value={search} onChange={e=>setSearch(e.target.value)} style={{width:180}}/>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={clearItemFilters}>✕ Clear</button>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{filtered.length} of {data.inventory.length} items</span>
+        </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
-          <table><thead><tr><th>SKU</th><th>Item</th><th>Cat</th><th>On Hand</th><th>Reorder At</th><th>Unit Cost</th><th>Value</th><th>Location</th><th/></tr></thead>
+          <table style={{minWidth:860}}><thead>
+            <tr>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('sku')}>SKU<SI col="sku"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('name')}>Item<SI col="name"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('cat')}>Cat<SI col="cat"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('qty')}>On Hand<SI col="qty"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('reorder')}>Reorder At<SI col="reorder"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('cost')}>Unit Cost<SI col="cost"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('value')}>Value<SI col="value"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('loc')}>Location<SI col="loc"/></th>
+              <th/>
+            </tr>
+            <tr style={{background:'var(--s2)'}}>
+              <td style={{padding:'3px 6px'}}><input value={fSku} onChange={e=>setFSku(e.target.value)} placeholder="SKU…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/></td>
+              <td style={{padding:'3px 6px'}}><input value={fName} onChange={e=>setFName(e.target.value)} placeholder="Name…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/></td>
+              <td style={{padding:'3px 6px'}}><select value={fCat} onChange={e=>setFCat(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}><option value="All">All</option>{cats.map(c=><option key={c}>{c}</option>)}</select></td>
+              <td style={{padding:'3px 6px'}}><select value={fStock} onChange={e=>setFStock(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}><option value="All">All</option><option value="Low">⚠ Low</option><option value="Zero">Zero</option><option value="OK">OK</option></select></td>
+              <td></td><td></td><td></td>
+              <td style={{padding:'3px 6px'}}><input value={fLoc} onChange={e=>setFLoc(e.target.value)} placeholder="Loc…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/></td>
+              <td></td>
+            </tr>
+          </thead>
             <tbody>{filtered.map(i=>{const l=i.qty<=i.reorder;return(
               <tr key={i.id}>
                 <td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{i.sku}</td>
@@ -27379,10 +27458,15 @@ const Inventory = ({data, setData, user}) => {
             </>;
           })()}
         </div>
+        <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center'}}>
+          <select value={gHeight} onChange={e=>setGHeight(e.target.value)} className="search" style={{width:120}}><option value="All">All Heights</option>{[...new Set((data.glassInventory||[]).map(g=>g.height))].sort((a,b)=>b-a).map(h=><option key={h} value={h}>{h}"</option>)}</select>
+          <select value={gStatus} onChange={e=>setGStatus(e.target.value)} className="search" style={{width:120}}><option value="All">All Status</option><option>OK</option><option>LOW</option></select>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setGHeight('All');setGStatus('All');}}>✕ Clear</button>
+        </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Height</th><th>Width (in)</th><th>Qty</th><th>Status</th><th>Location</th></tr></thead>
             <tbody>{(data.glassInventory||[]).length===0&&<tr><td colSpan={5}><Empty msg="No glass inventory data"/></td></tr>}
-            {(data.glassInventory||[]).sort((a,b)=>b.height-a.height||a.width-b.width).map((g,i)=>(
+            {(data.glassInventory||[]).filter(g=>(gHeight==='All'||String(g.height)===String(gHeight))&&(gStatus==='All'||g.status===gStatus)).sort((a,b)=>b.height-a.height||a.width-b.width).map((g,i)=>(
               <tr key={i}>
                 <td style={{fontWeight:700,color:'var(--acc)'}}>{g.height}"</td>
                 <td style={{fontWeight:600}}>{g.width}"</td>
@@ -27396,10 +27480,23 @@ const Inventory = ({data, setData, user}) => {
       </>}
 
       {/* BOM TAB */}
-      {invTab==='consumables'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {invTab==='consumables'&&<>
+        <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center',flexWrap:'wrap'}}>
+          <input value={cName} onChange={e=>setCName(e.target.value)} className="search" placeholder="Search item…" style={{width:180}}/>
+          <select value={cCat} onChange={e=>setCCat(e.target.value)} className="search" style={{width:140}}><option value="All">All Categories</option>{[...new Set((data.shopConsumables||[]).map(c=>c.cat).filter(Boolean))].sort().map(c=><option key={c}>{c}</option>)}</select>
+          <select value={cStock} onChange={e=>setCStock(e.target.value)} className="search" style={{width:120}}><option value="All">All Stock</option><option value="Low">⚠ Low</option><option value="OK">OK</option></select>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setCName('');setCCat('All');setCStock('All');}}>✕ Clear</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>SKU</th><th>Item</th><th>Category</th><th>On Hand</th><th>Unit</th><th>Reorder At</th><th>Unit Cost</th><th>Value</th><th>Location</th></tr></thead>
           <tbody>{(data.shopConsumables||[]).length===0&&<tr><td colSpan={9}><Empty msg="No consumables data"/></td></tr>}
-          {(data.shopConsumables||[]).map((c,i)=>(
+          {(data.shopConsumables||[]).filter(c=>{
+            if(cName && !c.name.toLowerCase().includes(cName.toLowerCase())) return false;
+            if(cCat!=='All' && c.cat!==cCat) return false;
+            if(cStock==='Low' && (c.qty||0)>(c.reorder||0)) return false;
+            if(cStock==='OK' && (c.qty||0)<=(c.reorder||0)) return false;
+            return true;
+          }).map((c,i)=>(
             <tr key={i}>
               <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{c.sku||c.id}</td>
               <td style={{fontWeight:500}}>{c.name}</td>
@@ -27413,16 +27510,25 @@ const Inventory = ({data, setData, user}) => {
             </tr>
           ))}</tbody>
         </table>
-      </div>}
+      </div>
+      </>
+      }
       {invTab==='cyclecount'&&<>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.cycleCount||[]).length} count events</span>
-          <button className="btn btn-p btn-sm" onClick={()=>{setForm({countNo:'CC-'+uid(),date:now(),location:'',category:'',item:'',systemQty:0,actualQty:0,variance:0,variancePct:0,countedBy:'',notes:''});setModal('cycle');}}>+ Log Count</button>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,flexWrap:'wrap',gap:8}}>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{(data.cycleCount||[]).filter(c=>(!ccLoc||c.location?.toLowerCase().includes(ccLoc.toLowerCase()))&&(!ccCat||c.category?.toLowerCase().includes(ccCat.toLowerCase()))&&(!ccItem||c.item?.toLowerCase().includes(ccItem.toLowerCase()))&&(!ccBy||c.countedBy?.toLowerCase().includes(ccBy.toLowerCase()))).length} of {(data.cycleCount||[]).length} counts</span>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap',alignItems:'center'}}>
+            <input value={ccLoc} onChange={e=>setCcLoc(e.target.value)} className="search" placeholder="Location…" style={{width:120}}/>
+            <input value={ccCat} onChange={e=>setCcCat(e.target.value)} className="search" placeholder="Category…" style={{width:110}}/>
+            <input value={ccItem} onChange={e=>setCcItem(e.target.value)} className="search" placeholder="Item…" style={{width:120}}/>
+            <input value={ccBy} onChange={e=>setCcBy(e.target.value)} className="search" placeholder="Counted by…" style={{width:110}}/>
+            <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setCcLoc('');setCcCat('');setCcItem('');setCcBy('');}}>✕</button>
+            <button className="btn btn-p btn-sm" onClick={()=>{setForm({countNo:'CC-'+uid(),date:now(),location:'',category:'',item:'',systemQty:0,actualQty:0,variance:0,variancePct:0,countedBy:'',notes:''});setModal('cycle');}}>+ Log Count</button>
+          </div>
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Count #</th><th>Date</th><th>Location</th><th>Category</th><th>Item</th><th>System Qty</th><th>Actual Qty</th><th>Variance</th><th>Variance %</th><th>Counted By</th><th/></tr></thead>
             <tbody>{(data.cycleCount||[]).length===0&&<tr><td colSpan={11}><Empty msg="No cycle counts yet"/></td></tr>}
-            {(data.cycleCount||[]).map((c,i)=>(
+            {(data.cycleCount||[]).filter(c=>(!ccLoc||c.location?.toLowerCase().includes(ccLoc.toLowerCase()))&&(!ccCat||c.category?.toLowerCase().includes(ccCat.toLowerCase()))&&(!ccItem||c.item?.toLowerCase().includes(ccItem.toLowerCase()))&&(!ccBy||c.countedBy?.toLowerCase().includes(ccBy.toLowerCase()))).map((c,i)=>(
               <tr key={i}>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{c.countNo}</td>
                 <td style={{fontSize:11}}>{c.date}</td>
@@ -27567,11 +27673,18 @@ const Inventory = ({data, setData, user}) => {
           <button className="btn btn-p" onClick={applyAdj} disabled={!adjForm.inventoryId||!adjForm.reason}>Apply Adjustment</button>
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
-          <div style={{padding:'12px 14px',borderBottom:'1px solid var(--bdr)',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Adjustment History</div>
+          <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+            <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Adjustment History</span>
+            <div style={{display:'flex',gap:6}}>
+              <input value={adjSearch} onChange={e=>setAdjSearch(e.target.value)} className="search" placeholder="Search item or reason…" style={{width:200}}/>
+              <select value={adjType} onChange={e=>setAdjType(e.target.value)} className="search" style={{width:120}}><option value="All">All Types</option><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select>
+              <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setAdjSearch('');setAdjType('All');}}>✕</button>
+            </div>
+          </div>
           <table><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reason</th><th>By</th></tr></thead>
             <tbody>
               {data.adjustmentLog.length===0&&<tr><td colSpan={6}><Empty msg="No adjustments yet"/></td></tr>}
-              {data.adjustmentLog.map(a=>(
+              {data.adjustmentLog.filter(a=>(!adjSearch||(a.itemName||'').toLowerCase().includes(adjSearch.toLowerCase())||(a.reason||'').toLowerCase().includes(adjSearch.toLowerCase()))&&(adjType==='All'||a.type===adjType)).map(a=>(
                 <tr key={a.id}>
                   <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(a.date)}</td>
                   <td style={{fontWeight:500}}>{a.itemName}</td>
@@ -28264,6 +28377,29 @@ const Purchasing = ({data, setData}) => {
   const [receiving,setReceiving]=useState(null);
   const [recQtys,setRecQtys]=useState({});
   const poStatuses=['Draft','Ordered','In Transit','Received','Cancelled'];
+  // PO tab filters
+  const [poVendor,setPoVendor]=useState('');
+  const [poStatus,setPoStatus]=useState('All');
+  const [poSearch,setPoSearch]=useState('');
+  // Order Requests filters
+  const [reqItem,setReqItem]=useState('');
+  const [reqDept,setReqDept]=useState('All');
+  const [reqPri,setReqPri]=useState('All');
+  const [reqStatus,setReqStatus]=useState('All');
+  const [reqBy,setReqBy]=useState('');
+  // Quote Log filters
+  const [qCust,setQCust]=useState('');
+  const [qCarrier,setQCarrier]=useState('All');
+  const [qStatus,setQStatus]=useState('All');
+  // Vendors filters
+  const [vndName,setVndName]=useState('');
+  const [vndCat,setVndCat]=useState('All');
+  // Misc Charges filters
+  const [mcCat,setMcCat]=useState('All');
+  const [mcVendor,setMcVendor]=useState('');
+  const [mcPaidBy,setMcPaidBy]=useState('All');
+  const [mcReimb,setMcReimb]=useState('All');
+  const [mcSearch,setMcSearch]=useState('');
 
   const openPO=(row=null)=>{
     setForm(row?{...row,items:row.items?[...row.items.map(i=>({...i}))]:[]}:{id:`PO-${uid()}`,vendor:'',vendorId:'',items:[],total:0,status:'Draft',ordered:now(),expected:'',received:false});
@@ -28331,9 +28467,24 @@ const Purchasing = ({data, setData}) => {
           <button className={'tab'+(purchTab==='vnd'?' on':'')} onClick={()=>setPurchTab('vnd')}>Vendors</button><button className={'tab'+(purchTab==='misc'?' on':'')} onClick={()=>setPurchTab('misc')}>Misc Charges</button></div>
 
       {purchTab==='po'&&<>
+        {(()=>{
+          const poFiltered = data.purchaseOrders.filter(p=>{
+            if(poVendor && !(p.vendor||'').toLowerCase().includes(poVendor.toLowerCase())) return false;
+            if(poStatus!=='All' && p.status!==poStatus) return false;
+            if(poSearch && !(p.id||'').toLowerCase().includes(poSearch.toLowerCase()) && !(p.vendor||'').toLowerCase().includes(poSearch.toLowerCase()) && !((p.items||[]).some(i=>(i.name||'').toLowerCase().includes(poSearch.toLowerCase())))) return false;
+            return true;
+          });
+          return null;
+        })()}
+        <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap',alignItems:'center'}}>
+          <input value={poSearch} onChange={e=>setPoSearch(e.target.value)} className="search" placeholder="Search PO#, vendor, items…" style={{width:200}}/>
+          <select value={poStatus} onChange={e=>setPoStatus(e.target.value)} className="search" style={{width:140}}><option value="All">All Statuses</option>{poStatuses.map(s=><option key={s}>{s}</option>)}</select>
+          <select value={poVendor} onChange={e=>setPoVendor(e.target.value)} className="search" style={{width:160}}><option value="">All Vendors</option>{[...new Set(data.purchaseOrders.map(p=>p.vendor).filter(Boolean))].sort().map(v=><option key={v}>{v}</option>)}</select>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setPoSearch('');setPoStatus('All');setPoVendor('');}}>✕ Clear</button>
+        </div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <span className="chip">{data.purchaseOrders.length} POs</span>
+            <span className="chip">{data.purchaseOrders.filter(p=>(poVendor?((p.vendor||'').toLowerCase().includes(poVendor.toLowerCase())):true)&&(poStatus==='All'||p.status===poStatus)&&(poSearch?((p.id||'').toLowerCase().includes(poSearch.toLowerCase())||(p.vendor||'').toLowerCase().includes(poSearch.toLowerCase())):true)).length} POs</span>
             <span className="chip" style={{color:'var(--warn)'}}>{fmt$(data.purchaseOrders.reduce((a,b)=>a+(b.total||0),0))} total</span>
             <span className="chip" style={{color:'var(--ok)'}}>{data.purchaseOrders.filter(p=>p.received).length} received</span>
           </div>
@@ -28355,8 +28506,13 @@ const Purchasing = ({data, setData}) => {
           </div>
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th style={{width:32}}></th><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Attach</th><th>Expected</th><th/></tr></thead>
-          <tbody>{data.purchaseOrders.map(p=>(
+        <table><thead><tr><th style={{width:32}}></th><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Expected</th><th>Attach</th><th/></tr></thead>
+          <tbody>{data.purchaseOrders.filter(p=>{
+              if(poVendor && !(p.vendor||'').toLowerCase().includes(poVendor.toLowerCase())) return false;
+              if(poStatus!=='All' && p.status!==poStatus) return false;
+              if(poSearch && !(p.id||'').toLowerCase().includes(poSearch.toLowerCase()) && !(p.vendor||'').toLowerCase().includes(poSearch.toLowerCase()) && !((p.items||[]).some(i=>(i.name||'').toLowerCase().includes(poSearch.toLowerCase())))) return false;
+              return true;
+            }).map(p=>(
             <tr key={p.id} style={{background:p._selected?'rgba(0,229,255,.05)':''}}>
               <td style={{textAlign:'center'}}>
                 <input type="checkbox" checked={!!p._selected} onChange={e=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(x=>x.id===p.id?{...x,_selected:e.target.checked}:x)}))}/>
@@ -28367,7 +28523,7 @@ const Purchasing = ({data, setData}) => {
               <td className="mono" style={{fontWeight:500}}>{fmt$(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0)}</td>
               <td><Badge s={p.status}/></td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.ordered)}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.expected)}</td>
+              <td style={{fontSize:11,color:p.expected&&p.expected<now()?'var(--warn)':'var(--muted)'}}>{p.expected?fmtD(p.expected):'—'}</td>
               <td style={{textAlign:'center',whiteSpace:'nowrap'}}>
                 {(p.attachments||[]).length>0
                   ? <button className="btn btn-xs" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}} onClick={()=>openPO(p)}>📎 {(p.attachments||[]).length}</button>
@@ -28435,7 +28591,12 @@ const Purchasing = ({data, setData}) => {
         </div>
         <table><thead><tr><th>Quote #</th><th>Date</th><th>Customer</th><th>Ship From</th><th>Ship To</th><th>Carrier</th><th>Service</th><th>Pkgs</th><th>Total Wt (lbs)</th><th>Est. Cost</th><th>Actual Cost</th><th>Variance</th><th>Status</th></tr></thead>
           <tbody>{(data.quoteLog||[]).length===0&&<tr><td colSpan={13}><Empty msg="No shipping quotes logged yet"/></td></tr>}
-          {(data.quoteLog||[]).map((q,i)=>(
+          {(data.quoteLog||[]).filter(q=>{
+            if(qCust && !(q.customer||'').toLowerCase().includes(qCust.toLowerCase())) return false;
+            if(qCarrier!=='All' && q.carrier!==qCarrier) return false;
+            if(qStatus!=='All' && (q.status||'Quoted')!==qStatus) return false;
+            return true;
+          }).map((q,i)=>(
             <tr key={i}>
               <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{q.id}</td>
               <td style={{fontSize:11}}>{q.date}</td>
@@ -28454,9 +28615,19 @@ const Purchasing = ({data, setData}) => {
           ))}</tbody>
         </table>
       </div>}
-      {purchTab==='vnd'&&<div className="card" style={{padding:0,overflow:'auto'}}>
+      {purchTab==='vnd'&&<>
+        <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap',alignItems:'center'}}>
+          <input value={vndName} onChange={e=>setVndName(e.target.value)} className="search" placeholder="Search vendor…" style={{width:200}}/>
+          <select value={vndCat} onChange={e=>setVndCat(e.target.value)} className="search" style={{width:160}}><option value="All">All Categories</option>{[...new Set(data.vendors.map(v=>v.cat).filter(Boolean))].sort().map(c=><option key={c}>{c}</option>)}</select>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setVndName('');setVndCat('All');}}>✕ Clear</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Vendor</th><th>Contact</th><th>Category</th><th>Lead Days</th><th>Rating</th><th>YTD Spend</th><th/></tr></thead>
-          <tbody>{data.vendors.map(v=>(
+          <tbody>{data.vendors.filter(v=>{
+            if(vndName && !(v.name||'').toLowerCase().includes(vndName.toLowerCase())) return false;
+            if(vndCat!=='All' && v.cat!==vndCat) return false;
+            return true;
+          }).map(v=>(
             <tr key={v.id}>
               <td style={{fontWeight:500}}>{v.name}</td>
               <td style={{fontSize:11}}><div>{v.contact}</div><div className="mono" style={{fontSize:10,color:'var(--muted)'}}>{v.email}</div></td>
@@ -28468,7 +28639,9 @@ const Purchasing = ({data, setData}) => {
             </tr>
           ))}</tbody>
         </table>
-      </div>}
+      </div>
+      </>
+      }
 
       {/* PO Receiving Modal */}
       {receiving&&<Modal title={`Receive PO — ${receiving.id}`} onClose={()=>setReceiving(null)}>
@@ -28567,6 +28740,13 @@ const Purchasing = ({data, setData}) => {
         </div>
       </Modal>}
       {purchTab==='misc'&&<>
+        <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap',alignItems:'center'}}>
+          <input value={mcSearch} onChange={e=>setMcSearch(e.target.value)} className="search" placeholder="Search desc, vendor, notes…" style={{width:200}}/>
+          <select value={mcCat} onChange={e=>setMcCat(e.target.value)} className="search" style={{width:140}}><option value="All">All Categories</option>{[...new Set((data.miscCharges||[]).map(c=>c.cat).filter(Boolean))].sort().map(c=><option key={c}>{c}</option>)}</select>
+          <select value={mcPaidBy} onChange={e=>setMcPaidBy(e.target.value)} className="search" style={{width:140}}><option value="All">All Paid By</option>{[...new Set((data.miscCharges||[]).map(c=>c.paidBy).filter(Boolean))].sort().map(p=><option key={p}>{p}</option>)}</select>
+          <select value={mcReimb} onChange={e=>setMcReimb(e.target.value)} className="search" style={{width:130}}><option value="All">Reimb: All</option><option value="Yes">Reimbursable</option><option value="No">Not Reimb.</option></select>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setMcSearch('');setMcCat('All');setMcPaidBy('All');setMcReimb('All');}}>✕ Clear</button>
+        </div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <span className="chip">{(data.miscCharges||[]).length} charges</span>
@@ -28620,7 +28800,13 @@ Maisy Railing | 208.603.8149`;
             </tr></thead>
             <tbody>
               {(data.miscCharges||[]).length===0&&<tr><td colSpan={13}><Empty msg="No misc charges — click + Add Charge"/></td></tr>}
-              {(data.miscCharges||[]).map((c,i)=>(
+              {(data.miscCharges||[]).filter(c=>{
+                if(mcSearch && !(c.desc||'').toLowerCase().includes(mcSearch.toLowerCase()) && !(c.vendor||'').toLowerCase().includes(mcSearch.toLowerCase()) && !(c.notes||'').toLowerCase().includes(mcSearch.toLowerCase())) return false;
+                if(mcCat!=='All' && c.cat!==mcCat) return false;
+                if(mcPaidBy!=='All' && c.paidBy!==mcPaidBy) return false;
+                if(mcReimb!=='All' && c.reimbursable!==mcReimb) return false;
+                return true;
+              }).map((c,i)=>(
                 <tr key={i} style={{background:c._selected?'rgba(0,229,255,.06)':''}}>
                   <td style={{textAlign:'center'}}>
                     <input type="checkbox" checked={!!c._selected} onChange={e=>setData(d=>({...d,miscCharges:(d.miscCharges||[]).map((x,j)=>j===i?{...x,_selected:e.target.checked}:x)}))}/>
@@ -36776,6 +36962,240 @@ const ProcessCostAnalysis = () => {
   );
 };
 
+// ─── INVENTORY BELLEVUE ──────────────────────────────────────────────────────────
+const InventoryBellevue = ({data, setData, user}) => {
+  const [bvTab,setBvTab]=useState('items');
+  const [modal,setModal]=useState(null);
+  const [form,setForm]=useState({});
+  const [adjForm,setAdjForm]=useState({inventoryId:'',type:'add',qty:1,reason:''});
+  const cats=['Raw Material','Hardware','Fasteners','Finish','Glass','Other'];
+
+  // Filters - items
+  const [fSku,setFSku]=useState('');
+  const [fName,setFName]=useState('');
+  const [fCat,setFCat]=useState('All');
+  const [fStock,setFStock]=useState('All');
+  const [fLoc,setFLoc]=useState('');
+  const [iSort,setISort]=useState('');
+  const [iDir,setIDir]=useState('asc');
+  // Adjustments filter
+  const [adjSearch,setAdjSearch]=useState('');
+  const [adjType,setAdjType]=useState('All');
+
+  const doSort=(col)=>{if(iSort===col){setIDir(d=>d==='asc'?'desc':'asc');}else{setISort(col);setIDir('asc');}};
+  const SI=({col})=>iSort===col?(iDir==='asc'?' ▲':' ▼'):'';
+
+  const inv = data.bellevueInventory || [];
+
+  const filtered = inv.filter(i=>{
+    if(fSku && !i.sku.toLowerCase().includes(fSku.toLowerCase())) return false;
+    if(fName && !i.name.toLowerCase().includes(fName.toLowerCase())) return false;
+    if(fCat!=='All' && i.cat!==fCat) return false;
+    if(fStock==='Low' && i.qty>i.reorder) return false;
+    if(fStock==='OK' && i.qty<=i.reorder) return false;
+    if(fStock==='Zero' && i.qty!==0) return false;
+    if(fLoc && !(i.loc||'').toLowerCase().includes(fLoc.toLowerCase())) return false;
+    return true;
+  }).sort((a,b)=>{
+    if(!iSort) return 0;
+    let av,bv;
+    if(iSort==='sku'){av=a.sku;bv=b.sku;}
+    else if(iSort==='name'){av=a.name;bv=b.name;}
+    else if(iSort==='cat'){av=a.cat;bv=b.cat;}
+    else if(iSort==='qty'){av=a.qty;bv=b.qty;}
+    else if(iSort==='reorder'){av=a.reorder;bv=b.reorder;}
+    else if(iSort==='cost'){av=a.cost;bv=b.cost;}
+    else if(iSort==='value'){av=a.qty*a.cost;bv=b.qty*b.cost;}
+    else if(iSort==='loc'){av=(a.loc||'');bv=(b.loc||'');}
+    else return 0;
+    if(av<bv) return iDir==='asc'?-1:1;
+    if(av>bv) return iDir==='asc'?1:-1;
+    return 0;
+  });
+
+  const low = inv.filter(i=>i.qty<=i.reorder);
+  const totalVal = inv.reduce((a,b)=>a+(b.qty*b.cost),0);
+
+  const openItem=(row=null)=>{setForm(row?{...row}:{id:`BVI-${uid()}`,sku:'',name:'',cat:'Raw Material',qty:0,unit:'ft',reorder:0,cost:0,loc:'Bellevue WH'});setModal('item');};
+  const saveItem=()=>{
+    const it={...form,qty:Number(form.qty),cost:Number(form.cost),reorder:Number(form.reorder)};
+    const exists=(data.bellevueInventory||[]).find(x=>x.id===it.id);
+    setData(d=>({...d,bellevueInventory:exists?(d.bellevueInventory||[]).map(i=>i.id===it.id?it:i):[...(d.bellevueInventory||[]),it]}));
+    setModal(null);
+  };
+  const delItem=id=>setData(d=>({...d,bellevueInventory:(d.bellevueInventory||[]).filter(i=>i.id!==id)}));
+
+  const applyAdj=()=>{
+    if(!adjForm.inventoryId||!adjForm.reason) return;
+    const item=(data.bellevueInventory||[]).find(i=>i.id===adjForm.inventoryId);
+    if(!item) return;
+    const delta=adjForm.type==='add'?Number(adjForm.qty):-Number(adjForm.qty);
+    const log={id:`BVADJ-${uid()}`,inventoryId:adjForm.inventoryId,itemName:item.name,type:adjForm.type,qty:Number(adjForm.qty),reason:adjForm.reason,date:now(),user:'Daniel Jones',warehouse:'Bellevue'};
+    setData(d=>({...d,
+      bellevueInventory:(d.bellevueInventory||[]).map(i=>i.id===adjForm.inventoryId?{...i,qty:Math.max(0,i.qty+delta)}:i),
+      bellevueAdjLog:[log,...(d.bellevueAdjLog||[])],
+    }));
+    setAdjForm({inventoryId:'',type:'add',qty:1,reason:''});
+  };
+
+  const bvAdjLog = (data.bellevueAdjLog||[]).filter(a=>
+    (!adjSearch||(a.itemName||'').toLowerCase().includes(adjSearch.toLowerCase())||(a.reason||'').toLowerCase().includes(adjSearch.toLowerCase()))&&
+    (adjType==='All'||a.type===adjType)
+  );
+
+  return (
+    <div className="fade-up">
+      <InfoBanner pageId="inventory"/>
+      <div className="section-hd">
+        <div>
+          <div className="hd" style={{fontSize:22}}>Inventory — Bellevue Warehouse</div>
+          <div style={{display:'flex',gap:6,marginTop:5}}>
+            <span className="chip">{fmt$(totalVal)} total value</span>
+            <span className="chip" style={{color:low.length?'var(--warn)':undefined}}>{low.length} low stock</span>
+            <span className="chip" style={{background:'rgba(99,102,241,.12)',color:'#818cf8',border:'1px solid rgba(99,102,241,.3)'}}>📍 Bellevue, WA</span>
+          </div>
+        </div>
+        {bvTab==='items'&&<button className="btn btn-p" onClick={()=>openItem()}>+ Add Item</button>}
+      </div>
+
+      <StatRow>
+        <StatCard label="Total Value" value={fmt$(totalVal)} icon="🏭" color="var(--acc)" sub={inv.length+" line items"}/>
+        <StatCard label="Low Stock Items" value={low.length} icon="⚠️" color={low.length>0?'var(--warn)':'var(--ok)'} sub="At or below reorder point"/>
+        <StatCard label="Zero Stock" value={inv.filter(i=>i.qty===0).length} icon="🔴" color={inv.filter(i=>i.qty===0).length>0?'var(--err)':'var(--ok)'} sub="Out of stock items"/>
+        <StatCard label="Categories" value={[...new Set(inv.map(i=>i.cat))].length} icon="📦" color="var(--acc2)" sub="Distinct categories"/>
+      </StatRow>
+
+      {low.length>0&&<div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span><span><strong>Low Stock:</strong> {low.map(i=>`${i.name} (${i.qty} ${i.unit})`).join(' · ')}</span></div>}
+
+      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
+        {['items','adjustments'].map(t=><button key={t} className={'tab'+(bvTab===t?' on':'')} onClick={()=>setBvTab(t)} style={{textTransform:'capitalize'}}>{t==='adjustments'?'Adjustment Log':t}</button>)}
+      </div>
+
+      {/* ITEMS TAB */}
+      {bvTab==='items'&&<>
+        <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center',flexWrap:'wrap'}}>
+          <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setFSku('');setFName('');setFCat('All');setFStock('All');setFLoc('');setISort('');setIDir('asc');}}>✕ Clear Filters</button>
+          <span style={{fontSize:11,color:'var(--muted)'}}>{filtered.length} of {inv.length} items</span>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table style={{minWidth:860}}><thead>
+            <tr>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('sku')}>SKU<SI col="sku"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('name')}>Item<SI col="name"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('cat')}>Cat<SI col="cat"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('qty')}>On Hand<SI col="qty"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('reorder')}>Reorder At<SI col="reorder"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('cost')}>Unit Cost<SI col="cost"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('value')}>Value<SI col="value"/></th>
+              <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('loc')}>Location<SI col="loc"/></th>
+              <th/>
+            </tr>
+            <tr style={{background:'var(--s2)'}}>
+              <td style={{padding:'3px 6px'}}><input value={fSku} onChange={e=>setFSku(e.target.value)} placeholder="SKU…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/></td>
+              <td style={{padding:'3px 6px'}}><input value={fName} onChange={e=>setFName(e.target.value)} placeholder="Name…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/></td>
+              <td style={{padding:'3px 6px'}}><select value={fCat} onChange={e=>setFCat(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}><option value="All">All</option>{cats.map(c=><option key={c}>{c}</option>)}</select></td>
+              <td style={{padding:'3px 6px'}}><select value={fStock} onChange={e=>setFStock(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}><option value="All">All</option><option value="Low">⚠ Low</option><option value="Zero">Zero</option><option value="OK">OK</option></select></td>
+              <td></td><td></td><td></td>
+              <td style={{padding:'3px 6px'}}><input value={fLoc} onChange={e=>setFLoc(e.target.value)} placeholder="Loc…" style={{fontSize:10,width:'100%',padding:'2px 4px',background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--txt)'}}/></td>
+              <td></td>
+            </tr>
+          </thead>
+          <tbody>
+            {inv.length===0&&<tr><td colSpan={9} style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No items yet — click "+ Add Item" to start tracking Bellevue inventory</td></tr>}
+            {filtered.map(i=>{const l=i.qty<=i.reorder;return(
+              <tr key={i.id}>
+                <td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{i.sku}</td>
+                <td style={{fontWeight:500}}>{i.name}</td>
+                <td><span className="chip">{i.cat}</span></td>
+                <td className="mono" style={{color:l?'var(--warn)':'var(--ok)',fontWeight:600}}>{i.qty.toLocaleString()} {i.unit}{l?' ⚠':''}</td>
+                <td className="mono" style={{color:'var(--muted)'}}>{i.reorder}</td>
+                <td className="mono">{fmt$(i.cost)}</td>
+                <td className="mono" style={{fontWeight:500}}>{fmt$(i.qty*i.cost)}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{i.loc||'Bellevue WH'}</td>
+                <td><div style={{display:'flex',gap:4}}>
+                  <button className="btn btn-g btn-sm" onClick={()=>{setForm({...i});setModal('item');}}>Edit</button>
+                  <button className="btn btn-d btn-sm" onClick={()=>delItem(i.id)}>Del</button>
+                </div></td>
+              </tr>
+            );})}
+          </tbody></table>
+        </div>
+      </>}
+
+      {/* ADJUSTMENTS TAB */}
+      {bvTab==='adjustments'&&<>
+        <div className="card" style={{marginBottom:16}}>
+          <div className="hd" style={{fontSize:14,marginBottom:14}}>New Adjustment</div>
+          <div className="grid2" style={{marginBottom:12}}>
+            <Field label="Item">
+              <select value={adjForm.inventoryId} onChange={e=>setAdjForm(f=>({...f,inventoryId:e.target.value}))}>
+                <option value="">— Select Item —</option>
+                {inv.map(i=><option key={i.id} value={i.id}>{i.name} (On Hand: {i.qty} {i.unit})</option>)}
+              </select>
+            </Field>
+            <Field label="Adjustment Type">
+              <select value={adjForm.type} onChange={e=>setAdjForm(f=>({...f,type:e.target.value}))}>
+                <option value="add">➕ Add to Stock</option>
+                <option value="remove">➖ Remove from Stock</option>
+              </select>
+            </Field>
+          </div>
+          <div className="grid2" style={{marginBottom:12}}>
+            <Field label="Quantity"><input type="number" min={1} value={adjForm.qty} onChange={e=>setAdjForm(f=>({...f,qty:e.target.value}))}/></Field>
+            <Field label="Reason / Reference"><input value={adjForm.reason} onChange={e=>setAdjForm(f=>({...f,reason:e.target.value}))} placeholder="e.g. Transfer from Hayden, WO consumed"/></Field>
+          </div>
+          <button className="btn btn-p" onClick={applyAdj} disabled={!adjForm.inventoryId||!adjForm.reason}>Apply Adjustment</button>
+        </div>
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+            <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Adjustment History — Bellevue</span>
+            <div style={{display:'flex',gap:6}}>
+              <input value={adjSearch} onChange={e=>setAdjSearch(e.target.value)} className="search" placeholder="Search item or reason…" style={{width:200}}/>
+              <select value={adjType} onChange={e=>setAdjType(e.target.value)} className="search" style={{width:120}}><option value="All">All Types</option><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select>
+              <button className="btn btn-sm" style={{fontSize:10,color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setAdjSearch('');setAdjType('All');}}>✕</button>
+            </div>
+          </div>
+          <table><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reason</th><th>By</th></tr></thead>
+            <tbody>
+              {(data.bellevueAdjLog||[]).length===0&&<tr><td colSpan={6}><Empty msg="No adjustments yet"/></td></tr>}
+              {bvAdjLog.map(a=>(
+                <tr key={a.id}>
+                  <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(a.date)}</td>
+                  <td style={{fontWeight:500}}>{a.itemName}</td>
+                  <td><span className="badge" style={{background:a.type==='add'?'rgba(16,185,129,.12)':'rgba(239,68,68,.12)',color:a.type==='add'?'var(--ok)':'var(--err)',border:`1px solid ${a.type==='add'?'rgba(16,185,129,.3)':'rgba(239,68,68,.3)'}`}}>{a.type==='add'?'+ ADD':'- REMOVE'}</span></td>
+                  <td className="mono" style={{fontWeight:600,color:a.type==='add'?'var(--ok)':'var(--err)'}}>{a.type==='add'?'+':'-'}{a.qty}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{a.reason}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{a.user}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
+      {/* ITEM MODAL */}
+      {modal==='item'&&<Modal title={inv.find(i=>i.id===form.id)?'Edit Item':'Add Item'} onClose={()=>setModal(null)}>
+        <div className="grid2">
+          <Field label="SKU"><input value={form.sku||''} onChange={e=>setForm(f=>({...f,sku:e.target.value}))}/></Field>
+          <Field label="Category"><select value={form.cat||'Raw Material'} onChange={e=>setForm(f=>({...f,cat:e.target.value}))}>{cats.map(c=><option key={c}>{c}</option>)}</select></Field>
+          <Field label="Item Name"><input value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></Field>
+          <Field label="Unit"><input value={form.unit||''} onChange={e=>setForm(f=>({...f,unit:e.target.value}))}/></Field>
+          <Field label="On Hand Qty"><input type="number" value={form.qty||0} onChange={e=>setForm(f=>({...f,qty:+e.target.value}))}/></Field>
+          <Field label="Reorder At"><input type="number" value={form.reorder||0} onChange={e=>setForm(f=>({...f,reorder:+e.target.value}))}/></Field>
+          <Field label="Unit Cost ($)"><input type="number" step="0.01" value={form.cost||0} onChange={e=>setForm(f=>({...f,cost:+e.target.value}))}/></Field>
+          <Field label="Location"><input value={form.loc||'Bellevue WH'} onChange={e=>setForm(f=>({...f,loc:e.target.value}))}/></Field>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button className="btn btn-p" onClick={saveItem}>Save</button>
+          <button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button>
+          {inv.find(i=>i.id===form.id)&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{delItem(form.id);setModal(null);}}>Delete</button>}
+        </div>
+      </Modal>}
+    </div>
+  );
+};
+
+
 const PrintCenter = ({data}) => {
   const docs = [
     {cat:'Shop Floor',items:[
@@ -36826,6 +37246,8 @@ const PrintCenter = ({data}) => {
 const normalizeData = (d) => {
   if (!d) return d;
   if (!d.inventory) d.inventory = [...(d.rawMaterials||[]).map(i=>({...i,sku:i.id,type:'Raw Material'})),...(d.assemblyItems||[]).map(i=>({...i,sku:i.id,type:'Assembly'})),...(d.shopConsumables||[]).map(i=>({...i,sku:i.id,type:'Consumable'}))];
+  if (!d.bellevueInventory) d.bellevueInventory = [];
+  if (!d.bellevueAdjLog) d.bellevueAdjLog = [];
   if (!d.shipments) d.shipments = (d.shipCostLog||[]).map((s,i)=>({...s,id:s.poRef||s.tracking||`SHP-${i+1}`,status:'Delivered'}));
   // Sanitize: ensure every shipment has a unique non-blank id
   const shipIds = new Set();
@@ -36891,7 +37313,7 @@ const normalizeData = (d) => {
 
 const PAGES = {
   dashboard:Dashboard, todo:Todo,
-  sales:Sales, production:Production, inventory:Inventory, shipping:Shipping,
+  sales:Sales, production:Production, inventory:Inventory, inventorybellevue:InventoryBellevue, shipping:Shipping,
   invoicing:Invoicing, purchasing:Purchasing, finance:Finance,
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
@@ -36902,7 +37324,7 @@ const PAGES = {
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
-  sales:'Sales & Quotes', production:'Production', inventory:'Inventory', shipping:'Shipping',
+  sales:'Sales & Quotes', production:'Production', inventory:'Inventory', inventorybellevue:'Inventory — Bellevue', shipping:'Shipping',
   invoicing:'Invoicing & A/R', purchasing:'Purchasing', finance:'Finance & P&L',
   jobcost:'Job Costing', customers:'Customers', autopo:'Auto Reorder',
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
