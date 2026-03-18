@@ -27725,45 +27725,48 @@ const Production = ({data, setData, user}) => {
 <title>Maisy Railing — Defect Report ${defectId}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
-  :root{--black:#0d0d0d;--gray-dark:#1e1e1e;--gray-mid:#4a4a4a;--gray-light:#e0e0e0;--gray-bg:#f5f5f5;--orange:#e85d04;--white:#ffffff}
+  :root{--black:#0d0d0d;--gray-mid:#4a4a4a;--gray-light:#e0e0e0;--gray-bg:#f5f5f5;--orange:#e85d04;--white:#ffffff}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Barlow',sans-serif;background:#d0d0d0;display:flex;flex-direction:column;align-items:center;padding:24px;gap:16px}
-  .controls{display:flex;gap:12px;align-items:center;background:var(--black);padding:12px 20px;border-radius:6px;width:816px}
-  .controls span{color:#aaa;font-size:13px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;flex:1}
+  body{font-family:'Barlow',sans-serif;background:#d0d0d0;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px}
+  .controls{display:flex;gap:10px;align-items:center;background:var(--black);padding:10px 16px;border-radius:6px;width:780px}
+  .controls span{color:#aaa;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;flex:1}
   .controls span strong{color:var(--orange)}
-  .btn{background:var(--orange);color:white;border:none;padding:8px 20px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+  .btn{background:var(--orange);color:white;border:none;padding:7px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;cursor:pointer}
   .btn-outline{background:transparent;border:1.5px solid #555;color:#aaa}
-  .page{width:816px;min-height:1056px;background:var(--white);padding:36px 40px 32px;display:flex;flex-direction:column;gap:0;box-shadow:0 4px 24px rgba(0,0,0,.25)}
-  .header{display:flex;align-items:stretch;border:2px solid var(--black);margin-bottom:0}
-  .header-logo{background:var(--black);color:var(--white);padding:14px 20px;display:flex;flex-direction:column;justify-content:center;min-width:200px}
-  .header-logo .company{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.06em;text-transform:uppercase;color:var(--white);line-height:1}
-  .header-logo .sub{font-family:'Barlow Condensed',sans-serif;font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-top:3px}
-  .header-title{flex:1;background:var(--orange);display:flex;align-items:center;padding:0 24px}
-  .header-title h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;letter-spacing:.08em;text-transform:uppercase;color:var(--white)}
-  .header-id{background:var(--gray-bg);border-left:2px solid var(--black);padding:12px 20px;display:flex;flex-direction:column;justify-content:center;min-width:170px;text-align:center}
-  .header-id .id-label{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-mid)}
-  .header-id .id-value{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--orange);letter-spacing:.04em;margin-top:2px}
-  .section-label{background:var(--black);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:5px 10px;margin-top:16px}
+  .page{width:780px;background:var(--white);padding:18px 22px 14px;display:flex;flex-direction:column;gap:0;box-shadow:0 4px 24px rgba(0,0,0,.25)}
+  .header{display:flex;align-items:stretch;border:2px solid var(--black)}
+  .header-logo{background:var(--black);color:var(--white);padding:8px 14px;display:flex;flex-direction:column;justify-content:center;min-width:170px}
+  .header-logo .company{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;letter-spacing:.06em;text-transform:uppercase;color:var(--white);line-height:1}
+  .header-logo .sub{font-family:'Barlow Condensed',sans-serif;font-weight:400;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-top:2px}
+  .header-title{flex:1;background:var(--orange);display:flex;align-items:center;padding:0 18px}
+  .header-title h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:23px;letter-spacing:.08em;text-transform:uppercase;color:var(--white)}
+  .header-id{background:var(--gray-bg);border-left:2px solid var(--black);padding:8px 14px;display:flex;flex-direction:column;justify-content:center;min-width:150px;text-align:center}
+  .header-id .id-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-mid)}
+  .header-id .id-value{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--orange);letter-spacing:.04em;margin-top:1px}
+  .section-label{background:var(--black);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;margin-top:9px}
   .field-grid{display:grid;border-left:2px solid var(--black);border-right:2px solid var(--black);border-bottom:2px solid var(--black)}
-  .field-row{display:flex;border-top:1.5px solid var(--gray-light)}
+  .field-row{display:flex;border-top:1px solid var(--gray-light)}
   .field-row:first-child{border-top:none}
-  .field{flex:1;display:flex;flex-direction:column;padding:8px 10px 4px;border-right:1.5px solid var(--gray-light)}
+  .field{flex:1;display:flex;flex-direction:column;padding:4px 8px 3px;border-right:1px solid var(--gray-light)}
   .field:last-child{border-right:none}
   .field.w2{flex:2}.field.w3{flex:3}
-  .field-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:2px}
-  .field-line{border-bottom:1.5px solid var(--black);height:22px;width:100%}
-  .field-tall .field-line{height:40px}
-  .field-xtall .field-line{height:56px}
-  .check-group{display:flex;gap:14px;flex-wrap:wrap;padding:4px 0 6px;align-items:center}
-  .check-item{display:flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:11px;color:var(--black)}
-  .check-box{width:14px;height:14px;border:1.5px solid var(--black);flex-shrink:0;display:inline-block}
-  .severity-group{display:flex;gap:0;padding:4px 0 6px}
-  .sev-box{display:flex;align-items:center;gap:5px;padding:4px 12px;border:1.5px solid var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:.04em;margin-right:-1.5px}
+  .field-label{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:1px}
+  .field-line{border-bottom:1px solid var(--black);height:17px;width:100%}
+  .check-group{display:flex;gap:10px;flex-wrap:wrap;padding:3px 0 4px;align-items:center}
+  .check-item{display:flex;align-items:center;gap:4px;font-family:'Barlow',sans-serif;font-size:10px;color:var(--black)}
+  .check-box{width:11px;height:11px;border:1px solid var(--black);flex-shrink:0;display:inline-block}
+  .severity-group{display:flex;gap:0;padding:3px 0 4px;flex-wrap:wrap}
+  .sev-box{display:flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.04em;margin-right:-1px}
   .sev-box.critical{color:#b00}.sev-box.major{color:#c96000}.sev-box.minor{color:#5a7a00}.sev-box.cosmetic{color:#005a7a}
-  .footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid var(--gray-light);padding-top:10px}
-  .footer-note{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#999;letter-spacing:.05em;text-transform:uppercase}
-  .footer-rev{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#bbb;letter-spacing:.05em}
-  @media print{body{background:white;padding:0}.controls{display:none!important}.page{width:100%;min-height:0;box-shadow:none;padding:20px 24px 16px}@page{size:letter;margin:0.4in 0.35in}}
+  .footer{margin-top:8px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gray-light);padding-top:6px}
+  .footer-note{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:#999;letter-spacing:.05em;text-transform:uppercase}
+  .footer-rev{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:#bbb;letter-spacing:.05em}
+  @media print{
+    body{background:white;padding:0;margin:0}
+    .controls{display:none!important}
+    .page{width:100%;box-shadow:none;padding:0}
+    @page{size:letter portrait;margin:0.3in 0.3in}
+  }
 </style>
 </head>
 <body>
@@ -27856,15 +27859,14 @@ const Production = ({data, setData, user}) => {
       <div class="field field-xtall w3">
         <div class="field-label">Describe the defect in detail — include location on part, measurements if applicable</div>
         <div class="field-line"></div>
-        <div class="field-line" style="margin-top:10px"></div>
-        <div class="field-line" style="margin-top:10px"></div>
+        <div class="field-line" style="margin-top:8px"></div>
       </div>
     </div>
     <div class="field-row">
       <div class="field w3" style="padding-bottom:10px">
         <div class="field-label">Sketch / Photo Reference (attach or draw below)</div>
-        <div style="border:1.5px dashed #ccc;height:90px;margin-top:6px;display:flex;align-items:center;justify-content:center">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#ccc;letter-spacing:.1em;text-transform:uppercase">Sketch or Attach Photo Here</span>
+        <div style="border:1px dashed #ccc;height:60px;margin-top:4px;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#ccc;letter-spacing:.1em;text-transform:uppercase">Sketch or Attach Photo Here</span>
         </div>
       </div>
     </div>
@@ -27876,14 +27878,14 @@ const Production = ({data, setData, user}) => {
       <div class="field w3 field-tall">
         <div class="field-label">Root Cause</div>
         <div class="field-line"></div>
-        <div class="field-line" style="margin-top:10px"></div>
+        <div class="field-line" style="margin-top:7px"></div>
       </div>
     </div>
     <div class="field-row">
-      <div class="field w3 field-tall">
+      <div class="field w3">
         <div class="field-label">Corrective Action Taken / Planned</div>
         <div class="field-line"></div>
-        <div class="field-line" style="margin-top:10px"></div>
+        <div class="field-line" style="margin-top:7px"></div>
       </div>
     </div>
     <div class="field-row">
