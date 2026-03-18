@@ -25306,6 +25306,53 @@ const InfoBanner = ({pageId}) => {
 };
 
 
+// ─── INLINE STATUS SELECT ────────────────────────────────────────────────────────
+// Reusable inline status dropdown — replaces static Badge cells across all tables
+const BADGE_COLOR = (s) => {
+  const c = {
+    Completed:'#10b981',Complete:'#10b981',Received:'#10b981',Paid:'#10b981',Delivered:'#10b981',
+    Active:'#10b981',Fulfilled:'#10b981',Closed:'#10b981',Done:'#10b981',OK:'#10b981',
+    'In Progress':'#3b82f6','In Transit':'#3b82f6',Ordered:'#3b82f6','Ready to Ship':'#3b82f6',
+    Approved:'#3b82f6','In Production':'#3b82f6','Production Complete':'#f59e0b',
+    Queued:'#f59e0b',Pending:'#f59e0b',Quoted:'#f59e0b',Draft:'#f59e0b','Not Started':'#f59e0b',
+    Planning:'#f59e0b',Requested:'#f59e0b',Submitted:'#f59e0b',
+    Shipped:'#a78bfa',Overdue:'#ef4444',Cancelled:'#ef4444',Exception:'#ef4444',
+    'On Hold':'#f97316','On Order':'#f97316','Back Ordered':'#ef4444',
+    Open:'#f59e0b','In Transit':'#3b82f6',CSR:'#6b7280',Unknown:'#6b7280',
+    Planned:'#6b7280','Not Started':'#f59e0b',
+  };
+  return c[s] || '#6b7280';
+};
+
+const StatusSelect = ({value, options, onChange, small=false}) => {
+  const c = BADGE_COLOR(value);
+  return (
+    <select
+      value={value||''}
+      onChange={e=>onChange(e.target.value)}
+      onClick={e=>e.stopPropagation()}
+      style={{
+        background:`${c}18`,
+        color:c,
+        border:`1px solid ${c}44`,
+        borderRadius:4,
+        fontSize:small?9:10,
+        fontFamily:'Barlow Condensed',
+        fontWeight:700,
+        letterSpacing:'.04em',
+        padding:small?'2px 5px':'3px 8px',
+        cursor:'pointer',
+        outline:'none',
+        minWidth: small?70:90,
+        textTransform:'uppercase',
+      }}
+    >
+      {options.map(o=><option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+};
+
+
 const QueueAnalyzer = ({data, setData}) => {
   // Load SheetJS on mount
   useEffect(() => {
@@ -27063,7 +27110,7 @@ const Sales = ({data, setData}) => {
                   <td style={{fontWeight:500}}>{o.customer}</td>
                   <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(o.date)}</td>
                   <td className="mono" style={{fontWeight:500}}>{fmt$(o.total)}</td>
-                  <td><Badge s={o.status}/></td>
+                  <td><StatusSelect value={o.status} options={['Quoted','Pending','In Production','Shipped','Completed','Cancelled']} onChange={v=>setData(d=>({...d,salesOrders:d.salesOrders.map(x=>x.id===o.id?{...x,status:v}:x)}))}/></td>
                   <td><span className="chip" style={{textTransform:'capitalize'}}>{o.type}</span></td>
                   <td style={{fontSize:11,color:'var(--acc)',fontWeight:600}}>{o.salesPerson||'—'}</td>
                   <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
@@ -27143,7 +27190,7 @@ const Sales = ({data, setData}) => {
                     <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.rootCause}>{iss.rootCause||'—'}</td>
                     <td style={{fontSize:10,maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.resolution}>{iss.resolution||'—'}</td>
                     <td style={{fontSize:11}}>{iss.assignedTo||'—'}</td>
-                    <td><Badge s={iss.status||'Open'}/></td>
+                    <td><StatusSelect value={iss.status||'Open'} options={['Open','In Progress','Closed','Resolved']} onChange={v=>setData(d=>({...d,customerIssues:(d.customerIssues||[]).map(x=>x.id===iss.id?{...x,status:v}:x)}))}/></td>
                     <td><div style={{display:'flex',gap:3,whiteSpace:'nowrap'}}>
                       <button className="btn btn-g btn-xs" onClick={()=>{setForm({...iss});setModal('ci');}}>Edit</button>
                       <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,customerIssues:(d.customerIssues||[]).filter(x=>x.id!==iss.id)}))}>×</button>
@@ -28085,7 +28132,7 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontWeight:500,maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
                 <td><span className="chip">{w.station}</span></td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{w.assigned}</td>
-                <td><Badge s={w.status}/></td>
+                <td><StatusSelect value={w.status} options={['Queued','In Progress','On Hold','Complete']} onChange={v=>setData(d=>({...d,workOrders:d.workOrders.map(x=>x.id===w.id?{...x,status:v}:x)}))}/></td>
                 <td style={{width:100}}>
                   <div style={{display:'flex',alignItems:'center',gap:5}}>
                     <div className="progress-bar" style={{flex:1}}><div className="progress-fill" style={{width:`${w.progress}%`,background:w.progress===100?'var(--ok)':'var(--acc)'}}/></div>
@@ -28160,7 +28207,7 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontSize:10,color:'var(--err)'}}>{s.injury||'—'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.rootCause}>{s.rootCause}</td>
                 <td style={{fontSize:10,maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.corrAction}>{s.corrAction}</td>
-                <td><Badge s={s.status||'Open'}/></td>
+                <td><StatusSelect value={s.status||'Open'} options={['Open','In Progress','Closed']} onChange={v=>setData(d=>({...d,safetyLog:(d.safetyLog||[]).map(x=>x.id===s.id?{...x,status:v}:x)}))}/></td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s,id:s.id||'SAF-'+uid()});setModal('safety');}}>Edit</button>
                   <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,safetyLog:(d.safetyLog||[]).filter((_,j)=>j!==i)}))}>Del</button>
@@ -28198,7 +28245,7 @@ const Production = ({data, setData, user}) => {
                 <td style={{color:'var(--ok)',fontWeight:700}}>{imp.estSavings?'$'+imp.estSavings.toLocaleString():'—'}</td>
                 <td style={{color:'var(--muted)'}}>{imp.implCost?'$'+imp.implCost.toLocaleString():'—'}</td>
                 <td style={{textAlign:'center'}}>{imp.priority}/5</td>
-                <td><Badge s={imp.status||'Submitted'}/></td>
+                <td><StatusSelect value={imp.status||'Submitted'} options={['Submitted','Planning','In Progress','Complete','Cancelled']} onChange={v=>setData(d=>({...d,improvementLog:(d.improvementLog||[]).map(x=>x.id===imp.id?{...x,status:v}:x)}))}/></td>
                 <td style={{color:'var(--ok)'}}>{imp.actualSavings?'$'+imp.actualSavings.toLocaleString():'—'}</td>
                 <td style={{textAlign:'center'}}>{imp.paybackMonths||'—'}</td>
                 <td><div style={{display:'flex',gap:4}}>
@@ -28298,7 +28345,7 @@ const Production = ({data, setData, user}) => {
                 <td style={{color:d.severity==='Critical'?'var(--err)':d.severity==='Major'?'var(--warn)':'var(--muted)',fontWeight:600,fontSize:11}}>{d.severity}</td>
                 <td style={{fontSize:10}}>{d.disposition}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:100,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.rootCause}</td>
-                <td><Badge s={d.status}/></td>
+                <td><StatusSelect value={d.status||'Open'} options={['Open','In Progress','Closed']} onChange={v=>setData(dt=>({...dt,defectLog:(dt.defectLog||[]).map(x=>x.id===d.id?{...x,status:v}:x)}))}/></td>
                 <td style={{color:'var(--err)',fontSize:11}}>{d.cost?'$'+d.cost:'—'}</td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...d});setModal('defect');}}>Edit</button>
@@ -28402,7 +28449,7 @@ const Purchasing = ({data, setData}) => {
   const [mcSearch,setMcSearch]=useState('');
 
   const openPO=(row=null)=>{
-    setForm(row?{...row,items:row.items?[...row.items.map(i=>({...i}))]:[]}:{id:`PO-${uid()}`,vendor:'',vendorId:'',items:[],total:0,status:'Draft',ordered:now(),expected:'',received:false});
+    setForm(row?{...row,items:row.items?[...row.items.map(i=>({...i}))]:[]}:{id:`PO-${uid()}`,vendor:'',vendorId:'',items:[],total:0,status:'Draft',ordered:now(),expected:'',received:false,notes:''});
     setModal('po');
   };
   const openVnd=(row=null)=>{ setForm(row?{...row}:{id:`VND-${uid()}`,name:'',contact:'',email:'',phone:'',cat:'',rating:5,ytd:0,leadDays:7}); setModal('vnd'); };
@@ -28458,6 +28505,7 @@ const Purchasing = ({data, setData}) => {
         <StatCard label="Open Purchase Orders" value={openPOs.length} icon="📦" color="var(--acc)" sub={fmt$(openPOs.reduce((a,b)=>a+b.total,0))+" committed"}/>
         <StatCard label="Ready to Receive" value={readyToReceive.length} icon="🚚" color={readyToReceive.length>0?'var(--warn)':'var(--muted)'} sub="In transit or ordered"/>
         <StatCard label="Total PO Spend" value={fmt$(totalPOSpend)} icon="💰" color="var(--ok)" sub={data.purchaseOrders.length+" total POs"}/>
+        <StatCard label="Misc Charges YTD" value={fmt$((data.miscCharges||[]).reduce((a,b)=>a+(b.amount||0),0))} icon="🧾" color="var(--warn)" sub={(data.miscCharges||[]).length+" charges logged"}/>
         <StatCard label="Active Vendors" value={data.vendors.length} icon="🏢" color="var(--acc2)" sub="In vendor directory"/>
       </StatRow>
       {readyToReceive.length>0&&<div className="alert-bar alert-info"><span style={{color:'var(--info)'}}>📦</span><span><strong>POs Ready to Receive:</strong> {readyToReceive.map(p=>p.id).join(' · ')} — click "Receive" to update inventory automatically</span></div>}
@@ -28506,7 +28554,7 @@ const Purchasing = ({data, setData}) => {
           </div>
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
-        <table><thead><tr><th style={{width:32}}></th><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Expected</th><th>Attach</th><th/></tr></thead>
+        <table><thead><tr><th style={{width:32}}></th><th>PO #</th><th>Vendor</th><th>Items</th><th>Total</th><th>Status</th><th>Order Date</th><th>Expected</th><th>Attach</th><th>Notes</th><th/></tr></thead>
           <tbody>{data.purchaseOrders.filter(p=>{
               if(poVendor && !(p.vendor||'').toLowerCase().includes(poVendor.toLowerCase())) return false;
               if(poStatus!=='All' && p.status!==poStatus) return false;
@@ -28521,7 +28569,7 @@ const Purchasing = ({data, setData}) => {
               <td style={{fontWeight:500}}>{p.vendor}</td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{p.items?.map(i=>i.name).join(', ').slice(0,50)}</td>
               <td className="mono" style={{fontWeight:500}}>{fmt$(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0)}</td>
-              <td><Badge s={p.status}/></td>
+              <td><StatusSelect value={p.status} options={['Draft','Ordered','In Transit','Received','Cancelled']} onChange={v=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(x=>x.id===p.id?{...x,status:v}:x)}))}/></td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.ordered)}</td>
               <td style={{fontSize:11,color:p.expected&&p.expected<now()?'var(--warn)':'var(--muted)'}}>{p.expected?fmtD(p.expected):'—'}</td>
               <td style={{textAlign:'center',whiteSpace:'nowrap'}}>
@@ -28536,6 +28584,7 @@ const Purchasing = ({data, setData}) => {
                       }}/>
                     </label>}
               </td>
+              <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.notes}>{p.notes||'—'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 {!p.received&&['Ordered','In Transit'].includes(p.status)&&<button className="btn btn-ok btn-sm" onClick={()=>startReceiving(p)}>Receive</button>}
                 <button className="btn btn-g btn-sm" onClick={()=>openPO(p)}>Edit</button>
@@ -28573,7 +28622,7 @@ const Purchasing = ({data, setData}) => {
                 <td style={{textAlign:'center'}}>{r.qty}</td>
                 <td>{r.estCost?'$'+r.estCost:'—'}</td>
                 <td style={{fontWeight:600}}>{r.estTotal?'$'+r.estTotal:'—'}</td>
-                <td><Badge s={r.status||'Requested'}/></td>
+                <td><StatusSelect value={r.status||'Requested'} options={['Requested','Approved','On Order','Back Ordered','Received','Cancelled']} onChange={v=>setData(d=>({...d,orderRequests:(d.orderRequests||[]).map(x=>x.id===r.id?{...x,status:v}:x)}))}/></td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{r.notes}</td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...r});setModal('req');}}>Edit</button>
@@ -28706,6 +28755,7 @@ const Purchasing = ({data, setData}) => {
             ))}
           </div>
         </div>
+        <Field label="Notes / Special Instructions" style={{marginTop:10}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Delivery instructions, terms, part numbers, references…"/></Field>
         <div style={{display:'flex',gap:8,marginTop:10}}><button className="btn btn-p" onClick={savePO}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
       </Modal>}
       {modal==='vnd'&&<Modal title="Vendor" onClose={()=>setModal(null)}>
@@ -28729,6 +28779,7 @@ const Purchasing = ({data, setData}) => {
           <Field label="Vendor"><input value={form.vendor||''} onChange={e=>setForm(f=>({...f,vendor:e.target.value}))}/></Field>
           <Field label="Vendor Part #"><input value={form.partNo||''} onChange={e=>setForm(f=>({...f,partNo:e.target.value}))}/></Field>
           <Field label="Qty"><input type="number" value={form.qty||''} onChange={e=>setForm(f=>({...f,qty:Number(e.target.value),estTotal:Number(e.target.value)*(form.estCost||0)}))}/></Field>
+          <Field label="Unit"><select value={form.unit||'EA'} onChange={e=>setForm(f=>({...f,unit:e.target.value}))}>{['EA','FT','LF','IN','LB','GAL','BOX','ROLL','PAIR','SET'].map(u=><option key={u}>{u}</option>)}</select></Field>
           <Field label="Est. Unit Cost ($)"><input type="number" step="0.01" value={form.estCost||''} onChange={e=>setForm(f=>({...f,estCost:Number(e.target.value),estTotal:(form.qty||0)*Number(e.target.value)}))}/></Field>
           <Field label="Approved By"><input value={form.approvedBy||''} onChange={e=>setForm(f=>({...f,approvedBy:e.target.value}))}/></Field>
           <Field label="Status"><select value={form.status||'Requested'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Requested','Approved','On Order','Back Ordered','Received','Cancelled'].map(s=><option key={s}>{s}</option>)}</select></Field>
@@ -28927,7 +28978,7 @@ const Invoicing = ({data, setData}) => {
               <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{i.orderId}</td>
               <td style={{fontWeight:500}}>{i.customer}</td>
               <td className="mono" style={{fontWeight:600}}>{fmt$(i.amount)}</td>
-              <td><Badge s={i.status}/></td>
+              <td><StatusSelect value={i.status} options={['Pending','Paid','Overdue','Cancelled']} onChange={v=>setData(d=>({...d,invoices:d.invoices.map(x=>x.id===i.id?{...x,status:v}:x)}))}/></td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(i.issued)}</td>
               <td style={{fontSize:11,color:i.status==='Overdue'?'var(--err)':'var(--muted)'}}>{fmtD(i.due)}</td>
               <td style={{fontSize:11,color:'var(--ok)'}}>{i.paid?fmtD(i.paid):'—'}</td>
@@ -29074,7 +29125,7 @@ const Shipping = ({data, setData}) => {
                 <td style={{fontWeight:500}}>{s.customer}</td>
                 <td style={{fontSize:11}}>{s.carrier}</td>
                 <td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{s.tracking||'—'}</td>
-                <td><Badge s={s.status}/></td>
+                <td><StatusSelect value={s.status||'Ready to Ship'} options={['Ready to Ship','Shipped','In Transit','Delivered','Exception']} onChange={v=>setData(d=>({...d,shipments:(d.shipments||[]).map(x=>x.id===s.id?{...x,status:v}:x)}))}/></td>
                 <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtD(s.shipped)}</td>
                 <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)',whiteSpace:'nowrap'}}>{fmtD(s.delivered)}</td>
                 <td style={{fontFamily:'monospace',textAlign:'right',color:'var(--muted)'}}>{s.weight>0?s.weight+' lbs':'—'}</td>
@@ -29335,7 +29386,7 @@ const JobCost = ({data,setData}) => {
               <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{w.id}</td>
               <td style={{fontWeight:500,maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{w.orderId||'—'}</td>
-              <td><Badge s={w.status}/></td>
+              <td><StatusSelect value={w.status||'Queued'} options={['Queued','In Progress','On Hold','Complete']} onChange={()=>{}}/></td>
               <td className="mono">{w.laborHrs}h @ ${w.laborRate}</td>
               <td className="mono">{fmt$(w.labor)}</td>
               <td className="mono">{fmt$(w.matCost)}</td>
@@ -30066,7 +30117,7 @@ const People = ({data,setData,user}) => {
               <td><span className="chip">{e.dept}</span></td>
               <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(e.hire)}</td>
               <td className="mono" style={{color:'var(--ok)'}}>{fmt$(e.rateHr)}</td>
-              <td><Badge s={e.status}/></td>
+              <td><StatusSelect value={e.status||'Active'} options={['Active','Inactive','On Leave','Terminated']} onChange={v=>setData(d=>({...d,employees:d.employees.map(x=>x.id===e.id?{...x,status:v}:x)}))}/></td>
               <td style={{fontSize:11}}>{e.email||'—'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-xs" onClick={()=>{setForm({...e});setModal('emp');}}>Edit</button>
@@ -30186,7 +30237,7 @@ const People = ({data,setData,user}) => {
               <td style={{fontWeight:600}}>{f.actualCost?'$'+f.actualCost.toLocaleString():'—'}</td>
               <td style={{color:f.variance<0?'var(--ok)':f.variance>0?'var(--err)':''}}>{f.variance?'$'+f.variance:'—'}</td>
               <td style={{fontSize:11}}>{f.vendor}</td>
-              <td><Badge s={f.status||'Planned'}/></td>
+              <td><StatusSelect value={f.status||'Planned'} options={['Planned','In Progress','Complete','On Hold','Cancelled']} onChange={v=>{}} small/></td>
               <td style={{fontSize:11}}>{f.dueDate}</td>
               <td style={{color:f.paid==='Yes'?'var(--ok)':''}}>{f.paid}</td>
               <td><div style={{display:'flex',gap:4}}>
@@ -30205,7 +30256,7 @@ const People = ({data,setData,user}) => {
               <td style={{fontWeight:600}}>{p.title}</td>
               <td><span className="chip">{p.dept}</span></td>
               <td><Badge s={p.priority}/></td>
-              <td><Badge s={p.status}/></td>
+              <td><StatusSelect value={p.status||'Open'} options={['Open','Interviewing','Offer Extended','Filled','On Hold','Cancelled']} onChange={v=>setData(d=>({...d,openPositions:d.openPositions.map(x=>x.id===p.id?{...x,status:v}:x)}))}/></td>
               <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(p.posted)}</td>
               <td style={{fontSize:11,color:'var(--muted)',maxWidth:200}}>{p.notes}</td>
               <td><div style={{display:'flex',gap:4}}>
@@ -30453,7 +30504,7 @@ const Automation = ({data,setData}) => {
                     <span style={{fontSize:11,fontFamily:'monospace',minWidth:32}}>{s.completion||0}%</span>
                   </div>
                 </td>
-                <td><Badge s={s.status||'Not Started'}/></td>
+                <td><StatusSelect value={s.status||'Not Started'} options={['Not Started','Planning','In Progress','Complete','On Hold']} onChange={v=>setData(d=>({...d,automationStations:(d.automationStations||[]).map(x=>x.id===s.id?{...x,status:v}:x)}))}/></td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s});setModal('station');}}>Edit</button>
                   <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,automationStations:(d.automationStations||[]).filter((_,j)=>j!==i)}))}>Del</button>
@@ -30560,7 +30611,7 @@ const Automation = ({data,setData}) => {
                   <td style={{fontSize:11,color:'var(--muted)'}}>{f.location}</td>
                   <td><span style={{background:f.type==='Transfer to Bellevue'?'rgba(99,102,241,.2)':'rgba(16,185,129,.2)',color:f.type==='Transfer to Bellevue'?'#818cf8':'var(--ok)',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{f.type}</span></td>
                   <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{f.amount?fmt$(f.amount):'—'}</td>
-                  <td><Badge s={f.status||'Fulfilled'}/></td>
+                  <td><StatusSelect value={f.status||'Fulfilled'} options={['Pending','Fulfilled','Cancelled','On Hold']} onChange={v=>setData(d=>({...d,orderFulfillment:(d.orderFulfillment||[]).map((x,j)=>x.id===f.id?{...x,status:v}:x)}))}/></td>
                   <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={f.notes}>{f.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
                     <button className="btn btn-g btn-xs" onClick={()=>{setForm({...f});setModal('of');}}>Edit</button>
@@ -32490,7 +32541,7 @@ const Commissions = ({data, setData}) => {
                   <td style={{fontWeight:700,color:'var(--ok)'}}>{fmt$(o.amount)}</td>
                   <td style={{textAlign:'center',color:'var(--muted)'}}>{rate}%</td>
                   <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(comm)}</td>
-                  <td><Badge s={o.status}/></td>
+                  <td><StatusSelect value={o.status} options={['New','Quoted','Confirmed','In Production','Ready to Ship','Shipped','Invoiced','Completed','Cancelled']} onChange={v=>setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,status:v}:x)}))}/></td>
                 </tr>
               );
             })}
@@ -35149,7 +35200,7 @@ const BuildSchedule = ({data, setData}) => {
                   <td style={{fontSize:11}}>{o.productType||'—'}</td>
                   <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700}}>{totalPosts||'—'}</td>
                   <td style={{fontSize:11,whiteSpace:'nowrap',color:o.dueDate&&o.dueDate<now()?'var(--err)':'var(--muted)'}}>{o.dueDate||'—'}</td>
-                  <td><Badge s={o.status}/></td>
+                  <td><StatusSelect value={o.status||'Queued'} options={['Queued','In Production','On Hold','Complete']} onChange={v=>setData(d=>({...d,buildSchedule:(d.buildSchedule||[]).map(x=>x.id===o.id?{...x,status:v}:x)}))}/></td>
                   <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700,color:{'1':'var(--err)','2':'#f97316','3':'var(--warn)','4':'var(--acc)','5':'var(--muted)'}[o.priority||3]}}>{o.priority||3}</td>
                   {stations.map(s=>{
                     const key = s.toLowerCase().replace(' ','').replace(' coat','Coat');
@@ -35710,7 +35761,7 @@ const FacilityMove = ({data, setData}) => {
               <td style={{textAlign:'right',fontFamily:'monospace'}}>{t.actual?fmt$(t.actual):'—'}</td>
               <td style={{textAlign:'right',fontFamily:'monospace',color:(t.actual||0)>(t.estimated||0)?'var(--err)':'var(--ok)'}}>{t.estimated&&t.actual?fmt$(t.actual-t.estimated):'—'}</td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{t.vendor||'—'}</td>
-              <td><Badge s={t.status||'Pending'}/></td>
+              <td><StatusSelect value={t.status||'Planned'} options={['Planned','In Progress','Complete','On Hold','Cancelled']} onChange={v=>setData(d=>({...d,facilityMoveTasks:(d.facilityMoveTasks||[]).map(x=>x.id===t.id?{...x,status:v}:x)}))}/></td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{t.dueDate||'—'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-xs" onClick={()=>{setForm({...t});setModal('task');}}>Edit</button>
