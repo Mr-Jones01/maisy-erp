@@ -27706,7 +27706,7 @@ const Production = ({data, setData, user}) => {
   const [prodTab,setProdTab]=useState('wo');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
-  const stations=['CNC Cut','CNC Drill','Welding','Powder Coat','Prep & Assembly','QC Inspection','Packaging'];
+  const stations=['CNC Cut','CNC Drill','Welding','Powder Coat','Prep','QC Inspection','Packaging'];
 
   const printDefectForm = () => {
     const now = new Date();
@@ -27811,7 +27811,7 @@ const Production = ({data, setData, user}) => {
           <label class="check-item"><span class="check-box"></span> CNC Machining</label>
           <label class="check-item"><span class="check-box"></span> Welding</label>
           <label class="check-item"><span class="check-box"></span> Powder Coat</label>
-          <label class="check-item"><span class="check-box"></span> Prep &amp; Assembly</label>
+          <label class="check-item"><span class="check-box"></span> Prep</label>
           <label class="check-item"><span class="check-box"></span> QC / Inspection</label>
           <label class="check-item"><span class="check-box"></span> Packaging</label>
           <label class="check-item"><span class="check-box"></span> Other: _______________</label>
