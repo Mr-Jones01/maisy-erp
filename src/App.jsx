@@ -27706,7 +27706,228 @@ const Production = ({data, setData, user}) => {
   const [prodTab,setProdTab]=useState('wo');
   const [modal,setModal]=useState(null);
   const [form,setForm]=useState({});
-  const stations=['CNC Cut','CNC Drill','Welding','Powder Coat','Assembly','QC Inspection','Packaging'];
+  const stations=['CNC Cut','CNC Drill','Welding','Powder Coat','Prep & Assembly','QC Inspection','Packaging'];
+
+  const printDefectForm = () => {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(2);
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const dd = String(now.getDate()).padStart(2,'0');
+    const rand = String(Math.floor(Math.random()*900)+100);
+    const defectId = `DEF-${yy}${mm}${dd}-${rand}`;
+    const dateStr = now.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+    const w = window.open('','_blank','width=900,height=1100');
+    w.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maisy Railing — Defect Report ${defectId}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+  :root{--black:#0d0d0d;--gray-dark:#1e1e1e;--gray-mid:#4a4a4a;--gray-light:#e0e0e0;--gray-bg:#f5f5f5;--orange:#e85d04;--white:#ffffff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Barlow',sans-serif;background:#d0d0d0;display:flex;flex-direction:column;align-items:center;padding:24px;gap:16px}
+  .controls{display:flex;gap:12px;align-items:center;background:var(--black);padding:12px 20px;border-radius:6px;width:816px}
+  .controls span{color:#aaa;font-size:13px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;flex:1}
+  .controls span strong{color:var(--orange)}
+  .btn{background:var(--orange);color:white;border:none;padding:8px 20px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+  .btn-outline{background:transparent;border:1.5px solid #555;color:#aaa}
+  .page{width:816px;min-height:1056px;background:var(--white);padding:36px 40px 32px;display:flex;flex-direction:column;gap:0;box-shadow:0 4px 24px rgba(0,0,0,.25)}
+  .header{display:flex;align-items:stretch;border:2px solid var(--black);margin-bottom:0}
+  .header-logo{background:var(--black);color:var(--white);padding:14px 20px;display:flex;flex-direction:column;justify-content:center;min-width:200px}
+  .header-logo .company{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.06em;text-transform:uppercase;color:var(--white);line-height:1}
+  .header-logo .sub{font-family:'Barlow Condensed',sans-serif;font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-top:3px}
+  .header-title{flex:1;background:var(--orange);display:flex;align-items:center;padding:0 24px}
+  .header-title h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;letter-spacing:.08em;text-transform:uppercase;color:var(--white)}
+  .header-id{background:var(--gray-bg);border-left:2px solid var(--black);padding:12px 20px;display:flex;flex-direction:column;justify-content:center;min-width:170px;text-align:center}
+  .header-id .id-label{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-mid)}
+  .header-id .id-value{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--orange);letter-spacing:.04em;margin-top:2px}
+  .section-label{background:var(--black);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:5px 10px;margin-top:16px}
+  .field-grid{display:grid;border-left:2px solid var(--black);border-right:2px solid var(--black);border-bottom:2px solid var(--black)}
+  .field-row{display:flex;border-top:1.5px solid var(--gray-light)}
+  .field-row:first-child{border-top:none}
+  .field{flex:1;display:flex;flex-direction:column;padding:8px 10px 4px;border-right:1.5px solid var(--gray-light)}
+  .field:last-child{border-right:none}
+  .field.w2{flex:2}.field.w3{flex:3}
+  .field-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:2px}
+  .field-line{border-bottom:1.5px solid var(--black);height:22px;width:100%}
+  .field-tall .field-line{height:40px}
+  .field-xtall .field-line{height:56px}
+  .check-group{display:flex;gap:14px;flex-wrap:wrap;padding:4px 0 6px;align-items:center}
+  .check-item{display:flex;align-items:center;gap:5px;font-family:'Barlow',sans-serif;font-size:11px;color:var(--black)}
+  .check-box{width:14px;height:14px;border:1.5px solid var(--black);flex-shrink:0;display:inline-block}
+  .severity-group{display:flex;gap:0;padding:4px 0 6px}
+  .sev-box{display:flex;align-items:center;gap:5px;padding:4px 12px;border:1.5px solid var(--gray-light);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:.04em;margin-right:-1.5px}
+  .sev-box.critical{color:#b00}.sev-box.major{color:#c96000}.sev-box.minor{color:#5a7a00}.sev-box.cosmetic{color:#005a7a}
+  .footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid var(--gray-light);padding-top:10px}
+  .footer-note{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#999;letter-spacing:.05em;text-transform:uppercase}
+  .footer-rev{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#bbb;letter-spacing:.05em}
+  @media print{body{background:white;padding:0}.controls{display:none!important}.page{width:100%;min-height:0;box-shadow:none;padding:20px 24px 16px}@page{size:letter;margin:0.4in 0.35in}}
+</style>
+</head>
+<body>
+<div class="controls">
+  <span>Defect ID: <strong>${defectId}</strong></span>
+  <button class="btn btn-outline" onclick="regen()">↻ New ID</button>
+  <button class="btn" onclick="window.print()">🖨 Print Form</button>
+</div>
+<div class="page">
+  <div class="header">
+    <div class="header-logo">
+      <div class="company">Maisy Railing</div>
+      <div class="sub">Custom Aluminum Railings</div>
+    </div>
+    <div class="header-title"><h1>Production Defect Report</h1></div>
+    <div class="header-id">
+      <div class="id-label">Defect ID</div>
+      <div class="id-value" id="did">${defectId}</div>
+    </div>
+  </div>
+
+  <div class="section-label">1 — Report Information</div>
+  <div class="field-grid">
+    <div class="field-row">
+      <div class="field"><div class="field-label">Date Found</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Time Found</div><div class="field-line"></div></div>
+      <div class="field w2"><div class="field-label">Order / Job #</div><div class="field-line"></div></div>
+      <div class="field w2"><div class="field-label">Reported By</div><div class="field-line"></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">2 — Product &amp; Station</div>
+  <div class="field-grid">
+    <div class="field-row">
+      <div class="field w2"><div class="field-label">Product Type / Part Description</div><div class="field-line"></div></div>
+      <div class="field w2"><div class="field-label">Customer Name (if known)</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Qty Affected</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row">
+      <div class="field w3">
+        <div class="field-label">Station Where Defect Was Found</div>
+        <div class="check-group">
+          <label class="check-item"><span class="check-box"></span> Cutting</label>
+          <label class="check-item"><span class="check-box"></span> Drilling</label>
+          <label class="check-item"><span class="check-box"></span> CNC Machining</label>
+          <label class="check-item"><span class="check-box"></span> Welding</label>
+          <label class="check-item"><span class="check-box"></span> Powder Coat</label>
+          <label class="check-item"><span class="check-box"></span> Prep &amp; Assembly</label>
+          <label class="check-item"><span class="check-box"></span> QC / Inspection</label>
+          <label class="check-item"><span class="check-box"></span> Packaging</label>
+          <label class="check-item"><span class="check-box"></span> Other: _______________</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">3 — Defect Classification</div>
+  <div class="field-grid">
+    <div class="field-row">
+      <div class="field w3">
+        <div class="field-label">Defect Type</div>
+        <div class="check-group">
+          <label class="check-item"><span class="check-box"></span> Dimensional / Mis-cut</label>
+          <label class="check-item"><span class="check-box"></span> Weld Defect</label>
+          <label class="check-item"><span class="check-box"></span> Powder Coat / Finish</label>
+          <label class="check-item"><span class="check-box"></span> Surface Damage / Scratch</label>
+          <label class="check-item"><span class="check-box"></span> Wrong Material / Part</label>
+          <label class="check-item"><span class="check-box"></span> Hole / Drill Error</label>
+          <label class="check-item"><span class="check-box"></span> Prep Error</label>
+          <label class="check-item"><span class="check-box"></span> Other: _______________</label>
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field w3">
+        <div class="field-label">Severity Level</div>
+        <div class="severity-group">
+          <div class="sev-box critical"><span class="check-box"></span> CRITICAL — Cannot Ship</div>
+          <div class="sev-box major"><span class="check-box"></span> MAJOR — Rework Required</div>
+          <div class="sev-box minor"><span class="check-box"></span> MINOR — Acceptable w/ Note</div>
+          <div class="sev-box cosmetic"><span class="check-box"></span> COSMETIC — Aesthetic Only</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">4 — Description of Defect</div>
+  <div class="field-grid">
+    <div class="field-row">
+      <div class="field field-xtall w3">
+        <div class="field-label">Describe the defect in detail — include location on part, measurements if applicable</div>
+        <div class="field-line"></div>
+        <div class="field-line" style="margin-top:10px"></div>
+        <div class="field-line" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field w3" style="padding-bottom:10px">
+        <div class="field-label">Sketch / Photo Reference (attach or draw below)</div>
+        <div style="border:1.5px dashed #ccc;height:90px;margin-top:6px;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#ccc;letter-spacing:.1em;text-transform:uppercase">Sketch or Attach Photo Here</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">5 — Root Cause &amp; Corrective Action</div>
+  <div class="field-grid">
+    <div class="field-row">
+      <div class="field w3 field-tall">
+        <div class="field-label">Root Cause</div>
+        <div class="field-line"></div>
+        <div class="field-line" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field w3 field-tall">
+        <div class="field-label">Corrective Action Taken / Planned</div>
+        <div class="field-line"></div>
+        <div class="field-line" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Disposition</div>
+        <div class="check-group">
+          <label class="check-item"><span class="check-box"></span> Rework</label>
+          <label class="check-item"><span class="check-box"></span> Scrap</label>
+          <label class="check-item"><span class="check-box"></span> Accept As-Is</label>
+          <label class="check-item"><span class="check-box"></span> Return to Vendor</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Est. Cost of Defect ($)</div>
+        <div class="field-line"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="field-label">Supervisor Signature</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Date Reviewed</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Status at Close</div><div class="check-group"><label class="check-item"><span class="check-box"></span> Open</label><label class="check-item"><span class="check-box"></span> Closed</label></div></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-note">Complete form and submit to supervisor — enter into ERP Defect Log same day.</div>
+    <div class="footer-rev">Form Rev. 1.1 &nbsp;|&nbsp; Printed: ${dateStr}</div>
+  </div>
+</div>
+<script>
+  function regen(){
+    const n=new Date();
+    const yy=String(n.getFullYear()).slice(2);
+    const mm=String(n.getMonth()+1).padStart(2,'0');
+    const dd=String(n.getDate()).padStart(2,'0');
+    const r=String(Math.floor(Math.random()*900)+100);
+    const id='DEF-'+yy+mm+dd+'-'+r;
+    document.getElementById('did').textContent=id;
+  }
+  window.addEventListener('beforeprint',regen);
+</script>
+</body></html>`);
+    w.document.close();
+  };
   const statuses=['Queued','In Progress','On Hold','Complete'];
   const canEdit = user.role!=='shop';
   const open=(row=null)=>{if(!canEdit)return;setForm(row?{...row}:{id:`WO-${uid()}`,orderId:'',product:'',qty:1,station:'CNC Cut',assigned:'',status:'Queued',start:now(),due:'',progress:0,laborHrs:0,matCost:0,laborRate:28});setModal(row?'edit':'new');};
@@ -27943,7 +28164,10 @@ const Production = ({data, setData, user}) => {
       {prodTab==='defects'&&<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div><span className="chip">{(data.defectLog||[]).length} defects</span><span className="chip" style={{color:'var(--err)',marginLeft:4}}>{(data.defectLog||[]).filter(d=>d.status==='Open').length} open</span></div>
-          <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'DEF-'+uid(),dateFound:now(),station:'',orderId:'',productType:'',defectType:'',description:'',severity:'Minor',disposition:'Rework',rootCause:'',corrAction:'',reportedBy:'',status:'Open',cost:0});setModal('defect');}}>+ Log Defect</button>
+          <div style={{display:'flex',gap:6}}>
+            <button className="btn btn-g btn-sm" onClick={printDefectForm}>🖨 Print Blank Form</button>
+            <button className="btn btn-p btn-sm" onClick={()=>{setForm({id:'DEF-'+uid(),dateFound:now(),station:'',orderId:'',productType:'',defectType:'',description:'',severity:'Minor',disposition:'Rework',rootCause:'',corrAction:'',reportedBy:'',status:'Open',cost:0});setModal('defect');}}>+ Log Defect</button>
+          </div>
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>ID</th><th>Date</th><th>Order</th><th>Station</th><th>Defect Type</th><th>Description</th><th>Severity</th><th>Disposition</th><th>Root Cause</th><th>Status</th><th>Cost</th><th/></tr></thead>
@@ -27975,7 +28199,12 @@ const Production = ({data, setData, user}) => {
           <Field label="Date Found"><input type="date" value={form.dateFound||''} onChange={e=>setForm(f=>({...f,dateFound:e.target.value}))}/></Field>
           <Field label="Station"><select value={form.station||stations[0]} onChange={e=>setForm(f=>({...f,station:e.target.value}))}>{stations.map(s=><option key={s}>{s}</option>)}</select></Field>
           <Field label="Order ID"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
-          <Field label="Defect Type"><input value={form.defectType||''} onChange={e=>setForm(f=>({...f,defectType:e.target.value}))} placeholder="Weld crack, Powder drip, Wrong cut…"/></Field>
+          <Field label="Defect Type">
+            <select value={form.defectType||''} onChange={e=>setForm(f=>({...f,defectType:e.target.value}))}>
+              <option value="">— Select —</option>
+              {['Dimensional / Mis-cut','Weld Defect','Powder Coat / Finish','Surface Damage / Scratch','Wrong Material / Part','Hole / Drill Error','Prep Error','Other'].map(t=><option key={t}>{t}</option>)}
+            </select>
+          </Field>
           <Field label="Severity"><select value={form.severity||'Minor'} onChange={e=>setForm(f=>({...f,severity:e.target.value}))}>{['Minor','Major','Critical'].map(s=><option key={s}>{s}</option>)}</select></Field>
           <Field label="Disposition"><select value={form.disposition||'Rework'} onChange={e=>setForm(f=>({...f,disposition:e.target.value}))}>{['Rework','Scrap','Accept As-Is','Return to Vendor'].map(s=><option key={s}>{s}</option>)}</select></Field>
           <Field label="Reported By"><input value={form.reportedBy||''} onChange={e=>setForm(f=>({...f,reportedBy:e.target.value}))}/></Field>
