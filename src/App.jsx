@@ -28597,6 +28597,22 @@ const Purchasing = ({data, setData}) => {
       </>}
 
             {purchTab==='req'&&<>
+        {(()=>{
+          const reqs=data.orderRequests||[];
+          const pendingReqs=reqs.filter(r=>r.status==='Requested');
+          const pendingTotal=pendingReqs.reduce((a,r)=>a+(r.estTotal||r.qty*r.estCost||0),0);
+          const approvedTotal=reqs.filter(r=>r.status==='Approved').reduce((a,r)=>a+(r.estTotal||r.qty*r.estCost||0),0);
+          const onOrderTotal=reqs.filter(r=>r.status==='On Order').reduce((a,r)=>a+(r.estTotal||r.qty*r.estCost||0),0);
+          const highPriCount=pendingReqs.filter(r=>r.priority==='High'||r.priority==='Critical').length;
+          return (
+            <StatRow>
+              <StatCard label="Pending Approval ($)" value={fmt$(pendingTotal)} icon="⏳" color="var(--warn)" sub={pendingReqs.length+' requests awaiting approval'+(highPriCount?' · '+highPriCount+' high/critical':'')}/>
+              <StatCard label="Approved — Not Ordered" value={fmt$(approvedTotal)} icon="✅" color="var(--ok)" sub={reqs.filter(r=>r.status==='Approved').length+' approved, ready to order'}/>
+              <StatCard label="On Order" value={fmt$(onOrderTotal)} icon="🚚" color="var(--acc)" sub={reqs.filter(r=>r.status==='On Order').length+' POs in flight'}/>
+              <StatCard label="Received YTD" value={reqs.filter(r=>r.status==='Received').length} icon="📦" color="var(--acc2)" sub={fmt$(reqs.filter(r=>r.status==='Received').reduce((a,r)=>a+(r.estTotal||0),0))+' in goods received'}/>
+            </StatRow>
+          );
+        })()}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <span className="chip">{(data.orderRequests||[]).length} requests</span>
