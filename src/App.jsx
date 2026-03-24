@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { idbGet, idbSet } from "./db.js";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -61,13 +62,17 @@ const G = () => (
     .modal{background:var(--s1);border:1px solid var(--bdr2);border-radius:10px;width:580px;max-height:90vh;overflow-y:auto;padding:26px;animation:fadeUp .2s ease;box-shadow:0 24px 64px rgba(0,0,0,.6)}
     .modal-lg{width:760px}.modal-xl{width:960px}
     .stat-card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:18px 20px}
-    .sidebar{width:214px;min-width:214px;background:var(--s1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;height:100vh}
+    .sidebar{background:var(--s1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;height:100vh;transition:width .22s cubic-bezier(.4,0,.2,1),min-width .22s cubic-bezier(.4,0,.2,1);overflow:hidden}
+    .sidebar.expanded{width:214px;min-width:214px}
+    .sidebar.collapsed{width:48px;min-width:48px}
+    .sidebar-toggle{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:5px;border:1px solid var(--bdr);background:none;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;flex-shrink:0}
+    .sidebar-toggle:hover{color:var(--txt);border-color:var(--dim)}
     .nav-i{display:flex;align-items:center;gap:8px;padding:7px 12px;margin:1px 7px;border-radius:6px;cursor:pointer;font-size:12.5px;color:var(--muted);transition:all .12s;user-select:none}
     .nav-i:hover{background:var(--s2);color:var(--txt)}.nav-i.on{background:rgba(0,229,255,.08);color:var(--acc);border:1px solid rgba(0,229,255,.12)}
     .nav-section{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);padding:10px 14px 3px;margin-top:4px}
     .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
     .topbar{height:50px;min-height:50px;background:var(--s1);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 18px;gap:10px}
-    .content{flex:1;overflow-y:auto;padding:22px}
+    .content{flex:1;overflow-y:auto;overflow-x:auto;padding:22px}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
     .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
@@ -25929,11 +25934,25 @@ const HotRushQueue = ({data, setData}) => {
           <div style={{color:'var(--muted)',fontSize:13}}>{hq.length ? 'No orders match filters' : 'No orders yet — push from Queue Analyzer or add manually'}</div>
         </div>
       ) : (
-        <div className="card" style={{overflowX:'auto'}}>
-          <table style={{minWidth:1200}}>
+        <div className="card" style={{overflowX:'auto',padding:0}}>
+          <table style={{minWidth:1400,tableLayout:'fixed',width:'100%'}}>
+            <colgroup>
+              <col style={{width:110}}/>  {/* Tag */}
+              <col style={{width:185}}/>  {/* Status */}
+              <col style={{width:95}}/>   {/* Date */}
+              <col style={{width:62}}/>   {/* Days */}
+              <col style={{width:50}}/>   {/* Pri */}
+              <col style={{width:160}}/>  {/* Customer */}
+              <col style={{width:110}}/>  {/* Source */}
+              <col style={{width:140}}/>  {/* Fulfillment */}
+              <col style={{width:130}}/>  {/* Ship To */}
+              <col style={{width:110}}/>  {/* Order # */}
+              <col/>                      {/* Notes — fills remaining space */}
+              <col style={{width:80}}/>   {/* Actions */}
+            </colgroup>
             <thead>
               <tr>
-                <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('tag')}>Tag<SI col="tag"/></th>
+                <th style={{cursor:'pointer',userSelect:'none',paddingLeft:14}} onClick={()=>doSort('tag')}>Tag<SI col="tag"/></th>
                 <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('status')}>Status<SI col="status"/></th>
                 <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('date')}>Date<SI col="date"/></th>
                 <th style={{cursor:'pointer',userSelect:'none'}} onClick={()=>doSort('days')}>Days<SI col="days"/></th>
@@ -26031,8 +26050,8 @@ const HotRushQueue = ({data, setData}) => {
                     <td style={{fontSize:11}}>{o.delivery||'—'}</td>
                     <td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'—'}</td>
                     <td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
-                    <td style={{whiteSpace:'nowrap'}}>
+                    <td style={{fontSize:11,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||'—'}</td>
+                    <td style={{whiteSpace:'nowrap',paddingRight:14}}>
                       <button className="btn btn-g btn-xs" style={{marginRight:4}} onClick={()=>{setEditId(o.id);setForm({...o});}}>✎</button>
                       <button className="btn btn-d btn-xs" onClick={()=>remove(o.id)}>✕</button>
                     </td>
@@ -26733,39 +26752,76 @@ const NAVS = [
   {id:'reports',icon:'◪',label:'Reports'},
 ];
 
-const Sidebar = ({page,setPage,data,user}) => {
+const Sidebar = ({page,setPage,data,user,collapsed,setCollapsed}) => {
   const access=ROLE_ACCESS[user.role]||[];
   const overdueInv=data.invoices.filter(i=>i.status==='Overdue').length;
   const lowStock=data.inventory.filter(i=>i.qty<=i.reorder).length;
   const openTodos=data.todos.filter(t=>t.status!=='Done').length;
+  const c = collapsed;
   return (
-    <div className="sidebar">
-      <div style={{padding:'15px 14px 12px',borderBottom:'1px solid var(--bdr)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <div style={{width:28,height:28,background:'linear-gradient(135deg,var(--acc),var(--acc2))',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div className={`sidebar ${c?'collapsed':'expanded'}`}>
+      {/* Header */}
+      <div style={{padding:c?'13px 10px':'15px 14px 12px',borderBottom:'1px solid var(--bdr)',display:'flex',alignItems:'center',gap:8,justifyContent:c?'center':'space-between',flexShrink:0}}>
+        {!c && (
+          <div style={{display:'flex',alignItems:'center',gap:8,overflow:'hidden'}}>
+            <div style={{width:28,height:28,flexShrink:0,background:'linear-gradient(135deg,var(--acc),var(--acc2))',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <span style={{color:'#000',fontSize:13,fontWeight:900,fontFamily:'Barlow Condensed'}}>M</span>
+            </div>
+            <div style={{overflow:'hidden'}}>
+              <div className="hd" style={{fontSize:15,whiteSpace:'nowrap'}}>MAISY ERP</div>
+              <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase',whiteSpace:'nowrap'}}>v5.6 · All Modules</div>
+            </div>
+          </div>
+        )}
+        {c && (
+          <div style={{width:28,height:28,flexShrink:0,background:'linear-gradient(135deg,var(--acc),var(--acc2))',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <span style={{color:'#000',fontSize:13,fontWeight:900,fontFamily:'Barlow Condensed'}}>M</span>
           </div>
-          <div><div className="hd" style={{fontSize:15}}>MAISY ERP</div><div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase'}}>v5.6 · All Modules</div></div>
-        </div>
+        )}
+        <button className="sidebar-toggle" title={c?'Expand sidebar [ ]':'Collapse sidebar [ ]'} onClick={()=>setCollapsed(v=>!v)} style={{marginLeft:c?0:'auto'}}>
+          {c ? '»' : '«'}
+        </button>
       </div>
-      <div style={{flex:1,overflowY:'auto',padding:'5px 0'}}>
+
+      {/* Nav items */}
+      <div style={{flex:1,overflowY:'auto',overflowX:'hidden',padding:'5px 0'}}>
         {NAVS.map((n,i)=>{
-          if(n.section)return <div key={i} className="nav-section">{n.section}</div>;
+          if(n.section) return c ? null : <div key={i} className="nav-section">{n.section}</div>;
           if(!access.includes(n.id))return null;
           const badge=n.id==='invoicing'&&overdueInv>0?overdueInv:n.id==='inventory'&&lowStock>0?lowStock:n.id==='todo'&&openTodos>0?openTodos:null;
           return(
-            <div key={n.id} className={`nav-i${page===n.id?' on':''}`} onClick={()=>setPage(n.id)}>
-              <span style={{fontSize:13,width:14,textAlign:'center',opacity:.65}}>{n.icon}</span>
-              <span style={{flex:1,fontSize:12.5}}>{n.label}</span>
-              {badge&&<span style={{background:'var(--err)',color:'#fff',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:10}}>{badge}</span>}
+            <div key={n.id}
+              className={`nav-i${page===n.id?' on':''}`}
+              title={c ? n.label : ''}
+              onClick={()=>setPage(n.id)}
+              style={c?{justifyContent:'center',padding:'8px 0',margin:'1px 6px',position:'relative'}:{}}
+            >
+              <span style={{fontSize:c?16:13,width:c?'auto':14,textAlign:'center',opacity:.75,flexShrink:0}}>{n.icon}</span>
+              {!c && <span style={{flex:1,fontSize:12.5,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{n.label}</span>}
+              {!c && badge && <span style={{background:'var(--err)',color:'#fff',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:10,flexShrink:0}}>{badge}</span>}
+              {c && badge && <span style={{position:'absolute',top:4,right:4,background:'var(--err)',color:'#fff',fontSize:8,fontWeight:700,padding:'1px 4px',borderRadius:8,lineHeight:1.2}}>{badge}</span>}
             </div>
           );
         })}
       </div>
-      <div style={{padding:'10px 14px',borderTop:'1px solid var(--bdr)'}}>
-        <div style={{fontSize:12,fontWeight:600}}>{user.name}</div>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}><span className={`badge role-${user.role}`} style={{fontSize:9}}>{user.role}</span><span style={{fontSize:10,color:'var(--muted)'}}>{user.title}</span></div>
-      </div>
+
+      {/* Footer */}
+      {!c && (
+        <div style={{padding:'10px 14px',borderTop:'1px solid var(--bdr)',flexShrink:0}}>
+          <div style={{fontSize:12,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{user.name}</div>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}>
+            <span className={`badge role-${user.role}`} style={{fontSize:9}}>{user.role}</span>
+            <span style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{user.title}</span>
+          </div>
+        </div>
+      )}
+      {c && (
+        <div style={{padding:'10px 0',borderTop:'1px solid var(--bdr)',display:'flex',justifyContent:'center',flexShrink:0}}>
+          <div title={user.name} style={{width:28,height:28,borderRadius:'50%',background:'var(--s3)',border:'1px solid var(--bdr)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'var(--acc)',cursor:'default'}}>
+            {user.name?.charAt(0)?.toUpperCase()||'?'}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -31670,12 +31726,15 @@ const KPIDashboard = ({data,setData}) => {
 const calcBOM = (order) => {
   const {
     lineQty=0, stairQty=0, cornerQty=0,
-    rail8ft=0, rail12ft=0, rail20ft=0,        // top rail pieces by length
-    stairRail8ft=0, stairRail12ft=0, stairRail20ft=0, // stair rail pieces
+    rail8ft=0, rail12ft=0, rail20ft=0,
+    stairRail8ft=0, stairRail12ft=0, stairRail20ft=0,
     swageQty=0, cableFootage=0, railCapQty=0,
-    angleWasherQty=0,                          // explicit from order if provided
+    angleWasherQty=0, lagQty=0, postScrewQty=0,
+    selfTapQty=0, angleBracketQty=0,
+    glassPanelQty=0, glassClampQty=0,
     mountType='', height='42', notes='', color='',
-    productType='', railType=''
+    productType='', railType='', stairAngles=[],
+    cableColor='', hardwareColor='', powderColor='',
   } = order;
 
   const lp = Number(lineQty)||0;
@@ -31685,125 +31744,237 @@ const calcBOM = (order) => {
   const swages = Number(swageQty)||0;
   const cable = Number(cableFootage)||0;
   const railCaps = Number(railCapQty)||0;
+  const glassPanel = Number(glassPanelQty)||0;
+  const glassClamp = Number(glassClampQty)||0;
 
-  const isFascia = (mountType||'').toLowerCase().includes('fascia');
+  // ── Flags & config ──────────────────────────────────────────────────────────
+  const isFascia  = (mountType||'').toLowerCase().includes('fascia');
   const isSurface = (mountType||'').toLowerCase().includes('surface');
-  // Default to fascia if not specified (most common order type)
   const mountFascia = isFascia || (!isFascia && !isSurface);
-  const is36 = (height||'').includes('36');
-  const postFtEach = is36 ? 3.0 : 3.5;
+  // Custom post height support: "42", "36", "Custom-48", "48", etc.
+  const heightStr = String(height||'42');
+  const is36 = heightStr.includes('36');
+  const customHeightMatch = heightStr.match(/\d+/);
+  const postInches = customHeightMatch ? Number(customHeightMatch[0]) : 42;
+  const postFtEach = postInches / 12;
+
   const notesLower = (notes||'').toLowerCase();
-  // Black hardware ONLY when customer explicitly requests it in notes
-  const isBlack = notesLower.includes('black hardware') || notesLower.includes('black cable') ||
-                  notesLower.includes('all black') || notesLower.includes('blk hardware') ||
-                  notesLower.includes('black swage') || notesLower.includes('black fastener');
+  const hwColorLower = (hardwareColor||'').toLowerCase();
+  const cableColorLower = (cableColor||'').toLowerCase();
+  const pcColorField = powderColor || color || '';
+
+  // Black hardware — dedicated field takes priority, then notes scan
+  const isBlackHW = hwColorLower.includes('black') || hwColorLower.includes('blk') ||
+    notesLower.includes('black hardware') || notesLower.includes('blk hardware') ||
+    notesLower.includes('black swage') || notesLower.includes('all black') ||
+    notesLower.includes('black fastener');
+  // Black cable — dedicated field takes priority, then notes
+  const isBlackCable = cableColorLower.includes('black') || cableColorLower.includes('blk') ||
+    notesLower.includes('black cable') || notesLower.includes('blk cable');
+
   const useLargeWashers = notesLower.includes('large wash');
-  const isCable = !(productType||'').toLowerCase().includes('glass') && !(railType||'').toLowerCase().includes('glass');
+  const noLags = notesLower.includes('no lag') || notesLower.includes('no lags');
+
+  const prodLower = (productType||'').toLowerCase() + ' ' + (railType||'').toLowerCase();
+  const isGlass           = prodLower.includes('glass');
+  const isGlassFrameless  = isGlass && prodLower.includes('frameless');
+  const isGlassFramed     = isGlass && !isGlassFrameless;
+  const isCable           = !isGlass;
+
+  // ── FLAG: stair posts with no stair angles ──────────────────────────────────
+  const stairAnglesArr = stairAngles || [];
+  const stairAngleFlag = sp > 0 && stairAnglesArr.length === 0;
 
   const items = [];
+  items._flags = [];
+  if(stairAngleFlag) items._flags.push({
+    type:'MISSING_STAIR_ANGLES', severity:'warn',
+    msg:`${sp} stair post(s) present but NO stair angles specified — verify cut angles and angle bracket requirements before releasing to production`,
+  });
+  if(!pcColorField) items._flags.push({
+    type:'MISSING_COLOR', severity:'err',
+    msg:'No powder coat color specified — cannot batch by color or pull powder inventory',
+  });
+
   const add = (id, name, qty, unit, cat, note='') => {
-    const q = typeof qty === 'number' ? qty : Number(qty)||0;
-    if(q > 0) items.push({inventoryId:id, sku:id, name, qty:Math.ceil(q*10)/10, unit, cat, note});
+    const q = Math.ceil((Number(qty)||0) * 10) / 10;
+    if(q > 0) items.push({inventoryId:id, sku:id, name, qty:q, unit, cat, note});
   };
 
-  // ── 1. POST ALUMINUM (RM-001) — 1"x3"x1/8" tube, all post types same material
-  const postAlumFt = totalPosts * postFtEach;
-  if(postAlumFt > 0) add('RM-001', '6061-T6 Tube 1"x3"x1/8" (Post Alum)', postAlumFt, 'FT', 'Aluminum',
-    `${totalPosts} posts × ${postFtEach}ft`);
-
-  // ── 2. TOP RAIL (RM-006) — 1"x2"x1/8" tube — Deck Top & Stair Top = SAME material
-  const r8  = (Number(rail8ft)||0)  + (Number(stairRail8ft)||0);
-  const r12 = (Number(rail12ft)||0) + (Number(stairRail12ft)||0);
-  const r20 = (Number(rail20ft)||0) + (Number(stairRail20ft)||0);
-  const totalRailFt = (r8*8) + (r12*12) + (r20*20);
-  if(totalRailFt > 0) {
-    const railNote = [r8&&`${r8}×8ft`, r12&&`${r12}×12ft`, r20&&`${r20}×20ft`].filter(Boolean).join(', ');
-    add('RM-006', '6061-T6 Tube 1"x2"x1/8" (Top Rail)', totalRailFt, 'FT', 'Aluminum', railNote);
-  }
-
-  // ── 3. CABLE (AI-001 standard, or black variant)
-  if(cable > 0 && isCable) {
-    const cableId = isBlack ? 'AI-016' : 'AI-001';
-    const cableName = isBlack ? '1/8" Cable Black SS316' : '1/8" Cable SS316';
-    add(cableId, cableName, cable, 'FT', 'Cable');
-  }
-
-  // ── 4. SWAGES — complete assemblies (AI-015 std, AI-016 black noted separately)
-  if(swages > 0 && isCable) {
-    const swageId = isBlack ? 'AI-016' : 'AI-015';
-    const swageName = isBlack ? 'Swage Assembly 1/8" Black SS316' : 'Swage Assembly 1/8" SS316';
-    add(swageId, swageName, swages, 'EA', 'Hardware', 'Complete assemblies');
-
-    // ── 5. ANGLE WASHERS — same qty as swages, ONLY when stair posts exist
-    //    Unless notes say "large washers" → use AI-010 (large washer)
-    if(sp > 0) {
-      const explicitAW = Number(angleWasherQty)||0;
-      const awQty = explicitAW > 0 ? explicitAW : swages; // user rule: same as swages
-      const awId = useLargeWashers ? 'AI-010' : 'AI-014';
-      const awName = useLargeWashers ? 'Swage Washer Large 5/8" OD SS316' : 'Swage Angle Washer 1/4"×57° SS316';
-      add(awId, awName, awQty, 'EA', 'Hardware',
-        useLargeWashers ? 'Large washers per notes' : '1:1 with swages (stair sections)');
+  // ════════════════════════════════════════════════════════════════════════════
+  // CABLE RAIL BOM
+  // ════════════════════════════════════════════════════════════════════════════
+  if(isCable) {
+    // 1. POST ALUMINUM — 1"×3"×1/8" tube
+    if(totalPosts > 0) {
+      add('RM-001','6061-T6 Tube 1"×3"×1/8" (Post Alum)', totalPosts * postFtEach, 'FT','Aluminum',
+        `${totalPosts} posts × ${postFtEach.toFixed(3)}ft (${postInches}" height)`);
     }
-  }
 
-  // ── 6. RAIL CAPS (AI-019)
-  if(railCaps > 0) add('AI-019', 'Handrail End Cap 3"×1" Black', railCaps, 'EA', 'Hardware');
-
-  // ── 7. LAGS (AI-005) — fascia=2/post, surface=0 + LAG WASHERS 1:1
-  if(mountFascia && totalPosts > 0) {
-    const lagCount = totalPosts * 2;
-    add('AI-005', 'Lag Bolt SS 3/8"×5"', lagCount, 'EA', 'Hardware', `${totalPosts} posts × 2`);
-    add('AI-008', 'Lag Bolt Washer 7/16" SS', lagCount, 'EA', 'Hardware', '1 per lag');
-  }
-
-  // ── 8. POST SCREWS (AI-004) — surface=4/post, fascia=0
-  if(isSurface && totalPosts > 0) {
-    add('AI-004', 'Post Screw 3/16"×2-7/8" Lock Head', totalPosts*4, 'EA', 'Hardware', `${totalPosts} posts × 4`);
-  }
-
-  // ── 9. SELF TAP (AI-002) — 4/post all types
-  if(totalPosts > 0) {
-    add('AI-002', '#11 Self-Tap Screw Sq Drive Pan Head', totalPosts*4, 'EA', 'Hardware', `${totalPosts} posts × 4`);
-  }
-
-  // ── 10. DERIVED ALUMINUM — flat bar for post base plates
-  if(totalPosts > 0) {
-    const barFt = Math.ceil((totalPosts * 4) / 12 * 10) / 10; // 4" per post → ft, 1 decimal
-    if(isSurface) {
-      // Surface: needs 4×1/4 flat bar + 2×1/8 flat bar
-      add('RM-004', '6061-T6 Bar 1/4"×4" (Surface Base)', barFt, 'FT', 'Aluminum', `${totalPosts} posts × 4"`);
-      add('RM-002', '6061-T6 Bar 1/8"×2" (Surface Base)', barFt, 'FT', 'Aluminum', `${totalPosts} posts × 4"`);
-    } else {
-      // Fascia: 2×1/8 flat bar for fascia channel
-      add('RM-002', '6061-T6 Bar 1/8"×2" (Fascia Channel)', barFt, 'FT', 'Aluminum', `${totalPosts} posts × 4"`);
+    // 2. TOP RAIL — 1"×2"×1/8" tube (deck + stair = same SKU)
+    const r8t  = (Number(rail8ft)||0)+(Number(stairRail8ft)||0);
+    const r12t = (Number(rail12ft)||0)+(Number(stairRail12ft)||0);
+    const r20t = (Number(rail20ft)||0)+(Number(stairRail20ft)||0);
+    const totalRailFt = (r8t*8)+(r12t*12)+(r20t*20);
+    if(totalRailFt > 0) {
+      const rn = [r8t&&`${r8t}×8ft`,r12t&&`${r12t}×12ft`,r20t&&`${r20t}×20ft`].filter(Boolean).join(', ');
+      add('RM-006','6061-T6 Tube 1"×2"×1/8" (Top Rail)', totalRailFt,'FT','Aluminum', rn);
     }
-    // Corner posts: need angle iron pieces
+
+    // 3. CABLE
+    if(cable > 0) {
+      add(isBlackCable?'AI-016b':'AI-001',
+        isBlackCable?'1/8" Cable Black SS316':'1/8" Cable SS316',
+        cable,'FT','Cable', isBlackCable?'Black per order spec':'Standard SS316');
+    }
+
+    // 4. SWAGES
+    if(swages > 0) {
+      add(isBlackHW?'AI-015b':'AI-015',
+        isBlackHW?'Swage Assembly 1/8" Black SS316':'Swage Assembly 1/8" SS316',
+        swages,'EA','Hardware','Complete assemblies');
+    }
+
+    // 5. ANGLE WASHERS — stair posts only, 1:1 with swages unless explicit
+    if(sp > 0 && swages > 0) {
+      const awQty = (Number(angleWasherQty)||0) > 0 ? Number(angleWasherQty) : swages;
+      add(useLargeWashers?'AI-010':(isBlackHW?'AI-014b':'AI-014'),
+        useLargeWashers?'Swage Washer Large 5/8" OD SS316':
+          isBlackHW?'Swage Angle Washer Black SS316':'Swage Angle Washer 1/4"×57° SS316',
+        awQty,'EA','Hardware',
+        useLargeWashers?'Large washers per notes':'1:1 with swages (stair sections)');
+    }
+
+    // 6. STAIR ANGLE BRACKETS — per stair run, 2 brackets per stair post per angle
+    if(stairAnglesArr.length > 0) {
+      stairAnglesArr.forEach(a => {
+        const aq = Number(a.qty)||0;
+        if(aq > 0) add('AI-012',`Stair Angle Bracket ${a.angle}`, aq*2,'EA','Hardware',
+          `${aq} post(s) × 2 brackets @ ${a.angle}${a.notes?' — '+a.notes:''}`);
+      });
+    } else if(sp > 0) {
+      // Unknown angle — placeholder so it shows in BOM with flag
+      add('AI-012','Stair Angle Bracket (⚠ angle unspecified)', sp*2,'EA','Hardware',
+        `${sp} stair post(s) × 2 — verify cut angle with customer`);
+    }
+
+    // 7. RAIL CAPS
+    if(railCaps > 0) add('AI-019','Handrail End Cap 3"×1"', railCaps,'EA','Hardware');
+
+    // 8. LAGS — fascia: 2/post + washers 1:1
+    if(mountFascia && totalPosts > 0 && !noLags) {
+      const lc = (Number(lagQty)||0) > 0 ? Number(lagQty) : totalPosts * 2;
+      add('AI-005','Lag Bolt SS 3/8"×5"', lc,'EA','Hardware',
+        Number(lagQty)>0?'From order spec':`${totalPosts} posts × 2`);
+      add('AI-008','Lag Bolt Washer 7/16" SS', lc,'EA','Hardware','1 per lag');
+    }
+
+    // 9. POST SCREWS — surface: 4/post
+    if(isSurface && totalPosts > 0) {
+      const pc = (Number(postScrewQty)||0) > 0 ? Number(postScrewQty) : totalPosts*4;
+      add('AI-004','Post Screw 3/16"×2-7/8" Lock Head', pc,'EA','Hardware',
+        Number(postScrewQty)>0?'From order spec':`${totalPosts} posts × 4`);
+    }
+
+    // 10. SELF-TAP — 4/post all types
+    if(totalPosts > 0) {
+      const sc = (Number(selfTapQty)||0) > 0 ? Number(selfTapQty) : totalPosts*4;
+      add('AI-002','#11 Self-Tap Screw Sq Drive Pan Head', sc,'EA','Hardware',
+        Number(selfTapQty)>0?'From order spec':`${totalPosts} posts × 4`);
+    }
+
+    // 11. FLAT BAR for base plates
+    if(totalPosts > 0) {
+      const barFt = Math.ceil((totalPosts*4)/12*10)/10;
+      if(isSurface) {
+        add('RM-004','6061-T6 Bar 1/4"×4" (Surface Base)', barFt,'FT','Aluminum',`${totalPosts} posts × 4"`);
+        add('RM-002','6061-T6 Bar 1/8"×2" (Surface Base)', barFt,'FT','Aluminum',`${totalPosts} posts × 4"`);
+      } else {
+        add('RM-002','6061-T6 Bar 1/8"×2" (Fascia Channel)', barFt,'FT','Aluminum',`${totalPosts} posts × 4"`);
+      }
+    }
+
+    // 12. CORNER POST ANGLE IRON
     if(cp > 0) {
-      const cornerAngle1 = Math.ceil((cp * 2 * 2) / 12 * 10) / 10; // 2 pcs × 2" each
-      const cornerAngle2 = Math.ceil((cp * 2 * 5) / 12 * 10) / 10; // 2 pcs × 5" each
-      add('RM-009', '6061-T6 Angle 1.5"×1.5"×1/8" (Corner)', cornerAngle1, 'FT', 'Aluminum', `${cp} corners × 2pcs × 2"`);
-      add('RM-015', '6061-T6 Angle 2"×4"×1/4" (Corner)', cornerAngle2, 'FT', 'Aluminum', `${cp} corners × 2pcs × 5"`);
+      add('RM-009','6061-T6 Angle 1.5"×1.5"×1/8" (Corner)', Math.ceil((cp*2*2)/12*10)/10,'FT','Aluminum',`${cp} corners × 2pcs × 2"`);
+      add('RM-015','6061-T6 Angle 2"×4"×1/4" (Corner)',      Math.ceil((cp*2*5)/12*10)/10,'FT','Aluminum',`${cp} corners × 2pcs × 5"`);
+    }
+
+    // 13. EXPLICIT ANGLE BRACKETS from order
+    if((Number(angleBracketQty)||0) > 0) {
+      add('AI-012','Angle Bracket SS316', Number(angleBracketQty),'EA','Hardware','From order spec');
     }
   }
 
-  // ── 11. POWDER COAT — calculate lbs needed and match to inventory item
-  // Surface area: 1"x3" tube @ 42" = 2.33 sqft, @ 36" = 2.0 sqft
-  // Top rail: 1"x2" tube = 0.5 sqft/ft
-  // Coverage: 80 sqft/lb at 2-3 mil DFT
-  if(totalPosts > 0 || totalRailFt > 0) {
-    const COVERAGE_SQ_FT_PER_LB = 80;
-    const postSqFt = is36
-      ? totalPosts * 2.0    // 36" post = 3.0ft × 0.667ft perimeter
-      : totalPosts * 2.33;  // 42" post = 3.5ft × 0.667ft perimeter
-    const railSqFt = totalRailFt * 0.5; // 1"x2" tube perimeter = 0.5ft/ft
-    const totalSqFt = postSqFt + railSqFt;
-    const lbsNeeded = Math.ceil((totalSqFt / COVERAGE_SQ_FT_PER_LB) * 10) / 10; // round up to 1 decimal
+  // ════════════════════════════════════════════════════════════════════════════
+  // GLASS RAIL BOM (industry standard approximation)
+  // ════════════════════════════════════════════════════════════════════════════
+  if(isGlass) {
+    // Glass posts: 2"×2"×1/8" square tube (heavier than cable posts)
+    if(totalPosts > 0) {
+      add('RM-007','6061-T6 Tube 2"×2"×1/8" (Glass Post)', totalPosts*postFtEach,'FT','Aluminum',
+        `${totalPosts} posts × ${postFtEach.toFixed(3)}ft (${postInches}")`);
+    }
 
-    // Color match: strip spaces/dashes, extract code segment
-    // Order colors: "BK 303 Matte Black", "C241-BK303", "T002-WH08", etc.
-    // Inventory: "Powder - C241-BK303", "Powder - T002-WH08" etc.
-    const colorClean = (color||'').toUpperCase().replace(/\s+/g,'').replace(/-/g,'');
-    // Build inventory color lookup (RM-017 to RM-044)
+    // Top rail same material
+    const r8g  = (Number(rail8ft)||0)+(Number(stairRail8ft)||0);
+    const r12g = (Number(rail12ft)||0)+(Number(stairRail12ft)||0);
+    const r20g = (Number(rail20ft)||0)+(Number(stairRail20ft)||0);
+    const totalRailFtG = (r8g*8)+(r12g*12)+(r20g*20);
+    if(totalRailFtG > 0) {
+      const rng = [r8g&&`${r8g}×8ft`,r12g&&`${r12g}×12ft`,r20g&&`${r20g}×20ft`].filter(Boolean).join(', ');
+      add('RM-006','6061-T6 Tube 1"×2"×1/8" (Top Rail)', totalRailFtG,'FT','Aluminum', rng);
+    }
+
+    // Glass panels — use explicit count or estimate (posts-1 per section)
+    const panelQty = glassPanel > 0 ? glassPanel : Math.max(1, totalPosts - 1 + cp);
+    const panelEst = glassPanel === 0;
+    add('GL-001',`1/2" Tempered Glass Panel${panelEst?' (estimated)':''}`, panelQty,'EA','Glass',
+      panelEst?`Estimated: ${totalPosts} posts − 1/section — verify with customer`:'From order spec');
+
+    // Glass clamps — industry standard: framed=4/panel, frameless=3/panel (standoffs)
+    const clampQty = glassClamp > 0 ? glassClamp : (isGlassFrameless ? panelQty*3 : panelQty*4);
+    const clampEst = glassClamp === 0;
+    add('GL-002',`Glass Clamp SS316${isGlassFrameless?' Standoff':''}${clampEst?' (estimated)':''}`,
+      clampQty,'EA','Hardware',
+      clampEst?(isGlassFrameless?`Frameless: ${panelQty} panels × 3 standoffs`:`Framed: ${panelQty} panels × 4 clamps`):'From order spec');
+
+    // Base shoe channel for framed glass
+    if(isGlassFramed && totalPosts > 0) {
+      const shoeRun = totalRailFtG || totalPosts * 3;
+      add('RM-010','Glass Base Shoe Channel 3"×1.5"×1/8"', shoeRun,'FT','Aluminum','Base channel for framed glass panels');
+    }
+
+    // Lags / post screws / self-tap same as cable
+    if(mountFascia && totalPosts > 0 && !noLags) {
+      const lc = totalPosts * 2;
+      add('AI-005','Lag Bolt SS 3/8"×5"', lc,'EA','Hardware',`${totalPosts} posts × 2`);
+      add('AI-008','Lag Bolt Washer 7/16" SS', lc,'EA','Hardware','1 per lag');
+    }
+    if(isSurface && totalPosts > 0) {
+      add('AI-004','Post Screw 3/16"×2-7/8" Lock Head', totalPosts*4,'EA','Hardware',`${totalPosts} posts × 4`);
+    }
+    if(totalPosts > 0) add('AI-002','#11 Self-Tap Screw Sq Drive Pan Head', totalPosts*4,'EA','Hardware',`${totalPosts} posts × 4`);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // POWDER COAT — all product types
+  // Coverage: 80 sqft/lb at 2-3 mil DFT (industry standard)
+  // Post tube 1"×3": perimeter = 2*(1+3) = 8" = 0.667ft/ft of length
+  // Rail tube 1"×2": perimeter = 2*(1+2) = 6" = 0.5ft/ft
+  // ════════════════════════════════════════════════════════════════════════════
+  const r8pc  = (Number(rail8ft)||0)+(Number(stairRail8ft)||0);
+  const r12pc = (Number(rail12ft)||0)+(Number(stairRail12ft)||0);
+  const r20pc = (Number(rail20ft)||0)+(Number(stairRail20ft)||0);
+  const totalRailFtPC = (r8pc*8)+(r12pc*12)+(r20pc*20);
+
+  if(totalPosts > 0 || totalRailFtPC > 0) {
+    const COVERAGE = 80;
+    const postSqFt = totalPosts * postFtEach * 0.667;
+    const railSqFt = totalRailFtPC * 0.5;
+    const totalSqFt = postSqFt + railSqFt;
+    const lbsNeeded = Math.ceil((totalSqFt / COVERAGE) * 10) / 10;
+
     const POWDER_MAP = {
       'T009BG01':'RM-017','T002WH08':'RM-018','T075BK211':'RM-019','T002BK08':'RM-020',
       'C013GR08':'RM-021','T005BK78':'RM-022','C241GR305':'RM-023','C206BK266':'RM-024',
@@ -31813,35 +31984,31 @@ const calcBOM = (order) => {
       'T238GR2070':'RM-038','T209C101':'RM-039','C209BR358':'RM-040','E305GR533':'RM-041',
       'P000BG631':'RM-042','C241BK303':'RM-043','T032BL04':'RM-044',
     };
-    // Try to find matching powder inv item
+
+    const colorClean = pcColorField.toUpperCase().replace(/[\s-]/g,'');
     let powderInvId = null;
-    let matchedColorCode = null;
     for(const [code, id] of Object.entries(POWDER_MAP)) {
-      if(colorClean.includes(code)) { powderInvId = id; matchedColorCode = code; break; }
+      if(colorClean.includes(code)) { powderInvId = id; break; }
     }
-    // Fallback: try partial match on just the numeric portion
     if(!powderInvId) {
-      const numMatch = (color||'').match(/\d{3,}/)?.[0];
-      if(numMatch) {
-        for(const [code, id] of Object.entries(POWDER_MAP)) {
-          if(code.includes(numMatch)) { powderInvId = id; matchedColorCode = code; break; }
-        }
+      const numMatch = pcColorField.match(/\d{3,}/)?.[0];
+      if(numMatch) for(const [code, id] of Object.entries(POWDER_MAP)) {
+        if(code.includes(numMatch)) { powderInvId = id; break; }
       }
     }
-
-    const powderName = powderInvId
-      ? `Powder Coat — ${color} (${powderInvId})`
-      : `Powder Coat — ${color||'UNSPECIFIED'} ⚠ Color not in inventory map`;
 
     items.push({
       inventoryId: powderInvId || 'PC-UNKNOWN',
       sku: powderInvId || 'PC-UNKNOWN',
-      name: powderName,
+      name: powderInvId
+        ? `Powder Coat — ${pcColorField}`
+        : `Powder Coat — ${pcColorField||'⚠ COLOR NOT SPECIFIED'} ⚠ not in color map`,
       qty: lbsNeeded,
       unit: 'LB',
       cat: 'Powder Coat',
-      note: `${totalPosts} posts (${totalSqFt.toFixed(1)} sqft) ÷ ${COVERAGE_SQ_FT_PER_LB} sqft/lb = ${lbsNeeded} lbs`,
+      note: `${totalPosts} posts (${(postSqFt).toFixed(1)} sqft) + ${totalRailFtPC}ft rail (${railSqFt.toFixed(1)} sqft) = ${totalSqFt.toFixed(1)} sqft ÷ ${COVERAGE} sqft/lb = ${lbsNeeded} lbs`,
       isPowder: true,
+      colorCode: pcColorField,
     });
   }
 
@@ -31860,6 +32027,10 @@ const Orders = ({data, setData}) => {
   const [customProductType, setCustomProductType] = useState('');
   const [emailModal, setEmailModal] = useState(null);
   const [emailForm, setEmailForm] = useState({});
+  const [ordersView, setOrdersView] = useState('list'); // 'list' | 'batch'
+  const [batchHeightFilter, setBatchHeightFilter] = useState('All');
+  const [batchStyleFilter, setBatchStyleFilter] = useState('All');
+  const [batchStatusFilter, setBatchStatusFilter] = useState('Active');
 
   const orders = data.orders||[];
   const statuses = ['New','Quoted','Confirmed','In Production','Ready to Ship','Shipped','Invoiced','Completed','Cancelled'];
@@ -31911,30 +32082,27 @@ const Orders = ({data, setData}) => {
     const wasInProd = existingOrder?.status === 'In Production';
     const nowInProd = rec.status === 'In Production';
 
-    const recWithBOM = {...rec, bom, bomGeneratedAt:now()};
-    if(isNew) setData(d=>({...d,orders:[...(d.orders||[]),recWithBOM]}));
-    else setData(d=>({...d,orders:(d.orders||[]).map(o=>o.id===rec.id?recWithBOM:o)}));
-
-    // Deduct inventory when order first moves to In Production
-    if(nowInProd && !wasInProd && !rec.invDeducted) {
-      const bom = calcBOM(rec);
-      if(bom.length > 0) {
-        const adjLogs = bom.map(item => ({
-          id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
-          type:'remove', qty:item.qty, reason:'Order '+rec.id+' — '+rec.customer+' moved to In Production',
-          date:now(), user:'System (BOM)'
-        }));
-        setData(d => ({
-          ...d,
-          orders: (d.orders||[]).map(o=>o.id===rec.id?{...o,invDeducted:true}:o),
-          inventory: d.inventory.map(inv => {
-            const bomItem = bom.find(b=>b.inventoryId===inv.id);
-            if(!bomItem) return inv;
-            return {...inv, qty: (inv.qty||0) - bomItem.qty};
-          }),
-          adjustmentLog: [...adjLogs, ...(d.adjustmentLog||[])],
-        }));
-      }
+    const recWithBOM = {...rec, bom, bomGeneratedAt:now(), invDeducted: isNew ? true : rec.invDeducted};
+    if(isNew) {
+      // New order: save + immediately deduct inventory (allow negatives)
+      const adjLogs = bom.filter(b=>b.inventoryId&&b.inventoryId!=='PC-UNKNOWN').map(item => ({
+        id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
+        type:'remove', qty:item.qty,
+        reason:'Order '+rec.id+' — '+rec.customer+' (new order created)',
+        date:now(), user:'System (BOM)',
+      }));
+      setData(d=>({
+        ...d,
+        orders:[...(d.orders||[]),recWithBOM],
+        inventory: d.inventory.map(inv => {
+          const bomItem = bom.find(b=>b.inventoryId===inv.id);
+          if(!bomItem) return inv;
+          return {...inv, qty: (inv.qty||0) - bomItem.qty};
+        }),
+        adjustmentLog:[...adjLogs,...(d.adjustmentLog||[])],
+      }));
+    } else {
+      setData(d=>({...d,orders:(d.orders||[]).map(o=>o.id===rec.id?recWithBOM:o)}));
     }
 
     if(is3BD && isNew){
@@ -31977,7 +32145,13 @@ const Orders = ({data, setData}) => {
             {typeCounts['Warranty']>0&&<span className="chip" style={{background:'rgba(239,68,68,.15)',color:'var(--err)'}}>{typeCounts['Warranty']} warranty</span>}
           </div>
         </div>
-        <button className="btn btn-p" onClick={()=>{newOrder();setModal('order');}}>+ New Order</button>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <div style={{display:'flex',gap:2,background:'var(--s2)',borderRadius:6,padding:3,border:'1px solid var(--bdr)'}}>
+            <button className={'btn btn-sm'+(ordersView==='list'?' btn-p':'')} style={{padding:'4px 12px',fontSize:11}} onClick={()=>setOrdersView('list')}>📋 Orders</button>
+            <button className={'btn btn-sm'+(ordersView==='batch'?' btn-p':'')} style={{padding:'4px 12px',fontSize:11}} onClick={()=>setOrdersView('batch')}>⚙ Batch Run</button>
+          </div>
+          {ordersView==='list'&&<button className="btn btn-p" onClick={()=>{newOrder();setModal('order');}}>+ New Order</button>}
+        </div>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
@@ -31987,6 +32161,221 @@ const Orders = ({data, setData}) => {
         <StatCard label="Filtered Total"      value={fmt$(filtered.reduce((s,o)=>s+(o.orderTotal||0),0))} icon="💰" color="var(--ok)" sub={filtered.length+' shown'}/>
       </div>
 
+      {/* ── BATCH PRODUCTION VIEW ─────────────────────────────────────────── */}
+      {ordersView==='batch'&&(()=>{
+        const activeStatuses = ['New','Quoted','Confirmed','In Production','Ready to Ship'];
+        const batchOrders = orders.filter(o=>{
+          if(batchStatusFilter==='Active' && !activeStatuses.includes(o.status)) return false;
+          if(batchStatusFilter==='In Production' && o.status!=='In Production') return false;
+          if(batchStatusFilter==='All') return true;
+          return true;
+        });
+
+        // Group by: powder coat color → post height → mount style
+        const groups = {};
+        batchOrders.forEach(o=>{
+          const color = (o.powderColor||o.color||'⚠ No Color').trim();
+          const heightStr = String(o.height||'42');
+          const hMatch = heightStr.match(/\d+/);
+          const h = hMatch ? hMatch[0]+'"' : heightStr;
+          const style = [
+            o.mountType||'Fascia',
+            (o.productType||'Cable Rail'),
+            o.railType&&o.railType!==o.productType?o.railType:'',
+          ].filter(Boolean).join(' / ');
+
+          const key = `${color}||${h}||${style}`;
+          if(!groups[key]) groups[key] = {color, height:h, style, orders:[], totalPosts:0, totalRailFt:0, powderLbs:0, flags:[]};
+          const g = groups[key];
+          g.orders.push(o);
+          g.totalPosts += (Number(o.lineQty)||0)+(Number(o.stairQty)||0)+(Number(o.cornerQty)||0);
+          const r8 =(Number(o.rail8ft)||0)+(Number(o.stairRail8ft)||0);
+          const r12=(Number(o.rail12ft)||0)+(Number(o.stairRail12ft)||0);
+          const r20=(Number(o.rail20ft)||0)+(Number(o.stairRail20ft)||0);
+          g.totalRailFt += r8*8+r12*12+r20*20;
+          // Sum powder from BOM
+          const bom = o.bom||calcBOM(o);
+          const pc = bom.find&&bom.find(b=>b.isPowder);
+          if(pc) g.powderLbs += pc.qty||0;
+          // Collect flags
+          if(bom._flags) bom._flags.forEach(f=>g.flags.push({orderId:o.id, customer:o.customer, ...f}));
+        });
+
+        // Apply height + style filters
+        const filteredGroups = Object.entries(groups).filter(([,g])=>{
+          if(batchHeightFilter!=='All' && g.height!==batchHeightFilter) return false;
+          if(batchStyleFilter!=='All' && !g.style.toLowerCase().includes(batchStyleFilter.toLowerCase())) return false;
+          return true;
+        }).sort(([,a],[,b])=>a.color.localeCompare(b.color));
+
+        const allHeights = [...new Set(Object.values(groups).map(g=>g.height))].sort();
+        const allStyles  = [...new Set(Object.values(groups).map(g=>g.style))].sort();
+        const totalFlags = filteredGroups.flatMap(([,g])=>g.flags);
+
+        return (
+          <div>
+            {/* Filters */}
+            <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+              <span style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}}>ORDERS</span>
+              {['Active','In Production','All'].map(s=>(
+                <button key={s} className={'tab'+(batchStatusFilter===s?' on':'')} onClick={()=>setBatchStatusFilter(s)} style={{fontSize:10,padding:'3px 8px'}}>{s}</button>
+              ))}
+              <div style={{width:1,height:16,background:'var(--bdr)',margin:'0 4px'}}/>
+              <span style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}}>HEIGHT</span>
+              {['All',...allHeights].map(h=>(
+                <button key={h} className={'tab'+(batchHeightFilter===h?' on':'')} onClick={()=>setBatchHeightFilter(h)} style={{fontSize:10,padding:'3px 8px'}}>{h}</button>
+              ))}
+              <div style={{width:1,height:16,background:'var(--bdr)',margin:'0 4px'}}/>
+              <span style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase'}}>STYLE</span>
+              {['All',...allStyles].map(s=>(
+                <button key={s} className={'tab'+(batchStyleFilter===s?' on':'')} onClick={()=>setBatchStyleFilter(s)} style={{fontSize:10,padding:'3px 8px',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s}</button>
+              ))}
+            </div>
+
+            {/* Global flags */}
+            {totalFlags.length>0&&<div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:6,padding:'8px 14px',marginBottom:12}}>
+              <div style={{fontSize:10,color:'var(--warn)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>⚠ {totalFlags.length} flag{totalFlags.length!==1?'s':''} require attention before production</div>
+              {totalFlags.map((f,i)=>(
+                <div key={i} style={{fontSize:11,color:f.severity==='err'?'var(--err)':'var(--warn)',marginBottom:2}}>
+                  <strong>{f.orderId} — {f.customer}:</strong> {f.msg}
+                </div>
+              ))}
+            </div>}
+
+            {filteredGroups.length===0&&<div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
+              <div style={{fontSize:32,marginBottom:8}}>⚙</div>
+              <div style={{fontSize:14,fontWeight:600}}>No batch groups match filters</div>
+              <div style={{fontSize:11,marginTop:4}}>Orders are grouped by powder coat color + post height + mount style</div>
+            </div>}
+
+            {filteredGroups.map(([key,g])=>{
+              const hasFlags = g.flags.length > 0;
+              const colorCode = (g.color.match(/[A-Z0-9]{4,}/)?.[0])||'';
+              return (
+                <div key={key} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,marginBottom:14,borderLeft:`4px solid ${hasFlags?'var(--warn)':'var(--acc)'}`}}>
+                  {/* Batch Group Header */}
+                  <div style={{padding:'12px 16px',borderBottom:'1px solid var(--bdr)',background:'var(--s2)',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+                    <div>
+                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                        <div style={{width:14,height:14,borderRadius:3,background:'var(--acc)',opacity:.7,flexShrink:0}}/>
+                        <span style={{fontWeight:700,fontSize:15,color:'var(--txt)'}}>{g.color}</span>
+                        <span style={{fontSize:11,color:'var(--muted)',background:'var(--s3)',borderRadius:4,padding:'2px 7px'}}>{g.height} posts</span>
+                        <span style={{fontSize:11,color:'var(--muted)',background:'var(--s3)',borderRadius:4,padding:'2px 7px'}}>{g.style}</span>
+                        {hasFlags&&<span style={{fontSize:9,background:'rgba(245,158,11,.2)',color:'var(--warn)',borderRadius:3,padding:'2px 7px',fontWeight:700}}>⚠ {g.flags.length} FLAG{g.flags.length!==1?'S':''}</span>}
+                      </div>
+                      <div style={{fontSize:10,color:'var(--muted)',marginTop:4,display:'flex',gap:14,flexWrap:'wrap'}}>
+                        <span>📦 {g.orders.length} order{g.orders.length!==1?'s':''}</span>
+                        <span>🏗 {g.totalPosts} posts total</span>
+                        <span>📏 {g.totalRailFt.toFixed(0)}ft top rail</span>
+                        <span>🎨 ~{Math.ceil(g.powderLbs*10)/10} lbs powder needed</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Orders in this batch group */}
+                  <div style={{overflowX:'auto'}}>
+                    <table style={{minWidth:900}}>
+                      <thead><tr>
+                        <th>Order #</th><th>Customer</th><th>Project</th>
+                        <th>Line</th><th>Stair</th><th>Corner</th>
+                        <th>Top Rail</th><th>Cable Color</th><th>HW Color</th>
+                        <th>Status</th><th>Due</th><th>Flags</th>
+                      </tr></thead>
+                      <tbody>
+                        {g.orders.map(o=>{
+                          const r8o=(Number(o.rail8ft)||0)+(Number(o.stairRail8ft)||0);
+                          const r12o=(Number(o.rail12ft)||0)+(Number(o.stairRail12ft)||0);
+                          const r20o=(Number(o.rail20ft)||0)+(Number(o.stairRail20ft)||0);
+                          const railStr = [r8o&&`${r8o}×8`,r12o&&`${r12o}×12`,r20o&&`${r20o}×20`].filter(Boolean).join(', ')||'—';
+                          const bom = o.bom||calcBOM(o);
+                          const oFlags = (bom._flags||[]);
+                          const statusC = {'New':'var(--acc)','In Production':'#f59e0b','Ready to Ship':'var(--ok)','Confirmed':'var(--warn)'};
+                          const overdue = o.dueDate && o.dueDate < now() && !['Completed','Shipped','Invoiced','Cancelled'].includes(o.status);
+                          return (
+                            <tr key={o.id}>
+                              <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{o.id}</td>
+                              <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{o.customer}</td>
+                              <td style={{fontSize:11,color:'var(--muted)',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
+                              <td style={{textAlign:'center',color:(o.lineQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.lineQty||'—'}</td>
+                              <td style={{textAlign:'center',color:(o.stairQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.stairQty||'—'}</td>
+                              <td style={{textAlign:'center',color:(o.cornerQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.cornerQty||'—'}</td>
+                              <td style={{fontSize:11,whiteSpace:'nowrap'}}>{railStr}</td>
+                              <td style={{fontSize:11,color:(o.cableColor||o.hardwareColor)?'var(--warn)':'var(--muted)'}}>{o.cableColor||'Standard SS'}</td>
+                              <td style={{fontSize:11,color:(o.hardwareColor)?'var(--warn)':'var(--muted)'}}>{o.hardwareColor||'Standard SS'}</td>
+                              <td><span style={{background:(statusC[o.status]||'var(--muted)')+'22',color:statusC[o.status]||'var(--muted)',border:`1px solid ${statusC[o.status]||'var(--bdr)'}44`,borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.status}</span></td>
+                              <td style={{fontSize:11,color:overdue?'var(--err)':'var(--muted)',whiteSpace:'nowrap',fontWeight:overdue?700:400}}>{o.dueDate||'—'}{overdue?' ⚠':''}</td>
+                              <td>
+                                {oFlags.map((f,fi)=>(
+                                  <div key={fi} style={{fontSize:9,color:f.severity==='err'?'var(--err)':'var(--warn)',fontWeight:700,whiteSpace:'nowrap'}} title={f.msg}>
+                                    ⚠ {f.type==='MISSING_STAIR_ANGLES'?'No stair angles':f.type==='MISSING_COLOR'?'No color':'Flag'}
+                                  </div>
+                                ))}
+                                {oFlags.length===0&&<span style={{fontSize:9,color:'var(--ok)'}}>✓</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Consolidated BOM for this batch group */}
+                  {(()=>{
+                    const consolidatedBOM = {};
+                    g.orders.forEach(o=>{
+                      const bom = o.bom||calcBOM(o);
+                      (Array.isArray(bom)?bom:[]).forEach(item=>{
+                        if(!consolidatedBOM[item.inventoryId]) consolidatedBOM[item.inventoryId]={...item,qty:0,orderCount:0};
+                        consolidatedBOM[item.inventoryId].qty += item.qty;
+                        consolidatedBOM[item.inventoryId].orderCount++;
+                      });
+                    });
+                    const bomItems = Object.values(consolidatedBOM).sort((a,b)=>a.cat.localeCompare(b.cat)||a.name.localeCompare(b.name));
+                    if(!bomItems.length) return null;
+                    const cats = [...new Set(bomItems.map(b=>b.cat))];
+                    return (
+                      <div style={{padding:'10px 16px',borderTop:'1px solid var(--bdr)',background:'rgba(0,229,255,.02)'}}>
+                        <div style={{fontSize:9,color:'var(--acc)',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',marginBottom:8}}>
+                          📦 Consolidated BOM — {g.orders.length} order{g.orders.length!==1?'s':''} combined
+                        </div>
+                        {cats.map(cat=>(
+                          <div key={cat} style={{marginBottom:8}}>
+                            <div style={{fontSize:9,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{cat}</div>
+                            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                              {bomItems.filter(b=>b.cat===cat).map((b,bi)=>{
+                                const inv=(data.inventory||[]).find(x=>x.id===b.inventoryId);
+                                const inStock = inv?.qty||0;
+                                const ok = inStock >= b.qty;
+                                const low = !ok && inStock > 0;
+                                return (
+                                  <div key={bi} style={{
+                                    background:ok?'rgba(16,185,129,.1)':low?'rgba(245,158,11,.12)':'rgba(239,68,68,.1)',
+                                    border:`1px solid ${ok?'rgba(16,185,129,.25)':low?'rgba(245,158,11,.3)':'rgba(239,68,68,.25)'}`,
+                                    borderRadius:5,padding:'4px 9px',minWidth:80,
+                                  }}>
+                                    <div style={{fontSize:10,fontWeight:700,color:ok?'var(--ok)':low?'var(--warn)':'var(--err)'}}>{Math.ceil(b.qty*10)/10} {b.unit}</div>
+                                    <div style={{fontSize:9,color:'var(--muted)',marginTop:1}}>{b.name}</div>
+                                    <div style={{fontSize:8,color:ok?'var(--ok)':low?'var(--warn)':'var(--err)',marginTop:1}}>
+                                      {ok?`✓ ${inStock} in stock`:`${inStock} in stock — need ${Math.ceil((b.qty-inStock)*10)/10} more`}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* ── LIST VIEW ──────────────────────────────────────────────────────── */}
+      {ordersView==='list'&&<>
       <div style={{display:'flex',gap:5,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
         <span style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginRight:2}}>STATUS</span>
         {['All',...statuses].map(s=>(
@@ -32266,6 +32655,7 @@ const Orders = ({data, setData}) => {
           <button className="btn" onClick={()=>setEmailModal(null)}>Cancel</button>
         </div>
       </Modal>}
+      </>}
     </div>
   );
 };
@@ -34090,7 +34480,7 @@ Return ONLY the JSON object, no other text.`;
     setParsing(null);
   };
 
-  // ── Confirm draft → create real order ────────────────────────────────────
+  // ── Confirm draft → create real order + immediately deduct inventory ────────
   const confirmDraft = () => {
     const bom = calcBOM(draftForm);
     const newOrder = {
@@ -34099,15 +34489,30 @@ Return ONLY the JSON object, no other text.`;
       status: 'New',
       balance: Number(draftForm.orderTotal||0) - Number(draftForm.deposit||0),
       source: 'OneDrive Import',
-      bom,          // store BOM with order for work order generation
+      bom,
       bomGeneratedAt: now(),
+      invDeducted: true,
     };
+    // Build adjustment log entries for every BOM item
+    const adjLogs = bom.filter(b=>b.inventoryId&&b.inventoryId!=='PC-UNKNOWN').map(item => ({
+      id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
+      type:'remove', qty:item.qty,
+      reason:'Order '+newOrder.id+' — '+newOrder.customer+' (confirmed from import)',
+      date:now(), user:'System (BOM)',
+    }));
     setData(d => ({
       ...d,
       orders: [...(d.orders||[]), newOrder],
       orderDrafts: (d.orderDrafts||[]).filter(dr=>dr.id!==draftForm.id),
+      // Deduct inventory immediately — allow negatives
+      inventory: d.inventory.map(inv => {
+        const bomItem = bom.find(b=>b.inventoryId===inv.id);
+        if(!bomItem) return inv;
+        return {...inv, qty: (inv.qty||0) - bomItem.qty};
+      }),
+      adjustmentLog: [...adjLogs, ...(d.adjustmentLog||[])],
     }));
-    addLog(draftForm.sourceFile, 'Confirmed', 'Created order '+newOrder.id+' for '+newOrder.customer+' — BOM: '+bom.length+' items');
+    addLog(draftForm.sourceFile, 'Confirmed', 'Created '+newOrder.id+' for '+newOrder.customer+' — BOM: '+bom.length+' items, inventory deducted');
     setDraftModal(null);
   };
 
@@ -37416,16 +37821,55 @@ export default function MaisyERP() {
   const [data,  setData]  = useState(INIT);
   const [aiOpen,setAiOpen]= useState(false);
   const [saved, setSaved] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(()=>{
+    try { return localStorage.getItem('maisy_sidebar_collapsed') === 'true'; } catch(e) { return false; }
+  });
+  // Persist sidebar preference & keyboard shortcut
+  useEffect(()=>{
+    try { localStorage.setItem('maisy_sidebar_collapsed', sidebarCollapsed); } catch(e) {}
+  },[sidebarCollapsed]);
+  useEffect(()=>{
+    const handler = (e) => {
+      if(e.key==='[' && !e.ctrlKey && !e.metaKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){
+        setSidebarCollapsed(v=>!v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return ()=>window.removeEventListener('keydown', handler);
+  },[]);
 
   useEffect(()=>{(async()=>{try{
-    // Use localStorage (works on Vercel) with window.storage fallback (Claude artifacts)
-    let savedValue = null;
-    try { savedValue = localStorage.getItem('maisy_erp_v4'); } catch(e) {}
-    if(!savedValue && window.storage) {
-      try { const r = await window.storage.get('maisy_erp_v4'); savedValue = r?.value || null; } catch(e) {}
+    // 1. Try IndexedDB first (no size limit, persists across sessions)
+    let savedData = null;
+    try { savedData = await idbGet('maisy_erp_v4'); } catch(e) {}
+
+    // 2. Migrate from localStorage if IndexedDB is empty (one-time migration)
+    if(!savedData) {
+      try {
+        const lsVal = localStorage.getItem('maisy_erp_v4');
+        if(lsVal) {
+          savedData = JSON.parse(lsVal);
+          // Migrate into IndexedDB and clear localStorage to free space
+          await idbSet('maisy_erp_v4', savedData);
+          localStorage.removeItem('maisy_erp_v4');
+        }
+      } catch(e) {}
     }
-    if(savedValue){
-      const stored=normalizeData(JSON.parse(savedValue));
+
+    // 3. Fallback: seed-data.json (fresh machine, cleared cache, new browser — always has real data)
+    if(!savedData) {
+      try {
+        const res = await fetch('/seed-data.json');
+        if(res.ok) {
+          const seedJson = await res.json();
+          savedData = seedJson.data || seedJson;
+        }
+      } catch(e) {}
+    }
+
+    if(savedData){
+      const stored = normalizeData(typeof savedData === 'string' ? JSON.parse(savedData) : savedData);
       // Merge: for any INIT key with data that stored has empty, use INIT value
       Object.keys(INIT).forEach(k=>{
         if(Array.isArray(INIT[k])&&INIT[k].length>0){
@@ -37436,12 +37880,19 @@ export default function MaisyERP() {
       });
       setData(stored);
     }
-  }catch(e){}})();},[]);
-  useEffect(()=>{if(!data)return;const t=setTimeout(async()=>{try{
-    const serialized = JSON.stringify(data);
-    try { localStorage.setItem('maisy_erp_v4', serialized); } catch(e) {}
-    if(window.storage) { try { await window.storage.set('maisy_erp_v4', serialized); } catch(e) {} }
-    setSaved(true);setTimeout(()=>setSaved(false),1600);}catch(e){}},900);return()=>clearTimeout(t);},[data]);
+  }catch(e){} finally { setLoaded(true); }})();},[]);
+
+  const [saveError, setSaveError] = useState(null);
+  useEffect(()=>{if(!loaded||!data)return;const t=setTimeout(async()=>{try{
+    // Save to IndexedDB — no size limit, works for any amount of data
+    await idbSet('maisy_erp_v4', data);
+    setSaved(true);
+    setSaveError(null);
+    setTimeout(()=>setSaved(false),1600);
+  }catch(e){
+    setSaveError('Save failed: '+e.message);
+    setTimeout(()=>setSaveError(null), 8000);
+  }},900);return()=>clearTimeout(t);},[data,loaded]);
 
   const [backupModal, setBackupModal] = useState(false);
   const importRef = useRef();
@@ -37546,11 +37997,12 @@ export default function MaisyERP() {
     <>
       <G/>
       <div className="app">
-        <Sidebar page={page} setPage={(p)=>{if(access.includes(p))setPage(p);}} data={data} user={user}/>
+        <Sidebar page={page} setPage={(p)=>{if(access.includes(p))setPage(p);}} data={data} user={user} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}/>
         <div className="main" style={{marginRight:aiOpen?370:0,transition:'margin-right .3s'}}>
           <div className="topbar">
             <span className="hd" style={{fontSize:13,color:'var(--muted)',flex:1}}>{TITLES[page]}</span>
             {saved&&<span style={{fontSize:10,color:'var(--ok)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',animation:'fadeIn .2s ease'}}>● Saved</span>}
+            {saveError&&<span style={{fontSize:10,color:'var(--err)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',animation:'fadeIn .2s ease',cursor:'pointer'}} title={saveError} onClick={()=>setBackupModal(true)}>⚠ SAVE FAILED — EXPORT NOW</span>}
             <div style={{width:1,height:18,background:'var(--bdr)',margin:'0 6px'}}/>
             <button onClick={()=>setBackupModal(true)} title="Backup & Restore your data" style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',borderRadius:5,padding:'5px 10px',cursor:'pointer',fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',transition:'all .15s'}} onMouseOver={e=>e.target.style.color='var(--acc)'} onMouseOut={e=>e.target.style.color='var(--muted)'}>💾 Backup</button>
             <div style={{width:1,height:18,background:'var(--bdr)',margin:'0 6px'}}/>
