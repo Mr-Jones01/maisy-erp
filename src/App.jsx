@@ -31273,8 +31273,8 @@ const ShopRef = ({data,setData}) => {
         <span className="chip">Read-only · Maisy_08_Blueprint</span>
       </div>
       <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:14}}>
-        {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','postmfg','materialsdb','skureference','vendorscores','calculators'].map(t=>(
-          <button key={t} className={'tab'+(shopTab===t?' on':'')} onClick={()=>setShopTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t==='skureference'?'SKU Reference':t}</button>
+        {['fasteners','drills','torque','tig','alloys','matprops','weldref','fractions','postmfg','materialsdb','skureference','vendorscores','calculators','cutref'].map(t=>(
+          <button key={t} className={'tab'+(shopTab===t?' on':'')} onClick={()=>setShopTab(t)} style={{textTransform:'capitalize'}}>{t==='tig'?'TIG Welding':t==='fractions'?'Fraction/Decimal':t==='drills'?'Drill Sizes':t==='matprops'?'Material Props':t==='weldref'?'Weld Reference':t==='skureference'?'SKU Reference':t==='cutref'?'✂️ Cut & Drill Reference':t}</button>
         ))}
       </div>
 
@@ -31535,6 +31535,139 @@ const ShopRef = ({data,setData}) => {
           ))}</tbody>
         </table>
       </div>}
+
+      {shopTab==='cutref'&&(()=>{
+        const CUT_DATA = {
+          cuts42: [
+            {type:'Surface Line',   mount:'Surface', style:'Line',   cutLen:'40 5/8"'},
+            {type:'Surface Stair',  mount:'Surface', style:'Stair',  cutLen:'40 5/8"'},
+            {type:'Surface Corner', mount:'Surface', style:'Corner', cutLen:'40 5/8"'},
+            {type:'Fascia Line',    mount:'Fascia',  style:'Line',   cutLen:'47 1/2"'},
+            {type:'Fascia Stair',   mount:'Fascia',  style:'Stair',  cutLen:'47 1/2"'},
+            {type:'Fascia Corner',  mount:'Fascia',  style:'Corner', cutLen:'47 1/2"'},
+            {type:'Gate',           mount:'—',       style:'Gate',   cutLen:'37 3/4"'},
+          ],
+          cuts36: [
+            {type:'Surface Line',   mount:'Surface', style:'Line',   cutLen:'34 5/8"'},
+            {type:'Surface Stair',  mount:'Surface', style:'Stair',  cutLen:'34 5/8"'},
+            {type:'Surface Corner', mount:'Surface', style:'Corner', cutLen:'34 5/8"'},
+            {type:'Fascia Line',    mount:'Fascia',  style:'Line',   cutLen:'42 7/8"'},
+            {type:'Fascia Stair',   mount:'Fascia',  style:'Stair',  cutLen:'42 7/8"'},
+            {type:'Fascia Corner',  mount:'Fascia',  style:'Corner', cutLen:'42 7/8"'},
+            {type:'Gate',           mount:'—',       style:'Gate',   cutLen:'31 1/2"'},
+          ],
+          drill42: [
+            {type:'Surface Line',   holes:13, sides:1,  notes:''},
+            {type:'Fascia Line',    holes:13, sides:1,  notes:''},
+            {type:'Surface Stair',  holes:12, sides:1,  notes:''},
+            {type:'Fascia Stair',   holes:12, sides:1,  notes:''},
+            {type:'Surface Corner', holes:13, sides:4,  notes:'All four sides'},
+            {type:'Fascia Corner',  holes:13, sides:4,  notes:'All four sides'},
+            {type:'Gate',           holes:12, sides:1,  notes:'First hole 2 3/8" from top, then 3" spacing'},
+          ],
+          drill36: [
+            {type:'Surface Line',   holes:11, sides:1,  notes:''},
+            {type:'Fascia Line',    holes:11, sides:1,  notes:''},
+            {type:'Surface Stair',  holes:10, sides:1,  notes:''},
+            {type:'Fascia Stair',   holes:10, sides:1,  notes:''},
+            {type:'Surface Corner', holes:11, sides:4,  notes:'All four sides'},
+            {type:'Fascia Corner',  holes:11, sides:4,  notes:'All four sides'},
+            {type:'Gate',           holes:10, sides:1,  notes:'First hole 2 3/8" from top, then 3" spacing'},
+          ],
+        };
+        const mountColor = (m) => m==='Surface'?{bg:'rgba(59,130,246,.12)',c:'#60a5fa'}:m==='Fascia'?{bg:'rgba(139,92,246,.12)',c:'#a78bfa'}:{bg:'rgba(100,116,139,.12)',c:'var(--muted)'};
+        const styleColor = (s) => s==='Stair'?{bg:'rgba(245,158,11,.12)',c:'var(--warn)'}:s==='Corner'?{bg:'rgba(16,185,129,.12)',c:'var(--ok)'}:s==='Gate'?{bg:'rgba(239,68,68,.12)',c:'var(--err)'}:{bg:'rgba(100,116,139,.1)',c:'var(--muted)'};
+        const Chip = ({label,color}) => <span style={{background:color.bg,color:color.c,border:`1px solid ${color.c}33`,borderRadius:4,padding:'1px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{label}</span>;
+        const CutTable = ({rows,title}) => (
+          <div className="card" style={{padding:0,overflow:'auto',marginBottom:0}}>
+            <div style={{padding:'8px 14px',background:'var(--s2)',borderBottom:'1px solid var(--bdr)',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,letterSpacing:'.06em'}}>{title}</div>
+            <table><thead><tr><th>Post Type</th><th>Mount</th><th>Style</th><th style={{textAlign:'center'}}>Cut Length</th></tr></thead>
+              <tbody>{rows.map((r,i)=>{const mc=mountColor(r.mount);const sc=styleColor(r.style);return(
+                <tr key={i}>
+                  <td style={{fontWeight:600,fontSize:13}}>{r.type}</td>
+                  <td><Chip label={r.mount} color={mc}/></td>
+                  <td><Chip label={r.style} color={sc}/></td>
+                  <td style={{textAlign:'center',fontFamily:'Barlow Condensed',fontWeight:800,fontSize:18,color:'var(--acc)',letterSpacing:'-.01em'}}>{r.cutLen}</td>
+                </tr>
+              );})}
+            </tbody></table>
+          </div>
+        );
+        const DrillTable = ({rows,title,postSize}) => (
+          <div className="card" style={{padding:0,overflow:'auto',marginBottom:0}}>
+            <div style={{padding:'8px 14px',background:'var(--s2)',borderBottom:'1px solid var(--bdr)',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,letterSpacing:'.06em'}}>{title}</div>
+            <table><thead><tr><th>Post Type</th><th style={{textAlign:'center'}}>Holes</th><th style={{textAlign:'center'}}>Sides</th><th style={{textAlign:'center'}}>Total Holes</th><th>Notes</th></tr></thead>
+              <tbody>{rows.map((r,i)=>{const sc=styleColor(r.style||r.type.split(' ').pop());return(
+                <tr key={i}>
+                  <td style={{fontWeight:600,fontSize:13}}>{r.type}</td>
+                  <td style={{textAlign:'center',fontFamily:'Barlow Condensed',fontWeight:800,fontSize:18,color:'var(--acc)'}}>{r.holes}</td>
+                  <td style={{textAlign:'center',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,color:r.sides>1?'var(--warn)':'var(--muted)'}}>{r.sides}</td>
+                  <td style={{textAlign:'center',fontFamily:'Barlow Condensed',fontWeight:800,fontSize:16,color:r.sides>1?'var(--err)':'var(--txt)'}}>{r.holes*r.sides}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{r.notes||'—'}</td>
+                </tr>
+              );})}
+            </tbody></table>
+          </div>
+        );
+        return (
+          <div>
+            <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:16,flexWrap:'wrap'}}>
+              <div>
+                <div className="hd" style={{fontSize:18,marginBottom:3}}>Cut & Drill Reference</div>
+                <div style={{fontSize:11,color:'var(--muted)'}}>Source: Cut Reference sheet.docx — Maisy Railing shop standard. All measurements for aluminum post stock.</div>
+              </div>
+              <div style={{display:'flex',gap:8,marginLeft:'auto',flexWrap:'wrap'}}>
+                <div style={{background:'rgba(59,130,246,.1)',border:'1px solid rgba(59,130,246,.3)',borderRadius:6,padding:'6px 12px',fontSize:11,color:'#60a5fa',fontFamily:'Barlow Condensed',fontWeight:700}}>SM = Surface Mount</div>
+                <div style={{background:'rgba(139,92,246,.1)',border:'1px solid rgba(139,92,246,.3)',borderRadius:6,padding:'6px 12px',fontSize:11,color:'#a78bfa',fontFamily:'Barlow Condensed',fontWeight:700}}>FM = Fascia Mount</div>
+              </div>
+            </div>
+
+            {/* Cut Lengths */}
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>Post Cut Lengths</div>
+            <div className="grid2" style={{gap:16,marginBottom:24}}>
+              <CutTable rows={CUT_DATA.cuts42} title="42&quot; Post Heights — Cut Lengths"/>
+              <CutTable rows={CUT_DATA.cuts36} title="36&quot; Post Heights — Cut Lengths"/>
+            </div>
+
+            {/* Drilling */}
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>Drilling Specs</div>
+            <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.25)',borderRadius:6,padding:'10px 14px',marginBottom:12,fontSize:12}}>
+              <span style={{color:'var(--warn)',fontWeight:700}}>Gate Drilling Note:</span> First hole is <strong>2 3/8"</strong> from top, then <strong>3" spacing</strong> for each subsequent hole. Applies to both 42" and 36" gates.
+            </div>
+            <div className="grid2" style={{gap:16,marginBottom:24}}>
+              <DrillTable rows={CUT_DATA.drill42} title="42&quot; Posts — Drilling"/>
+              <DrillTable rows={CUT_DATA.drill36} title="36&quot; Posts — Drilling"/>
+            </div>
+
+            {/* Quick lookup */}
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:12}}>Quick Lookup</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:10}}>
+              {[
+                {label:'42" Surface (Line/Stair/Corner)',cut:'40 5/8"',drill:'13 / 12 / 13',color:'#60a5fa'},
+                {label:'42" Fascia (Line/Stair/Corner)',cut:'47 1/2"',drill:'13 / 12 / 13',color:'#a78bfa'},
+                {label:'42" Gate',cut:'37 3/4"',drill:'12 holes',color:'var(--err)'},
+                {label:'36" Surface (Line/Stair/Corner)',cut:'34 5/8"',drill:'11 / 10 / 11',color:'#60a5fa'},
+                {label:'36" Fascia (Line/Stair/Corner)',cut:'42 7/8"',drill:'11 / 10 / 11',color:'#a78bfa'},
+                {label:'36" Gate',cut:'31 1/2"',drill:'10 holes',color:'var(--err)'},
+              ].map(item=>(
+                <div key={item.label} style={{background:'var(--s1)',border:`1px solid ${item.color}44`,borderRadius:8,padding:'12px 14px'}}>
+                  <div style={{fontSize:11,color:item.color,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.06em',marginBottom:6}}>{item.label}</div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+                    <div>
+                      <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed'}}>Cut Length</div>
+                      <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:22,color:'var(--acc)'}}>{item.cut}</div>
+                    </div>
+                    <div style={{textAlign:'right'}}>
+                      <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed'}}>Drill (L/St/C)</div>
+                      <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14}}>{item.drill}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {modal==='refitem'&&<Modal title="Edit Reference Item" onClose={()=>setModal(null)} lg>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
