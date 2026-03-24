@@ -32031,6 +32031,10 @@ const Orders = ({data, setData}) => {
   const [batchHeightFilter, setBatchHeightFilter] = useState('All');
   const [batchStyleFilter, setBatchStyleFilter] = useState('All');
   const [batchStatusFilter, setBatchStatusFilter] = useState('Active');
+  const [cancelModal, setCancelModal] = useState(null); // {orderId, customer}
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelReasonOther, setCancelReasonOther] = useState('');
+  const CANCEL_REASONS = ['Customer Request','Pricing / Budget','Order Error','Duplicate Order','Project Cancelled','Customer Unresponsive','Lost to Competitor','Other'];
 
   const orders = data.orders||[];
   const statuses = ['New','Quoted','Confirmed','In Production','Ready to Ship','Shipped','Invoiced','Completed','Cancelled'];
@@ -32112,6 +32116,62 @@ const Orders = ({data, setData}) => {
     setModal(null);
   };
 
+  // ── Restore inventory for a cancelled/deleted order ─────────────────────────
+  const restoreInventory = (order, reason) => {
+    if(!order.invDeducted) return; // never deducted, nothing to restore
+    const bom = order.bom || calcBOM(order);
+    const bomItems = Array.isArray(bom) ? bom.filter(b=>b.inventoryId&&b.inventoryId!=='PC-UNKNOWN') : [];
+    if(!bomItems.length) return;
+    const adjLogs = bomItems.map(item => ({
+      id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
+      type:'add', qty:item.qty,
+      reason:`Order ${order.id} — ${order.customer} (${reason})`,
+      date:now(), user:'System (BOM restore)',
+    }));
+    setData(d => ({
+      ...d,
+      inventory: d.inventory.map(inv => {
+        const bomItem = bomItems.find(b=>b.inventoryId===inv.id);
+        if(!bomItem) return inv;
+        return {...inv, qty: (inv.qty||0) + bomItem.qty};
+      }),
+      adjustmentLog: [...adjLogs, ...(d.adjustmentLog||[])],
+    }));
+  };
+
+  // ── Cancel order with reason tracking ───────────────────────────────────────
+  const cancelOrder = (orderId, reason) => {
+    const order = (data.orders||[]).find(o=>o.id===orderId);
+    if(!order) return;
+    restoreInventory(order, `cancelled — ${reason}`);
+    const cancelEntry = {
+      id:'CXL-'+uid(), orderId, customer:order.customer,
+      project:order.project||'', orderTotal:order.orderTotal||0,
+      reason, cancelledAt:now(), previousStatus:order.status,
+    };
+    setData(d => ({
+      ...d,
+      orders: (d.orders||[]).map(o => o.id===orderId
+        ? {...o, status:'Cancelled', cancelReason:reason, cancelledAt:now(), invDeducted:false}
+        : o),
+      cancelLog: [...(d.cancelLog||[]), cancelEntry],
+    }));
+    setCancelModal(null);
+    setCancelReason('');
+    setCancelReasonOther('');
+  };
+
+  // ── Delete order — restore inventory + remove ────────────────────────────────
+  const deleteOrder = (orderId) => {
+    const order = (data.orders||[]).find(o=>o.id===orderId);
+    if(!order) return;
+    restoreInventory(order, 'order deleted');
+    setData(d => ({
+      ...d,
+      orders: (d.orders||[]).filter(o=>o.id!==orderId),
+    }));
+  };
+
   const emailTemplates = {
     'New':          o => ({subject:'Maisy Railing — Order '+o.id+' Received',         body:'Hi '+o.customer+',\n\nThank you for your order! We received Order '+o.id+' for '+( o.project||'your project')+' and it is now in our queue.\n\nDetails:\n• Product: '+o.productType+'\n• Color: '+o.color+'\n• Line Posts: '+( o.lineQty||0)+' | Stair: '+(o.stairQty||0)+' | Corner: '+(o.cornerQty||0)+'\n• Due Date: '+(o.dueDate||'TBD')+'\n\nWe will keep you updated as your order progresses.\n\nBest regards,\nDaniel Jones | Director of Operations\nMaisy Railing | (208) 603-8149'}),
     'Confirmed':    o => ({subject:'Maisy Railing — Order '+o.id+' Confirmed',         body:'Hi '+o.customer+',\n\nYour order '+o.id+' has been CONFIRMED and scheduled for production.\n\nProject: '+(o.project||'—')+'\nDue Date: '+(o.dueDate||'TBD')+'\nColor: '+o.color+'\n\nWe will notify you when it moves to production.\n\nBest regards,\nDaniel Jones | Maisy Railing'}),
@@ -32149,6 +32209,9 @@ const Orders = ({data, setData}) => {
           <div style={{display:'flex',gap:2,background:'var(--s2)',borderRadius:6,padding:3,border:'1px solid var(--bdr)'}}>
             <button className={'btn btn-sm'+(ordersView==='list'?' btn-p':'')} style={{padding:'4px 12px',fontSize:11}} onClick={()=>setOrdersView('list')}>📋 Orders</button>
             <button className={'btn btn-sm'+(ordersView==='batch'?' btn-p':'')} style={{padding:'4px 12px',fontSize:11}} onClick={()=>setOrdersView('batch')}>⚙ Batch Run</button>
+            <button className={'btn btn-sm'+(ordersView==='cancellog'?' btn-p':'')} style={{padding:'4px 12px',fontSize:11}} onClick={()=>setOrdersView('cancellog')}>
+              ✕ Cancellations{(data.cancelLog||[]).length>0&&<span style={{marginLeft:4,background:'rgba(239,68,68,.3)',color:'var(--err)',borderRadius:8,padding:'0 5px',fontSize:9,fontWeight:700}}>{(data.cancelLog||[]).length}</span>}
+            </button>
           </div>
           {ordersView==='list'&&<button className="btn btn-p" onClick={()=>{newOrder();setModal('order');}}>+ New Order</button>}
         </div>
@@ -32374,6 +32437,70 @@ const Orders = ({data, setData}) => {
         );
       })()}
 
+      {/* ── CANCELLATION LOG VIEW ──────────────────────────────────────────── */}
+      {ordersView==='cancellog'&&(()=>{
+        const cancelLog = data.cancelLog||[];
+        const reasonCounts = {};
+        cancelLog.forEach(c=>{ reasonCounts[c.reason]=(reasonCounts[c.reason]||0)+1; });
+        const sortedReasons = Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]);
+        const totalValue = cancelLog.reduce((s,c)=>s+(c.orderTotal||0),0);
+        return (
+          <div>
+            {/* Summary stats */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+              <div className="stat-card" style={{borderTop:'3px solid var(--err)'}}>
+                <div style={{fontSize:9,color:'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',marginBottom:6}}>Total Cancelled</div>
+                <div style={{fontSize:28,fontWeight:700,color:'var(--err)',fontFamily:'Barlow Condensed'}}>{cancelLog.length}</div>
+              </div>
+              <div className="stat-card" style={{borderTop:'3px solid var(--warn)'}}>
+                <div style={{fontSize:9,color:'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',marginBottom:6}}>Lost Revenue</div>
+                <div style={{fontSize:22,fontWeight:700,color:'var(--warn)',fontFamily:'Barlow Condensed'}}>{fmt$(totalValue)}</div>
+              </div>
+              <div className="stat-card" style={{borderTop:'3px solid var(--acc)',gridColumn:'span 2'}}>
+                <div style={{fontSize:9,color:'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',marginBottom:8}}>Top Cancel Reasons</div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {sortedReasons.slice(0,5).map(([r,c])=>(
+                    <span key={r} style={{fontSize:10,background:'rgba(239,68,68,.12)',color:'var(--err)',borderRadius:4,padding:'2px 8px',fontWeight:700}}>
+                      {r} ({c})
+                    </span>
+                  ))}
+                  {sortedReasons.length===0&&<span style={{fontSize:11,color:'var(--muted)'}}>No cancellations yet</span>}
+                </div>
+              </div>
+            </div>
+
+            {cancelLog.length===0
+              ? <div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
+                  <div style={{fontSize:32,marginBottom:8,opacity:.3}}>✕</div>
+                  <div style={{fontSize:14,fontWeight:600}}>No cancelled orders</div>
+                  <div style={{fontSize:11,marginTop:4}}>Cancellation reasons will appear here when orders are cancelled</div>
+                </div>
+              : <div className="card" style={{padding:0,overflowX:'auto'}}>
+                  <table style={{minWidth:900}}>
+                    <thead><tr>
+                      <th>Date</th><th>Order #</th><th>Customer</th><th>Project</th>
+                      <th>Reason</th><th>Prior Status</th><th>Order Value</th>
+                    </tr></thead>
+                    <tbody>
+                      {[...cancelLog].reverse().map((c,i)=>(
+                        <tr key={i}>
+                          <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{c.cancelledAt?.split('T')[0]||'—'}</td>
+                          <td style={{fontFamily:'monospace',fontSize:11,color:'var(--err)',fontWeight:700}}>{c.orderId}</td>
+                          <td style={{fontWeight:600}}>{c.customer}</td>
+                          <td style={{fontSize:11,color:'var(--muted)'}}>{c.project||'—'}</td>
+                          <td><span style={{background:'rgba(239,68,68,.12)',color:'var(--err)',borderRadius:4,padding:'2px 8px',fontSize:10,fontWeight:700}}>{c.reason}</span></td>
+                          <td style={{fontSize:11,color:'var(--muted)'}}>{c.previousStatus||'—'}</td>
+                          <td style={{fontWeight:600,color:'var(--warn)'}}>{c.orderTotal?fmt$(c.orderTotal):'—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+            }
+          </div>
+        );
+      })()}
+
       {/* ── LIST VIEW ──────────────────────────────────────────────────────── */}
       {ordersView==='list'&&<>
       <div style={{display:'flex',gap:5,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
@@ -32451,13 +32578,31 @@ const Orders = ({data, setData}) => {
                 <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'—'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'—'}</td>
                 <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'—'}</td>
-                <td><select value={o.status} onChange={e=>{const newStatus=e.target.value;const wasInProd=o.status==='In Production';const nowInProd=newStatus==='In Production';setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,status:newStatus}:x)}));if(nowInProd&&!wasInProd&&!o.invDeducted){const bom=calcBOM(o);if(bom.length>0){setData(d=>({...d,inventory:d.inventory.map(inv=>{const b=bom.find(b=>b.inventoryId===inv.id);return b?{...inv,qty:(inv.qty||0)-b.qty}:inv;}),adjustmentLog:[{id:'ADJ-'+uid(),inventoryId:'',itemName:'BOM deduction',type:'remove',qty:0,reason:'Order '+o.id+' moved to In Production',date:now(),user:'System'},...(d.adjustmentLog||[])],orders:(d.orders||[]).map(x=>x.id===o.id?{...x,invDeducted:true}:x)}));}}}} style={{background:statusColors[o.status]||'var(--s2)',color:statusColors[o.status]?'#fff':'var(--txt)',border:'none',borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none',fontFamily:'Barlow Condensed',letterSpacing:'.05em',textTransform:'uppercase',width:140,minWidth:140}}>{statuses.map(s=><option key={s} value={s}>{s}</option>)}</select></td>
+                <td>
+                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                    <select value={o.status} onChange={e=>{
+                      const newStatus = e.target.value;
+                      if(newStatus==='Cancelled') {
+                        // Intercept — open cancel modal instead
+                        setCancelModal({orderId:o.id, customer:o.customer});
+                        setCancelReason('');
+                        setCancelReasonOther('');
+                      } else {
+                        setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,status:newStatus}:x)}));
+                      }
+                    }} style={{background:statusColors[o.status]||'var(--s2)',color:statusColors[o.status]?'#fff':'var(--txt)',border:'none',borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none',fontFamily:'Barlow Condensed',letterSpacing:'.05em',textTransform:'uppercase',width:140,minWidth:140}}>
+                      {statuses.map(s=><option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {o.cancelReason&&<div style={{fontSize:9,color:'var(--err)',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:140}} title={o.cancelReason}>✕ {o.cancelReason}</div>}
+                  </div>
+                </td>
                 <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'—'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap',color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||''}</td>
                 <td style={{whiteSpace:'nowrap'}}><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-xs" onClick={()=>{setForm({...o});setModal('order');}}>Edit</button>
-                  <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,orders:(d.orders||[]).filter(x=>x.id!==o.id)}))}>×</button>
+                  <button className="btn btn-d btn-xs" title="Cancel order" onClick={()=>{setCancelModal({orderId:o.id,customer:o.customer});setCancelReason('');setCancelReasonOther('');}}>✕ Cancel</button>
+                  <button className="btn btn-d btn-xs" style={{fontSize:9,opacity:.6}} title="Permanently delete order (restores inventory)" onClick={()=>{if(window.confirm('Permanently DELETE order '+o.id+' for '+o.customer+'?\n\nInventory will be restored. This cannot be undone.'))deleteOrder(o.id);}}>🗑</button>
                 </div></td>
               </tr>
             );})}
@@ -32655,6 +32800,38 @@ const Orders = ({data, setData}) => {
           <button className="btn" onClick={()=>setEmailModal(null)}>Cancel</button>
         </div>
       </Modal>}
+
+      {/* ── CANCEL ORDER MODAL ──────────────────────────────────────────────── */}
+      {cancelModal&&<div className="overlay" onClick={e=>{if(e.target.className==='overlay'){setCancelModal(null);setCancelReason('');setCancelReasonOther('');}}}>
+        <div className="modal" style={{maxWidth:480}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <div className="hd" style={{fontSize:16,color:'var(--err)'}}>✕ Cancel Order</div>
+            <button className="btn btn-g btn-sm" onClick={()=>{setCancelModal(null);setCancelReason('');setCancelReasonOther('');}}>✕</button>
+          </div>
+          <div style={{background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'8px 12px',marginBottom:16,fontSize:12}}>
+            <strong>{cancelModal.orderId}</strong> — {cancelModal.customer}
+            <div style={{fontSize:10,color:'var(--muted)',marginTop:3}}>Cancelling this order will automatically restore all allocated inventory back to stock.</div>
+          </div>
+          <Field label="Cancellation Reason *">
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {CANCEL_REASONS.map(r=>(
+                <label key={r} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:12,padding:'5px 8px',borderRadius:5,background:cancelReason===r?'rgba(239,68,68,.1)':'transparent',border:cancelReason===r?'1px solid rgba(239,68,68,.3)':'1px solid transparent',transition:'all .15s'}}>
+                  <input type="radio" name="cancelReason" value={r} checked={cancelReason===r} onChange={()=>setCancelReason(r)} style={{width:'auto',accentColor:'var(--err)'}}/>
+                  {r}
+                </label>
+              ))}
+              {cancelReason==='Other'&&<input value={cancelReasonOther} onChange={e=>setCancelReasonOther(e.target.value)} placeholder="Describe reason…" style={{marginTop:4}}/>}
+            </div>
+          </Field>
+          <div style={{display:'flex',gap:8,marginTop:18,justifyContent:'flex-end'}}>
+            <button className="btn btn-g btn-sm" onClick={()=>{setCancelModal(null);setCancelReason('');setCancelReasonOther('');}}>Keep Order</button>
+            <button className="btn btn-d btn-sm" disabled={!cancelReason||(cancelReason==='Other'&&!cancelReasonOther.trim())} onClick={()=>cancelOrder(cancelModal.orderId, cancelReason==='Other'?cancelReasonOther.trim():cancelReason)}>
+              Confirm Cancellation
+            </button>
+          </div>
+        </div>
+      </div>}
+
       </>}
     </div>
   );
