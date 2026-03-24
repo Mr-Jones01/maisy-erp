@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { idbGet, idbSet } from "./db.js";
 import { BarChart, Bar, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HOW TO ADD A NEW MODULE — READ THIS FIRST
+// HOW TO ADD A NEW MODULE - READ THIS FIRST
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. Add seed data to INIT (below) under a new key, e.g. INIT.mymodule = [...]
 // 2. Create a React component: const MyModule = ({data, setData, user}) => { ... }
@@ -12,7 +12,7 @@ import { BarChart, Bar, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip,
 // 5. Add a nav entry to NAVS: { id:'mymodule', icon:'◈', label:'My Module' }
 //    under an existing section header or add a new section header
 // 6. Add role access to ROLE_ACCESS for each role that should see it
-// That's it — storage, persistence, AI context all inherit automatically.
+// That's it - storage, persistence, AI context all inherit automatically.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ─── STYLES ─────────────────────────────────────────────────────────────────────
@@ -134,10 +134,10 @@ const DEMO_USERS = [
 ];
 
 const ROLE_ACCESS = {
-  admin:  ['dashboard','inventorybellevue','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','workorders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer','buildschedule','processtracker','processcost','shifthandoff','calculators','facilitymove','employeereviews','productcatalog','opsreference'],
+  admin:  ['materialpulls','dashboard','inventorybellevue','todo','sales','production','inventory','shipping','invoicing','purchasing','jobcost','customers','autopo','people','orders','workorders','orderimport','salespipeline','commissions','payments','quickbooks','taxcenter','shipcalc','shopref','automation','sister','finance','kpi','srscatalog','legacyorders','printcenter','reports','queueanalyzer','hotqueue','workbookgen','orderanalyzer','buildschedule','processtracker','processcost','shifthandoff','calculators','facilitymove','employeereviews','productcatalog','opsreference'],
   owner:  ['dashboard','sales','invoicing','finance','reports','customers','automation','people','kpi','printcenter','queueanalyzer','hotqueue','workorders','inventorybellevue'],
   office: ['dashboard','todo','sales','invoicing','shipping','customers','srscatalog','printcenter'],
-  shop:   ['dashboard','todo','production','orders','workorders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
+  shop:   ['materialpulls','dashboard','todo','production','orders','workorders','salespipeline','commissions','payments','taxcenter','shipcalc','shopref','printcenter','hotqueue','queueanalyzer'],
   shopqueue: ['hotqueue','queueanalyzer'],
 };
 
@@ -153,8 +153,8 @@ const BADGE = {
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────────
 const fmt$  = n => '$'+(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtD  = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-const fmtDs = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+const fmtD  = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '-';
+const fmtDs = d => d ? new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '-';
 const uid   = () => Math.random().toString(36).slice(2,8).toUpperCase();
 const now   = () => new Date().toISOString().slice(0,10);
 const ts    = () => new Date().toLocaleString();
@@ -240,7 +240,7 @@ const PRINT_CSS = `
 const printHTML = (title, bodyHTML) => {
   const w = window.open('','_blank','width=900,height=750');
   const scriptTag = '<scr'+'ipt>window.onload=()=>{window.print();}</scr'+'ipt>';
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} — Maisy Railing</title><style>${PRINT_CSS}</style></head><body>${bodyHTML}<div class="watermark">Maisy Railing · Printed ${new Date().toLocaleDateString()} · Confidential</div>${scriptTag}</body></html>`);
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} - Maisy Railing</title><style>${PRINT_CSS}</style></head><body>${bodyHTML}<div class="watermark">Maisy Railing · Printed ${new Date().toLocaleDateString()} · Confidential</div>${scriptTag}</body></html>`);
   w.document.close();
 };
 
@@ -259,10 +259,10 @@ const printWorkOrder = (wo) => {
         <div style="text-align:right"><div class="doc-title">${wo.id}</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
       </div>
       <div class="grid-4">
-        <div class="box"><div class="box-label">Order Ref</div><div class="box-val">${wo.orderId||'—'}</div></div>
+        <div class="box"><div class="box-label">Order Ref</div><div class="box-val">${wo.orderId||'-'}</div></div>
         <div class="box"><div class="box-label">Station</div><div class="box-val">${wo.station}</div></div>
         <div class="box"><div class="box-label">Qty</div><div class="box-val">${wo.qty} pcs</div></div>
-        <div class="box"><div class="box-label">Due Date</div><div class="box-val" style="font-size:13px">${wo.due||'—'}</div></div>
+        <div class="box"><div class="box-label">Due Date</div><div class="box-val" style="font-size:13px">${wo.due||'-'}</div></div>
       </div>
       <div class="section-title">Product</div>
       <div class="box" style="font-size:14px;font-weight:600;margin-bottom:16px">${wo.product}</div>
@@ -295,12 +295,12 @@ const printInvoice = (inv) => {
       <div class="grid-2">
         <div><div class="section-title">Bill To</div>
           <div style="font-size:13px;font-weight:600;margin-bottom:4px">${inv.customer}</div>
-          <div class="doc-meta">Order Ref: ${inv.orderId||'—'}</div>
+          <div class="doc-meta">Order Ref: ${inv.orderId||'-'}</div>
         </div>
         <div style="text-align:right">
           <div class="box" style="display:inline-block;min-width:200px">
-            <div class="acct-row"><span>Invoice Date:</span><span>${inv.issued||'—'}</span></div>
-            <div class="acct-row"><span>Due Date:</span><span style="font-weight:600;color:${inv.status==='Overdue'?'#991b1b':'#1a1a2e'}">${inv.due||'—'}</span></div>
+            <div class="acct-row"><span>Invoice Date:</span><span>${inv.issued||'-'}</span></div>
+            <div class="acct-row"><span>Due Date:</span><span style="font-weight:600;color:${inv.status==='Overdue'?'#991b1b':'#1a1a2e'}">${inv.due||'-'}</span></div>
             <div class="acct-row"><span>Status:</span><span><span class="badge badge-${inv.status==='Paid'?'ok':inv.status==='Overdue'?'err':'warn'}">${inv.status}</span></span></div>
           </div>
         </div>
@@ -308,7 +308,7 @@ const printInvoice = (inv) => {
       <table>
         <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
         <tbody>
-          <tr><td>Railing Systems — ${inv.orderId||'Custom Order'}</td><td style="text-align:right">$${(inv.amount||0).toFixed(2)}</td></tr>
+          <tr><td>Railing Systems - ${inv.orderId||'Custom Order'}</td><td style="text-align:right">$${(inv.amount||0).toFixed(2)}</td></tr>
         </tbody>
       </table>
       <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
@@ -322,7 +322,7 @@ const printInvoice = (inv) => {
       <div class="section-title">Payment Instructions</div>
       <div style="font-size:11px;line-height:1.7;color:#374151">
         <b>Check:</b> Payable to Maisy Railing LLC &nbsp;|&nbsp; <b>ACH/Wire:</b> Contact daniel@maisyrailing.com for banking details<br>
-        Net 15 — Late payments subject to 1.5% monthly finance charge.
+        Net 15 - Late payments subject to 1.5% monthly finance charge.
       </div>
       <div class="sig-line"><span>Maisy Railing LLC · Hayden, Idaho</span><span>Questions? daniel@maisyrailing.com · (208) 603-8149</span></div>
     </div>`);
@@ -339,13 +339,13 @@ const printPO = (po) => {
       </div>
       <div class="grid-2" style="margin-bottom:20px">
         <div><div class="section-title">Vendor</div>
-          <div style="font-size:13px;font-weight:600">${po.vendor||'—'}</div>
+          <div style="font-size:13px;font-weight:600">${po.vendor||'-'}</div>
           ${po.vendorId?`<div class="doc-meta">Vendor ID: ${po.vendorId}</div>`:''}
         </div>
         <div>
           <div class="box">
             <div class="acct-row"><span>PO Date:</span><span>${po.ordered||now()}</span></div>
-            <div class="acct-row"><span>Expected:</span><span>${po.expected||'—'}</span></div>
+            <div class="acct-row"><span>Expected:</span><span>${po.expected||'-'}</span></div>
             <div class="acct-row"><span>Status:</span><span><span class="badge badge-blue">${po.status||'Draft'}</span></span></div>
           </div>
         </div>
@@ -353,7 +353,7 @@ const printPO = (po) => {
       <table>
         <thead><tr><th>#</th><th>Item / Description</th><th style="text-align:center">Qty</th><th>Unit</th><th style="text-align:right">Unit Cost</th><th style="text-align:right">Total</th></tr></thead>
         <tbody>
-          ${items.length>0?items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.name||it.inventoryId||'—'}</td><td style="text-align:center">${it.qty}</td><td>${it.unit||''}</td><td style="text-align:right">$${(it.cost||0).toFixed(2)}</td><td style="text-align:right">$${((it.qty||0)*(it.cost||0)).toFixed(2)}</td></tr>`).join(''):`<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">See notes below</td></tr>`}
+          ${items.length>0?items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.name||it.inventoryId||'-'}</td><td style="text-align:center">${it.qty}</td><td>${it.unit||''}</td><td style="text-align:right">$${(it.cost||0).toFixed(2)}</td><td style="text-align:right">$${((it.qty||0)*(it.cost||0)).toFixed(2)}</td></tr>`).join(''):`<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">See notes below</td></tr>`}
         </tbody>
       </table>
       <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
@@ -380,21 +380,21 @@ const printPackingSlip = (shipment) => {
           <div style="font-size:11px;line-height:1.8">Maisy Railing LLC<br>2150 E Glenrose Dr<br>Hayden, ID 83835</div>
         </div>
         <div><div class="section-title">Ship To</div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${shipment.customer||shipment.destCity||'—'}</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${shipment.customer||shipment.destCity||'-'}</div>
           <div style="font-size:11px;line-height:1.8">${shipment.destCity||''}${shipment.destState?', '+shipment.destState:''}</div>
         </div>
       </div>
       <div class="grid-4">
-        <div class="box"><div class="box-label">Carrier</div><div class="box-val" style="font-size:12px">${shipment.carrier||'—'}</div></div>
-        <div class="box"><div class="box-label">Service</div><div class="box-val" style="font-size:12px">${shipment.service||'—'}</div></div>
-        <div class="box"><div class="box-label">Weight</div><div class="box-val">${shipment.weight||'—'} lbs</div></div>
-        <div class="box"><div class="box-label">Tracking</div><div class="box-val" style="font-size:10px;word-break:break-all">${shipment.tracking||'—'}</div></div>
+        <div class="box"><div class="box-label">Carrier</div><div class="box-val" style="font-size:12px">${shipment.carrier||'-'}</div></div>
+        <div class="box"><div class="box-label">Service</div><div class="box-val" style="font-size:12px">${shipment.service||'-'}</div></div>
+        <div class="box"><div class="box-label">Weight</div><div class="box-val">${shipment.weight||'-'} lbs</div></div>
+        <div class="box"><div class="box-label">Tracking</div><div class="box-val" style="font-size:10px;word-break:break-all">${shipment.tracking||'-'}</div></div>
       </div>
       <div class="section-title">Contents</div>
       <table>
         <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Condition</th><th>Notes</th></tr></thead>
         <tbody>
-          <tr><td>1</td><td>Aluminum Railing System — ${shipment.customer||''}</td><td> </td><td><span class="badge badge-ok">New</span></td><td></td></tr>
+          <tr><td>1</td><td>Aluminum Railing System - ${shipment.customer||''}</td><td> </td><td><span class="badge badge-ok">New</span></td><td></td></tr>
           <tr><td>2</td><td>Hardware Kit</td><td> </td><td><span class="badge badge-ok">New</span></td><td></td></tr>
           <tr><td>3</td><td>Installation Instructions</td><td>1</td><td><span class="badge badge-ok">New</span></td><td></td></tr>
         </tbody>
@@ -460,12 +460,12 @@ const printKPIReport = (data) => {
       <div class="section-title">Weekly KPI Trend (Last 8 Weeks)</div>
       <table>
         <thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th></tr></thead>
-        <tbody>${weekly.length>0?weekly.map(w=>`<tr><td>${w.weekEnding}</td><td style="${w.onTimeDeliveryPct>=95?'color:#065f46':w.onTimeDeliveryPct>=85?'color:#92400e':'color:#991b1b'}">${w.onTimeDeliveryPct||'—'}</td><td>${w.firstPassYieldPct||'—'}</td><td>${w.avgLeadTimeDays||'—'}</td><td>${w.wipCount||'—'}</td><td>${w.scrapWasteDollar?'$'+w.scrapWasteDollar:'—'}</td><td style="${w.safetyIncidents>0?'color:#991b1b;font-weight:700':''}">${w.safetyIncidents||'0'}</td></tr>`).join(''):`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">No weekly data entered yet — use KPI Dashboard to log weekly metrics</td></tr>`}</tbody>
+        <tbody>${weekly.length>0?weekly.map(w=>`<tr><td>${w.weekEnding}</td><td style="${w.onTimeDeliveryPct>=95?'color:#065f46':w.onTimeDeliveryPct>=85?'color:#92400e':'color:#991b1b'}">${w.onTimeDeliveryPct||'-'}</td><td>${w.firstPassYieldPct||'-'}</td><td>${w.avgLeadTimeDays||'-'}</td><td>${w.wipCount||'-'}</td><td>${w.scrapWasteDollar?'$'+w.scrapWasteDollar:'-'}</td><td style="${w.safetyIncidents>0?'color:#991b1b;font-weight:700':''}">${w.safetyIncidents||'0'}</td></tr>`).join(''):`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">No weekly data entered yet - use KPI Dashboard to log weekly metrics</td></tr>`}</tbody>
       </table>
       <div class="section-title">Station Output (Process Cost Analysis)</div>
       <table>
         <thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Day</th><th>Labor $/Day</th><th>Total $/Day</th></tr></thead>
-        <tbody>${(data.costPerStation||[]).slice(0,10).map(s=>`<tr><td>${s.station}</td><td>${s.timePerSectionMin?.toFixed(1)||'—'}</td><td>${s.sectionsPerDay?.toFixed(0)||'—'}</td><td>$${s.laborDollarDay?.toFixed(0)||'—'}</td><td>$${s.totalProcessDollarDay?.toFixed(0)||'—'}</td></tr>`).join('')}</tbody>
+        <tbody>${(data.costPerStation||[]).slice(0,10).map(s=>`<tr><td>${s.station}</td><td>${s.timePerSectionMin?.toFixed(1)||'-'}</td><td>${s.sectionsPerDay?.toFixed(0)||'-'}</td><td>$${s.laborDollarDay?.toFixed(0)||'-'}</td><td>$${s.totalProcessDollarDay?.toFixed(0)||'-'}</td></tr>`).join('')}</tbody>
       </table>
       <div class="sig-line"><span>Report by: Daniel Jones, Director of Operations</span><span>Maisy Railing · ${new Date().toLocaleDateString()}</span></div>
     </div>`);
@@ -486,15 +486,15 @@ const printInventoryReport = (data) => {
         <div class="box"><div class="box-label">Raw Materials</div><div class="box-val">${(data.rawMaterials||[]).length}</div></div>
         <div class="box"><div class="box-label">Assembly Items</div><div class="box-val">${(data.assemblyItems||[]).length}</div></div>
       </div>
-      <div class="section-title">🔴 Critical / Low Stock — Reorder Required</div>
+      <div class="section-title">🔴 Critical / Low Stock - Reorder Required</div>
       <table>
         <thead><tr><th>ID</th><th>Description</th><th>On Hand</th><th>Reorder Point</th><th>Unit</th><th>Vendor</th><th>Status</th></tr></thead>
-        <tbody>${critical.map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td>${i.name}</td><td style="font-weight:700;color:#991b1b">${i.qty}</td><td>${i.reorder||i.minOnHand||'—'}</td><td>${i.unit}</td><td style="font-size:10px">${i.vendor||'—'}</td><td><span class="badge badge-err">${i.status}</span></td></tr>`).join('')}</tbody>
+        <tbody>${critical.map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td>${i.name}</td><td style="font-weight:700;color:#991b1b">${i.qty}</td><td>${i.reorder||i.minOnHand||'-'}</td><td>${i.unit}</td><td style="font-size:10px">${i.vendor||'-'}</td><td><span class="badge badge-err">${i.status}</span></td></tr>`).join('')}</tbody>
       </table>
-      <div class="section-title">Full Inventory — Raw Materials</div>
+      <div class="section-title">Full Inventory - Raw Materials</div>
       <table>
         <thead><tr><th>ID</th><th>Description</th><th>Qty On Hand</th><th>Unit</th><th>Cost</th><th>Value</th><th>Status</th></tr></thead>
-        <tbody>${(data.rawMaterials||[]).map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td style="font-size:10px">${i.name}</td><td style="${i.status==='CRITICAL'?'color:#991b1b;font-weight:700':''}">${i.qty}</td><td>${i.unit}</td><td>$${i.cost||'—'}</td><td>$${i.value||((i.qty||0)*(i.cost||0)).toFixed(2)}</td><td><span class="badge badge-${i.status==='OK'?'ok':i.status==='CRITICAL'?'err':'warn'}">${i.status||'—'}</span></td></tr>`).join('')}</tbody>
+        <tbody>${(data.rawMaterials||[]).map(i=>`<tr><td style="font-family:monospace;font-size:10px">${i.id}</td><td style="font-size:10px">${i.name}</td><td style="${i.status==='CRITICAL'?'color:#991b1b;font-weight:700':''}">${i.qty}</td><td>${i.unit}</td><td>$${i.cost||'-'}</td><td>$${i.value||((i.qty||0)*(i.cost||0)).toFixed(2)}</td><td><span class="badge badge-${i.status==='OK'?'ok':i.status==='CRITICAL'?'err':'warn'}">${i.status||'-'}</span></td></tr>`).join('')}</tbody>
       </table>
       <div class="sig-line"><span>Cycle Count by: __________________</span><span>Date: __________________</span><span>Verified by: __________________</span></div>
     </div>`);
@@ -516,7 +516,7 @@ const printSafetyLog = (data) => {
       </div>
       <table>
         <thead><tr><th>Date</th><th>Type</th><th>Location</th><th>Involved</th><th>Description</th><th>Corrective Action</th><th>Status</th></tr></thead>
-        <tbody>${log.map(l=>`<tr><td style="white-space:nowrap">${l.date||'—'}</td><td><span class="badge badge-${l.type&&l.type.toLowerCase().includes('injury')?'err':l.type&&l.type.toLowerCase().includes('near')?'warn':'gray'}">${l.type||'—'}</span></td><td style="font-size:10px">${l.location||'—'}</td><td style="font-size:10px">${l.involved||'—'}</td><td style="font-size:10px;max-width:150px">${l.description||'—'}</td><td style="font-size:10px;max-width:120px">${l.corrAction||'—'}</td><td><span class="badge badge-${l.status&&l.status.toLowerCase().includes('closed')?'ok':'err'}">${l.status||'—'}</span></td></tr>`).join('')}
+        <tbody>${log.map(l=>`<tr><td style="white-space:nowrap">${l.date||'-'}</td><td><span class="badge badge-${l.type&&l.type.toLowerCase().includes('injury')?'err':l.type&&l.type.toLowerCase().includes('near')?'warn':'gray'}">${l.type||'-'}</span></td><td style="font-size:10px">${l.location||'-'}</td><td style="font-size:10px">${l.involved||'-'}</td><td style="font-size:10px;max-width:150px">${l.description||'-'}</td><td style="font-size:10px;max-width:120px">${l.corrAction||'-'}</td><td><span class="badge badge-${l.status&&l.status.toLowerCase().includes('closed')?'ok':'err'}">${l.status||'-'}</span></td></tr>`).join('')}
         ${log.length===0?'<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:20px">No incidents recorded</td></tr>':''}</tbody>
       </table>
       <div class="section-title">Blank Incident Report</div>
@@ -552,7 +552,7 @@ const printImprovementLog = (data) => {
       </div>
       <table>
         <thead><tr><th>ID</th><th>Area</th><th>Description</th><th>By</th><th>Est $/yr</th><th>Cost</th><th>Status</th></tr></thead>
-        <tbody>${log.map(l=>`<tr><td style="font-family:monospace;font-size:10px">${l.id}</td><td style="font-size:10px">${l.area||'—'}</td><td style="font-size:10px;max-width:200px">${l.description||'—'}</td><td style="font-size:10px">${l.submittedBy||'—'}</td><td style="color:#065f46;font-weight:600">$${(l.estSavings||0).toLocaleString()}</td><td style="color:#6b7280">$${(l.implCost||0).toLocaleString()}</td><td><span class="badge badge-${l.status==='Complete'?'ok':l.status==='In Progress'?'blue':'gray'}">${l.status||'—'}</span></td></tr>`).join('')}</tbody>
+        <tbody>${log.map(l=>`<tr><td style="font-family:monospace;font-size:10px">${l.id}</td><td style="font-size:10px">${l.area||'-'}</td><td style="font-size:10px;max-width:200px">${l.description||'-'}</td><td style="font-size:10px">${l.submittedBy||'-'}</td><td style="color:#065f46;font-weight:600">$${(l.estSavings||0).toLocaleString()}</td><td style="color:#6b7280">$${(l.implCost||0).toLocaleString()}</td><td><span class="badge badge-${l.status==='Complete'?'ok':l.status==='In Progress'?'blue':'gray'}">${l.status||'-'}</span></td></tr>`).join('')}</tbody>
       </table>
       <div class="section-title">Submit a New Improvement Idea</div>
       <div class="grid-2">
@@ -560,7 +560,7 @@ const printImprovementLog = (data) => {
         <div class="write-label">Station / Area</div><div class="write-line"/>
         <div class="write-label">Est. Annual Savings</div><div class="write-line"/></div>
         <div><div class="write-label">Date</div><div class="write-line"/>
-        <div class="write-label">Priority (1–5)</div><div class="write-line"/>
+        <div class="write-label">Priority (1-5)</div><div class="write-line"/>
         <div class="write-label">Est. Implementation Cost</div><div class="write-line"/></div>
       </div>
       <div class="write-label">Description of Improvement</div><div class="write-line"/><div class="write-line"/>
@@ -581,10 +581,10 @@ const printTrainingMatrix = (data) => {
         <div><div class="logo">MAISY<span>ERP</span> · Maisy Railing</div><div class="doc-meta">Cross-Training Skills Matrix</div></div>
         <div style="text-align:right"><div class="doc-title">TRAINING MATRIX</div><div class="doc-meta">Printed ${new Date().toLocaleDateString()}</div></div>
       </div>
-      <div style="font-size:10px;color:#6b7280;margin-bottom:10px">Legend: <b style="color:#065f46">✓</b> = Certified &nbsp;|&nbsp; <b style="color:#1e40af">IP</b> = In Progress &nbsp;|&nbsp; <b style="color:#9ca3af">—</b> = Not Trained</div>
+      <div style="font-size:10px;color:#6b7280;margin-bottom:10px">Legend: <b style="color:#065f46">✓</b> = Certified &nbsp;|&nbsp; <b style="color:#1e40af">IP</b> = In Progress &nbsp;|&nbsp; <b style="color:#9ca3af">-</b> = Not Trained</div>
       <table>
         <thead><tr><th>Skill / Certification</th>${employees.map(e=>`<th style="text-align:center">${e}</th>`).join('')}</tr></thead>
-        <tbody>${skills.map(skill=>`<tr><td style="font-size:10px">${skill}</td>${employees.map(e=>{const v=lookup[`${e}|${skill}`]||'—';return`<td style="text-align:center;font-size:11px;font-weight:700;color:${v==='✓'?'#065f46':v==='IP'?'#1e40af':'#d1d5db'}">${v}</td>`;}).join('')}</tr>`).join('')}</tbody>
+        <tbody>${skills.map(skill=>`<tr><td style="font-size:10px">${skill}</td>${employees.map(e=>{const v=lookup[`${e}|${skill}`]||'-';return`<td style="text-align:center;font-size:11px;font-weight:700;color:${v==='✓'?'#065f46':v==='IP'?'#1e40af':'#d1d5db'}">${v}</td>`;}).join('')}</tr>`).join('')}</tbody>
       </table>
       <div class="sig-line"><span>HR Review: __________________</span><span>Date: __________________</span><span>Next Review: __________________</span></div>
     </div>`);
@@ -592,7 +592,7 @@ const printTrainingMatrix = (data) => {
 
 
 const INIT = {
-  // ── Maisy_04_ARSENAL_SUPPLY — Raw Materials (45 items, deduped source) ─────
+  // ── Maisy_04_ARSENAL_SUPPLY - Raw Materials (45 items, deduped source) ─────
   rawMaterials: [
     {
         "id": "RM-001",
@@ -1496,7 +1496,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_04_ARSENAL_SUPPLY — Assembly Items (21 items) ───────────────────
+  // ── Maisy_04_ARSENAL_SUPPLY - Assembly Items (21 items) ───────────────────
   assemblyItems: [
     {
         "id": "AI-001",
@@ -1899,7 +1899,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_04_ARSENAL_SUPPLY — Glass Inventory (30 panels) ─────────────────
+  // ── Maisy_04_ARSENAL_SUPPLY - Glass Inventory (30 panels) ─────────────────
   glassInventory: [
     {
         "height": 42,
@@ -2143,7 +2143,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_04_ARSENAL_SUPPLY — Shop Consumables (36 items) ─────────────────
+  // ── Maisy_04_ARSENAL_SUPPLY - Shop Consumables (36 items) ─────────────────
   shopConsumables: [
     {
         "id": "PSC-001",
@@ -2615,7 +2615,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_04_ARSENAL_SUPPLY — Vendor Directory (39 vendors) ───────────────
+  // ── Maisy_04_ARSENAL_SUPPLY - Vendor Directory (39 vendors) ───────────────
   vendors: [
     {
         "id": "VND-001",
@@ -3126,7 +3126,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_04_ARSENAL_SUPPLY — Purchase Log (7 orders) ─────────────────────
+  // ── Maisy_04_ARSENAL_SUPPLY - Purchase Log (7 orders) ─────────────────────
   purchaseLog: [
     {
         "po": "18538062",
@@ -3273,7 +3273,7 @@ const INIT = {
   {id:'PO-009',orderDate:'',vendor:'',vendorContact:'',item:'',category:'',qty:0,unit:'Total Freight:',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Ordered',notes:''},
   {id:'PO-010',orderDate:'',vendor:'',vendorContact:'',item:'',category:'',qty:0,unit:'Grand Total Spend:',unitCost:0,total:0,freight:0,expectedDelivery:'',actualDelivery:'',status:'Ordered',notes:''}],
 
-  // ── Maisy_04_ARSENAL_SUPPLY — Order Requests (5 requests) ─────────────────
+  // ── Maisy_04_ARSENAL_SUPPLY - Order Requests (5 requests) ─────────────────
   orderRequests: [
     {
         "id": "REQ-0001",
@@ -3372,7 +3372,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_04_ARSENAL_SUPPLY — Misc Charges (15 charges, same as 05 — one copy) ──
+  // ── Maisy_04_ARSENAL_SUPPLY - Misc Charges (15 charges, same as 05 - one copy) ──
   miscCharges: [
     {
         "id": "MC-001",
@@ -4042,7 +4042,7 @@ const INIT = {
     approvedBy:'D. Jones'
   }],
 
-  // ── Maisy_02_VELOCITY_SALES — Quote Log (deduped from 02 only) ────────────
+  // ── Maisy_02_VELOCITY_SALES - Quote Log (deduped from 02 only) ────────────
   quoteLog: [
     {
         "id": "SQ-2026-0045",
@@ -4098,7 +4098,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_06_DISPATCH_LOGISTICS — Ship Cost Log (23 real shipments) ────────
+  // ── Maisy_06_DISPATCH_LOGISTICS - Ship Cost Log (23 real shipments) ────────
   shipCostLog: [
     {
         "date": "2026-01-13",
@@ -4492,7 +4492,7 @@ const INIT = {
   {id:'SHP-21',date:'2026-03-02',month:'Mar 2026',poRef:'432685222',customer:'Cedrik Cox',carrier:'Estes Freight',serviceType:'Freight',weight:443,dimensions:'144x48x17',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'St. Helens',destState:'OR',baseRate:754.53,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:754.53,tracking:'317447',notes:'',status:'Delivered'},
   {id:'SHP-22',date:'2026-03-06',month:'Mar 2026',poRef:'N/A',customer:'Cedrik Cox',carrier:'UPS',serviceType:'Ground',weight:1,dimensions:'8x8x7',declaredValue:100,originCity:'Hayden',originState:'ID',destCity:'St. Helens',destState:'OR',baseRate:26.45,fuelSurcharge:0,residentialFee:0,otherCharges:0,totalCost:26.45,tracking:'1Z5K02DT0320589066',notes:'',status:'Delivered'}],
 
-  // ── Maisy_06_DISPATCH_LOGISTICS — Borrowed Labor (11 entries) ─────────────
+  // ── Maisy_06_DISPATCH_LOGISTICS - Borrowed Labor (11 entries) ─────────────
   borrowedLabor: [
     {
         "entry": 1.0,
@@ -4771,7 +4771,7 @@ const INIT = {
     notes:''
   }],
 
-  // ── Maisy_06_DISPATCH_LOGISTICS — Order Fulfillment / Sister Co (17 orders) ─
+  // ── Maisy_06_DISPATCH_LOGISTICS - Order Fulfillment / Sister Co (17 orders) ─
   orderFulfillment: [
     {id:'OF-001',orderNo:'1088',date:'2026-01-01',project:'3BD-DAVE WAH',description:'6 POST/ 1 L BAR',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
     {id:'OF-002',orderNo:'1085',date:'2026-01-02',project:'3BD-HANNAH PARK',description:'SURFACE CABLE',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]},
@@ -4792,7 +4792,7 @@ const INIT = {
     {id:'OF-017',orderNo:'1136',date:'2026-03-05',project:'3BD - Janet Vanderveen',description:'Top Rail',location:'HAYDEN - BELLEVUE',amount:0.0,notes:'NO AMOUNT ON ORDER FORM',source:'3BD',type:'Transfer to Bellevue',status:'Fulfilled',attachments:[]}
   ],
 
-  // ── Maisy_03_FORGE_PRODUCTION — Scrap & Waste (6 entries) ─────────────────
+  // ── Maisy_03_FORGE_PRODUCTION - Scrap & Waste (6 entries) ─────────────────
   scrapWaste: [
     {
         "date": "2026-01-14",
@@ -4889,7 +4889,7 @@ const INIT = {
     unit:'pcs',
     cost:42.5,
     reason:'CUT',
-    rootCause:'Wrong length — measured from wrong end',
+    rootCause:'Wrong length - measured from wrong end',
     corrAction:'Re-trained on measurement SOP',
     reportedBy:'Jace'
   },
@@ -4917,7 +4917,7 @@ const INIT = {
     unit:'pcs',
     cost:35,
     reason:'CNC',
-    rootCause:'Wrong hole pattern — old program',
+    rootCause:'Wrong hole pattern - old program',
     corrAction:'Updated CNC program library',
     reportedBy:'Nick'
   },
@@ -4931,7 +4931,7 @@ const INIT = {
     unit:'pcs',
     cost:18.75,
     reason:'COAT',
-    rootCause:'Orange peel — DFT too high',
+    rootCause:'Orange peel - DFT too high',
     corrAction:'Calibrated spray gun',
     reportedBy:'Michael'
   },
@@ -4945,7 +4945,7 @@ const INIT = {
     unit:'pcs',
     cost:56,
     reason:'CUT',
-    rootCause:'Blade chatter — dull blade',
+    rootCause:'Blade chatter - dull blade',
     corrAction:'Replaced cold saw blade',
     reportedBy:'Amber'
   },
@@ -4964,15 +4964,15 @@ const INIT = {
     reportedBy:'Amber'
   }],
 
-  // ── Maisy_03_FORGE_PRODUCTION — Safety Log (4 incidents) ──────────────────
+  // ── Maisy_03_FORGE_PRODUCTION - Safety Log (4 incidents) ──────────────────
   safetyLog: [
   {id:'SAF-001',date:'2026-01-09',time:'10:30 AM',reportedBy:'Daniel',type:'Near Miss',location:'Cutting',description:'Aluminum tube slipped from saw clamp',employees:'',injuryDetails:'',firstAid:'No',rootCause:'Clamp not fully tightened',corrAction:'Added clamp check to SOP',status:'Closed',lostTime:''},
-  {id:'SAF-002',date:'2026-01-24',time:'2:15 PM',reportedBy:'Jace',type:'Injury',location:'Welding',description:'Minor burn on left forearm — sleeve rode up',employees:'',injuryDetails:'',firstAid:'Yes',rootCause:'PPE not secured',corrAction:'Issued welding sleeves',status:'Closed',lostTime:''},
+  {id:'SAF-002',date:'2026-01-24',time:'2:15 PM',reportedBy:'Jace',type:'Injury',location:'Welding',description:'Minor burn on left forearm - sleeve rode up',employees:'',injuryDetails:'',firstAid:'Yes',rootCause:'PPE not secured',corrAction:'Issued welding sleeves',status:'Closed',lostTime:''},
   {id:'SAF-003',date:'2026-02-08',time:'11:00 AM',reportedBy:'Nick',type:'Property',location:'Powder Coat',description:'Powder gun hose caught on rack',employees:'',injuryDetails:'',firstAid:'No',rootCause:'Hose routing issue',corrAction:'Rerouted with overhead hooks',status:'Closed',lostTime:''},
   {id:'SAF-004',date:'2026-02-20',time:'9:45 AM',reportedBy:'Amber',type:'Near Miss',location:'Assembly',description:'Air hose whipped on disconnect',employees:'',injuryDetails:'',firstAid:'No',rootCause:'Worn quick-connect',corrAction:'Replaced all fittings + whip checks',status:'Open',lostTime:''}
 ],
 
-  // ── Maisy_03_FORGE_PRODUCTION — Improvement Log (5 ideas) ────────────────
+  // ── Maisy_03_FORGE_PRODUCTION - Improvement Log (5 ideas) ────────────────
   improvementLog: [
     {
         "id": "KZ-001",
@@ -5083,7 +5083,7 @@ const INIT = {
     dateSubmitted:'2026-01-29',
     submittedBy:'Nick',
     station:'CNC',
-    description:'Build multi-part fixture — 4 posts/cycle',
+    description:'Build multi-part fixture - 4 posts/cycle',
     benefit:'Double CNC throughput',
     estSavings:18000,
     implCost:2800,
@@ -5097,7 +5097,7 @@ const INIT = {
     dateSubmitted:'2026-02-08',
     submittedBy:'Amber',
     station:'Packaging',
-    description:'Standardize box sizes — reduce waste',
+    description:'Standardize box sizes - reduce waste',
     benefit:'Save ~$200/mo materials',
     estSavings:2400,
     implCost:500,
@@ -5111,7 +5111,7 @@ const INIT = {
     dateSubmitted:'2026-02-18',
     submittedBy:'Daniel',
     station:'Powder Coat',
-    description:'Batch colors — reduce changeover',
+    description:'Batch colors - reduce changeover',
     benefit:'Save 45 min per change',
     estSavings:6000,
     implCost:0,
@@ -5191,7 +5191,7 @@ const INIT = {
     phase:''
   }],
 
-  // ── Maisy_05_MERIDIAN_FINANCE — Labor Processes (26 processes) ────────────
+  // ── Maisy_05_MERIDIAN_FINANCE - Labor Processes (26 processes) ────────────
   laborProcesses: [
     {
         "id": "P-01",
@@ -5481,7 +5481,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_07_NEXUS_PEOPLE — Employees (5 real employees) ──────────────────
+  // ── Maisy_07_NEXUS_PEOPLE - Employees (5 real employees) ──────────────────
   employees: [
     {
         "id": "EMP-001",
@@ -5540,7 +5540,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_07_NEXUS_PEOPLE — Training Matrix (real data) ───────────────────
+  // ── Maisy_07_NEXUS_PEOPLE - Training Matrix (real data) ───────────────────
   trainingMatrix: [
     {
         "empId": "EMP-002",
@@ -6552,7 +6552,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_07_NEXUS_PEOPLE — Automation Stations (8 stations) ─────────────
+  // ── Maisy_07_NEXUS_PEOPLE - Automation Stations (8 stations) ─────────────
   automationStations: [
     {
         "station": "Cutting",
@@ -6636,7 +6636,7 @@ const INIT = {
     }
 ],
 
-  // ── Maisy_07_NEXUS_PEOPLE — Automation Phases Roadmap ────────────────────
+  // ── Maisy_07_NEXUS_PEOPLE - Automation Phases Roadmap ────────────────────
   automationPhasesRoadmap: [
     {
         "phase": "Phase",
@@ -6900,7 +6900,7 @@ const INIT = {
     notes:'Notes'
   }],
 
-  // ── Maisy_07_NEXUS_PEOPLE — Job History (10 orders) ──────────────────────
+  // ── Maisy_07_NEXUS_PEOPLE - Job History (10 orders) ──────────────────────
   jobHistory: [
     {
         "id": "MR-2026-0101",
@@ -7113,7 +7113,7 @@ const INIT = {
   },
   {
     id:'MR-2026-0118',
-    customer:'Home Depot — #3847',
+    customer:'Home Depot - #3847',
     project:'Stock Order',
     productType:'Cable Post SM 36',
     mount:'Surface',
@@ -7304,7 +7304,7 @@ const INIT = {
     status:'Shipped'
   }],
 
-  // ── Retained from v4.0 — Sales Orders & Customers (placeholder until CRM sync) ──
+  // ── Retained from v4.0 - Sales Orders & Customers (placeholder until CRM sync) ──
   salesOrders:[
     {id:'SO-001',customer:'Henderson Deck Co.',dest:'Boise, ID',carrier:'FedEx Ground',pkgs:3,weight:185,estCost:145,actualCost:142.30,status:'Shipped',variance:-2.70},
     {id:'SO-002',customer:'Coastal Living Design',dest:'San Diego, CA',carrier:'R+L LTL',pkgs:2,weight:420,estCost:385,actualCost:410,status:'Shipped',variance:25},
@@ -7321,15 +7321,15 @@ const INIT = {
     {id:'CUS-007',name:'KGM Construction',contact:'',email:'',phone:'',type:'GC',city:'Templeton, CA',ytd:734.88},
   ],
 
-  // ── Work Orders (placeholder — FORGE production sync pending) ─────────────
+  // ── Work Orders (placeholder - FORGE production sync pending) ─────────────
   workOrders:[
-    {id:'WO-001',product:'Cable Post SM 42 — 18pc',customer:'Riverside Homes',qty:18,station:'Assembly',status:'Complete',start:'2025-12-15',due:'2025-12-30',progress:100,laborHrs:0,matCost:1680,laborRate:40},
-    {id:'WO-002',product:'Cable Post FM 36 — 12pc',customer:'Alpine Builders',qty:12,station:'Welding',status:'Complete',start:'2025-12-20',due:'2026-01-04',progress:100,laborHrs:0,matCost:1200,laborRate:40},
-    {id:'WO-003',product:'Glass Post FM 42 — 8pc',customer:'Clearwater Design',qty:8,station:'Powder Coat',status:'In Progress',start:'2026-02-28',due:'2026-03-10',progress:55,laborHrs:12,matCost:2400,laborRate:45},
-    {id:'WO-004',product:'Cable Post SM 36 — 48pc',customer:'Home Depot #3847',qty:48,station:'CNC',status:'In Progress',start:'2026-03-01',due:'2026-03-12',progress:40,laborHrs:8,matCost:3800,laborRate:40},
+    {id:'WO-001',product:'Cable Post SM 42 - 18pc',customer:'Riverside Homes',qty:18,station:'Assembly',status:'Complete',start:'2025-12-15',due:'2025-12-30',progress:100,laborHrs:0,matCost:1680,laborRate:40},
+    {id:'WO-002',product:'Cable Post FM 36 - 12pc',customer:'Alpine Builders',qty:12,station:'Welding',status:'Complete',start:'2025-12-20',due:'2026-01-04',progress:100,laborHrs:0,matCost:1200,laborRate:40},
+    {id:'WO-003',product:'Glass Post FM 42 - 8pc',customer:'Clearwater Design',qty:8,station:'Powder Coat',status:'In Progress',start:'2026-02-28',due:'2026-03-10',progress:55,laborHrs:12,matCost:2400,laborRate:45},
+    {id:'WO-004',product:'Cable Post SM 36 - 48pc',customer:'Home Depot #3847',qty:48,station:'CNC',status:'In Progress',start:'2026-03-01',due:'2026-03-12',progress:40,laborHrs:8,matCost:3800,laborRate:40},
   ],
 
-  // ── Invoices (placeholder — MERIDIAN finance sync pending) ────────────────
+  // ── Invoices (placeholder - MERIDIAN finance sync pending) ────────────────
   invoices:[
     {id:'INV-001',orderId:'MR-2026-0101',customer:'Riverside Homes',amount:4250,status:'Paid',issued:'2025-12-30',due:'2026-01-14',paid:'2026-01-10'},
     {id:'INV-002',orderId:'MR-2026-0105',customer:'Alpine Builders',amount:3180,status:'Paid',issued:'2026-01-04',due:'2026-01-19',paid:'2026-01-15'},
@@ -7338,7 +7338,7 @@ const INIT = {
     {id:'INV-005',orderId:'MR-2026-0143',customer:'Lakeshore Estates',amount:2200,status:'Overdue',issued:'2026-02-16',due:'2026-03-02',paid:null},
   ],
 
-  // ── P&L Monthly (structure ready — data entry pending) ────────────────────
+  // ── P&L Monthly (structure ready - data entry pending) ────────────────────
   pnlMonthly:[
     {month:'Jan 26',revenue:0,cogs:0,gross:0,overhead:0,ebitda:0},
     {month:'Feb 26',revenue:0,cogs:0,gross:0,overhead:0,ebitda:0},
@@ -7347,21 +7347,21 @@ const INIT = {
 
   // ── Hot List & Todos ───────────────────────────────────────────────────────
   hotList:[
-  {id:'HL-001',priority:1,orderId:'MR-2026-0148',customer:'Coastal Living Design',issue:'Rush — customer event deadline',station:'Powder Coat',action:'Prioritize in oven queue',owner:'Daniel',dateFlagged:'2026-02-26',targetResolve:'2026-03-03',status:'In Progress'},
-  {id:'HL-002',priority:2,orderId:'MR-2026-0147',customer:'Henderson Deck Co.',issue:'Welding rework — 3 posts failed QC',station:'Welding',action:'Re-weld posts #4, #7, #12',owner:'Jace',dateFlagged:'2026-02-27',targetResolve:'2026-03-02',status:'Open'},
-  {id:'HL-003',priority:3,orderId:'MR-2026-0152',customer:'Apex Construction',issue:'Material shortage — 6063 tube backorder',station:'Cutting',action:'Source from alt vendor or wait',owner:'Daniel',dateFlagged:'2026-02-25',targetResolve:'2026-03-05',status:'Blocked'},
-  {id:'HL-004',priority:4,orderId:'MR-2026-0153',customer:'Home Depot — #4521',issue:'Large order — needs dedicated run',station:'All',action:'Schedule full-day dedicated run',owner:'Amber',dateFlagged:'2026-02-28',targetResolve:'2026-03-07',status:'Planning'},
+  {id:'HL-001',priority:1,orderId:'MR-2026-0148',customer:'Coastal Living Design',issue:'Rush - customer event deadline',station:'Powder Coat',action:'Prioritize in oven queue',owner:'Daniel',dateFlagged:'2026-02-26',targetResolve:'2026-03-03',status:'In Progress'},
+  {id:'HL-002',priority:2,orderId:'MR-2026-0147',customer:'Henderson Deck Co.',issue:'Welding rework - 3 posts failed QC',station:'Welding',action:'Re-weld posts #4, #7, #12',owner:'Jace',dateFlagged:'2026-02-27',targetResolve:'2026-03-02',status:'Open'},
+  {id:'HL-003',priority:3,orderId:'MR-2026-0152',customer:'Apex Construction',issue:'Material shortage - 6063 tube backorder',station:'Cutting',action:'Source from alt vendor or wait',owner:'Daniel',dateFlagged:'2026-02-25',targetResolve:'2026-03-05',status:'Blocked'},
+  {id:'HL-004',priority:4,orderId:'MR-2026-0153',customer:'Home Depot - #4521',issue:'Large order - needs dedicated run',station:'All',action:'Schedule full-day dedicated run',owner:'Amber',dateFlagged:'2026-02-28',targetResolve:'2026-03-07',status:'Planning'},
   {id:'HL-005',priority:5,orderId:'MR-2026-0150',customer:'Lakehouse Properties',issue:'Custom color match pending',station:'Powder Coat',action:'Send sample chip to customer',owner:'Nick',dateFlagged:'2026-02-24',targetResolve:'2026-03-01',status:'Open'}
 ],
   todos:[
-    {id:'TODO-001',title:'Reorder swage assemblies — AI-015/AI-016 critical',cat:'Inventory',priority:'High',status:'Open',due:'2026-03-10',assigned:'Daniel Jones',notes:'REQ-0004 submitted'},
+    {id:'TODO-001',title:'Reorder swage assemblies - AI-015/AI-016 critical',cat:'Inventory',priority:'High',status:'Open',due:'2026-03-10',assigned:'Daniel Jones',notes:'REQ-0004 submitted'},
     {id:'TODO-002',title:'Order poly tubing (AI-020/021/022) and air cushion film',cat:'Inventory',priority:'High',status:'Open',due:'2026-03-10',assigned:'Daniel Jones',notes:'ULINE order pending'},
     {id:'TODO-003',title:'Restock TIG filler rod #4043 and MIG wire',cat:'Inventory',priority:'High',status:'Open',due:'2026-03-10',assigned:'Daniel Jones',notes:'PSC-016 and PSC-020 critical'},
-    {id:'TODO-004',title:'Approve REQ-0001 Weld Hood Band — National Welding',cat:'Purchasing',priority:'Medium',status:'Open',due:'2026-03-15',assigned:'Daniel Jones',notes:'Michael requested'},
+    {id:'TODO-004',title:'Approve REQ-0001 Weld Hood Band - National Welding',cat:'Purchasing',priority:'Medium',status:'Open',due:'2026-03-15',assigned:'Daniel Jones',notes:'Michael requested'},
     {id:'TODO-005',title:'Schedule vendor scorecard reviews',cat:'Admin',priority:'Low',status:'Open',due:'2026-03-25',assigned:'Daniel Jones',notes:'14 vendors to evaluate'},
     {id:'TODO-006',title:'Finalize automation Phase 1 RFQ',cat:'Automation',priority:'High',status:'Open',due:'2026-03-20',assigned:'Daniel Jones',notes:'CNC + cutting stations'},
-    {id:'TODO-007',title:'Follow up on IMV-005 overdue invoice — Lakeshore Estates',cat:'Finance',priority:'High',status:'Open',due:'2026-03-09',assigned:'Daniel Jones',notes:'$2,200 past due'},
-    {id:'TODO-008',title:'Safety: close REQ AIR HOSE whip check (2/20)',cat:'Quality',priority:'Medium',status:'Open',due:'2026-03-12',assigned:'Daniel Jones',notes:'All fittings replaced — verify'},
+    {id:'TODO-007',title:'Follow up on IMV-005 overdue invoice - Lakeshore Estates',cat:'Finance',priority:'High',status:'Open',due:'2026-03-09',assigned:'Daniel Jones',notes:'$2,200 past due'},
+    {id:'TODO-008',title:'Safety: close REQ AIR HOSE whip check (2/20)',cat:'Quality',priority:'Medium',status:'Open',due:'2026-03-12',assigned:'Daniel Jones',notes:'All fittings replaced - verify'},
   ],
 
   // ── Open Positions & Discipline ───────────────────────────────────────────
@@ -7373,7 +7373,7 @@ const INIT = {
   ],
   disciplineLog:[],
 
-  // ── Automation Roadmap (kept from v4 — real data in automationStations/PhasesRoadmap) ──
+  // ── Automation Roadmap (kept from v4 - real data in automationStations/PhasesRoadmap) ──
   automationPhases:[
     {id:'PH-001',phase:1,title:'CNC + Cutting Automation',months:'Q1-Q2 2026',budget:50000,status:'In Progress',completion:15,items:[
       {id:'PH-001-A',task:'Fusion CAM nesting software',cost:0,status:'In Progress'},
@@ -7548,7 +7548,7 @@ const INIT = {
   ],
 
 
-  // v5.2 DATA — all files
+  // v5.2 DATA - all files
   productCatalog: [
   {
     "kitSku": "MR-KIT-CABLE-FM-L-BLK-4x42",
@@ -8836,7 +8836,7 @@ const INIT = {
     orderId:'MR-2026-0098',
     product:'Cable Post SM 42',
     issueType:'DAMAGE',
-    description:'Two posts dented — shipping damage',
+    description:'Two posts dented - shipping damage',
     severity:3,
     rootCause:'Insufficient packaging',
     resolution:'Reshipped + added foam to SOP',
@@ -8848,7 +8848,7 @@ const INIT = {
   {
     id:'CI-002',
     dateReported:'2026-01-29',
-    customer:'Home Depot — #3847',
+    customer:'Home Depot - #3847',
     orderId:'MR-2026-0118',
     product:'Cable Post SM 36',
     issueType:'MISSING',
@@ -8991,7 +8991,7 @@ const INIT = {
   },
   {
     id:'WARRANTY',
-    dateReported:'Warranty claim — field failure',
+    dateReported:'Warranty claim - field failure',
     customer:'',
     orderId:'',
     product:'',
@@ -9023,7 +9023,7 @@ const INIT = {
   },
   {
     id:'OTHER',
-    dateReported:'Other — see description',
+    dateReported:'Other - see description',
     customer:'',
     orderId:'',
     product:'',
@@ -16392,7 +16392,7 @@ const INIT = {
     {partNo:'P-CBL-SM-CRN-36',desc:'36in',mfgHeight:'35in',cutLength:'34 3/4in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Saw | Drill Press | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-CRN-42',desc:'42in',mfgHeight:'41in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Chop Saw | Drill Press w/ 7/16in bit | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-LINE-36',desc:'36in',mfgHeight:'35in',cutLength:'34 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16in bit | TIG Welder',unit:'in'},
-    {partNo:'P-CBL-SM-LINE-42',desc:'42in Surface Mount Cable Line Post',mfgHeight:'41in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'',tooling:'Band Saw | Drill Press w/ 5/16in Bit | TIG Welder | Saw Stop Fixture | Cable Hole Template | Weld Fixture — Post | AUTOMATION OPPORTUNITIES | CNC Drilling | CNC Cutting | Robotic Welding | Automated Powder Line | PROJECTED IMPACT | Current Manual Time | Projected Automated Time | Labor Reduction Target',unit:'in'},
+    {partNo:'P-CBL-SM-LINE-42',desc:'42in Surface Mount Cable Line Post',mfgHeight:'41in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'',tooling:'Band Saw | Drill Press w/ 5/16in Bit | TIG Welder | Saw Stop Fixture | Cable Hole Template | Weld Fixture - Post | AUTOMATION OPPORTUNITIES | CNC Drilling | CNC Cutting | Robotic Welding | Automated Powder Line | PROJECTED IMPACT | Current Manual Time | Projected Automated Time | Labor Reduction Target',unit:'in'},
     {partNo:'P-CBL-SM-MINI',desc:'13in',mfgHeight:'13in',cutLength:'11 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM | 1x RAIL-MINI',tooling:'Band Saw | Drill Press w/ 5/16in bit | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-STR-36',desc:'36in',mfgHeight:'34 7/8in',cutLength:'34 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16in | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-STR-42',desc:'42in',mfgHeight:'40 7/8in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16in bit | TIG Welder',unit:'in'},
@@ -16407,14 +16407,14 @@ const INIT = {
     {partNo:'TOP-RAIL',desc:'20 Sticks',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder',unit:'in'}
   ],
   productProfitability: [
-    {id:'PP-001',family:'Cable Posts — Surface Mount',unitsSold:487,revenue:87660,matCost:32580,laborCost:18140,overheadAlloc:8766,totalCost:59486,grossProfit:28174,grossMarginPct:32.1,avgSellPrice:180,notes:'SM line/stair/corner — highest volume'},
-    {id:'PP-002',family:'Cable Posts — Fascia Mount',unitsSold:312,revenue:68640,matCost:22464,laborCost:15600,overheadAlloc:6864,totalCost:44928,grossProfit:23712,grossMarginPct:34.5,avgSellPrice:220,notes:'FM higher margin per unit'},
-    {id:'PP-003',family:'Glass Posts — Framed',unitsSold:156,revenue:54600,matCost:20280,laborCost:12480,overheadAlloc:5460,totalCost:38220,grossProfit:16380,grossMarginPct:30.0,avgSellPrice:350,notes:'Glass framed — slower to build'},
-    {id:'PP-004',family:'Glass Posts — Frameless',unitsSold:48,revenue:24000,matCost:9600,laborCost:5280,overheadAlloc:2400,totalCost:17280,grossProfit:6720,grossMarginPct:28.0,avgSellPrice:500,notes:'Low volume, high margin potential'},
+    {id:'PP-001',family:'Cable Posts - Surface Mount',unitsSold:487,revenue:87660,matCost:32580,laborCost:18140,overheadAlloc:8766,totalCost:59486,grossProfit:28174,grossMarginPct:32.1,avgSellPrice:180,notes:'SM line/stair/corner - highest volume'},
+    {id:'PP-002',family:'Cable Posts - Fascia Mount',unitsSold:312,revenue:68640,matCost:22464,laborCost:15600,overheadAlloc:6864,totalCost:44928,grossProfit:23712,grossMarginPct:34.5,avgSellPrice:220,notes:'FM higher margin per unit'},
+    {id:'PP-003',family:'Glass Posts - Framed',unitsSold:156,revenue:54600,matCost:20280,laborCost:12480,overheadAlloc:5460,totalCost:38220,grossProfit:16380,grossMarginPct:30.0,avgSellPrice:350,notes:'Glass framed - slower to build'},
+    {id:'PP-004',family:'Glass Posts - Frameless',unitsSold:48,revenue:24000,matCost:9600,laborCost:5280,overheadAlloc:2400,totalCost:17280,grossProfit:6720,grossMarginPct:28.0,avgSellPrice:500,notes:'Low volume, high margin potential'},
     {id:'PP-005',family:'Top Rail',unitsSold:892,revenue:26760,matCost:10704,laborCost:4460,overheadAlloc:2676,totalCost:17840,grossProfit:8920,grossMarginPct:33.3,avgSellPrice:30,notes:'High unit count, low per-unit revenue'},
-    {id:'PP-006',family:'Graspable Handrail',unitsSold:64,revenue:9600,matCost:3840,laborCost:1920,overheadAlloc:960,totalCost:6720,grossProfit:2880,grossMarginPct:30.0,avgSellPrice:150,notes:'Custom length — per order'},
+    {id:'PP-006',family:'Graspable Handrail',unitsSold:64,revenue:9600,matCost:3840,laborCost:1920,overheadAlloc:960,totalCost:6720,grossProfit:2880,grossMarginPct:30.0,avgSellPrice:150,notes:'Custom length - per order'},
     {id:'PP-007',family:'Gate Kits',unitsSold:28,revenue:11200,matCost:4480,laborCost:3360,overheadAlloc:1120,totalCost:8960,grossProfit:2240,grossMarginPct:20.0,avgSellPrice:400,notes:'Labor intensive; revisit pricing'},
-    {id:'PP-008',family:'Custom Posts',unitsSold:34,revenue:17000,matCost:5440,laborCost:5100,overheadAlloc:1700,totalCost:12240,grossProfit:4760,grossMarginPct:28.0,avgSellPrice:500,notes:'Per spec — variable margin'},
+    {id:'PP-008',family:'Custom Posts',unitsSold:34,revenue:17000,matCost:5440,laborCost:5100,overheadAlloc:1700,totalCost:12240,grossProfit:4760,grossMarginPct:28.0,avgSellPrice:500,notes:'Per spec - variable margin'},
     {id:'PP-009',family:'Hardware & Parts',unitsSold:1240,revenue:18600,matCost:9300,laborCost:1860,overheadAlloc:1860,totalCost:13020,grossProfit:5580,grossMarginPct:30.0,avgSellPrice:15,notes:'Cable, fasteners, end caps'},
     {id:'PP-010',family:'Home Depot Channel',unitsSold:420,revenue:63000,matCost:25200,laborCost:12600,overheadAlloc:6300,totalCost:44100,grossProfit:18900,grossMarginPct:30.0,avgSellPrice:150,notes:'Net-30 terms; bulk discount applied'}
   ],
@@ -17545,7 +17545,7 @@ const INIT = {
     shiftLead:'Amber',
     ordersCompleted:2,
     ordersInProgress:6,
-    stationsDown:'CNC — program issue',
+    stationsDown:'CNC - program issue',
     qualityIssues:'None',
     materialShortages:'6063 tube running low',
     safetyIssues:'None',
@@ -17560,7 +17560,7 @@ const INIT = {
     ordersInProgress:3,
     stationsDown:'None',
     qualityIssues:'None',
-    materialShortages:'Ordered — ETA 3 days',
+    materialShortages:'Ordered - ETA 3 days',
     safetyIssues:'None',
     tomorrowPriorities:'Push HD order, finish Lakehouse color',
     notes:'CNC back up'
@@ -17575,7 +17575,7 @@ const INIT = {
     qualityIssues:'Powder coat DFT check',
     materialShortages:'None',
     safetyIssues:'None',
-    tomorrowPriorities:'Apex order starts tomorrow — 20 glass posts',
+    tomorrowPriorities:'Apex order starts tomorrow - 20 glass posts',
     notes:'Prepping fixtures'
   }],
   fastenerGuide: [
@@ -22270,7 +22270,7 @@ const INIT = {
 ],
   defectLog: [],
   cycleCount: [],
-  // ─── Backward-compatible keys (v4 components reference these — do NOT remove) ──
+  // ─── Backward-compatible keys (v4 components reference these - do NOT remove) ──
   // inventory: merged view of rawMaterials + assemblyItems + shopConsumables
   inventory: [
     {
@@ -25102,16 +25102,16 @@ const INIT = {
   adjustmentLog: [],
 
   orders: [
-    {id:'ORD-0001',date:'2026-01-08',dueDate:'2026-01-28',customer:'Henderson Deck Co.',po:'HDC-2601',shipTo:'Boise, ID',project:'Boise Residential Deck',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post — surface mount, matte black',lineQty:12,stairQty:6,cornerQty:0,topRailQty:0,lengths:'12x8ft, 4x6ft',color:'Matte Black',status:'Completed',orderTotal:3240,deposit:1620,balance:0,salesRep:'Daniel',notes:'Repeat customer — fast pay'},
-    {id:'ORD-0002',date:'2026-01-15',dueDate:'2026-02-10',customer:'Coastal Living Design',po:'CLD-289',shipTo:'San Diego, CA',project:'San Diego Condo Reno',productType:'Glass Rail',orderType:'New Order',description:'FM 36" glass post — fascia mount, satin silver',lineQty:12,stairQty:0,cornerQty:2,topRailQty:0,lengths:'10x10ft, 2x8ft',color:'Satin Silver',status:'Completed',orderTotal:4800,deposit:2400,balance:0,salesRep:'Rocky',notes:''},
-    {id:'ORD-0003',date:'2026-01-22',dueDate:'2026-02-18',customer:'Apex Construction',po:'APC-1145',shipTo:'Portland, OR',project:'Portland Mixed-Use',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post — surface mount, matte black',lineQty:24,stairQty:8,cornerQty:4,topRailQty:0,lengths:'20x10ft, 8x6ft',color:'Matte Black',status:'Shipped',orderTotal:6480,deposit:3240,balance:3240,salesRep:'Daniel',notes:'4 pkg pallets — LTL freight'},
-    {id:'ORD-0004',date:'2026-02-03',dueDate:'2026-03-05',customer:'Clearwater Design Group',po:'CDG-778',shipTo:'Scottsdale, AZ',project:'Scottsdale Custom Home',productType:'Glass Rail',orderType:'New Order',description:'FM 42" glass post — fascia, white gloss',lineQty:8,stairQty:0,cornerQty:0,topRailQty:8,lengths:'6x12ft, 2x8ft',color:'White Gloss',status:'In Production',orderTotal:3600,deposit:1800,balance:1800,salesRep:'Rocky',notes:'Special order finish — 10 day cure'},
-    {id:'ORD-0005',date:'2026-02-10',dueDate:'2026-03-12',customer:'Home Depot #4521',po:'HD-98847',shipTo:'Seattle, WA',project:'Store Stock Replenishment',productType:'Cable Rail',orderType:'New Order',description:'SM 36" & 42" mix — black, bulk',lineQty:36,stairQty:12,cornerQty:0,topRailQty:0,lengths:'30x10ft, 12x8ft',color:'Matte Black',status:'In Production',orderTotal:7680,deposit:0,balance:7680,salesRep:'Daniel',notes:'Net-30 terms'},
-    {id:'ORD-0006',date:'2026-02-14',dueDate:'2026-03-20',customer:'Alpine Builders',po:'AB-504',shipTo:'Vail, CO',project:'Vail Mountain Cabin',productType:'Stair Rail',orderType:'New Order',description:'Stair cable post SM — angled, bronze',lineQty:4,stairQty:10,cornerQty:0,topRailQty:4,lengths:'4x12ft, 6x8ft, 4x4ft',color:'Bronze',status:'Confirmed',orderTotal:3920,deposit:1960,balance:1960,salesRep:'Rocky',notes:'Ship via FedEx Ground — no LTL'},
-    {id:'ORD-0007',date:'2026-02-20',dueDate:'2026-03-25',customer:'Pacific Northwest Homes',po:'PNH-2244',shipTo:'Seattle, WA',project:'Seattle Rooftop Deck',productType:'Cable Rail',orderType:'New Order',description:'SM 42" surface mount — slate gray',lineQty:18,stairQty:6,cornerQty:0,topRailQty:0,lengths:'12x10ft, 6x8ft',color:'Slate Gray',status:'Confirmed',orderTotal:4320,deposit:2160,balance:2160,salesRep:'Daniel',notes:''},
-    {id:'ORD-0008',date:'2026-02-25',dueDate:'2026-04-01',customer:'Riverside Homes',po:'RH-1087',shipTo:'Boise, ID',project:'Boise New Build',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post surface mount — black',lineQty:16,stairQty:6,cornerQty:0,topRailQty:0,lengths:'10x10ft, 6x8ft',color:'Matte Black',status:'Quoted',orderTotal:3960,deposit:0,balance:3960,salesRep:'Daniel',notes:'Awaiting signed PO'},
-    {id:'ORD-0009',date:'2026-03-01',dueDate:'2026-04-10',customer:'Sunbelt Contractors',po:'',shipTo:'Phoenix, AZ',project:'Phoenix Commercial Plaza',productType:'Glass Rail',orderType:'New Order',description:'FM 42" glass post — fascia, clear anodized',lineQty:24,stairQty:0,cornerQty:4,topRailQty:24,lengths:'20x12ft, 4x10ft',color:'Clear Anodized',status:'Quoted',orderTotal:13500,deposit:0,balance:13500,salesRep:'Rocky',notes:'Large commercial — needs eng stamp'},
-    {id:'ORD-0010',date:'2026-03-05',dueDate:'2026-03-28',customer:'Home Depot #3847',po:'HD-99102',shipTo:'Portland, OR',project:'Store Stock Q1',productType:'Cable Rail',orderType:'Re-Work',description:'Powder coat defect — redo 8 posts',lineQty:8,stairQty:0,cornerQty:0,topRailQty:0,lengths:'8x10ft',color:'Matte Black',status:'In Production',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',notes:'Warranty re-work from ORD-0005 — no charge'},
+    {id:'ORD-0001',date:'2026-01-08',dueDate:'2026-01-28',customer:'Henderson Deck Co.',po:'HDC-2601',shipTo:'Boise, ID',project:'Boise Residential Deck',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post - surface mount, matte black',lineQty:12,stairQty:6,cornerQty:0,topRailQty:0,lengths:'12x8ft, 4x6ft',color:'Matte Black',status:'Completed',orderTotal:3240,deposit:1620,balance:0,salesRep:'Daniel',notes:'Repeat customer - fast pay'},
+    {id:'ORD-0002',date:'2026-01-15',dueDate:'2026-02-10',customer:'Coastal Living Design',po:'CLD-289',shipTo:'San Diego, CA',project:'San Diego Condo Reno',productType:'Glass Rail',orderType:'New Order',description:'FM 36" glass post - fascia mount, satin silver',lineQty:12,stairQty:0,cornerQty:2,topRailQty:0,lengths:'10x10ft, 2x8ft',color:'Satin Silver',status:'Completed',orderTotal:4800,deposit:2400,balance:0,salesRep:'Rocky',notes:''},
+    {id:'ORD-0003',date:'2026-01-22',dueDate:'2026-02-18',customer:'Apex Construction',po:'APC-1145',shipTo:'Portland, OR',project:'Portland Mixed-Use',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post - surface mount, matte black',lineQty:24,stairQty:8,cornerQty:4,topRailQty:0,lengths:'20x10ft, 8x6ft',color:'Matte Black',status:'Shipped',orderTotal:6480,deposit:3240,balance:3240,salesRep:'Daniel',notes:'4 pkg pallets - LTL freight'},
+    {id:'ORD-0004',date:'2026-02-03',dueDate:'2026-03-05',customer:'Clearwater Design Group',po:'CDG-778',shipTo:'Scottsdale, AZ',project:'Scottsdale Custom Home',productType:'Glass Rail',orderType:'New Order',description:'FM 42" glass post - fascia, white gloss',lineQty:8,stairQty:0,cornerQty:0,topRailQty:8,lengths:'6x12ft, 2x8ft',color:'White Gloss',status:'In Production',orderTotal:3600,deposit:1800,balance:1800,salesRep:'Rocky',notes:'Special order finish - 10 day cure'},
+    {id:'ORD-0005',date:'2026-02-10',dueDate:'2026-03-12',customer:'Home Depot #4521',po:'HD-98847',shipTo:'Seattle, WA',project:'Store Stock Replenishment',productType:'Cable Rail',orderType:'New Order',description:'SM 36" & 42" mix - black, bulk',lineQty:36,stairQty:12,cornerQty:0,topRailQty:0,lengths:'30x10ft, 12x8ft',color:'Matte Black',status:'In Production',orderTotal:7680,deposit:0,balance:7680,salesRep:'Daniel',notes:'Net-30 terms'},
+    {id:'ORD-0006',date:'2026-02-14',dueDate:'2026-03-20',customer:'Alpine Builders',po:'AB-504',shipTo:'Vail, CO',project:'Vail Mountain Cabin',productType:'Stair Rail',orderType:'New Order',description:'Stair cable post SM - angled, bronze',lineQty:4,stairQty:10,cornerQty:0,topRailQty:4,lengths:'4x12ft, 6x8ft, 4x4ft',color:'Bronze',status:'Confirmed',orderTotal:3920,deposit:1960,balance:1960,salesRep:'Rocky',notes:'Ship via FedEx Ground - no LTL'},
+    {id:'ORD-0007',date:'2026-02-20',dueDate:'2026-03-25',customer:'Pacific Northwest Homes',po:'PNH-2244',shipTo:'Seattle, WA',project:'Seattle Rooftop Deck',productType:'Cable Rail',orderType:'New Order',description:'SM 42" surface mount - slate gray',lineQty:18,stairQty:6,cornerQty:0,topRailQty:0,lengths:'12x10ft, 6x8ft',color:'Slate Gray',status:'Confirmed',orderTotal:4320,deposit:2160,balance:2160,salesRep:'Daniel',notes:''},
+    {id:'ORD-0008',date:'2026-02-25',dueDate:'2026-04-01',customer:'Riverside Homes',po:'RH-1087',shipTo:'Boise, ID',project:'Boise New Build',productType:'Cable Rail',orderType:'New Order',description:'SM 42" cable post surface mount - black',lineQty:16,stairQty:6,cornerQty:0,topRailQty:0,lengths:'10x10ft, 6x8ft',color:'Matte Black',status:'Quoted',orderTotal:3960,deposit:0,balance:3960,salesRep:'Daniel',notes:'Awaiting signed PO'},
+    {id:'ORD-0009',date:'2026-03-01',dueDate:'2026-04-10',customer:'Sunbelt Contractors',po:'',shipTo:'Phoenix, AZ',project:'Phoenix Commercial Plaza',productType:'Glass Rail',orderType:'New Order',description:'FM 42" glass post - fascia, clear anodized',lineQty:24,stairQty:0,cornerQty:4,topRailQty:24,lengths:'20x12ft, 4x10ft',color:'Clear Anodized',status:'Quoted',orderTotal:13500,deposit:0,balance:13500,salesRep:'Rocky',notes:'Large commercial - needs eng stamp'},
+    {id:'ORD-0010',date:'2026-03-05',dueDate:'2026-03-28',customer:'Home Depot #3847',po:'HD-99102',shipTo:'Portland, OR',project:'Store Stock Q1',productType:'Cable Rail',orderType:'Re-Work',description:'Powder coat defect - redo 8 posts',lineQty:8,stairQty:0,cornerQty:0,topRailQty:0,lengths:'8x10ft',color:'Matte Black',status:'In Production',orderTotal:0,deposit:0,balance:0,salesRep:'Daniel',notes:'Warranty re-work from ORD-0005 - no charge'},
   ],
 
   postsMfgList: [
@@ -25128,7 +25128,7 @@ const INIT = {
     {partNo:'P-CBL-SM-CRN-36',desc:'36in',mfgHeight:'35in',cutLength:'34 3/4in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Saw | Drill Press | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-CRN-42',desc:'42in',mfgHeight:'41in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'2x ANG-TOP | 1x PLT-SM',tooling:'Chop Saw | Drill Press w/ 7/16" bit | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-LINE-36',desc:'36in',mfgHeight:'35in',cutLength:'34 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
-    {partNo:'P-CBL-SM-LINE-42',desc:'42in Surface Mount Cable Line Post',mfgHeight:'41in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'',tooling:'Band Saw | Drill Press w/ 5/16" Bit | TIG Welder | Saw Stop Fixture | Cable Hole Template | Weld Fixture — Post | AUTOMATION OPPORTUNITIES | CNC Drilling | CNC Cutting | Robotic Welding | Automated Powder Line | PROJECTED IMPACT | Current Manual Time | Projected Automated Time | Labor Reduction Target',unit:'in'},
+    {partNo:'P-CBL-SM-LINE-42',desc:'42in Surface Mount Cable Line Post',mfgHeight:'41in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'',tooling:'Band Saw | Drill Press w/ 5/16" Bit | TIG Welder | Saw Stop Fixture | Cable Hole Template | Weld Fixture - Post | AUTOMATION OPPORTUNITIES | CNC Drilling | CNC Cutting | Robotic Welding | Automated Powder Line | PROJECTED IMPACT | Current Manual Time | Projected Automated Time | Labor Reduction Target',unit:'in'},
     {partNo:'P-CBL-SM-MINI',desc:'13in',mfgHeight:'13in',cutLength:'11 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM | 1x RAIL-MINI',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-STR-36',desc:'36in',mfgHeight:'34 7/8in',cutLength:'34 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'None',tooling:'Saw | Drill Press w/ 5/16" | TIG Welder',unit:'in'},
     {partNo:'P-CBL-SM-STR-42',desc:'42in',mfgHeight:'40 7/8in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
@@ -25141,7 +25141,7 @@ const INIT = {
     {partNo:'P-GLS-SM-LINE-42',desc:'42in',mfgHeight:'41in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-TOP | 1x PLT-SM',tooling:'Band Saw | TIG Welder',unit:'in'},
     {partNo:'P-GLS-SM-STR-42',desc:'42in',mfgHeight:'40 7/8in',cutLength:'40 5/8in',rawStock:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',partsRequired:'1x PLT-SM',tooling:'Band Saw | Drill Press w/ 5/16" bit | TIG Welder',unit:'in'},
     {partNo:'TOP-RAIL',desc:'20 Sticks',mfgHeight:'Per order',cutLength:'Per order',rawStock:'Tube | Square | Aluminum | 2x1x1/8 | 20 ft',partsRequired:'None',tooling:'Band Saw | TIG Welder',unit:'in'},
-    {partNo:'Engineering specifications for every manufactured SKU — dimensions, materials, hole patterns, yields',desc:'',mfgHeight:'',cutLength:'',rawStock:'',partsRequired:'',tooling:'',unit:'in'},
+    {partNo:'Engineering specifications for every manufactured SKU - dimensions, materials, hole patterns, yields',desc:'',mfgHeight:'',cutLength:'',rawStock:'',partsRequired:'',tooling:'',unit:'in'},
     {partNo:'36-22-GATE-KIT',desc:'36in x 22in',mfgHeight:'36-22-GATE-KIT',cutLength:'32in',rawStock:'31 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes specified',unit:'in'},
     {partNo:'42-22-GATE-KIT',desc:'42in x 22in',mfgHeight:'42-22-GATE-KIT',cutLength:'38in',rawStock:'37 3/4"',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'No holes specified',unit:'in'},
     {partNo:'CUSTOM-POSTS',desc:'Per Order Specification',mfgHeight:'CUSTOM-POSTS',cutLength:'Per order',rawStock:'Per order',partsRequired:'Tube | Square | Aluminum | 2x2x1/8 | 20 ft',tooling:'Per order specification',unit:'in'},
@@ -25171,26 +25171,26 @@ const INIT = {
   ],
 
   salesPipeline: [
-    {id:'PL-001',type:'Proposal',customer:'Sunbelt Contractors',project:'Phoenix Commercial Plaza',amount:13500,stage:'Proposal',probability:60,rep:'Rocky',dateCreated:'2026-02-28',expectedClose:'2026-04-15',productType:'Glass Rail',notes:'Needs eng stamp — waiting on architect approval'},
-    {id:'PL-002',type:'Quote',customer:'Mountain States Builders',project:'Denver Rooftop Terrace',amount:8400,stage:'Qualified',probability:40,rep:'Daniel',dateCreated:'2026-03-01',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Sent quote 3/1 — follow up 3/8'},
-    {id:'PL-003',type:'Estimate',customer:'Pacific Rim Construction',project:'Seattle Mixed-Use Phase 2',amount:22800,stage:'Negotiation',probability:75,rep:'Rocky',dateCreated:'2026-02-15',expectedClose:'2026-03-20',productType:'Glass Rail',notes:'Price-sensitive — offered 5% volume discount'},
-    {id:'PL-004',type:'Proposal',customer:'Desert Sun Homes',project:'Scottsdale New Build',amount:5600,stage:'Lead',probability:20,rep:'Daniel',dateCreated:'2026-03-05',expectedClose:'2026-04-30',productType:'Cable Rail',notes:'Inbound from website — initial contact'},
-    {id:'PL-005',type:'Quote',customer:'Great Lakes Remodeling',project:'Chicago Deck Replacement',amount:3200,stage:'Closed Won',probability:100,rep:'Rocky',dateCreated:'2026-02-10',expectedClose:'2026-03-01',productType:'Cable Rail',notes:'Converted to ORD-0011 — deposit received'},
-    {id:'PL-006',type:'Estimate',customer:'Cascade Custom Homes',project:'Portland Stair Rail',amount:4800,stage:'Closed Lost',probability:0,rep:'Daniel',dateCreated:'2026-01-20',expectedClose:'2026-02-15',productType:'Stair Rail',notes:'Lost to competitor — price 15% under ours'},
+    {id:'PL-001',type:'Proposal',customer:'Sunbelt Contractors',project:'Phoenix Commercial Plaza',amount:13500,stage:'Proposal',probability:60,rep:'Rocky',dateCreated:'2026-02-28',expectedClose:'2026-04-15',productType:'Glass Rail',notes:'Needs eng stamp - waiting on architect approval'},
+    {id:'PL-002',type:'Quote',customer:'Mountain States Builders',project:'Denver Rooftop Terrace',amount:8400,stage:'Qualified',probability:40,rep:'Daniel',dateCreated:'2026-03-01',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Sent quote 3/1 - follow up 3/8'},
+    {id:'PL-003',type:'Estimate',customer:'Pacific Rim Construction',project:'Seattle Mixed-Use Phase 2',amount:22800,stage:'Negotiation',probability:75,rep:'Rocky',dateCreated:'2026-02-15',expectedClose:'2026-03-20',productType:'Glass Rail',notes:'Price-sensitive - offered 5% volume discount'},
+    {id:'PL-004',type:'Proposal',customer:'Desert Sun Homes',project:'Scottsdale New Build',amount:5600,stage:'Lead',probability:20,rep:'Daniel',dateCreated:'2026-03-05',expectedClose:'2026-04-30',productType:'Cable Rail',notes:'Inbound from website - initial contact'},
+    {id:'PL-005',type:'Quote',customer:'Great Lakes Remodeling',project:'Chicago Deck Replacement',amount:3200,stage:'Closed Won',probability:100,rep:'Rocky',dateCreated:'2026-02-10',expectedClose:'2026-03-01',productType:'Cable Rail',notes:'Converted to ORD-0011 - deposit received'},
+    {id:'PL-006',type:'Estimate',customer:'Cascade Custom Homes',project:'Portland Stair Rail',amount:4800,stage:'Closed Lost',probability:0,rep:'Daniel',dateCreated:'2026-01-20',expectedClose:'2026-02-15',productType:'Stair Rail',notes:'Lost to competitor - price 15% under ours'},
     {id:'PL-007',type:'Proposal',customer:'Frontier Builders',project:'Boise Commercial Office',amount:18500,stage:'Proposal',probability:55,rep:'Rocky',dateCreated:'2026-03-03',expectedClose:'2026-04-10',productType:'Glass Rail',notes:'Following up with architect this week'},
-    {id:'PL-008',type:'Quote',customer:'Summit Properties',project:'Park City Condo Complex',amount:31200,stage:'Negotiation',probability:70,rep:'Daniel',dateCreated:'2026-02-25',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Large job — needs 3 week lead time commitment'},
+    {id:'PL-008',type:'Quote',customer:'Summit Properties',project:'Park City Condo Complex',amount:31200,stage:'Negotiation',probability:70,rep:'Daniel',dateCreated:'2026-02-25',expectedClose:'2026-04-01',productType:'Cable Rail',notes:'Large job - needs 3 week lead time commitment'},
   ],
   commissionRates: [
     {rep:'Kyle',rate:4.5,active:true,notes:'Standard rep rate'},
     {rep:'AJ',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'3BD',rate:5.0,active:true,notes:'Channel partner — higher rate'},
+    {rep:'3BD',rate:5.0,active:true,notes:'Channel partner - higher rate'},
     {rep:'Tony',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'Rocky',rate:0,active:true,notes:'Owner — no commission'},
+    {rep:'Rocky',rate:0,active:true,notes:'Owner - no commission'},
     {rep:'Beth',rate:4.5,active:true,notes:'Standard rep rate'},
     {rep:'Ryan',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'Fien',rate:5.0,active:true,notes:'Senior rep — premium rate'},
+    {rep:'Fien',rate:5.0,active:true,notes:'Senior rep - premium rate'},
     {rep:'RC',rate:4.5,active:true,notes:'Standard rep rate'},
-    {rep:'Daniel',rate:0,active:true,notes:'Operations — no commission'},
+    {rep:'Daniel',rate:0,active:true,notes:'Operations - no commission'},
   ],
   paymentMethods: [
     {id:'PM-001',label:'Chase Visa - Main',type:'Visa',last4:'4521',expiry:'09/27',customer:'Maisy Railing',default:true,notes:'Primary operating card'},
@@ -25206,7 +25206,7 @@ const INIT = {
   ],
   resaleCerts: [
     {id:'RC-001',customer:'Henderson Deck Co.',state:'ID',certNumber:'ID-RC-20240115',issueDate:'2024-01-15',expDate:'2026-01-15',status:'Expired',taxExempt:true,notes:'Renewal requested 2/2026'},
-    {id:'RC-002',customer:'Home Depot',state:'Multi',certNumber:'HD-MULTI-2025',issueDate:'2025-01-01',expDate:'2027-01-01',status:'Active',taxExempt:true,notes:'National resale cert — all states'},
+    {id:'RC-002',customer:'Home Depot',state:'Multi',certNumber:'HD-MULTI-2025',issueDate:'2025-01-01',expDate:'2027-01-01',status:'Active',taxExempt:true,notes:'National resale cert - all states'},
     {id:'RC-003',customer:'Apex Construction',state:'OR',certNumber:'OR-RC-20250601',issueDate:'2025-06-01',expDate:'2027-06-01',status:'Active',taxExempt:true,notes:'Oregon contractors license on file'},
   ],
   emailLog: [],
@@ -25225,57 +25225,59 @@ const INIT = {
   buildSchedule: [],
   employeeReviews: [],
   facilityMoveTasks: [],
-  facilityMoveOverview: {currentFacility:'15,000 sq ft — Hayden, ID',newFacility:'',targetDate:'',downtime:'',budget:0,coordinator:'Daniel Jones'},
+  facilityMoveOverview: {currentFacility:'15,000 sq ft - Hayden, ID',newFacility:'',targetDate:'',downtime:'',budget:0,coordinator:'Daniel Jones'},
   kitCatalog: [],
+  materialPulls: [],
+  bellevueTransfers: [],
 };
 
 
 // ─── QUEUE ANALYZER ──────────────────────────────────────────────────────────────
 // ─── INFO BANNER ─────────────────────────────────────────────────────────────────
 const INFO_SOURCES = {
-  dashboard:      { icon:'▦',  title:'Command Dashboard',        summary:'Auto-calculated from live ERP data.', details:'KPIs pull from Orders, Invoicing, Inventory, Work Orders, and Shipping. All figures update in real time as data is entered across the system. Nothing here is manually typed — it reflects the current state of all other pages.' },
+  dashboard:      { icon:'▦',  title:'Command Dashboard',        summary:'Auto-calculated from live ERP data.', details:'KPIs pull from Orders, Invoicing, Inventory, Work Orders, and Shipping. All figures update in real time as data is entered across the system. Nothing here is manually typed - it reflects the current state of all other pages.' },
   todo:           { icon:'☑',  title:'To-Do / Hot List',         summary:'100% manually entered.', details:'Tasks and hot list items are created and managed by your team. Priority, status, due date, and owner are all set by whoever creates or updates the entry. Nothing auto-populates here.' },
   orders:         { icon:'📋', title:'Orders',                   summary:'Manually entered + imported from OneDrive.', details:'Orders can be created manually by clicking "+ New Order", or automatically imported from Excel order files stored on OneDrive via the Order Import page. The BOM (Bill of Materials) is auto-calculated when an order is confirmed. Inventory is deducted automatically when status changes to "In Production".' },
   orderimport:    { icon:'📥', title:'Order Import',             summary:'Auto-parsed from Excel files on OneDrive.', details:'Connects to your Microsoft OneDrive account and scans order folders for Excel files. Each file is parsed by AI (Claude) which extracts customer info, quantities, dimensions, and hardware. You review each draft before confirming. Files must be in the connected OneDrive directory.' },
   workorders:     { icon:'🏗', title:'Work Orders',              summary:'Manually created and updated.', details:'Work Orders are created manually by admin or shop staff, linked to a Sales Order by Order ID. Station, assigned worker, qty, labor hours, and material cost are all entered by hand. Progress % can be updated by shop staff via slider. Completed WOs roll into Job Costing.' },
-  sales:          { icon:'◈',  title:'Sales & Quotes',           summary:'Manually entered.', details:'Sales orders and quotes are entered manually. Each record includes customer, amount, status, and dates — all typed in by office or sales staff. Revenue totals on the Dashboard pull from confirmed Sales Orders here.' },
-  production:     { icon:'◎',  title:'Production',              summary:'Mixed: Work Orders are manual. Safety/Defect logs are manual. Scrap is manual.', details:'Work Orders tab: Created manually, progress updated by shop staff. Scrap & Waste: Manually logged by station. Safety Log: Manually entered after each incident — required for OSHA records. Defect Log: Manually entered after QC failures. Improvements: Manually submitted by any team member. Shift Handoff: Manually completed by shift lead at end of each shift.' },
-  queueanalyzer:  { icon:'📊', title:'Queue Analyzer',          summary:'Uploaded from Excel — your NetSuite/production queue export.', details:'Upload an Excel file exported from your order management system (needs a "Form Responses 1" sheet). The analyzer auto-parses all rows and calculates age, status, flags overdue items, and generates the monthly breakdown. Status changes you make here are saved and persist until you upload a new file.' },
+  sales:          { icon:'◈',  title:'Sales & Quotes',           summary:'Manually entered.', details:'Sales orders and quotes are entered manually. Each record includes customer, amount, status, and dates - all typed in by office or sales staff. Revenue totals on the Dashboard pull from confirmed Sales Orders here.' },
+  production:     { icon:'◎',  title:'Production',              summary:'Mixed: Work Orders are manual. Safety/Defect logs are manual. Scrap is manual.', details:'Work Orders tab: Created manually, progress updated by shop staff. Scrap & Waste: Manually logged by station. Safety Log: Manually entered after each incident - required for OSHA records. Defect Log: Manually entered after QC failures. Improvements: Manually submitted by any team member. Shift Handoff: Manually completed by shift lead at end of each shift.' },
+  queueanalyzer:  { icon:'📊', title:'Queue Analyzer',          summary:'Uploaded from Excel - your NetSuite/production queue export.', details:'Upload an Excel file exported from your order management system (needs a "Form Responses 1" sheet). The analyzer auto-parses all rows and calculates age, status, flags overdue items, and generates the monthly breakdown. Status changes you make here are saved and persist until you upload a new file.' },
   hotqueue:       { icon:'🔥', title:'Hot / Rush Queue',         summary:'Pushed from Queue Analyzer or entered manually.', details:'Items arrive here two ways: (1) Auto-pushed from Queue Analyzer when you flag orders as HOT, RUSH, or FLAGGED and click "Push to Hot Queue", or (2) Manually added by clicking "+ Add Order". Tag, status, and all fields can be edited at any time. This is your live priority board.' },
   inventory:      { icon:'◉',  title:'Inventory',               summary:'Seeded from your material list. Adjustments manual. Auto-deducted on production.', details:'Starting quantities were loaded from your materials tracker. Inventory is reduced automatically when an Order status changes to "In Production" (based on the BOM). Manual adjustments can be made anytime via the ± button. Reorder points trigger alerts on the Dashboard. The BOM Builder is manually configured per product.' },
-  shipping:       { icon:'◒',  title:'Shipping',                summary:'Mixed: Historical log imported. New entries manual.', details:'Ship Log: Your historical ABF/UPS/Estes shipment records were imported from your GOD Mode Excel file. New shipments are entered manually after booking with the carrier — enter tracking, weight, dims, cost, and status. Carrier Analysis and Monthly Summary are auto-calculated from the log. Ship Calculator uses manually entered package details with live rate estimation.' },
-  salespipeline:  { icon:'📊', title:'Sales Pipeline',          summary:'Manually entered by sales team.', details:'Deals, stages, values, and probability are all entered manually by Kyle or sales staff. Nothing pulls from Orders automatically — this is a forward-looking pipeline for deals not yet converted to orders. Won deals should be manually linked to an Order when they close.' },
+  shipping:       { icon:'◒',  title:'Shipping',                summary:'Mixed: Historical log imported. New entries manual.', details:'Ship Log: Your historical ABF/UPS/Estes shipment records were imported from your GOD Mode Excel file. New shipments are entered manually after booking with the carrier - enter tracking, weight, dims, cost, and status. Carrier Analysis and Monthly Summary are auto-calculated from the log. Ship Calculator uses manually entered package details with live rate estimation.' },
+  salespipeline:  { icon:'📊', title:'Sales Pipeline',          summary:'Manually entered by sales team.', details:'Deals, stages, values, and probability are all entered manually by Kyle or sales staff. Nothing pulls from Orders automatically - this is a forward-looking pipeline for deals not yet converted to orders. Won deals should be manually linked to an Order when they close.' },
   commissions:    { icon:'💵', title:'Commissions',             summary:'Auto-calculated from Sales Orders + manually configured rates.', details:'Commission rates per rep are set manually in the Rates tab. Earned commissions are calculated automatically from confirmed Sales Orders. Adjustments (bonuses, clawbacks) are entered manually. Payout records are logged manually after payment.' },
-  shipcalc:       { icon:'🚚', title:'Ship Calculator',         summary:'Manual inputs, calculated output.', details:'Enter package dimensions, weight, destination zip, and carrier — the calculator estimates freight cost using your historical rate data. No live carrier API connection. Results are estimates only; actual costs may vary. Use the Ship Log to record actual costs after booking.' },
-  invoicing:      { icon:'◑',  title:'Invoicing & A/R',        summary:'Manually created. Aging auto-calculated.', details:'Invoices are created manually — linked to a Sales Order by ID. Amount, status, issue date, and due date are entered by hand. The system auto-flags Overdue invoices based on due date vs. today. A/R aging buckets (Current, 30, 60, 90+ days) are auto-calculated from invoice dates. Misc Charges are manually logged.' },
-  purchasing:     { icon:'◐',  title:'Purchasing',              summary:'Manually entered. Vendor records maintained here.', details:'Purchase Orders are created manually — vendor, items, quantities, costs, and delivery dates are all typed in. Vendor records are maintained manually. When a PO is received, click "Receive" to update status. Auto Reorder rules (on the Auto Reorder page) can trigger PO suggestions but do not auto-create POs.' },
-  finance:        { icon:'◧',  title:'Finance & P&L',          summary:'Auto-calculated from Invoicing, Purchasing, Shipping, and Misc Charges.', details:'Revenue pulls from paid Invoices. COGS pulls from PO costs + Work Order material costs. Freight expense pulls from the Ship Log. Misc Charges are added from the Invoicing page. Labor Rates are configured manually. All P&L figures are derived — no manual entry required here except labor rate setup and product profitability lines.' },
-  payments:       { icon:'💳', title:'Payments',               summary:'Manually logged after payment received.', details:'Payment records are entered manually when a customer pays — amount, method, date, and linked invoice are all typed in. Payment methods (cards, ACH, etc.) are set up manually in the Methods tab. QuickBooks sync (if connected) can push payment records to QBO.' },
+  shipcalc:       { icon:'🚚', title:'Ship Calculator',         summary:'Manual inputs, calculated output.', details:'Enter package dimensions, weight, destination zip, and carrier - the calculator estimates freight cost using your historical rate data. No live carrier API connection. Results are estimates only; actual costs may vary. Use the Ship Log to record actual costs after booking.' },
+  invoicing:      { icon:'◑',  title:'Invoicing & A/R',        summary:'Manually created. Aging auto-calculated.', details:'Invoices are created manually - linked to a Sales Order by ID. Amount, status, issue date, and due date are entered by hand. The system auto-flags Overdue invoices based on due date vs. today. A/R aging buckets (Current, 30, 60, 90+ days) are auto-calculated from invoice dates. Misc Charges are manually logged.' },
+  purchasing:     { icon:'◐',  title:'Purchasing',              summary:'Manually entered. Vendor records maintained here.', details:'Purchase Orders are created manually - vendor, items, quantities, costs, and delivery dates are all typed in. Vendor records are maintained manually. When a PO is received, click "Receive" to update status. Auto Reorder rules (on the Auto Reorder page) can trigger PO suggestions but do not auto-create POs.' },
+  finance:        { icon:'◧',  title:'Finance & P&L',          summary:'Auto-calculated from Invoicing, Purchasing, Shipping, and Misc Charges.', details:'Revenue pulls from paid Invoices. COGS pulls from PO costs + Work Order material costs. Freight expense pulls from the Ship Log. Misc Charges are added from the Invoicing page. Labor Rates are configured manually. All P&L figures are derived - no manual entry required here except labor rate setup and product profitability lines.' },
+  payments:       { icon:'💳', title:'Payments',               summary:'Manually logged after payment received.', details:'Payment records are entered manually when a customer pays - amount, method, date, and linked invoice are all typed in. Payment methods (cards, ACH, etc.) are set up manually in the Methods tab. QuickBooks sync (if connected) can push payment records to QBO.' },
   quickbooks:     { icon:'📗', title:'QuickBooks',             summary:'Syncs TO QuickBooks from this ERP. OAuth connection required.', details:'Connect via OAuth in the Setup tab using your QBO credentials. Once connected, you can sync Customers, Invoices, and Payments to QuickBooks Online. Data flows one-way: ERP → QBO. The ERP does not pull data from QBO. Sync status and logs are shown in the Activity Log tab.' },
-  taxcenter:      { icon:'🧾', title:'Tax & Compliance',       summary:'Calculated via Avalara AvaTax API. Resale certs manually uploaded.', details:'Sales tax on orders is calculated automatically using the Avalara AvaTax API (requires API credentials in Setup). The tax rate is determined by the ship-to address. Resale Certificates are uploaded and managed manually — attach a PDF or image when adding a cert. The Nexus map shows states where you have tax obligations.' },
+  taxcenter:      { icon:'🧾', title:'Tax & Compliance',       summary:'Calculated via Avalara AvaTax API. Resale certs manually uploaded.', details:'Sales tax on orders is calculated automatically using the Avalara AvaTax API (requires API credentials in Setup). The tax rate is determined by the ship-to address. Resale Certificates are uploaded and managed manually - attach a PDF or image when adding a cert. The Nexus map shows states where you have tax obligations.' },
   jobcost:        { icon:'◬',  title:'Job Costing',            summary:'Auto-calculated from Work Orders, Invoicing, and Shipping.', details:'Material cost pulls from Work Order matCost fields. Labor cost is calculated from Work Order labor hours × labor rate. Freight cost pulls from Ship Log entries matched by order. Revenue pulls from linked Invoices. Gross margin is auto-calculated. All inputs must be entered accurately in their respective pages for job cost to be meaningful.' },
-  customers:      { icon:'◫',  title:'Customers',             summary:'Partially seeded. New entries manual.', details:'A starter customer list was loaded from your historical order data. New customers are added manually — contact info, type, and city are all entered by hand. YTD revenue auto-calculates from linked Sales Orders. Customer history shows linked orders and invoices.' },
-  autopo:         { icon:'◩',  title:'Auto Reorder',          summary:'Rules manually configured. Triggers auto-detected from inventory levels.', details:'Auto Reorder Rules are set up manually — choose an inventory item, set a trigger quantity, order quantity, vendor, and cost. The system monitors inventory levels and flags items that have hit their reorder point. Rules do NOT auto-create POs — they surface alerts so you can create the PO manually in Purchasing.' },
-  sister:         { icon:'⊕',  title:'Sister Company',        summary:'Manually entered from 3BD order forms.', details:'Order Fulfillment records (transfers to Bellevue) are manually entered from 3BD order forms — order number, project name, description, amount, and type are all typed in. Borrowed Labor entries are also manual — entered after each cross-company labor event. Totals and analytics auto-calculate from the log.' },
-  people:         { icon:'◍',  title:'People & HR',           summary:'All manually maintained.', details:'Employees: Added manually — name, role, rate, hire date. Training Matrix: Skill levels updated manually per employee. Certifications: Uploaded manually with expiration dates. Equipment: Added manually with PM schedule. Facility Move: Items added manually with budget/actual tracking. Positions: Open roles added manually. Discipline Log: Entries added manually after each event. Efficiency: Tracked manually per employee.' },
-  automation:     { icon:'⊞',  title:'Automation Roadmap',   summary:'Manually maintained by Operations.', details:'Phases, completion percentages, budgets, and station details are all updated manually by the Director of Operations. Phase items are added manually as automation projects progress. The roadmap reflects your 30-month plan — update completion sliders and budget actuals as equipment is procured and installed.' },
+  customers:      { icon:'◫',  title:'Customers',             summary:'Partially seeded. New entries manual.', details:'A starter customer list was loaded from your historical order data. New customers are added manually - contact info, type, and city are all entered by hand. YTD revenue auto-calculates from linked Sales Orders. Customer history shows linked orders and invoices.' },
+  autopo:         { icon:'◩',  title:'Auto Reorder',          summary:'Rules manually configured. Triggers auto-detected from inventory levels.', details:'Auto Reorder Rules are set up manually - choose an inventory item, set a trigger quantity, order quantity, vendor, and cost. The system monitors inventory levels and flags items that have hit their reorder point. Rules do NOT auto-create POs - they surface alerts so you can create the PO manually in Purchasing.' },
+  sister:         { icon:'⊕',  title:'Sister Company',        summary:'Manually entered from 3BD order forms.', details:'Order Fulfillment records (transfers to Bellevue) are manually entered from 3BD order forms - order number, project name, description, amount, and type are all typed in. Borrowed Labor entries are also manual - entered after each cross-company labor event. Totals and analytics auto-calculate from the log.' },
+  people:         { icon:'◍',  title:'People & HR',           summary:'All manually maintained.', details:'Employees: Added manually - name, role, rate, hire date. Training Matrix: Skill levels updated manually per employee. Certifications: Uploaded manually with expiration dates. Equipment: Added manually with PM schedule. Facility Move: Items added manually with budget/actual tracking. Positions: Open roles added manually. Discipline Log: Entries added manually after each event. Efficiency: Tracked manually per employee.' },
+  automation:     { icon:'⊞',  title:'Automation Roadmap',   summary:'Manually maintained by Operations.', details:'Phases, completion percentages, budgets, and station details are all updated manually by the Director of Operations. Phase items are added manually as automation projects progress. The roadmap reflects your 30-month plan - update completion sliders and budget actuals as equipment is procured and installed.' },
   kpi:            { icon:'◈',  title:'KPI Dashboard',        summary:'Auto-calculated from all ERP data.', details:'All KPI cards pull live from the corresponding data: on-time delivery from Ship Log dates, revenue from Invoicing, inventory turns from Inventory + COGS, defect rate from Defect Log, labor efficiency from Work Orders. Targets are set manually in the configuration. Trend charts auto-generate from historical records.' },
-  buildschedule:  { icon:'📅', title:'Build Schedule',       summary:'Manually built from Orders data.', details:'Schedule entries are created manually — pull the order from your Orders page, set the production date, assign a station, and set priority. The system does not auto-schedule orders. The Bottleneck Analysis auto-calculates from station times in the Process Cost Analysis page.' },
-  processtracker: { icon:'⏱',  title:'Process Tracker',      summary:'Based on your floor-measured time study data.', details:'All task times, labor rates, and production targets were derived from actual floor measurements taken during your time study (Feb-Mar 2026). These are your real numbers — not industry estimates. Update them manually if process times change significantly.' },
+  buildschedule:  { icon:'📅', title:'Build Schedule',       summary:'Manually built from Orders data.', details:'Schedule entries are created manually - pull the order from your Orders page, set the production date, assign a station, and set priority. The system does not auto-schedule orders. The Bottleneck Analysis auto-calculates from station times in the Process Cost Analysis page.' },
+  processtracker: { icon:'⏱',  title:'Process Tracker',      summary:'Based on your floor-measured time study data.', details:'All task times, labor rates, and production targets were derived from actual floor measurements taken during your time study (Feb-Mar 2026). These are your real numbers - not industry estimates. Update them manually if process times change significantly.' },
   processcost:    { icon:'💲', title:'Process Cost Analysis', summary:'Calculated from your floor-measured data + live product selector.', details:'All labor rates, task times, consumable costs, and equipment depreciation were loaded from your Process Cost Analysis Excel workbook (v9). The product selector dynamically recalculates all costs, times, and outputs for each product type. Update the underlying data in the Excel file and re-import if your process changes.' },
-  shifthandoff:   { icon:'📋', title:'Shift Handoff',        summary:'Manually completed by shift lead at end of each shift.', details:'The shift lead fills out the handoff log at the end of each shift — who worked, what orders were touched, which stations are down, and any quality or safety issues. This feeds the Production > Shift Handoff tab. Entries are timestamped automatically.' },
-  calculators:    { icon:'🧮', title:'Shop Calculators',     summary:'Manual inputs only — all calculations are instant.', details:'Powder Coat: Enter post count and dimensions to get lbs of powder needed. Material Cost: Enter quantities and unit costs. Labor: Enter hours and rate. Automation ROI: Enter investment, savings, and timeline. Unit Converter: Enter any value to convert between units. Nothing here saves to the ERP — these are standalone reference tools.' },
-  facilitymove:   { icon:'🏗️', title:'Facility Move Planner',summary:'Manually tracked by Operations.', details:'Move tasks and capital items are added manually — category, description, estimated cost, actual cost, vendor, status, and due date are all entered by hand. Budget overview figures are updated manually as actual costs come in. This is a standalone planning tracker, not connected to Purchasing or Finance automatically.' },
-  employeereviews:{ icon:'⭐',  title:'Employee Reviews',    summary:'Manually completed by Director of Operations each quarter.', details:'Competency scores (1-5) for each employee across 7 categories are entered manually by the reviewer. Overall scores and trend charts auto-calculate from the scores entered. Reviews should be completed quarterly — previous scores are retained for trend tracking.' },
-  productcatalog: { icon:'🏷️', title:'Product Catalog',    summary:'Manually maintained by Operations/Sales.', details:'Kit SKUs, descriptions, COGS, wholesale price, and retail price are all entered and maintained manually. Gross margin % auto-calculates from cost vs. price. This catalog is a reference tool — it does not automatically connect to Orders or Invoicing (yet). Use it to ensure pricing is consistent across quotes.' },
-  opsreference:   { icon:'📖', title:'Ops Reference',       summary:'Static reference content — no live data.', details:'This page contains your standard operating procedures, quality standards, and daily/weekly/monthly checklists. All content is hardcoded reference material. To update procedures, contact the Director of Operations to have the ERP updated. This is not a live-edited document.' },
-  shopref:        { icon:'⊟',  title:'Shop Reference',     summary:'Static material specs and reference tables.', details:'Material properties, fastener specs, stair angle calculator, and the inches-to-mm conversion chart are all reference tables loaded from your Shop Reference Guide. The stair angle and raw material calculators use manual inputs. No live data connection — these are lookup tools for the shop floor.' },
-  workbookgen:    { icon:'📑', title:'Workbook Generator',  summary:'Generates Excel workbooks from your current ERP data.', details:'The workbook generator pulls live inventory, pricing, and order data from the ERP to build downloadable Excel files. Select the workbook type, configure options, and download. Output reflects whatever is currently in your ERP — keep your data current for accurate workbooks.' },
-  orderanalyzer:  { icon:'🔍', title:'Order Analyzer',     summary:'Analyzes confirmed Orders from this ERP.', details:'Pulls all confirmed orders from the Orders page and runs analytics — product mix, revenue by customer, lead source breakdown, and monthly trends. All data comes from the Orders you have confirmed in the system. More orders = more accurate analysis.' },
-  srscatalog:     { icon:'⊛',  title:'SRS Catalog',       summary:'Static product and pricing reference.', details:'The SRS (Standard Railing System) catalog contains standard configurations, part numbers, and suggested pricing. Content is maintained by Operations and updated manually. Use this as a quoting reference — not a live price feed.' },
+  shifthandoff:   { icon:'📋', title:'Shift Handoff',        summary:'Manually completed by shift lead at end of each shift.', details:'The shift lead fills out the handoff log at the end of each shift - who worked, what orders were touched, which stations are down, and any quality or safety issues. This feeds the Production > Shift Handoff tab. Entries are timestamped automatically.' },
+  calculators:    { icon:'🧮', title:'Shop Calculators',     summary:'Manual inputs only - all calculations are instant.', details:'Powder Coat: Enter post count and dimensions to get lbs of powder needed. Material Cost: Enter quantities and unit costs. Labor: Enter hours and rate. Automation ROI: Enter investment, savings, and timeline. Unit Converter: Enter any value to convert between units. Nothing here saves to the ERP - these are standalone reference tools.' },
+  facilitymove:   { icon:'🏗️', title:'Facility Move Planner',summary:'Manually tracked by Operations.', details:'Move tasks and capital items are added manually - category, description, estimated cost, actual cost, vendor, status, and due date are all entered by hand. Budget overview figures are updated manually as actual costs come in. This is a standalone planning tracker, not connected to Purchasing or Finance automatically.' },
+  employeereviews:{ icon:'⭐',  title:'Employee Reviews',    summary:'Manually completed by Director of Operations each quarter.', details:'Competency scores (1-5) for each employee across 7 categories are entered manually by the reviewer. Overall scores and trend charts auto-calculate from the scores entered. Reviews should be completed quarterly - previous scores are retained for trend tracking.' },
+  productcatalog: { icon:'🏷️', title:'Product Catalog',    summary:'Manually maintained by Operations/Sales.', details:'Kit SKUs, descriptions, COGS, wholesale price, and retail price are all entered and maintained manually. Gross margin % auto-calculates from cost vs. price. This catalog is a reference tool - it does not automatically connect to Orders or Invoicing (yet). Use it to ensure pricing is consistent across quotes.' },
+  opsreference:   { icon:'📖', title:'Ops Reference',       summary:'Static reference content - no live data.', details:'This page contains your standard operating procedures, quality standards, and daily/weekly/monthly checklists. All content is hardcoded reference material. To update procedures, contact the Director of Operations to have the ERP updated. This is not a live-edited document.' },
+  shopref:        { icon:'⊟',  title:'Shop Reference',     summary:'Static material specs and reference tables.', details:'Material properties, fastener specs, stair angle calculator, and the inches-to-mm conversion chart are all reference tables loaded from your Shop Reference Guide. The stair angle and raw material calculators use manual inputs. No live data connection - these are lookup tools for the shop floor.' },
+  workbookgen:    { icon:'📑', title:'Workbook Generator',  summary:'Generates Excel workbooks from your current ERP data.', details:'The workbook generator pulls live inventory, pricing, and order data from the ERP to build downloadable Excel files. Select the workbook type, configure options, and download. Output reflects whatever is currently in your ERP - keep your data current for accurate workbooks.' },
+  orderanalyzer:  { icon:'🔍', title:'Order Analyzer',     summary:'Analyzes confirmed Orders from this ERP.', details:'Pulls all confirmed orders from the Orders page and runs analytics - product mix, revenue by customer, lead source breakdown, and monthly trends. All data comes from the Orders you have confirmed in the system. More orders = more accurate analysis.' },
+  srscatalog:     { icon:'⊛',  title:'SRS Catalog',       summary:'Static product and pricing reference.', details:'The SRS (Standard Railing System) catalog contains standard configurations, part numbers, and suggested pricing. Content is maintained by Operations and updated manually. Use this as a quoting reference - not a live price feed.' },
   legacyorders:   { icon:'◫',  title:'Legacy Orders',     summary:'Historical orders imported from old system.', details:'These orders were migrated from your previous order management system. They are read-only reference records. New orders go in the Orders page. Legacy orders feed into the Order Analyzer for historical trend data.' },
-  printcenter:    { icon:'🖨', title:'Print Center',      summary:'Generates formatted PDFs from live ERP data.', details:'Each print option pulls current data from the corresponding ERP page — Safety Log, QC checklists, Work Orders, Ship Log, etc. Output is always current as of the time you print. No data is manually entered here.' },
-  reports:        { icon:'◪',  title:'Reports',           summary:'Auto-generated from all ERP data. Backup/Restore here.', details:'All report figures are calculated live from your ERP data. The Backup button exports your entire ERP to a JSON file — download it weekly. The Restore function lets you load a previous backup. The Reset function clears all data — use with extreme caution.' },
+  printcenter:    { icon:'🖨', title:'Print Center',      summary:'Generates formatted PDFs from live ERP data.', details:'Each print option pulls current data from the corresponding ERP page - Safety Log, QC checklists, Work Orders, Ship Log, etc. Output is always current as of the time you print. No data is manually entered here.' },
+  reports:        { icon:'◪',  title:'Reports',           summary:'Auto-generated from all ERP data. Backup/Restore here.', details:'All report figures are calculated live from your ERP data. The Backup button exports your entire ERP to a JSON file - download it weekly. The Restore function lets you load a previous backup. The Reset function clears all data - use with extreme caution.' },
 };
 
 const InfoBanner = ({pageId}) => {
@@ -25297,7 +25299,7 @@ const InfoBanner = ({pageId}) => {
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
           <span style={{fontSize:11,fontWeight:700,color:'var(--acc)',fontFamily:"Barlow Condensed",letterSpacing:'.06em',textTransform:'uppercase'}}>{info.title}</span>
-          <span style={{fontSize:11,color:'var(--muted)'}}>—</span>
+          <span style={{fontSize:11,color:'var(--muted)'}}>-</span>
           <span style={{fontSize:11,color:'var(--muted)'}}>{info.summary}</span>
           <button
             onClick={()=>setOpen(o=>!o)}
@@ -25312,7 +25314,7 @@ const InfoBanner = ({pageId}) => {
 
 
 // ─── INLINE STATUS SELECT ────────────────────────────────────────────────────────
-// Reusable inline status dropdown — replaces static Badge cells across all tables
+// Reusable inline status dropdown - replaces static Badge cells across all tables
 const BADGE_COLOR = (s) => {
   const c = {
     Completed:'#10b981',Complete:'#10b981',Received:'#10b981',Paid:'#10b981',Delivered:'#10b981',
@@ -25368,7 +25370,7 @@ const QueueAnalyzer = ({data, setData}) => {
     }
   }, []);
 
-  // Persist to data.queueAnalyzer so it survives navigation — only reset on explicit new file upload
+  // Persist to data.queueAnalyzer so it survives navigation - only reset on explicit new file upload
   const qa = data.queueAnalyzer || {orders:[], tags:{}, fileName:''};
   const orders   = qa.orders   || [];
   const tags     = qa.tags     || {};
@@ -25399,7 +25401,7 @@ const QueueAnalyzer = ({data, setData}) => {
   const doSort = (col) => { if(sortCol===col){setSortDir(d=>d==='asc'?'desc':'asc');}else{setSortCol(col);setSortDir('asc');} };
   const SortInd = ({col}) => sortCol===col ? (sortDir==='asc'?' ▲':' ▼') : '';
 
-  // Inline status change — updates persisted order status
+  // Inline status change - updates persisted order status
   const updateOrderStatus = (uid, newStatus) => {
     setData(d => {
       const prev = d.queueAnalyzer || {orders:[], tags:{}, fileName:''};
@@ -25450,7 +25452,7 @@ const QueueAnalyzer = ({data, setData}) => {
         location: get('location','city','address'),
         orderNum: get('order','order#','number','#'),
         date, age,
-        dateLabel: date ? date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—',
+        dateLabel: date ? date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '-',
         monthKey: date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}` : null,
         monthLabel: date ? date.toLocaleDateString('en-US',{month:'short',year:'numeric'}) : null,
         notes: get('notes','comment','note') || '',
@@ -25464,7 +25466,7 @@ const QueueAnalyzer = ({data, setData}) => {
     if (!file) return;
     setError('');
     const XLSX = window.XLSX;
-    if (!XLSX) { setError('SheetJS not loaded — check index.html'); return; }
+    if (!XLSX) { setError('SheetJS not loaded - check index.html'); return; }
     const r = new FileReader();
     r.onload = (e) => {
       try {
@@ -25555,7 +25557,7 @@ const QueueAnalyzer = ({data, setData}) => {
       <div style={{fontSize:40,opacity:.3}}>📊</div>
       <div className="hd" style={{fontSize:22,color:'var(--txt)'}}>Queue Analyzer</div>
       <div style={{fontSize:13,color:'var(--muted)',textAlign:'center',maxWidth:400}}>Upload your production queue Excel file (needs a <span style={{color:'var(--acc)'}}>"Form Responses 1"</span> sheet) to analyze orders, track status, and push hot/rush items to the queue.</div>
-      <div style={{fontSize:11,color:'var(--muted)',textAlign:'center',maxWidth:380,marginTop:-8}}>Your queue data and any status changes you make are saved automatically — they will still be here when you come back.</div>
+      <div style={{fontSize:11,color:'var(--muted)',textAlign:'center',maxWidth:380,marginTop:-8}}>Your queue data and any status changes you make are saved automatically - they will still be here when you come back.</div>
       {error && <div style={{color:'var(--err)',fontSize:12,background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'8px 14px'}}>{error}</div>}
       <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e=>handleFile(e.target.files[0])}/>
       <button className="btn btn-p" style={{fontSize:14,padding:'10px 28px'}} onClick={()=>fileRef.current.click()}>📂 Upload Queue Excel</button>
@@ -25688,7 +25690,7 @@ const QueueAnalyzer = ({data, setData}) => {
                 <td style={{padding:'4px 6px'}}>
                   <select value={fDays} onChange={e=>setFDays(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
                     <option value="All">All</option>
-                    <option value="0-7">0–7 days</option>
+                    <option value="0-7">0-7 days</option>
                     <option value=">7">&gt;7 days</option>
                     <option value=">14">&gt;14 days</option>
                   </select>
@@ -25723,12 +25725,12 @@ const QueueAnalyzer = ({data, setData}) => {
                     <td style={{whiteSpace:'nowrap',fontSize:11}}>{o.dateLabel}</td>
                     <td style={{color:o.priority===1?'var(--err)':o.priority<=3?'var(--warn)':'var(--muted)',fontWeight:700}}>{o.priority}</td>
                     <td style={{fontWeight:600}}>{o.customer}</td>
-                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'—'}</td>
-                    <td style={{fontSize:11}}>{o.delivery||'—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'—'}</td>
-                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td>
-                    <td style={{color:o.age>14?'var(--err)':o.age>7?'var(--warn)':'var(--txt)',fontWeight:o.age>14?700:400}}>{o.age != null ? o.age+'d' : '—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'-'}</td>
+                    <td style={{fontSize:11}}>{o.delivery||'-'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'-'}</td>
+                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'-'}</td>
+                    <td style={{color:o.age>14?'var(--err)':o.age>7?'var(--warn)':'var(--txt)',fontWeight:o.age>14?700:400}}>{o.age != null ? o.age+'d' : '-'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'-'}</td>
                   </tr>
                 );
               })}
@@ -25746,7 +25748,7 @@ const QueueAnalyzer = ({data, setData}) => {
             <tbody>
               {completed.slice(0,50).map(o=>{
                 const sc=SS[o.status]||SS['Unknown'];
-                return <tr key={o.uid}><td><span style={{background:`${sc.c}22`,color:sc.c,border:`1px solid ${sc.c}44`,padding:'2px 7px',borderRadius:3,fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{sc.l}</span></td><td style={{fontSize:11}}>{o.dateLabel}</td><td style={{fontWeight:600}}>{o.customer}</td><td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'—'}</td><td style={{fontSize:11}}>{o.delivery||'—'}</td><td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'—'}</td><td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td></tr>;
+                return <tr key={o.uid}><td><span style={{background:`${sc.c}22`,color:sc.c,border:`1px solid ${sc.c}44`,padding:'2px 7px',borderRadius:3,fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{sc.l}</span></td><td style={{fontSize:11}}>{o.dateLabel}</td><td style={{fontWeight:600}}>{o.customer}</td><td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'-'}</td><td style={{fontSize:11}}>{o.delivery||'-'}</td><td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'-'}</td><td className="mono" style={{fontSize:11}}>{o.orderNum||'-'}</td></tr>;
               })}
               {!completed.length && <tr><td colSpan={7} style={{textAlign:'center',color:'var(--muted)',padding:24}}>No fulfilled orders</td></tr>}
             </tbody>
@@ -25866,12 +25868,12 @@ const HotRushQueue = ({data, setData}) => {
           <label>{l}</label>
           {k==='status' ? (
             <select value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {statuses.map(s=><option key={s}>{s}</option>)}
             </select>
           ) : k==='tag' ? (
             <select value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}>
-              <option value="">— None —</option>
+              <option value="">- None -</option>
               <option>HOT</option><option>RUSH</option><option>FLAGGED</option>
             </select>
           ) : k==='notes' ? (
@@ -25931,7 +25933,7 @@ const HotRushQueue = ({data, setData}) => {
       {!filtered.length ? (
         <div className="card" style={{textAlign:'center',padding:'48px 0'}}>
           <div style={{fontSize:32,opacity:.2,marginBottom:8}}>🔥</div>
-          <div style={{color:'var(--muted)',fontSize:13}}>{hq.length ? 'No orders match filters' : 'No orders yet — push from Queue Analyzer or add manually'}</div>
+          <div style={{color:'var(--muted)',fontSize:13}}>{hq.length ? 'No orders match filters' : 'No orders yet - push from Queue Analyzer or add manually'}</div>
         </div>
       ) : (
         <div className="card" style={{overflowX:'auto',padding:0}}>
@@ -25947,7 +25949,7 @@ const HotRushQueue = ({data, setData}) => {
               <col style={{width:140}}/>  {/* Fulfillment */}
               <col style={{width:130}}/>  {/* Ship To */}
               <col style={{width:110}}/>  {/* Order # */}
-              <col/>                      {/* Notes — fills remaining space */}
+              <col/>                      {/* Notes - fills remaining space */}
               <col style={{width:80}}/>   {/* Actions */}
             </colgroup>
             <thead>
@@ -25986,7 +25988,7 @@ const HotRushQueue = ({data, setData}) => {
                 <td style={{padding:'4px 6px'}}>
                   <select value={fDays} onChange={e=>setFDays(e.target.value)} style={{fontSize:10,width:'100%',padding:'2px 4px'}}>
                     <option value="All">All</option>
-                    <option value="0-7">0–7d</option>
+                    <option value="0-7">0-7d</option>
                     <option value=">7">&gt;7d</option>
                     <option value=">14">&gt;14d</option>
                   </select>
@@ -26031,7 +26033,7 @@ const HotRushQueue = ({data, setData}) => {
                   <tr key={o.id}>
                     <td>
                       <select value={o.tag||''} onChange={e=>updateTag(o.id,e.target.value)} style={{background:`${tc}22`,color:tc,border:`1px solid ${tc}44`,borderRadius:3,fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,padding:'2px 6px',cursor:'pointer',outline:'none'}}>
-                        <option value="">—</option>
+                        <option value="">-</option>
                         <option value="HOT">🔥 HOT</option>
                         <option value="RUSH">⚡ RUSH</option>
                         <option value="FLAGGED">🟡 FLAGGED</option>
@@ -26042,15 +26044,15 @@ const HotRushQueue = ({data, setData}) => {
                         {statuses.map(s=><option key={s} value={s}>{s}</option>)}
                       </select>
                     </td>
-                    <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.dateLabel||'—'}</td>
-                    <td style={{color:a>14?'var(--err)':a>7?'var(--warn)':'var(--txt)',fontWeight:a>14?700:400}}>{a!=null?a+'d':'—'}</td>
-                    <td style={{color:o.priority===1?'var(--err)':o.priority<=3?'var(--warn)':'var(--muted)',fontWeight:700}}>{o.priority||'—'}</td>
-                    <td style={{fontWeight:600}}>{o.customer||'—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'—'}</td>
-                    <td style={{fontSize:11}}>{o.delivery||'—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'—'}</td>
-                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||'—'}</td>
+                    <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.dateLabel||'-'}</td>
+                    <td style={{color:a>14?'var(--err)':a>7?'var(--warn)':'var(--txt)',fontWeight:a>14?700:400}}>{a!=null?a+'d':'-'}</td>
+                    <td style={{color:o.priority===1?'var(--err)':o.priority<=3?'var(--warn)':'var(--muted)',fontWeight:700}}>{o.priority||'-'}</td>
+                    <td style={{fontWeight:600}}>{o.customer||'-'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.leadSource||'-'}</td>
+                    <td style={{fontSize:11}}>{o.delivery||'-'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.location||'-'}</td>
+                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'-'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||'-'}</td>
                     <td style={{whiteSpace:'nowrap',paddingRight:14}}>
                       <button className="btn btn-g btn-xs" style={{marginRight:4}} onClick={()=>{setEditId(o.id);setForm({...o});}}>✎</button>
                       <button className="btn btn-d btn-xs" onClick={()=>remove(o.id)}>✕</button>
@@ -26129,7 +26131,7 @@ const WorkbookGenerator = ({data, setData}) => {
   };
 
   const generateWB = () => {
-    const XLSX=window.XLSX; if(!XLSX){alert('SheetJS not loaded — refresh the page and try again');return;}
+    const XLSX=window.XLSX; if(!XLSX){alert('SheetJS not loaded - refresh the page and try again');return;}
     const wb=XLSX.utils.book_new();
     const sc=(ws,r,c,v)=>{const ref=XLSX.utils.encode_cell({r,c});ws[ref]={v,t:typeof v==='number'?'n':'s'};};
     for(const order of wbgOrders){
@@ -26183,7 +26185,7 @@ const WorkbookGenerator = ({data, setData}) => {
           <div style={{border:'2px dashed var(--bdr)',borderRadius:10,padding:'60px 0',textAlign:'center',cursor:'pointer',marginBottom:20}} onClick={()=>fileRef2.current.click()} onDragOver={e=>{e.preventDefault();}} onDrop={e=>{e.preventDefault();setWbgFiles(f=>[...f,...Array.from(e.dataTransfer.files)]);}}>
             <div style={{fontSize:36,marginBottom:10,opacity:.4}}>📂</div>
             <div className="hd" style={{fontSize:16,color:'var(--txt)',marginBottom:6}}>DROP ORDER FILES HERE</div>
-            <div style={{fontSize:12,color:'var(--muted)'}}>Excel, PDF, PNG, JPG — one file per customer order</div>
+            <div style={{fontSize:12,color:'var(--muted)'}}>Excel, PDF, PNG, JPG - one file per customer order</div>
           </div>
           {wbgFiles.length>0 && (
             <div className="card" style={{marginBottom:16}}>
@@ -26220,7 +26222,7 @@ const WorkbookGenerator = ({data, setData}) => {
         <div>
           <div className="section-hd">
             <div>
-              <div className="hd" style={{fontSize:18}}>Workbook Generator — Results</div>
+              <div className="hd" style={{fontSize:18}}>Workbook Generator - Results</div>
               <div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{wbgOrders.length} order{wbgOrders.length!==1?'s':''} · {Object.keys(wbgOrders.reduce((a,o)=>{(o.materials||[]).forEach(m=>{a[m.name]=1;});return a;},{})).length} materials</div>
             </div>
             <div style={{display:'flex',gap:8}}>
@@ -26348,7 +26350,7 @@ const OrderAnalyzer = ({data}) => {
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'60vh',gap:20}}>
       <div style={{fontSize:40,opacity:.3}}>🔍</div>
       <div className="hd" style={{fontSize:22}}>Order Analyzer</div>
-      <div style={{fontSize:13,color:'var(--muted)',maxWidth:400,textAlign:'center'}}>Upload any Excel order file for instant breakdown — status distribution, revenue by type, salesperson metrics, and full order table.</div>
+      <div style={{fontSize:13,color:'var(--muted)',maxWidth:400,textAlign:'center'}}>Upload any Excel order file for instant breakdown - status distribution, revenue by type, salesperson metrics, and full order table.</div>
       {error3 && <div style={{color:'var(--err)',fontSize:12,background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'8px 14px'}}>{error3}</div>}
       <input ref={fileRef3} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={e=>handleFile3(e.target.files[0])}/>
       <button className="btn btn-p" onClick={()=>fileRef3.current.click()}>📂 Upload Order File</button>
@@ -26448,13 +26450,13 @@ const OrderAnalyzer = ({data}) => {
                   <tr key={o.id}>
                     <td style={{color:'var(--muted)'}}>{o.id}</td>
                     <td style={{fontWeight:600}}>{o.customer}</td>
-                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'—'}</td>
-                    <td>{o.status ? <Badge s={o.status}/> : '—'}</td>
-                    <td style={{fontSize:11}}>{o.date||'—'}</td>
-                    <td style={{fontWeight:600,color:'var(--ok)'}}>{o.amount ? fmt$(o.amount) : '—'}</td>
-                    <td style={{fontSize:11}}>{o.type||'—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.salesperson||'—'}</td>
-                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.source||'—'}</td>
+                    <td className="mono" style={{fontSize:11}}>{o.orderNum||'-'}</td>
+                    <td>{o.status ? <Badge s={o.status}/> : '-'}</td>
+                    <td style={{fontSize:11}}>{o.date||'-'}</td>
+                    <td style={{fontWeight:600,color:'var(--ok)'}}>{o.amount ? fmt$(o.amount) : '-'}</td>
+                    <td style={{fontSize:11}}>{o.type||'-'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.salesperson||'-'}</td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{o.source||'-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -26528,7 +26530,7 @@ const Login = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* ── LEFT — Brand panel ─────────────────────────────────────── */}
+      {/* ── LEFT - Brand panel ─────────────────────────────────────── */}
       <div className="login-left">
         {/* Logo */}
         <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:52}}>
@@ -26562,7 +26564,7 @@ const Login = ({ onLogin }) => {
             </span>
           </div>
           <div style={{fontSize:15,color:'rgba(255,255,255,.5)',lineHeight:1.7,maxWidth:340,fontWeight:400}}>
-            Built by hand in Hayden, Idaho — powder coated to perfection and tracked from raw stock to your front door.
+            Built by hand in Hayden, Idaho - powder coated to perfection and tracked from raw stock to your front door.
           </div>
         </div>
 
@@ -26586,7 +26588,7 @@ const Login = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* ── RIGHT — Login panel ────────────────────────────────────── */}
+      {/* ── RIGHT - Login panel ────────────────────────────────────── */}
       <div className="login-right">
         <div style={{marginBottom:32}}>
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:10,letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(0,229,255,.7)',marginBottom:10}}>Production Operations System</div>
@@ -26650,7 +26652,7 @@ const Login = ({ onLogin }) => {
           })}
         </div>
 
-        {/* Manual login — collapsed */}
+        {/* Manual login - collapsed */}
         <div style={{borderTop:'1px solid rgba(255,255,255,.08)',paddingTop:18}}>
           <button
             onClick={()=>setShowManual(s=>!s)}
@@ -26708,6 +26710,7 @@ const NAVS = [
   {id:'sales',icon:'◈',label:'Sales & Quotes'},
   {id:'production',icon:'◎',label:'Production'},
   {id:'queueanalyzer',icon:'📊',label:'Queue Analyzer'},
+  {id:'materialpulls',icon:'📦',label:'Material Pulls'},
   {id:'hotqueue',icon:'🔥',label:'Hot/Rush Queue'},
   {id:'inventory',icon:'◉',label:'Inventory'},
   {id:'inventorybellevue',icon:'📍',label:'Inventory Bellevue'},
@@ -26769,7 +26772,7 @@ const Sidebar = ({page,setPage,data,user,collapsed,setCollapsed}) => {
             </div>
             <div style={{overflow:'hidden'}}>
               <div className="hd" style={{fontSize:15,whiteSpace:'nowrap'}}>MAISY ERP</div>
-              <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase',whiteSpace:'nowrap'}}>v5.6 · All Modules</div>
+              <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.13em',textTransform:'uppercase',whiteSpace:'nowrap'}}>v6.10 - All Modules</div>
             </div>
           </div>
         )}
@@ -26839,7 +26842,7 @@ const Dashboard = ({data,setPage}) => {
   const openTodos=data.todos.filter(t=>t.status!=='Done');
   const hotItems=data.hotList;
   const alerts=[
-    ...data.inventory.filter(i=>i.qty<=i.reorder).map(i=>({t:'warn',m:`Low stock: ${i.name} — ${i.qty} ${i.unit}`})),
+    ...data.inventory.filter(i=>i.qty<=i.reorder).map(i=>({t:'warn',m:`Low stock: ${i.name} - ${i.qty} ${i.unit}`})),
     ...data.invoices.filter(i=>i.status==='Overdue').map(i=>({t:'err',m:`Overdue: ${i.id} · ${i.customer} · ${fmt$(i.amount)}`})),
     ...data.todos.filter(t=>t.priority==='Critical'&&t.status!=='Done').map(t=>({t:'err',m:`Critical task: ${t.title}`})),
   ];
@@ -26881,14 +26884,14 @@ const Dashboard = ({data,setPage}) => {
         ))}
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
-        <StatCard label="On-Time Delivery" value={latestKPI.onTimeDeliveryPct?latestKPI.onTimeDeliveryPct+'%':'—'} icon="🎯" color={latestKPI.onTimeDeliveryPct>=95?'var(--ok)':latestKPI.onTimeDeliveryPct>=85?'var(--warn)':'var(--err)'} sub={"Week of "+latestKPI.weekEnding||'No data'}/>
+        <StatCard label="On-Time Delivery" value={latestKPI.onTimeDeliveryPct?latestKPI.onTimeDeliveryPct+'%':'-'} icon="🎯" color={latestKPI.onTimeDeliveryPct>=95?'var(--ok)':latestKPI.onTimeDeliveryPct>=85?'var(--warn)':'var(--err)'} sub={"Week of "+latestKPI.weekEnding||'No data'}/>
         <StatCard label="YTD Freight Spend" value={fmt$(totalFreight)} icon="🚚" color="var(--acc)" sub={((data.shipCostLog||[]).length+(data.shipments||[]).filter(s=>s.totalCost>0).length)+" shipments"}/>
         <StatCard label="Misc Charges YTD" value={fmt$(miscSpend)} icon="🧾" color="var(--acc2)" sub={(data.miscCharges||[]).length+" charges"}/>
         <StatCard label="Scrap Cost YTD" value={fmt$((data.scrapWaste||[]).reduce((a,b)=>a+(b.cost||0),0))} icon="🗑️" color="var(--err)" sub={(data.scrapWaste||[]).length+" events"}/>
       </div>
       <div className="grid2" style={{marginBottom:16}}>
         <div className="card">
-          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:14}}>Revenue vs EBITDA — 6 Months</div>
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:14}}>Revenue vs EBITDA - 6 Months</div>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={monthData} margin={{top:0,right:0,bottom:0,left:-18}}>
               <XAxis dataKey="month" tick={{fill:'#4a5070',fontSize:9}} axisLine={false} tickLine={false}/>
@@ -27168,8 +27171,8 @@ const Sales = ({data, setData}) => {
                   <td className="mono" style={{fontWeight:500}}>{fmt$(o.total)}</td>
                   <td><StatusSelect value={o.status} options={['Quoted','Pending','In Production','Shipped','Completed','Cancelled']} onChange={v=>setData(d=>({...d,salesOrders:d.salesOrders.map(x=>x.id===o.id?{...x,status:v}:x)}))}/></td>
                   <td><span className="chip" style={{textTransform:'capitalize'}}>{o.type}</span></td>
-                  <td style={{fontSize:11,color:'var(--acc)',fontWeight:600}}>{o.salesPerson||'—'}</td>
-                  <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
+                  <td style={{fontSize:11,color:'var(--acc)',fontWeight:600}}>{o.salesPerson||'-'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'-'}</td>
                   <td style={{color:'var(--muted)',maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{o.notes}</td>
                   <td><div style={{display:'flex',gap:4}}>
                     <button className="btn btn-g btn-sm" onClick={()=>open(o)}>Edit</button>
@@ -27194,9 +27197,9 @@ const Sales = ({data, setData}) => {
                 <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{p.kitSku}</td>
                 <td style={{fontWeight:500}}>{p.kitName}</td><td style={{fontSize:10,color:'var(--muted)'}}>{p.category}</td>
                 <td>{p.mountType}</td><td>{p.color}</td><td>{p.size}</td>
-                <td style={{fontWeight:600}}>{p.cogs?fmt$(p.cogs):'—'}</td>
-                <td style={{color:'var(--warn)',fontWeight:600}}>{p.wholesale?fmt$(p.wholesale):'—'}</td>
-                <td style={{color:'var(--ok)',fontWeight:600}}>{p.retail?fmt$(p.retail):'—'}</td>
+                <td style={{fontWeight:600}}>{p.cogs?fmt$(p.cogs):'-'}</td>
+                <td style={{color:'var(--warn)',fontWeight:600}}>{p.wholesale?fmt$(p.wholesale):'-'}</td>
+                <td style={{color:'var(--ok)',fontWeight:600}}>{p.retail?fmt$(p.retail):'-'}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -27233,19 +27236,19 @@ const Sales = ({data, setData}) => {
                 <th>Resolution</th><th>Assigned To</th><th>Status</th><th></th>
               </tr></thead>
               <tbody>
-                {(data.customerIssues||[]).length===0&&<tr><td colSpan={12}><Empty msg="No customer issues logged — click + Log Issue"/></td></tr>}
+                {(data.customerIssues||[]).length===0&&<tr><td colSpan={12}><Empty msg="No customer issues logged - click + Log Issue"/></td></tr>}
                 {(data.customerIssues||[]).map((iss,i)=>(
                   <tr key={i}>
                     <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{iss.id}</td>
                     <td style={{fontSize:11,whiteSpace:'nowrap'}}>{iss.dateReported}</td>
                     <td style={{fontWeight:500,whiteSpace:'nowrap'}}>{iss.customer}</td>
-                    <td style={{fontFamily:'monospace',fontSize:10}}>{iss.orderId||'—'}</td>
+                    <td style={{fontFamily:'monospace',fontSize:10}}>{iss.orderId||'-'}</td>
                     <td style={{fontSize:11,maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.product}>{iss.product}</td>
                     <td><span className="chip" style={{fontSize:10}}>{iss.issueType}</span></td>
                     <td style={{textAlign:'center',color:iss.severity>=4?'var(--err)':iss.severity>=3?'var(--warn)':'var(--ok)',fontWeight:700,fontSize:14}}>{iss.severity}</td>
-                    <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.rootCause}>{iss.rootCause||'—'}</td>
-                    <td style={{fontSize:10,maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.resolution}>{iss.resolution||'—'}</td>
-                    <td style={{fontSize:11}}>{iss.assignedTo||'—'}</td>
+                    <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.rootCause}>{iss.rootCause||'-'}</td>
+                    <td style={{fontSize:10,maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={iss.resolution}>{iss.resolution||'-'}</td>
+                    <td style={{fontSize:11}}>{iss.assignedTo||'-'}</td>
                     <td><StatusSelect value={iss.status||'Open'} options={['Open','In Progress','Closed','Resolved']} onChange={v=>setData(d=>({...d,customerIssues:(d.customerIssues||[]).map(x=>x.id===iss.id?{...x,status:v}:x)}))}/></td>
                     <td><div style={{display:'flex',gap:3,whiteSpace:'nowrap'}}>
                       <button className="btn btn-g btn-xs" onClick={()=>{setForm({...iss});setModal('ci');}}>Edit</button>
@@ -27276,13 +27279,13 @@ const Sales = ({data, setData}) => {
           <Field label="Product"><input value={form.product||''} onChange={e=>setForm(f=>({...f,product:e.target.value}))}/></Field>
           <Field label="Issue Type">
             <select value={form.issueType||''} onChange={e=>setForm(f=>({...f,issueType:e.target.value}))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {['Wrong Color','Wrong Size','Missing Parts','Damaged','Defective Weld','Powder Coat Defect','Shipping Damage','Wrong SKU','Measurement Error','Other'].map(t=><option key={t}>{t}</option>)}
             </select>
           </Field>
-          <Field label="Severity (1–5)">
+          <Field label="Severity (1-5)">
             <select value={form.severity||2} onChange={e=>setForm(f=>({...f,severity:+e.target.value}))}>
-              {[1,2,3,4,5].map(n=><option key={n} value={n}>{n} — {n===1?'Minor':n===2?'Low':n===3?'Moderate':n===4?'High':'Critical'}</option>)}
+              {[1,2,3,4,5].map(n=><option key={n} value={n}>{n} - {n===1?'Minor':n===2?'Low':n===3?'Moderate':n===4?'High':'Critical'}</option>)}
             </select>
           </Field>
         </div>
@@ -27315,7 +27318,7 @@ const Sales = ({data, setData}) => {
           <Field label="Status"><select value={form.status||'Pending'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{statuses.map(s=><option key={s}>{s}</option>)}</select></Field>
           <Field label="Sales Person / Lead Source">
             <select value={salesReps.includes(form.salesPerson)?form.salesPerson:form.salesPerson?'Other':''} onChange={e=>setForm(f=>({...f,salesPerson:e.target.value}))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {salesReps.map(r=><option key={r}>{r}</option>)}
             </select>
           </Field>
@@ -27574,7 +27577,7 @@ const Inventory = ({data, setData, user}) => {
                 <td style={{fontWeight:700,color:'var(--acc)'}}>{g.height}"</td>
                 <td style={{fontWeight:600}}>{g.width}"</td>
                 <td style={{fontWeight:700,color:g.qty<=2?'var(--warn)':'var(--ok)'}}>{g.qty} panels</td>
-                <td><span style={{fontSize:10,padding:'2px 7px',borderRadius:3,background:g.status==='OK'?'rgba(16,185,129,.15)':g.status==='LOW'?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)',color:g.status==='OK'?'var(--ok)':g.status==='LOW'?'var(--warn)':'var(--err)'}}>{g.status||'—'}</span></td>
+                <td><span style={{fontSize:10,padding:'2px 7px',borderRadius:3,background:g.status==='OK'?'rgba(16,185,129,.15)':g.status==='LOW'?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)',color:g.status==='OK'?'var(--ok)':g.status==='LOW'?'var(--warn)':'var(--err)'}}>{g.status||'-'}</span></td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{g.loc||'Glass Bay'}</td>
               </tr>
             ))}</tbody>
@@ -27606,10 +27609,10 @@ const Inventory = ({data, setData, user}) => {
               <td><span className="chip">{c.cat}</span></td>
               <td style={{fontWeight:600,color:(c.qty||0)<=(c.reorder||0)?'var(--warn)':'var(--ok)'}}>{c.qty} {c.unit}{(c.qty||0)<=(c.reorder||0)?' ⚠':''}</td>
               <td style={{color:'var(--muted)'}}>{c.unit}</td>
-              <td>{c.reorder||'—'}</td>
-              <td style={{fontFamily:'monospace'}}>{c.cost?'$'+c.cost:'—'}</td>
-              <td style={{fontFamily:'monospace'}}>{c.cost&&c.qty?'$'+(c.qty*c.cost).toFixed(2):'—'}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{c.loc||'—'}</td>
+              <td>{c.reorder||'-'}</td>
+              <td style={{fontFamily:'monospace'}}>{c.cost?'$'+c.cost:'-'}</td>
+              <td style={{fontFamily:'monospace'}}>{c.cost&&c.qty?'$'+(c.qty*c.cost).toFixed(2):'-'}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{c.loc||'-'}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -27668,9 +27671,9 @@ const Inventory = ({data, setData, user}) => {
               </div>
               <table><thead><tr><th>Component</th><th>SKU</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Ext. Cost</th><th>Note</th></tr></thead>
                 <tbody>{b.items.map((item,i)=>{const inv=data.inventory.find(x=>x.id===item.inventoryId);return(
-                  <tr key={i}><td style={{fontWeight:500}}>{inv?.name||item.invName||item.inventoryId}</td><td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{inv?.sku||'—'}</td>
+                  <tr key={i}><td style={{fontWeight:500}}>{inv?.name||item.invName||item.inventoryId}</td><td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{inv?.sku||'-'}</td>
                     <td className="mono">{item.qty}</td><td style={{color:'var(--muted)'}}>{item.unit}</td>
-                    <td className="mono">{inv?fmt$(inv.cost):'—'}</td><td className="mono" style={{color:'var(--ok)'}}>{inv?fmt$(inv.cost*item.qty):'—'}</td>
+                    <td className="mono">{inv?fmt$(inv.cost):'-'}</td><td className="mono" style={{color:'var(--ok)'}}>{inv?fmt$(inv.cost*item.qty):'-'}</td>
                     <td style={{fontSize:11,color:'var(--muted)'}}>{item.note}</td>
                   </tr>);
                 })}</tbody>
@@ -27697,7 +27700,7 @@ const Inventory = ({data, setData, user}) => {
           const onHand = inv?.qty||0;
           const shortage = item.neededQty - onHand;
           const reorderQty = Math.ceil(Math.max(item.neededQty*1.5, (inv?.reorderQty||0)));
-          return {...item, onHand, shortage, reorderQty, invName:inv?.name||item.name, unit:inv?.unit||item.unit, vendor:inv?.vendor||'—', status:shortage>0?'SHORT':onHand<=(inv?.reorder||0)?'LOW':'OK'};
+          return {...item, onHand, shortage, reorderQty, invName:inv?.name||item.name, unit:inv?.unit||item.unit, vendor:inv?.vendor||'-', status:shortage>0?'SHORT':onHand<=(inv?.reorder||0)?'LOW':'OK'};
         }).sort((a,b)=>b.shortage-a.shortage);
         const shorts=needList.filter(i=>i.status==='SHORT');
         const lows=needList.filter(i=>i.status==='LOW');
@@ -27717,10 +27720,10 @@ const Inventory = ({data, setData, user}) => {
                 <div style={{fontSize:10,color:'var(--ok)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Open Orders</div>
               </div>
             </div>
-            {needList.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)',fontSize:13}}>No open orders — add orders to see reorder needs</div>}
+            {needList.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)',fontSize:13}}>No open orders - add orders to see reorder needs</div>}
             {needList.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
               <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)',display:'flex',justifyContent:'space-between'}}>
-                <span>Materials needed across {openOrders.length} open orders — auto-calculated from BOM</span>
+                <span>Materials needed across {openOrders.length} open orders - auto-calculated from BOM</span>
                 <span style={{color:shorts.length>0?'var(--err)':'var(--muted)'}}>{shorts.length} short · {lows.length} low</span>
               </div>
               <table style={{minWidth:860}}>
@@ -27739,8 +27742,8 @@ const Inventory = ({data, setData, user}) => {
                       <td style={{fontWeight:600,fontSize:12}}>{item.invName}</td>
                       <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:item.onHand<=0?'var(--err)':item.onHand<item.neededQty?'var(--warn)':'var(--ok)'}}>{item.onHand}</td>
                       <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{item.neededQty}</td>
-                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:item.shortage>0?'var(--err)':'var(--dim)'}}>{item.shortage>0?item.shortage:'—'}</td>
-                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--acc)'}}>{item.shortage>0?item.reorderQty:item.status==='LOW'?(item.reorderQty||'—'):'—'}</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:item.shortage>0?'var(--err)':'var(--dim)'}}>{item.shortage>0?item.shortage:'-'}</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--acc)'}}>{item.shortage>0?item.reorderQty:item.status==='LOW'?(item.reorderQty||'-'):'-'}</td>
                       <td style={{fontSize:11,color:'var(--muted)'}}>{item.unit}</td>
                       <td style={{fontSize:10,color:'var(--muted)'}} title={[...new Set(item.orders)].join(', ')}>{[...new Set(item.orders)].length} order(s)</td>
                     </tr>
@@ -27758,7 +27761,7 @@ const Inventory = ({data, setData, user}) => {
           <div className="grid2" style={{marginBottom:12}}>
             <Field label="Item">
               <select value={adjForm.inventoryId} onChange={e=>setAdjForm(f=>({...f,inventoryId:e.target.value}))}>
-                <option value="">— Select Item —</option>
+                <option value="">- Select Item -</option>
                 {data.inventory.map(i=><option key={i.id} value={i.id}>{i.name} (On Hand: {i.qty} {i.unit})</option>)}
               </select>
             </Field>
@@ -27829,7 +27832,7 @@ const Inventory = ({data, setData, user}) => {
         </div>
         {csvPreview.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <span className="hd" style={{fontSize:13}}>Import Preview — {csvPreview.length} Items</span>
+            <span className="hd" style={{fontSize:13}}>Import Preview - {csvPreview.length} Items</span>
             <span className="chip">{csvPreview.filter(p=>!data.inventory.find(i=>i.sku===p.sku)).length} new · {csvPreview.filter(p=>data.inventory.find(i=>i.sku===p.sku)).length} duplicates (skipped)</span>
           </div>
           <table><thead><tr><th>SKU</th><th>Name</th><th>Cat</th><th>Qty</th><th>Unit</th><th>Reorder</th><th>Cost</th><th>Loc</th><th>Status</th></tr></thead>
@@ -27899,7 +27902,7 @@ const Inventory = ({data, setData, user}) => {
           <div className="grid2" style={{marginBottom:8}}>
             <Field label="Inventory Item">
               <select value={bomItem.inventoryId} onChange={e=>setBomItem(f=>({...f,inventoryId:e.target.value}))}>
-                <option value="">— Select —</option>
+                <option value="">- Select -</option>
                 {data.inventory.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
             </Field>
@@ -27938,7 +27941,7 @@ const Production = ({data, setData, user}) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maisy Railing — Defect Report ${defectId}</title>
+<title>Maisy Railing - Defect Report ${defectId}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
   :root{--black:#0d0d0d;--gray-mid:#4a4a4a;--gray-light:#e0e0e0;--gray-bg:#f5f5f5;--orange:#e85d04;--white:#ffffff}
@@ -28004,7 +28007,7 @@ const Production = ({data, setData, user}) => {
     </div>
   </div>
 
-  <div class="section-label">1 — Report Information</div>
+  <div class="section-label">1 - Report Information</div>
   <div class="field-grid">
     <div class="field-row">
       <div class="field"><div class="field-label">Date Found</div><div class="field-line"></div></div>
@@ -28014,7 +28017,7 @@ const Production = ({data, setData, user}) => {
     </div>
   </div>
 
-  <div class="section-label">2 — Product &amp; Station</div>
+  <div class="section-label">2 - Product &amp; Station</div>
   <div class="field-grid">
     <div class="field-row">
       <div class="field w2"><div class="field-label">Product Type / Part Description</div><div class="field-line"></div></div>
@@ -28039,7 +28042,7 @@ const Production = ({data, setData, user}) => {
     </div>
   </div>
 
-  <div class="section-label">3 — Defect Classification</div>
+  <div class="section-label">3 - Defect Classification</div>
   <div class="field-grid">
     <div class="field-row">
       <div class="field w3">
@@ -28060,20 +28063,20 @@ const Production = ({data, setData, user}) => {
       <div class="field w3">
         <div class="field-label">Severity Level</div>
         <div class="severity-group">
-          <div class="sev-box critical"><span class="check-box"></span> CRITICAL — Cannot Ship</div>
-          <div class="sev-box major"><span class="check-box"></span> MAJOR — Rework Required</div>
-          <div class="sev-box minor"><span class="check-box"></span> MINOR — Acceptable w/ Note</div>
-          <div class="sev-box cosmetic"><span class="check-box"></span> COSMETIC — Aesthetic Only</div>
+          <div class="sev-box critical"><span class="check-box"></span> CRITICAL - Cannot Ship</div>
+          <div class="sev-box major"><span class="check-box"></span> MAJOR - Rework Required</div>
+          <div class="sev-box minor"><span class="check-box"></span> MINOR - Acceptable w/ Note</div>
+          <div class="sev-box cosmetic"><span class="check-box"></span> COSMETIC - Aesthetic Only</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="section-label">4 — Description of Defect</div>
+  <div class="section-label">4 - Description of Defect</div>
   <div class="field-grid">
     <div class="field-row">
       <div class="field field-xtall w3">
-        <div class="field-label">Describe the defect in detail — include location on part, measurements if applicable</div>
+        <div class="field-label">Describe the defect in detail - include location on part, measurements if applicable</div>
         <div class="field-line"></div>
         <div class="field-line" style="margin-top:8px"></div>
       </div>
@@ -28088,7 +28091,7 @@ const Production = ({data, setData, user}) => {
     </div>
   </div>
 
-  <div class="section-label">5 — Root Cause &amp; Corrective Action</div>
+  <div class="section-label">5 - Root Cause &amp; Corrective Action</div>
   <div class="field-grid">
     <div class="field-row">
       <div class="field w3 field-tall">
@@ -28127,7 +28130,7 @@ const Production = ({data, setData, user}) => {
   </div>
 
   <div class="footer">
-    <div class="footer-note">Complete form and submit to supervisor — enter into ERP Defect Log same day.</div>
+    <div class="footer-note">Complete form and submit to supervisor - enter into ERP Defect Log same day.</div>
     <div class="footer-rev">Form Rev. 1.1 &nbsp;|&nbsp; Printed: ${dateStr}</div>
   </div>
 </div>
@@ -28209,13 +28212,13 @@ const Production = ({data, setData, user}) => {
       {prodTab==='scrap'&&<>
         <StatRow>
           <StatCard label="YTD Scrap Cost" value={fmt$(scrapYTD)} icon="🗑️" color="var(--err)" sub={(data.scrapWaste||[]).length+" scrap events"}/>
-          <StatCard label="Biggest Station" value={(()=>{const by={};(data.scrapWaste||[]).forEach(s=>{by[s.station]=(by[s.station]||0)+(s.cost||0);});const top=Object.entries(by).sort((a,b)=>b[1]-a[1])[0];return top?top[0]:'—';})()}  icon="⚙️" color="var(--warn)" sub="Most scrap by cost"/>
-          <StatCard label="Avg Cost/Event" value={(data.scrapWaste||[]).length?fmt$(scrapYTD/(data.scrapWaste||[]).length):'—'} icon="📊" color="var(--acc)" sub="Per scrap event"/>
+          <StatCard label="Biggest Station" value={(()=>{const by={};(data.scrapWaste||[]).forEach(s=>{by[s.station]=(by[s.station]||0)+(s.cost||0);});const top=Object.entries(by).sort((a,b)=>b[1]-a[1])[0];return top?top[0]:'-';})()}  icon="⚙️" color="var(--warn)" sub="Most scrap by cost"/>
+          <StatCard label="Avg Cost/Event" value={(data.scrapWaste||[]).length?fmt$(scrapYTD/(data.scrapWaste||[]).length):'-'} icon="📊" color="var(--acc)" sub="Per scrap event"/>
           <StatCard label="Scrap This Month" value={fmt$((data.scrapWaste||[]).filter(s=>s.date&&s.date.slice(0,7)===now().slice(0,7)).reduce((a,b)=>a+(b.cost||0),0))} icon="📅" color="var(--acc2)" sub="Current month"/>
         </StatRow>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Date</th><th>Station</th><th>SKU / Product</th><th>Material</th><th>Qty</th><th>Unit</th><th>Est. Cost</th><th>Reason Code</th><th>Root Cause</th><th>Corrective Action</th><th>By</th></tr></thead>
-            <tbody>{(data.scrapWaste||[]).length===0&&<tr><td colSpan={11}><Empty msg="No scrap events logged — great!"/></td></tr>}
+            <tbody>{(data.scrapWaste||[]).length===0&&<tr><td colSpan={11}><Empty msg="No scrap events logged - great!"/></td></tr>}
             {(data.scrapWaste||[]).map((s,i)=>(
               <tr key={i}>
                 <td style={{whiteSpace:'nowrap'}}>{s.date}</td>
@@ -28255,12 +28258,12 @@ const Production = ({data, setData, user}) => {
             {(data.safetyLog||[]).map((s,i)=>(
               <tr key={i}>
                 <td style={{whiteSpace:'nowrap',fontWeight:600}}>{s.date}</td>
-                <td style={{fontSize:11}}>{s.time||'—'}</td>
+                <td style={{fontSize:11}}>{s.time||'-'}</td>
                 <td><span className="chip" style={{color:s.type&&s.type.toLowerCase().includes('injury')?'var(--err)':s.type&&s.type.toLowerCase().includes('near')?'var(--warn)':'var(--muted)'}}>{s.type}</span></td>
                 <td style={{fontSize:11}}>{s.location}</td>
                 <td style={{fontSize:11,fontWeight:500}}>{s.involved}</td>
                 <td style={{fontSize:10,maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.description}>{s.description}</td>
-                <td style={{fontSize:10,color:'var(--err)'}}>{s.injury||'—'}</td>
+                <td style={{fontSize:10,color:'var(--err)'}}>{s.injury||'-'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.rootCause}>{s.rootCause}</td>
                 <td style={{fontSize:10,maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.corrAction}>{s.corrAction}</td>
                 <td><StatusSelect value={s.status||'Open'} options={['Open','In Progress','Closed']} onChange={v=>setData(d=>({...d,safetyLog:(d.safetyLog||[]).map(x=>x.id===s.id?{...x,status:v}:x)}))}/></td>
@@ -28290,7 +28293,7 @@ const Production = ({data, setData, user}) => {
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>ID</th><th>Submitted</th><th>By</th><th>Area</th><th>Description</th><th>Est $/yr</th><th>Impl Cost</th><th>Priority</th><th>Status</th><th>Actual Savings</th><th>Payback (mo)</th><th/></tr></thead>
-            <tbody>{(data.improvementLog||[]).length===0&&<tr><td colSpan={12}><Empty msg="No improvement ideas yet — click + Submit Idea"/></td></tr>}
+            <tbody>{(data.improvementLog||[]).length===0&&<tr><td colSpan={12}><Empty msg="No improvement ideas yet - click + Submit Idea"/></td></tr>}
             {(data.improvementLog||[]).map((imp,i)=>(
               <tr key={i}>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{imp.id}</td>
@@ -28298,12 +28301,12 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontSize:11,fontWeight:500}}>{imp.submittedBy}</td>
                 <td><span className="chip">{imp.area}</span></td>
                 <td style={{fontSize:11,maxWidth:200,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={imp.description}>{imp.description}</td>
-                <td style={{color:'var(--ok)',fontWeight:700}}>{imp.estSavings?'$'+imp.estSavings.toLocaleString():'—'}</td>
-                <td style={{color:'var(--muted)'}}>{imp.implCost?'$'+imp.implCost.toLocaleString():'—'}</td>
+                <td style={{color:'var(--ok)',fontWeight:700}}>{imp.estSavings?'$'+imp.estSavings.toLocaleString():'-'}</td>
+                <td style={{color:'var(--muted)'}}>{imp.implCost?'$'+imp.implCost.toLocaleString():'-'}</td>
                 <td style={{textAlign:'center'}}>{imp.priority}/5</td>
                 <td><StatusSelect value={imp.status||'Submitted'} options={['Submitted','Planning','In Progress','Complete','Cancelled']} onChange={v=>setData(d=>({...d,improvementLog:(d.improvementLog||[]).map(x=>x.id===imp.id?{...x,status:v}:x)}))}/></td>
-                <td style={{color:'var(--ok)'}}>{imp.actualSavings?'$'+imp.actualSavings.toLocaleString():'—'}</td>
-                <td style={{textAlign:'center'}}>{imp.paybackMonths||'—'}</td>
+                <td style={{color:'var(--ok)'}}>{imp.actualSavings?'$'+imp.actualSavings.toLocaleString():'-'}</td>
+                <td style={{textAlign:'center'}}>{imp.paybackMonths||'-'}</td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...imp});setModal('improve');}}>Edit</button>
                   <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,improvementLog:(d.improvementLog||[]).filter((_,j)=>j!==i)}))}>Del</button>
@@ -28320,17 +28323,17 @@ const Production = ({data, setData, user}) => {
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Date</th><th>Lead</th><th>Completed</th><th>In Progress</th><th>Stations Down</th><th>Quality Issues</th><th>Material Shortages</th><th>Safety Issues</th><th>Tomorrow's Priorities</th><th/></tr></thead>
-            <tbody>{(data.shiftHandoff||[]).length===0&&<tr><td colSpan={10}><Empty msg="No shift handoffs logged yet — click + Log Shift"/></td></tr>}
+            <tbody>{(data.shiftHandoff||[]).length===0&&<tr><td colSpan={10}><Empty msg="No shift handoffs logged yet - click + Log Shift"/></td></tr>}
             {(data.shiftHandoff||[]).map((s,i)=>(
               <tr key={i}>
                 <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{s.date}</td>
                 <td style={{fontWeight:500}}>{s.lead}</td>
                 <td style={{textAlign:'center',color:'var(--ok)',fontWeight:700}}>{s.ordersCompleted}</td>
                 <td style={{textAlign:'center',color:'var(--warn)'}}>{s.ordersInProgress}</td>
-                <td style={{fontSize:10,color:s.stationsDown&&s.stationsDown!=='None'?'var(--err)':''}}>{s.stationsDown||'—'}</td>
-                <td style={{fontSize:10,color:s.qualityIssues&&s.qualityIssues!=='None'?'var(--warn)':''}}>{s.qualityIssues||'—'}</td>
-                <td style={{fontSize:10,color:s.materialShortages&&s.materialShortages!=='None'?'var(--warn)':''}}>{s.materialShortages||'—'}</td>
-                <td style={{fontSize:10,color:s.safetyIssues&&s.safetyIssues!=='None'?'var(--err)':''}}>{s.safetyIssues||'—'}</td>
+                <td style={{fontSize:10,color:s.stationsDown&&s.stationsDown!=='None'?'var(--err)':''}}>{s.stationsDown||'-'}</td>
+                <td style={{fontSize:10,color:s.qualityIssues&&s.qualityIssues!=='None'?'var(--warn)':''}}>{s.qualityIssues||'-'}</td>
+                <td style={{fontSize:10,color:s.materialShortages&&s.materialShortages!=='None'?'var(--warn)':''}}>{s.materialShortages||'-'}</td>
+                <td style={{fontSize:10,color:s.safetyIssues&&s.safetyIssues!=='None'?'var(--err)':''}}>{s.safetyIssues||'-'}</td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{s.tomorrowPriorities}</td>
                 <td><button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,shiftHandoff:(d.shiftHandoff||[]).filter((_,j)=>j!==i)}))}>×</button></td>
               </tr>
@@ -28389,12 +28392,12 @@ const Production = ({data, setData, user}) => {
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>ID</th><th>Date</th><th>Order</th><th>Station</th><th>Defect Type</th><th>Description</th><th>Severity</th><th>Disposition</th><th>Root Cause</th><th>Status</th><th>Cost</th><th/></tr></thead>
-            <tbody>{(data.defectLog||[]).length===0&&<tr><td colSpan={12}><Empty msg="No defects logged — great!"/></td></tr>}
+            <tbody>{(data.defectLog||[]).length===0&&<tr><td colSpan={12}><Empty msg="No defects logged - great!"/></td></tr>}
             {(data.defectLog||[]).map((d,i)=>(
               <tr key={i}>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{d.id}</td>
                 <td style={{fontSize:11}}>{d.dateFound}</td>
-                <td style={{fontFamily:'monospace',fontSize:10}}>{d.orderId||'—'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10}}>{d.orderId||'-'}</td>
                 <td><span className="chip">{d.station}</span></td>
                 <td style={{fontSize:11}}>{d.defectType}</td>
                 <td style={{fontSize:10,maxWidth:150,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.description}>{d.description}</td>
@@ -28402,7 +28405,7 @@ const Production = ({data, setData, user}) => {
                 <td style={{fontSize:10}}>{d.disposition}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:100,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.rootCause}</td>
                 <td><StatusSelect value={d.status||'Open'} options={['Open','In Progress','Closed']} onChange={v=>setData(dt=>({...dt,defectLog:(dt.defectLog||[]).map(x=>x.id===d.id?{...x,status:v}:x)}))}/></td>
-                <td style={{color:'var(--err)',fontSize:11}}>{d.cost?'$'+d.cost:'—'}</td>
+                <td style={{color:'var(--err)',fontSize:11}}>{d.cost?'$'+d.cost:'-'}</td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...d});setModal('defect');}}>Edit</button>
                   <button className="btn btn-d btn-sm" onClick={()=>setData(dt=>({...dt,defectLog:(dt.defectLog||[]).filter((_,j)=>j!==i)}))}>Del</button>
@@ -28419,7 +28422,7 @@ const Production = ({data, setData, user}) => {
           <Field label="Order ID"><input value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}/></Field>
           <Field label="Defect Type">
             <select value={form.defectType||''} onChange={e=>setForm(f=>({...f,defectType:e.target.value}))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {['Dimensional / Mis-cut','Weld Defect','Powder Coat / Finish','Surface Damage / Scratch','Wrong Material / Part','Hole / Drill Error','Prep Error','Other'].map(t=><option key={t}>{t}</option>)}
             </select>
           </Field>
@@ -28564,7 +28567,7 @@ const Purchasing = ({data, setData}) => {
         <StatCard label="Misc Charges YTD" value={fmt$((data.miscCharges||[]).reduce((a,b)=>a+(b.amount||0),0))} icon="🧾" color="var(--warn)" sub={(data.miscCharges||[]).length+" charges logged"}/>
         <StatCard label="Active Vendors" value={data.vendors.length} icon="🏢" color="var(--acc2)" sub="In vendor directory"/>
       </StatRow>
-      {readyToReceive.length>0&&<div className="alert-bar alert-info"><span style={{color:'var(--info)'}}>📦</span><span><strong>POs Ready to Receive:</strong> {readyToReceive.map(p=>p.id).join(' · ')} — click "Receive" to update inventory automatically</span></div>}
+      {readyToReceive.length>0&&<div className="alert-bar alert-info"><span style={{color:'var(--info)'}}>📦</span><span><strong>POs Ready to Receive:</strong> {readyToReceive.map(p=>p.id).join(' · ')} - click "Receive" to update inventory automatically</span></div>}
       <div style={{display:'flex',gap:6,marginBottom:14}}><button className={'tab'+(purchTab==='po'?' on':'')} onClick={()=>setPurchTab('po')}>Purchase Orders</button>
           <button className={'tab'+(purchTab==='req'?' on':'')} onClick={()=>setPurchTab('req')}>Order Requests</button>
           <button className={'tab'+(purchTab==='quotes'?' on':'')} onClick={()=>setPurchTab('quotes')}>Quote Log</button>
@@ -28599,7 +28602,7 @@ const Purchasing = ({data, setData}) => {
               if(!sel.length){alert('Select at least one PO to email');return;}
               const lines=sel.map(p=>{
                 const total=p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0;
-                const items=p.items?.map(i=>i.qty+'x '+i.name+' @ $'+i.cost).join('\n  ') || p.notes || '—';
+                const items=p.items?.map(i=>i.qty+'x '+i.name+' @ $'+i.cost).join('\n  ') || p.notes || '-';
                 return 'PO #: '+p.id+'\nVendor: '+(p.vendor||'\u2014')+'\nStatus: '+(p.status||'\u2014')+'\nOrder Date: '+(p.ordered||'\u2014')+'\nExpected: '+(p.expected||'\u2014')+'\nTotal: $'+total.toFixed(2)+'\nItems:\n  '+items+(p.attachments&&p.attachments.length?' \n['+p.attachments.length+' attachment(s): '+p.attachments.map(a=>a.name).join(', ')+']':'');
               }).join('\n\n---\n\n');
               const totalAmt=sel.reduce((s,p)=>s+(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0),0);
@@ -28627,7 +28630,7 @@ const Purchasing = ({data, setData}) => {
               <td className="mono" style={{fontWeight:500}}>{fmt$(p.total||p.items?.reduce((a,b)=>a+b.qty*b.cost,0)||0)}</td>
               <td><StatusSelect value={p.status} options={['Draft','Ordered','In Transit','Received','Cancelled']} onChange={v=>setData(d=>({...d,purchaseOrders:d.purchaseOrders.map(x=>x.id===p.id?{...x,status:v}:x)}))}/></td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(p.ordered)}</td>
-              <td style={{fontSize:11,color:p.expected&&p.expected<now()?'var(--warn)':'var(--muted)'}}>{p.expected?fmtD(p.expected):'—'}</td>
+              <td style={{fontSize:11,color:p.expected&&p.expected<now()?'var(--warn)':'var(--muted)'}}>{p.expected?fmtD(p.expected):'-'}</td>
               <td style={{textAlign:'center',whiteSpace:'nowrap'}}>
                 {(p.attachments||[]).length>0
                   ? <button className="btn btn-xs" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}} onClick={()=>openPO(p)}>📎 {(p.attachments||[]).length}</button>
@@ -28640,7 +28643,7 @@ const Purchasing = ({data, setData}) => {
                       }}/>
                     </label>}
               </td>
-              <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.notes}>{p.notes||'—'}</td>
+              <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.notes}>{p.notes||'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 {!p.received&&['Ordered','In Transit'].includes(p.status)&&<button className="btn btn-ok btn-sm" onClick={()=>startReceiving(p)}>Receive</button>}
                 <button className="btn btn-g btn-sm" onClick={()=>openPO(p)}>Edit</button>
@@ -28663,7 +28666,7 @@ const Purchasing = ({data, setData}) => {
           return (
             <StatRow>
               <StatCard label="Pending Approval ($)" value={fmt$(pendingTotal)} icon="⏳" color="var(--warn)" sub={pendingReqs.length+' requests awaiting approval'+(highPriCount?' · '+highPriCount+' high/critical':'')}/>
-              <StatCard label="Approved — Not Ordered" value={fmt$(approvedTotal)} icon="✅" color="var(--ok)" sub={reqs.filter(r=>r.status==='Approved').length+' approved, ready to order'}/>
+              <StatCard label="Approved - Not Ordered" value={fmt$(approvedTotal)} icon="✅" color="var(--ok)" sub={reqs.filter(r=>r.status==='Approved').length+' approved, ready to order'}/>
               <StatCard label="On Order" value={fmt$(onOrderTotal)} icon="🚚" color="var(--acc)" sub={reqs.filter(r=>r.status==='On Order').length+' POs in flight'}/>
               <StatCard label="Received YTD" value={reqs.filter(r=>r.status==='Received').length} icon="📦" color="var(--acc2)" sub={fmt$(reqs.filter(r=>r.status==='Received').reduce((a,r)=>a+(r.estTotal||0),0))+' in goods received'}/>
             </StatRow>
@@ -28684,16 +28687,16 @@ const Purchasing = ({data, setData}) => {
               <tr key={i}>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{r.id}</td>
                 <td style={{fontSize:11}}>{r.dateReq}</td>
-                <td style={{fontSize:11,color:r.dateNeed&&r.dateNeed<now()?'var(--err)':''}}>{r.dateNeed||'—'}</td>
+                <td style={{fontSize:11,color:r.dateNeed&&r.dateNeed<now()?'var(--err)':''}}>{r.dateNeed||'-'}</td>
                 <td style={{fontWeight:500}}>{r.item}</td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{r.dept}</td>
                 <td style={{fontSize:11}}>{r.requester}</td>
                 <td><span style={{fontWeight:700,color:r.priority==='High'?'var(--err)':r.priority==='Medium'?'var(--warn)':'var(--muted)',fontSize:11}}>{r.priority}</span></td>
-                <td style={{fontSize:11}}>{r.vendor||'—'}</td>
-                <td style={{fontFamily:'monospace',fontSize:10}}>{r.partNo||'—'}</td>
+                <td style={{fontSize:11}}>{r.vendor||'-'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10}}>{r.partNo||'-'}</td>
                 <td style={{textAlign:'center'}}>{r.qty}</td>
-                <td>{r.estCost?'$'+r.estCost:'—'}</td>
-                <td style={{fontWeight:600}}>{r.estTotal?'$'+r.estTotal:'—'}</td>
+                <td>{r.estCost?'$'+r.estCost:'-'}</td>
+                <td style={{fontWeight:600}}>{r.estTotal?'$'+r.estTotal:'-'}</td>
                 <td><StatusSelect value={r.status||'Requested'} options={['Requested','Approved','On Order','Back Ordered','Received','Cancelled']} onChange={v=>setData(d=>({...d,orderRequests:(d.orderRequests||[]).map(x=>x.id===r.id?{...x,status:v}:x)}))}/></td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{r.notes}</td>
                 <td><div style={{display:'flex',gap:4}}>
@@ -28728,9 +28731,9 @@ const Purchasing = ({data, setData}) => {
               <td style={{fontSize:10,color:'var(--muted)'}}>{q.service}</td>
               <td style={{textAlign:'center'}}>{q.pieces}</td>
               <td style={{textAlign:'center'}}>{q.weight}</td>
-              <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{q.estCost?'$'+q.estCost:'—'}</td>
-              <td style={{fontFamily:'monospace',fontWeight:600,color:'var(--ok)'}}>{q.actualCost?'$'+q.actualCost:'—'}</td>
-              <td style={{fontFamily:'monospace',color:q.variance>0?'var(--err)':q.variance<0?'var(--ok)':'var(--muted)'}}>{q.variance?'$'+q.variance:'—'}</td>
+              <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{q.estCost?'$'+q.estCost:'-'}</td>
+              <td style={{fontFamily:'monospace',fontWeight:600,color:'var(--ok)'}}>{q.actualCost?'$'+q.actualCost:'-'}</td>
+              <td style={{fontFamily:'monospace',color:q.variance>0?'var(--err)':q.variance<0?'var(--ok)':'var(--muted)'}}>{q.variance?'$'+q.variance:'-'}</td>
               <td><Badge s={q.status||'Quoted'}/></td>
             </tr>
           ))}</tbody>
@@ -28765,7 +28768,7 @@ const Purchasing = ({data, setData}) => {
       }
 
       {/* PO Receiving Modal */}
-      {receiving&&<Modal title={`Receive PO — ${receiving.id}`} onClose={()=>setReceiving(null)}>
+      {receiving&&<Modal title={`Receive PO - ${receiving.id}`} onClose={()=>setReceiving(null)}>
         <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:6,padding:'10px 14px',marginBottom:16}}>
           <div style={{fontSize:12,color:'var(--muted)'}}>Vendor: <strong style={{color:'var(--txt)'}}>{receiving.vendor}</strong></div>
         </div>
@@ -28812,7 +28815,7 @@ const Purchasing = ({data, setData}) => {
               }}/>
             </label>
           </div>
-          {(form.attachments||[]).length===0&&<div style={{fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>No attachments — click + Add File to attach invoices, receipts, quotes, or photos</div>}
+          {(form.attachments||[]).length===0&&<div style={{fontSize:11,color:'var(--muted)',fontStyle:'italic'}}>No attachments - click + Add File to attach invoices, receipts, quotes, or photos</div>}
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             {(form.attachments||[]).map((att,i)=>(
               <div key={i} style={{display:'flex',alignItems:'center',gap:8,background:'var(--s2)',borderRadius:5,padding:'6px 10px'}}>
@@ -28885,9 +28888,9 @@ const Purchasing = ({data, setData}) => {
 Date: ${c.date}
 Category: ${c.cat}
 Description: ${c.desc}
-Vendor: ${c.vendor||'—'}
+Vendor: ${c.vendor||'-'}
 Amount: $${(c.amount||0).toFixed(2)}
-Paid By: ${c.paidBy||'—'}
+Paid By: ${c.paidBy||'-'}
 Notes: ${c.notes||''}
 `).join('\n---\n\n');
               const body = `Hi Accounting,
@@ -28903,7 +28906,7 @@ Thank you,
 Daniel Jones
 Director of Operations
 Maisy Railing | 208.603.8149`;
-              const subject = `Maisy Railing — Misc Charge${selected.length>1?'s':''} for Review (${selected.length} item${selected.length>1?'s':''})`;
+              const subject = `Maisy Railing - Misc Charge${selected.length>1?'s':''} for Review (${selected.length} item${selected.length>1?'s':''})`;
               window.open('mailto:accounting@maisyrailing.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body));
             }}>✉ Email Selected</button>
             <button className="btn btn-xs" onClick={()=>{
@@ -28922,7 +28925,7 @@ Maisy Railing | 208.603.8149`;
               <th>Reimb.</th><th>Receipt</th><th>Notes</th><th></th>
             </tr></thead>
             <tbody>
-              {(data.miscCharges||[]).length===0&&<tr><td colSpan={13}><Empty msg="No misc charges — click + Add Charge"/></td></tr>}
+              {(data.miscCharges||[]).length===0&&<tr><td colSpan={13}><Empty msg="No misc charges - click + Add Charge"/></td></tr>}
               {(data.miscCharges||[]).filter(c=>{
                 if(mcSearch && !(c.desc||'').toLowerCase().includes(mcSearch.toLowerCase()) && !(c.vendor||'').toLowerCase().includes(mcSearch.toLowerCase()) && !(c.notes||'').toLowerCase().includes(mcSearch.toLowerCase())) return false;
                 if(mcCat!=='All' && c.cat!==mcCat) return false;
@@ -28946,7 +28949,7 @@ Maisy Railing | 208.603.8149`;
                   <td style={{textAlign:'center'}}>
                     {c.receipt
                       ? <button className="btn btn-xs" style={{background:'rgba(16,185,129,.15)',color:'var(--ok)'}} onClick={()=>{const a=document.createElement('a');a.href=c.receipt;a.download=c.receiptName||'receipt';a.click();}}>📎 {c.receiptName||'View'}</button>
-                      : <span style={{fontSize:10,color:'var(--muted)'}}>—</span>}
+                      : <span style={{fontSize:10,color:'var(--muted)'}}>-</span>}
                   </td>
                   <td style={{fontSize:10,color:'var(--muted)',maxWidth:110,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.notes}>{c.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
@@ -29041,7 +29044,7 @@ const Invoicing = ({data, setData}) => {
         <StatCard label="Overdue" value={fmt$(data.invoices.filter(i=>i.status==='Overdue').reduce((a,b)=>a+b.amount,0))} icon="🔴" color={data.invoices.filter(i=>i.status==='Overdue').length>0?'var(--err)':'var(--muted)'} sub={data.invoices.filter(i=>i.status==='Overdue').length+" invoices overdue"}/>
         <StatCard label="Total Invoices" value={data.invoices.length} icon="🧾" color="var(--acc)" sub={"Avg: "+fmt$(data.invoices.length?data.invoices.reduce((a,b)=>a+b.amount,0)/data.invoices.length:0)}/>
       </StatRow>
-      {data.invoices.filter(i=>i.status==='Overdue').length>0&&<div className="alert-bar alert-err"><span style={{color:'var(--err)'}}>⚠</span><strong style={{color:'var(--err)'}}>Overdue:</strong>&nbsp;{data.invoices.filter(i=>i.status==='Overdue').map(i=>`${i.id} · ${i.customer} (${fmt$(i.amount)})`).join(' — ')}</div>}
+      {data.invoices.filter(i=>i.status==='Overdue').length>0&&<div className="alert-bar alert-err"><span style={{color:'var(--err)'}}>⚠</span><strong style={{color:'var(--err)'}}>Overdue:</strong>&nbsp;{data.invoices.filter(i=>i.status==='Overdue').map(i=>`${i.id} · ${i.customer} (${fmt$(i.amount)})`).join(' - ')}</div>}
       <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Invoice #</th><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th><th>Issued</th><th>Due</th><th>Paid</th><th/></tr></thead>
           <tbody>{data.invoices.map(i=>(
@@ -29053,7 +29056,7 @@ const Invoicing = ({data, setData}) => {
               <td><StatusSelect value={i.status} options={['Pending','Paid','Overdue','Cancelled']} onChange={v=>setData(d=>({...d,invoices:d.invoices.map(x=>x.id===i.id?{...x,status:v}:x)}))}/></td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{fmtD(i.issued)}</td>
               <td style={{fontSize:11,color:i.status==='Overdue'?'var(--err)':'var(--muted)'}}>{fmtD(i.due)}</td>
-              <td style={{fontSize:11,color:'var(--ok)'}}>{i.paid?fmtD(i.paid):'—'}</td>
+              <td style={{fontSize:11,color:'var(--ok)'}}>{i.paid?fmtD(i.paid):'-'}</td>
               <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(i)}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(i.id)}>Del</button></div></td>
             </tr>
           ))}</tbody>
@@ -29101,7 +29104,7 @@ const Shipping = ({data, setData}) => {
     if(modal==='new') {
       setData(d=>({...d, shipments:[...(d.shipments||[]), rec]}));
     } else {
-      // Use index-based replacement — immune to duplicate id bugs
+      // Use index-based replacement - immune to duplicate id bugs
       if(_editIdx !== null && _editIdx !== undefined) {
         setData(d=>({...d, shipments:(d.shipments||[]).map((s,i)=>i===_editIdx?rec:s)}));
       } else {
@@ -29121,7 +29124,7 @@ const Shipping = ({data, setData}) => {
     status:'Delivered',
   })), ...(data.shipments||[])];
 
-  // Carrier analysis — computed live
+  // Carrier analysis - computed live
   const carrierStats = {};
   allShipments.forEach(s => {
     const c = s.carrier||'Other';
@@ -29136,7 +29139,7 @@ const Shipping = ({data, setData}) => {
     .sort((a,b)=>b.spend-a.spend)
     .map(c=>({...c, avgCost:c.count?c.spend/c.count:0, onTimePct:c.total?Math.round(c.delivered/c.total*100):0}));
 
-  // Monthly summary — computed live
+  // Monthly summary - computed live
   const monthMap = {};
   allShipments.forEach(s => {
     const raw = s.month||s.date||'';
@@ -29193,16 +29196,16 @@ const Shipping = ({data, setData}) => {
             {(data.shipments||[]).map(s=>(
               <tr key={s.id}>
                 <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{s.id}</td>
-                <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{s.orderId||'—'}</td>
+                <td className="mono" style={{fontSize:11,color:'var(--muted)'}}>{s.orderId||'-'}</td>
                 <td style={{fontWeight:500}}>{s.customer}</td>
                 <td style={{fontSize:11}}>{s.carrier}</td>
-                <td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{s.tracking||'—'}</td>
+                <td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{s.tracking||'-'}</td>
                 <td><StatusSelect value={s.status||'Ready to Ship'} options={['Ready to Ship','Shipped','In Transit','Delivered','Exception']} onChange={v=>setData(d=>({...d,shipments:(d.shipments||[]).map(x=>x.id===s.id?{...x,status:v}:x)}))}/></td>
                 <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtD(s.shipped)}</td>
                 <td style={{fontSize:11,color:s.status==='Delivered'?'var(--ok)':'var(--muted)',whiteSpace:'nowrap'}}>{fmtD(s.delivered)}</td>
-                <td style={{fontFamily:'monospace',textAlign:'right',color:'var(--muted)'}}>{s.weight>0?s.weight+' lbs':'—'}</td>
-                <td style={{fontFamily:'monospace',fontSize:10.5,textAlign:'center',color:'var(--muted)'}}>{s.dims||'—'}</td>
-                <td style={{fontFamily:'monospace',fontWeight:600,textAlign:'right',color:s.totalCost>0?'var(--warn)':'var(--muted)'}}>{s.totalCost>0?fmt$(s.totalCost):'—'}</td>
+                <td style={{fontFamily:'monospace',textAlign:'right',color:'var(--muted)'}}>{s.weight>0?s.weight+' lbs':'-'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10.5,textAlign:'center',color:'var(--muted)'}}>{s.dims||'-'}</td>
+                <td style={{fontFamily:'monospace',fontWeight:600,textAlign:'right',color:s.totalCost>0?'var(--warn)':'var(--muted)'}}>{s.totalCost>0?fmt$(s.totalCost):'-'}</td>
                 <td><div style={{display:'flex',gap:4}}><button className="btn btn-g btn-sm" onClick={()=>open(s, (data.shipments||[]).indexOf(s))}>Edit</button><button className="btn btn-d btn-sm" onClick={()=>del(s.id)}>Del</button></div></td>
               </tr>
             ))}
@@ -29239,7 +29242,7 @@ const Shipping = ({data, setData}) => {
       </div>}
       {shipTab==='monthly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',fontSize:11,color:'var(--muted)',borderBottom:'1px solid var(--bdr)'}}>
-          Auto-computed from all shipments — {monthlySummary.length} months
+          Auto-computed from all shipments - {monthlySummary.length} months
         </div>
         <table><thead><tr><th>Month</th><th style={{textAlign:'right'}}>ABF</th><th style={{textAlign:'right'}}>UPS</th><th style={{textAlign:'right'}}>FedEx</th><th style={{textAlign:'right'}}>Estes</th><th style={{textAlign:'right'}}>Old Dom</th><th style={{textAlign:'right'}}>R+L</th><th style={{textAlign:'right'}}>XPO</th><th style={{textAlign:'right'}}>Other</th><th style={{textAlign:'right'}}>TOTAL</th></tr></thead>
           <tbody>{monthlySummary.length===0&&<tr><td colSpan={10}><Empty msg="No shipment data yet"/></td></tr>}
@@ -29249,7 +29252,7 @@ const Shipping = ({data, setData}) => {
               <tr key={i}>
                 <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{m.month}</td>
                 {['abf','ups','fedex','estes','oldDom','rl','xpo','other'].map(k=>(
-                  <td key={k} style={{fontFamily:'monospace',textAlign:'right',color:(c[k]||0)>0?'var(--txt)':'var(--dim)'}}>{(c[k]||0)>0?fmt$(c[k]):'—'}</td>
+                  <td key={k} style={{fontFamily:'monospace',textAlign:'right',color:(c[k]||0)>0?'var(--txt)':'var(--dim)'}}>{(c[k]||0)>0?fmt$(c[k]):'-'}</td>
                 ))}
                 <td style={{fontFamily:'monospace',fontWeight:700,textAlign:'right',color:'var(--acc)'}}>{fmt$(m.total)}</td>
               </tr>
@@ -29260,7 +29263,7 @@ const Shipping = ({data, setData}) => {
               <td style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase'}}>TOTAL</td>
               {['abf','ups','fedex','estes','oldDom','rl','xpo','other'].map(k=>(
                 <td key={k} style={{fontFamily:'monospace',fontWeight:700,textAlign:'right'}}>
-                  {(()=>{const t=monthlySummary.reduce((a,m)=>a+(m.carriers?.[k]||0),0);return t>0?fmt$(t):'—';})()}
+                  {(()=>{const t=monthlySummary.reduce((a,m)=>a+(m.carriers?.[k]||0),0);return t>0?fmt$(t):'-';})()}
                 </td>
               ))}
               <td style={{fontFamily:'monospace',fontWeight:700,textAlign:'right',color:'var(--acc)'}}>{fmt$(monthlySummary.reduce((a,m)=>a+(m.total||0),0))}</td>
@@ -29270,7 +29273,7 @@ const Shipping = ({data, setData}) => {
         </table>
       </div>}
       {modal&&<Modal title={modal==='new'?'New Shipment':'Edit Shipment'} onClose={()=>setModal(null)} lg>
-        {/* PO Lookup — searches shipCostLog + orders by PO ref or order ID */}
+        {/* PO Lookup - searches shipCostLog + orders by PO ref or order ID */}
         {modal==='new'&&(()=>{
           const lookup = (poVal) => {
             const q = (poVal||'').trim().toLowerCase();
@@ -29322,7 +29325,7 @@ const Shipping = ({data, setData}) => {
                 <button className="btn btn-p btn-sm" onClick={()=>lookup(form._lookupQ)}>🔍 Look Up</button>
               </div>
               <div style={{fontSize:10,color:'var(--muted)',marginTop:4}}>
-                Searches {(data.shipCostLog||[]).length} historical shipments · {(data.orders||[]).length} orders — press Enter or click Look Up to auto-fill cost, weight, dims, carrier
+                Searches {(data.shipCostLog||[]).length} historical shipments · {(data.orders||[]).length} orders - press Enter or click Look Up to auto-fill cost, weight, dims, carrier
               </div>
             </div>
           );
@@ -29355,7 +29358,7 @@ const Shipping = ({data, setData}) => {
             <Field label="Freight Cost ($)"><input type="number" step="0.01" min="0" value={form.totalCost||''} placeholder="0.00" onChange={e=>setForm(f=>({...f,totalCost:e.target.value}))}/></Field>
             <Field label="Weight (lbs)"><input type="number" min="0" value={form.weight||''} placeholder="lbs" onChange={e=>setForm(f=>({...f,weight:e.target.value}))}/></Field>
           </div>
-          <Field label="Dimensions — L × W × H (inches)" style={{marginTop:8}}>
+          <Field label="Dimensions - L × W × H (inches)" style={{marginTop:8}}>
             <input value={form.dims||''} placeholder="e.g. 144×44×17" onChange={e=>setForm(f=>({...f,dims:e.target.value}))}/>
           </Field>
         </div>
@@ -29394,10 +29397,10 @@ const Shipping = ({data, setData}) => {
                 return (
                   <tr key={i}>
                     <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{m.month}</td>
-                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.abf||0)>0?'var(--txt)':'var(--dim)'}}>{c.abf?fmt$(c.abf):'—'}</td>
-                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.ups||0)>0?'var(--txt)':'var(--dim)'}}>{c.ups?fmt$(c.ups):'—'}</td>
-                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.fedex||0)>0?'var(--txt)':'var(--dim)'}}>{c.fedex?fmt$(c.fedex):'—'}</td>
-                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.rl||0)>0?'var(--txt)':'var(--dim)'}}>{c.rl?fmt$(c.rl):'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.abf||0)>0?'var(--txt)':'var(--dim)'}}>{c.abf?fmt$(c.abf):'-'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.ups||0)>0?'var(--txt)':'var(--dim)'}}>{c.ups?fmt$(c.ups):'-'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.fedex||0)>0?'var(--txt)':'var(--dim)'}}>{c.fedex?fmt$(c.fedex):'-'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:(c.rl||0)>0?'var(--txt)':'var(--dim)'}}>{c.rl?fmt$(c.rl):'-'}</td>
                     <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(m.total)}</td>
                   </tr>
                 );
@@ -29452,19 +29455,19 @@ const JobCost = ({data,setData}) => {
       </div>
       <div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>WO #</th><th>Product</th><th>Order</th><th>Status</th><th>Labor Hrs</th><th>Labor $</th><th>Material $</th><th>Total Cost</th><th>Est. Revenue</th><th>Margin</th><th/></tr></thead>
-          <tbody>{wos.length===0&&<tr><td colSpan={11}><Empty msg="No work orders — add one to start tracking job costs"/></td></tr>}
+          <tbody>{wos.length===0&&<tr><td colSpan={11}><Empty msg="No work orders - add one to start tracking job costs"/></td></tr>}
           {wos.map(w=>(
             <tr key={w.id}>
               <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{w.id}</td>
               <td style={{fontWeight:500,maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{w.product}</td>
-              <td style={{fontSize:10,color:'var(--muted)'}}>{w.orderId||'—'}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{w.orderId||'-'}</td>
               <td><StatusSelect value={w.status||'Queued'} options={['Queued','In Progress','On Hold','Complete']} onChange={()=>{}}/></td>
               <td className="mono">{w.laborHrs}h @ ${w.laborRate}</td>
               <td className="mono">{fmt$(w.labor)}</td>
               <td className="mono">{fmt$(w.matCost)}</td>
               <td className="mono" style={{fontWeight:600,color:'var(--err)'}}>{fmt$(w.total)}</td>
-              <td className="mono" style={{color:'var(--ok)'}}>{w.rev?fmt$(w.rev):'—'}</td>
-              <td className="mono" style={{color:w.margin==null?'var(--muted)':w.margin>40?'var(--ok)':w.margin>20?'var(--warn)':'var(--err)',fontWeight:600}}>{w.margin!=null?w.margin.toFixed(1)+'%':'—'}</td>
+              <td className="mono" style={{color:'var(--ok)'}}>{w.rev?fmt$(w.rev):'-'}</td>
+              <td className="mono" style={{color:w.margin==null?'var(--muted)':w.margin>40?'var(--ok)':w.margin>20?'var(--warn)':'var(--err)',fontWeight:600}}>{w.margin!=null?w.margin.toFixed(1)+'%':'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-sm" onClick={()=>{setForm({...w});setModal('woedit');}}>Edit</button>
                 <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,workOrders:(d.workOrders||[]).filter(x=>x.id!==w.id)}))}>Del</button>
@@ -29477,8 +29480,8 @@ const JobCost = ({data,setData}) => {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
           <Field label="Product / Description"><input value={form.product||''} onChange={e=>setForm(f=>({...f,product:e.target.value}))}/></Field>
           <Field label="Sales Order"><select value={form.orderId||''} onChange={e=>setForm(f=>({...f,orderId:e.target.value}))}>
-            <option value="">— No Order —</option>
-            {(data.salesOrders||[]).map(o=><option key={o.id} value={o.id}>{o.id} — {o.customer}</option>)}
+            <option value="">- No Order -</option>
+            {(data.salesOrders||[]).map(o=><option key={o.id} value={o.id}>{o.id} - {o.customer}</option>)}
           </select></Field>
           <Field label="Status"><select value={form.status||'Queued'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
             {['Queued','In Progress','On Hold','Complete'].map(s=><option key={s}>{s}</option>)}
@@ -29600,7 +29603,7 @@ const AutoPO = ({data, setData}) => {
         <div style={{display:'flex',gap:6,alignItems:'center'}}><span style={{color:'var(--err)'}}>⚡</span><strong style={{color:'var(--err)'}}>Auto PO Triggers Active</strong></div>
         {triggered.map(r=>{const i=data.inventory.find(x=>x.id===r.inventoryId);return(
           <div key={r.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--s2)',borderRadius:5,padding:'8px 12px'}}>
-            <span style={{fontSize:12}}><strong>{r.itemName}</strong> — {i?.qty} {r.unit} remaining (reorder at {r.triggerQty}) · Order {r.orderQty} {r.unit} for {fmt$(r.orderQty*r.unitCost)}</span>
+            <span style={{fontSize:12}}><strong>{r.itemName}</strong> - {i?.qty} {r.unit} remaining (reorder at {r.triggerQty}) · Order {r.orderQty} {r.unit} for {fmt$(r.orderQty*r.unitCost)}</span>
             <button className="btn btn-p btn-sm" onClick={()=>setConfirm(r)}>Generate PO</button>
           </div>
         );})}
@@ -29622,7 +29625,7 @@ const AutoPO = ({data, setData}) => {
                   <span style={{fontSize:11,color:r.enabled?'var(--ok)':'var(--muted)'}}>{r.enabled?'On':'Off'}</span>
                 </div>
               </td>
-              <td><span className="mono" style={{color:trg?'var(--err)':'var(--ok)',fontWeight:600}}>{i?.qty||'—'} {r.unit}{trg?' ⚡':''}</span></td>
+              <td><span className="mono" style={{color:trg?'var(--err)':'var(--ok)',fontWeight:600}}>{i?.qty||'-'} {r.unit}{trg?' ⚡':''}</span></td>
               <td><div style={{display:'flex',gap:4}}>
                 {trg&&r.enabled&&<button className="btn btn-ok btn-sm" onClick={()=>setConfirm(r)}>PO</button>}
                 <button className="btn btn-g btn-sm" onClick={()=>open(r)}>Edit</button>
@@ -29693,7 +29696,7 @@ const Reports = ({data,setData}) => {
         <div><div className="hd" style={{fontSize:22}}>Reports & Analytics</div></div>
         <div style={{display:'flex',gap:8}}>
           <button className="btn btn-p btn-sm" onClick={()=>{setJhForm({id:'JH-'+uid(),customer:'',project:'',productType:'',mount:'',qty:0,orderTotal:0,matCost:0,laborCost:0,grossMarginPct:0,orderDate:now(),shipDate:'',leadTimeDays:0,status:'Shipped'});setJhModal('new');}}>+ Add Job History</button>
-          <button className="btn" style={{border:'1px solid var(--err)',color:'var(--err)',fontSize:11}} 
+          <button className="btn" style={{border:'1px solid var(--err)',color:'var(--err)',fontSize:11}}
             onClick={()=>{if(window.confirm('Clear browser data and reload with fresh INIT data?')){window.storage&&window.storage.delete('maisy_erp_v4').then(()=>window.location.reload()).catch(()=>{localStorage.removeItem('maisy_erp_v4');window.location.reload()});}}}>
             🔄 Reset Data
           </button>
@@ -29704,7 +29707,7 @@ const Reports = ({data,setData}) => {
       {report&&<div style={{background:'rgba(0,229,255,.04)',border:'1px solid rgba(0,229,255,.18)',borderRadius:8,padding:'16px 18px',marginBottom:18}}>
         <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:12}}>
           <div style={{width:7,height:7,borderRadius:'50%',background:'var(--acc)'}} className="pulse"/>
-          <span className="hd" style={{fontSize:14,color:'var(--acc)'}}>AI Executive Report — {new Date().toLocaleDateString()}</span>
+          <span className="hd" style={{fontSize:14,color:'var(--acc)'}}>AI Executive Report - {new Date().toLocaleDateString()}</span>
         </div>
         {report.split('\n').map((l,i)=><div key={i} style={{fontSize:13,lineHeight:1.75,minHeight:4}}>{l}</div>)}
       </div>}
@@ -29741,9 +29744,9 @@ const Reports = ({data,setData}) => {
         </div>
       </div>
       <div style={{marginTop:24}}>
-        <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:14}}>Job History — {(data.jobHistory||[]).length} orders</div>
+        <div style={{fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--dim)',borderBottom:'1px solid var(--bdr)',paddingBottom:6,marginBottom:14}}>Job History - {(data.jobHistory||[]).length} orders</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
-          {[{l:'Total Revenue',v:fmt$((data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0)),c:'var(--ok)'},{l:'Avg Margin',v:(data.jobHistory||[]).length?((data.jobHistory||[]).reduce((a,b)=>a+(b.grossMarginPct||0),0)/(data.jobHistory||[]).length).toFixed(1)+'%':'—',c:'var(--warn)'},{l:'Avg Lead Time',v:(data.jobHistory||[]).length?((data.jobHistory||[]).reduce((a,b)=>a+(b.leadTimeDays||0),0)/(data.jobHistory||[]).length).toFixed(0)+' days':'—',c:'var(--acc)'},{l:'Orders',v:(data.jobHistory||[]).length,c:'var(--acc2)'}].map((k,i)=>(
+          {[{l:'Total Revenue',v:fmt$((data.jobHistory||[]).reduce((a,b)=>a+(b.orderTotal||0),0)),c:'var(--ok)'},{l:'Avg Margin',v:(data.jobHistory||[]).length?((data.jobHistory||[]).reduce((a,b)=>a+(b.grossMarginPct||0),0)/(data.jobHistory||[]).length).toFixed(1)+'%':'-',c:'var(--warn)'},{l:'Avg Lead Time',v:(data.jobHistory||[]).length?((data.jobHistory||[]).reduce((a,b)=>a+(b.leadTimeDays||0),0)/(data.jobHistory||[]).length).toFixed(0)+' days':'-',c:'var(--acc)'},{l:'Orders',v:(data.jobHistory||[]).length,c:'var(--acc2)'}].map((k,i)=>(
             <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 16px'}}>
               <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{k.l}</div>
               <div style={{fontSize:22,fontFamily:'Barlow Condensed',fontWeight:700,color:k.c}}>{k.v}</div>
@@ -29759,12 +29762,12 @@ const Reports = ({data,setData}) => {
                 <td style={{fontWeight:500}}>{j.customer}</td>
                 <td style={{fontSize:11}}>{j.productType}</td>
                 <td style={{textAlign:'center'}}>{j.qty}</td>
-                <td style={{fontWeight:700,color:'var(--ok)'}}>{j.orderTotal?fmt$(j.orderTotal):'—'}</td>
-                <td>{j.materialCost?fmt$(j.materialCost):'—'}</td>
-                <td>{j.laborCost?fmt$(j.laborCost):'—'}</td>
-                <td style={{color:'var(--ok)',fontWeight:600}}>{j.grossProfit?fmt$(j.grossProfit):'—'}</td>
-                <td style={{color:j.grossMarginPct>=35?'var(--ok)':j.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{j.grossMarginPct?(+j.grossMarginPct).toFixed(1)+'%':'—'}</td>
-                <td style={{fontSize:11}}>{j.leadTimeDays?j.leadTimeDays+' days':'—'}</td>
+                <td style={{fontWeight:700,color:'var(--ok)'}}>{j.orderTotal?fmt$(j.orderTotal):'-'}</td>
+                <td>{j.materialCost?fmt$(j.materialCost):'-'}</td>
+                <td>{j.laborCost?fmt$(j.laborCost):'-'}</td>
+                <td style={{color:'var(--ok)',fontWeight:600}}>{j.grossProfit?fmt$(j.grossProfit):'-'}</td>
+                <td style={{color:j.grossMarginPct>=35?'var(--ok)':j.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{j.grossMarginPct?(+j.grossMarginPct).toFixed(1)+'%':'-'}</td>
+                <td style={{fontSize:11}}>{j.leadTimeDays?j.leadTimeDays+' days':'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-xs" onClick={()=>{setJhForm({...j});setJhModal('edit');}}>Edit</button>
                 <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,jobHistory:(d.jobHistory||[]).filter(x=>x.id!==j.id)}))}>Del</button>
@@ -29946,15 +29949,15 @@ const Finance = ({data,setData}) => {
               <th>Notes</th>
               <th></th>
             </tr></thead>
-            <tbody>{(data.costPerStation||[]).length===0&&<tr><td colSpan={8}><Empty msg="No station data — click Reset Data in Reports to load"/></td></tr>}
+            <tbody>{(data.costPerStation||[]).length===0&&<tr><td colSpan={8}><Empty msg="No station data - click Reset Data in Reports to load"/></td></tr>}
             {(data.costPerStation||[]).map((s,i)=>(
               <tr key={i}>
                 <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station}</td>
-                <td className="mono" style={{textAlign:'center'}}>{s.timePerSectionMin||s.cycleMin||'—'}</td>
-                <td className="mono" style={{textAlign:'center'}}>{s.laborRate?'$'+s.laborRate:s.laborHrAvg?'$'+Math.round(s.laborHrAvg*60)+'est':'—'}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.timePerSectionMin||s.cycleMin||'-'}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.laborRate?'$'+s.laborRate:s.laborHrAvg?'$'+Math.round(s.laborHrAvg*60)+'est':'-'}</td>
                 <td className="mono" style={{textAlign:'center',color:'var(--warn)',fontWeight:700}}>{fmt$(s.costPerSection||s.laborCostUnit)}</td>
-                <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerHr||'—'}</td>
-                <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerDay||'—'}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerHr||'-'}</td>
+                <td className="mono" style={{textAlign:'center'}}>{s.sectionsPerDay||'-'}</td>
                 <td style={{fontSize:11,color:'var(--muted)',maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.notes}</td>
                 <td><button className="btn btn-g btn-xs" onClick={()=>{setForm({...s});setModal('cs');}}>Edit</button></td>
               </tr>
@@ -29970,7 +29973,7 @@ const Finance = ({data,setData}) => {
           <Field label="COGS ($)"><input type="number" value={form.cogs||0} onChange={e=>setForm(f=>({...f,cogs:e.target.value}))}/></Field>
         </div>
         <Field label="Overhead ($)"><input type="number" value={form.overhead||0} onChange={e=>setForm(f=>({...f,overhead:e.target.value}))}/></Field>
-        <div style={{padding:'8px 12px',background:'var(--s2)',borderRadius:5,fontSize:12,color:'var(--ok)',marginBottom:12}}>EBITDA = Revenue − COGS − Overhead = {fmt$(Number(form.revenue||0)-Number(form.cogs||0)-Number(form.overhead||0))}</div>
+        <div style={{padding:'8px 12px',background:'var(--s2)',borderRadius:5,fontSize:12,color:'var(--ok)',marginBottom:12}}>EBITDA = Revenue - COGS - Overhead = {fmt$(Number(form.revenue||0)-Number(form.cogs||0)-Number(form.overhead||0))}</div>
         <div style={{display:'flex',gap:8}}><button className="btn btn-p" onClick={saveMonth}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
       </Modal>}
       {modal==='lr'&&<Modal title="Labor Rate" onClose={()=>setModal(null)}>
@@ -30035,19 +30038,19 @@ const Finance = ({data,setData}) => {
               <th></th>
             </tr></thead>
             <tbody>
-              {(data.productProfitability||[]).length===0&&<tr><td colSpan={12}><Empty msg="No profitability data — click + Add Line"/></td></tr>}
+              {(data.productProfitability||[]).length===0&&<tr><td colSpan={12}><Empty msg="No profitability data - click + Add Line"/></td></tr>}
               {(data.productProfitability||[]).map((p,i)=>(
                 <tr key={i}>
                   <td style={{fontWeight:600}}>{p.family}</td>
-                  <td style={{textAlign:'center'}}>{p.unitsSold||'—'}</td>
-                  <td style={{fontWeight:600,color:'var(--ok)'}}>{p.revenue?fmt$(p.revenue):'—'}</td>
-                  <td style={{color:'var(--muted)'}}>{p.matCost?fmt$(p.matCost):'—'}</td>
-                  <td style={{color:'var(--muted)'}}>{p.laborCost?fmt$(p.laborCost):'—'}</td>
-                  <td style={{color:'var(--muted)'}}>{p.overheadAlloc?fmt$(p.overheadAlloc):'—'}</td>
-                  <td style={{fontWeight:600}}>{p.totalCost?fmt$(p.totalCost):'—'}</td>
-                  <td style={{color:'var(--ok)',fontWeight:700}}>{p.grossProfit?fmt$(p.grossProfit):'—'}</td>
-                  <td style={{color:p.grossMarginPct>=35?'var(--ok)':p.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{p.grossMarginPct?p.grossMarginPct+'%':'—'}</td>
-                  <td className="mono">{p.avgSellPrice?fmt$(p.avgSellPrice):'—'}</td>
+                  <td style={{textAlign:'center'}}>{p.unitsSold||'-'}</td>
+                  <td style={{fontWeight:600,color:'var(--ok)'}}>{p.revenue?fmt$(p.revenue):'-'}</td>
+                  <td style={{color:'var(--muted)'}}>{p.matCost?fmt$(p.matCost):'-'}</td>
+                  <td style={{color:'var(--muted)'}}>{p.laborCost?fmt$(p.laborCost):'-'}</td>
+                  <td style={{color:'var(--muted)'}}>{p.overheadAlloc?fmt$(p.overheadAlloc):'-'}</td>
+                  <td style={{fontWeight:600}}>{p.totalCost?fmt$(p.totalCost):'-'}</td>
+                  <td style={{color:'var(--ok)',fontWeight:700}}>{p.grossProfit?fmt$(p.grossProfit):'-'}</td>
+                  <td style={{color:p.grossMarginPct>=35?'var(--ok)':p.grossMarginPct>=20?'var(--warn)':'var(--err)',fontWeight:700}}>{p.grossMarginPct?p.grossMarginPct+'%':'-'}</td>
+                  <td className="mono">{p.avgSellPrice?fmt$(p.avgSellPrice):'-'}</td>
                   <td style={{fontSize:10,color:'var(--muted)',maxWidth:130,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.notes}>{p.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
                     <button className="btn btn-g btn-xs" onClick={()=>{setForm({...p});setModal('profit');}}>Edit</button>
@@ -30113,7 +30116,7 @@ const Finance = ({data,setData}) => {
 
 // ─── PEOPLE & HR ─────────────────────────────────────────────────────────────────
 const STATIONS_ALL = ['CNC Cut','CNC Drill','Welding','Powder Coat','Assembly','QC Inspection','Packaging'];
-const SKILL_LEVELS = [{v:0,label:'—',bg:'var(--dim)',fg:'var(--muted)'},{v:1,label:'T',bg:'rgba(245,158,11,.2)',fg:'var(--warn)'},{v:2,label:'✓',bg:'rgba(59,130,246,.2)',fg:'var(--info)'},{v:3,label:'★',bg:'rgba(16,185,129,.2)',fg:'var(--ok)'}];
+const SKILL_LEVELS = [{v:0,label:'-',bg:'var(--dim)',fg:'var(--muted)'},{v:1,label:'T',bg:'rgba(245,158,11,.2)',fg:'var(--warn)'},{v:2,label:'✓',bg:'rgba(59,130,246,.2)',fg:'var(--info)'},{v:3,label:'★',bg:'rgba(16,185,129,.2)',fg:'var(--ok)'}];
 
 const People = ({data,setData,user}) => {
   const [peopleTab,setPeopleTab]=useState('employees');
@@ -30190,7 +30193,7 @@ const People = ({data,setData,user}) => {
               <td style={{color:'var(--muted)',fontSize:11}}>{fmtD(e.hire)}</td>
               <td className="mono" style={{color:'var(--ok)'}}>{fmt$(e.rateHr)}</td>
               <td><StatusSelect value={e.status||'Active'} options={['Active','Inactive','On Leave','Terminated']} onChange={v=>setData(d=>({...d,employees:d.employees.map(x=>x.id===e.id?{...x,status:v}:x)}))}/></td>
-              <td style={{fontSize:11}}>{e.email||'—'}</td>
+              <td style={{fontSize:11}}>{e.email||'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-xs" onClick={()=>{setForm({...e});setModal('emp');}}>Edit</button>
                 <button className="btn btn-d btn-xs" onClick={()=>delEmp(e.id)}>×</button>
@@ -30201,7 +30204,7 @@ const People = ({data,setData,user}) => {
       </div>}
 
       {peopleTab==='training'&&<div>
-        <div className="alert-bar alert-info" style={{marginBottom:14}}><span style={{color:'var(--info)'}}>ℹ</span> Click any cell to cycle skill level: — → T (Trainee) → ✓ (Capable) → ★ (Expert) → —</div>
+        <div className="alert-bar alert-info" style={{marginBottom:14}}><span style={{color:'var(--info)'}}>ℹ</span> Click any cell to cycle skill level: - → T (Trainee) → ✓ (Capable) → ★ (Expert) → -</div>
         <div className="card" style={{overflowX:'auto',padding:0}}>
           <table className="ref-table">
             <thead><tr>
@@ -30231,12 +30234,12 @@ const People = ({data,setData,user}) => {
 
       {peopleTab==='certs'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Employee</th><th>Skill / Certification</th><th>Status</th><th>Badge</th></tr></thead>
-          <tbody>{(data.trainingCerts||[]).length===0&&<tr><td colSpan={4}><Empty msg="No certification records — will load from Excel training matrix"/></td></tr>}
+          <tbody>{(data.trainingCerts||[]).length===0&&<tr><td colSpan={4}><Empty msg="No certification records - will load from Excel training matrix"/></td></tr>}
           {(data.trainingCerts||[]).map((c,i)=>(
             <tr key={i}>
               <td style={{fontWeight:600}}>{c.empName}</td>
-              <td style={{fontSize:12}}>{c.skill||c.station||'—'}</td>
-              <td style={{textAlign:'center',color:c.raw==='✓'?'var(--ok)':c.raw==='IP'?'var(--warn)':'var(--muted)',fontWeight:700,fontFamily:'monospace'}}>{c.raw||'—'}</td>
+              <td style={{fontSize:12}}>{c.skill||c.station||'-'}</td>
+              <td style={{textAlign:'center',color:c.raw==='✓'?'var(--ok)':c.raw==='IP'?'var(--warn)':'var(--muted)',fontWeight:700,fontFamily:'monospace'}}>{c.raw||'-'}</td>
               <td><span style={{fontSize:10,padding:'2px 7px',borderRadius:3,background:c.raw==='✓'?'rgba(16,185,129,.15)':c.raw==='IP'?'rgba(245,158,11,.15)':'rgba(100,116,139,.12)',color:c.raw==='✓'?'var(--ok)':c.raw==='IP'?'var(--warn)':'var(--muted)'}}>{c.raw==='✓'?'Certified':c.raw==='IP'?'In Progress':'Not Trained'}</span></td>
             </tr>
           ))}</tbody>
@@ -30249,7 +30252,7 @@ const People = ({data,setData,user}) => {
           <button className="btn btn-p btn-sm" onClick={()=>setModal('efficiency')}>+ Log Entry</button>
         </div>
         <table><thead><tr><th>Week</th><th>Station</th><th>Units</th><th>Hours</th><th>Units/Hr</th><th>FPQ %</th><th>Rework</th><th>Days Present</th><th>Days Late</th><th>OT Hrs</th><th/></tr></thead>
-          <tbody>{(data.employeeEfficiency||[]).length===0&&<tr><td colSpan={11}><Empty msg="No efficiency data — click + Log Entry"/></td></tr>}
+          <tbody>{(data.employeeEfficiency||[]).length===0&&<tr><td colSpan={11}><Empty msg="No efficiency data - click + Log Entry"/></td></tr>}
           {(data.employeeEfficiency||[]).map((e,i)=>(
             <tr key={i}>
               <td style={{fontWeight:600}}>{e.weekEnding}</td><td>{e.station}</td>
@@ -30281,10 +30284,10 @@ const People = ({data,setData,user}) => {
               <td style={{fontSize:11,color:'var(--muted)'}}>{e.model}</td>
               <td style={{fontFamily:'monospace',fontSize:10}}>{e.serial}</td>
               <td style={{fontSize:11}}>{e.acquired}</td>
-              <td>{e.cost?'$'+e.cost.toLocaleString():'—'}</td>
+              <td>{e.cost?'$'+e.cost.toLocaleString():'-'}</td>
               <td style={{fontSize:11}}>{e.location}</td>
               <td style={{textAlign:'center',color:e.condition>=4?'var(--ok)':e.condition>=3?'var(--warn)':'var(--err)',fontWeight:700}}>{e.condition}/5</td>
-              <td style={{fontSize:11,color:e.nextPM&&e.nextPM<=now()?'var(--err)':''}}>{e.nextPM||'—'}</td>
+              <td style={{fontSize:11,color:e.nextPM&&e.nextPM<=now()?'var(--err)':''}}>{e.nextPM||'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-sm" onClick={()=>{setForm({...e});setModal('equipment');}}>Edit</button>
                 <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,equipmentLog:(d.equipmentLog||[]).filter((_,j)=>j!==i)}))}>Del</button>
@@ -30305,9 +30308,9 @@ const People = ({data,setData,user}) => {
             <tr key={i}>
               <td style={{fontSize:10,color:'var(--muted)'}}>{f.category}</td>
               <td style={{fontWeight:500}}>{f.description}</td>
-              <td>{f.estCost?'$'+f.estCost.toLocaleString():'—'}</td>
-              <td style={{fontWeight:600}}>{f.actualCost?'$'+f.actualCost.toLocaleString():'—'}</td>
-              <td style={{color:f.variance<0?'var(--ok)':f.variance>0?'var(--err)':''}}>{f.variance?'$'+f.variance:'—'}</td>
+              <td>{f.estCost?'$'+f.estCost.toLocaleString():'-'}</td>
+              <td style={{fontWeight:600}}>{f.actualCost?'$'+f.actualCost.toLocaleString():'-'}</td>
+              <td style={{color:f.variance<0?'var(--ok)':f.variance>0?'var(--err)':''}}>{f.variance?'$'+f.variance:'-'}</td>
               <td style={{fontSize:11}}>{f.vendor}</td>
               <td><StatusSelect value={f.status||'Planned'} options={['Planned','In Progress','Complete','On Hold','Cancelled']} onChange={v=>{}} small/></td>
               <td style={{fontSize:11}}>{f.dueDate}</td>
@@ -30341,7 +30344,7 @@ const People = ({data,setData,user}) => {
       </div>}
 
       {peopleTab==='discipline'&&<div>
-        <div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span> Disciplinary records are confidential — admin access only.</div>
+        <div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span> Disciplinary records are confidential - admin access only.</div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Employee</th><th>Type</th><th>Date</th><th>Issue</th><th>Action Taken</th><th>Issued By</th><th/></tr></thead>
             <tbody>{data.disciplineLog.length===0&&<tr><td colSpan={7}><Empty/></td></tr>}
@@ -30388,7 +30391,7 @@ const People = ({data,setData,user}) => {
       {modal==='disc'&&<Modal title="Disciplinary Entry" onClose={()=>setModal(null)}>
         <div className="grid2">
           <Field label="Employee"><select value={form.empId||''} onChange={e=>{const emp=data.employees.find(x=>x.id===e.target.value);setForm(f=>({...f,empId:e.target.value,empName:emp?.name||''}));}}>
-            <option value="">— Select —</option>{data.employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></Field>
+            <option value="">- Select -</option>{data.employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></Field>
           <Field label="Type"><select value={form.type||'Verbal Warning'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}><option>Verbal Warning</option><option>Written Warning</option><option>Final Warning</option><option>Suspension</option><option>Termination</option><option>Performance Plan</option></select></Field>
         </div>
         <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
@@ -30560,14 +30563,14 @@ const Automation = ({data,setData}) => {
       {autoTab==='stations'&&<>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Station</th><th>Current Setup</th><th>Goal</th><th>Equipment</th><th>Budget</th><th>Completion</th><th>Status</th><th/></tr></thead>
-            <tbody>{(data.automationStations||[]).length===0&&<tr><td colSpan={8}><Empty msg="No stations added — click + Add Station"/></td></tr>}
+            <tbody>{(data.automationStations||[]).length===0&&<tr><td colSpan={8}><Empty msg="No stations added - click + Add Station"/></td></tr>}
             {(data.automationStations||[]).map((s,i)=>(
               <tr key={i}>
                 <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station||s.name}</td>
-                <td style={{fontSize:11}}>{s.currentSetup||s.currentProcess||'—'}</td>
-                <td style={{fontSize:11,color:'var(--ok)'}}>{s.goal||s.targetAutomation||'—'}</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'—'}</td>
-                <td style={{fontFamily:'monospace'}}>{s.budget?fmt$(s.budget):'—'}</td>
+                <td style={{fontSize:11}}>{s.currentSetup||s.currentProcess||'-'}</td>
+                <td style={{fontSize:11,color:'var(--ok)'}}>{s.goal||s.targetAutomation||'-'}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'-'}</td>
+                <td style={{fontFamily:'monospace'}}>{s.budget?fmt$(s.budget):'-'}</td>
                 <td>
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
                     <div style={{flex:1,background:'var(--s2)',borderRadius:3,height:6}}>
@@ -30590,17 +30593,17 @@ const Automation = ({data,setData}) => {
       {autoTab==='roadmap'&&<>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table><thead><tr><th>Station</th><th>Current Process</th><th>Target Automation</th><th>Equipment</th><th>Est. Cost</th><th>Labor ↓</th><th>Throughput ↑</th><th>Payback (mo)</th><th>Phase</th><th>Priority</th><th/></tr></thead>
-            <tbody>{(data.automationPhasesRoadmap||[]).length===0&&<tr><td colSpan={11}><Empty msg="No roadmap items — click + Add Item"/></td></tr>}
+            <tbody>{(data.automationPhasesRoadmap||[]).length===0&&<tr><td colSpan={11}><Empty msg="No roadmap items - click + Add Item"/></td></tr>}
             {(data.automationPhasesRoadmap||[]).map((s,i)=>(
               <tr key={i}>
                 <td style={{fontWeight:700,color:'var(--acc)'}}>{s.station}</td>
                 <td style={{fontSize:11}}>{s.currentProcess}</td>
                 <td style={{fontSize:11,color:'var(--ok)'}}>{s.targetAutomation}</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'—'}</td>
-                <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{s.estCost||'—'}</td>
-                <td style={{color:'var(--ok)',fontFamily:'monospace'}}>{s.laborReduction||'—'}</td>
-                <td style={{fontFamily:'monospace'}}>{s.throughputIncrease||'—'}</td>
-                <td style={{textAlign:'center'}}>{s.paybackMonths||'—'}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{s.equipment||'-'}</td>
+                <td style={{fontFamily:'monospace',color:'var(--warn)'}}>{s.estCost||'-'}</td>
+                <td style={{color:'var(--ok)',fontFamily:'monospace'}}>{s.laborReduction||'-'}</td>
+                <td style={{fontFamily:'monospace'}}>{s.throughputIncrease||'-'}</td>
+                <td style={{textAlign:'center'}}>{s.paybackMonths||'-'}</td>
                 <td><span className="chip">Phase {s.phase}</span></td>
                 <td style={{textAlign:'center',fontWeight:700}}>{s.priority}</td>
                 <td><div style={{display:'flex',gap:4}}>
@@ -30676,13 +30679,13 @@ const Automation = ({data,setData}) => {
               {(data.orderFulfillment||[]).length===0&&<tr><td colSpan={10}><Empty msg="No fulfillment entries yet"/></td></tr>}
               {(data.orderFulfillment||[]).map((f,i)=>(
                 <tr key={i}>
-                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700}}>{f.orderNo||'—'}</td>
+                  <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)',fontWeight:700}}>{f.orderNo||'-'}</td>
                   <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{f.date}</td>
                   <td style={{fontWeight:600}}>{f.project}</td>
                   <td style={{fontSize:11}}>{f.description}</td>
                   <td style={{fontSize:11,color:'var(--muted)'}}>{f.location}</td>
                   <td><span style={{background:f.type==='Transfer to Bellevue'?'rgba(99,102,241,.2)':'rgba(16,185,129,.2)',color:f.type==='Transfer to Bellevue'?'#818cf8':'var(--ok)',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{f.type}</span></td>
-                  <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{f.amount?fmt$(f.amount):'—'}</td>
+                  <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{f.amount?fmt$(f.amount):'-'}</td>
                   <td><StatusSelect value={f.status||'Fulfilled'} options={['Pending','Fulfilled','Cancelled','On Hold']} onChange={v=>setData(d=>({...d,orderFulfillment:(d.orderFulfillment||[]).map((x,j)=>x.id===f.id?{...x,status:v}:x)}))}/></td>
                   <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={f.notes}>{f.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
@@ -30725,7 +30728,7 @@ const Sister = ({data,setData}) => {
   const [sisterTab,setSisterTab] = useState('dashboard');
   const [search,setSearch]  = useState('');
 
-  // Primary data sources — straight from GOD Mode tabs
+  // Primary data sources - straight from GOD Mode tabs
   const fulfillment = data.orderFulfillment || [];
   const borrowed    = data.borrowedLabor    || [];
 
@@ -30803,7 +30806,7 @@ const Sister = ({data,setData}) => {
         <StatCard label="Order Revenue" value={fmt$(totalRevenue)}   icon="💰" color="var(--ok)"   sub={fulfillment.length+" orders fulfilled"}/>
         <StatCard label="Labor Cost"    value={fmt$(totalLaborCost)} icon="👷" color="var(--warn)" sub={totalHrs.toFixed(0)+" total hours"}/>
         <StatCard label="Net Balance"   value={fmt$(netBalance)}     icon="📊" color={netBalance>0?'var(--ok)':'var(--err)'} sub="Revenue + Labor owed"/>
-        <StatCard label="Employees Used" value={employees.length}    icon="👥" color="var(--acc)"  sub={employees.join(', ')||'—'}/>
+        <StatCard label="Employees Used" value={employees.length}    icon="👥" color="var(--acc)"  sub={employees.join(', ')||'-'}/>
       </StatRow>
 
       {/* ── Header ── */}
@@ -30869,7 +30872,7 @@ const Sister = ({data,setData}) => {
                 {label:'Transfer Hours',      val: transferHrs+'h'},
                 {label:'Total Hours',         val: totalHrs+'h'},
                 {label:'Total Labor Cost',    val: fmt$(totalLaborCost)},
-                {label:'Avg Hourly Rate',     val: totalHrs>0 ? fmt$(totalLaborCost/totalHrs)+'/hr' : '—'},
+                {label:'Avg Hourly Rate',     val: totalHrs>0 ? fmt$(totalLaborCost/totalHrs)+'/hr' : '-'},
               ].map(r=>(
                 <div key={r.label} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid var(--bdr)'}}>
                   <span style={{fontSize:12,color:'var(--muted)'}}>{r.label}</span>
@@ -30915,13 +30918,13 @@ const Sister = ({data,setData}) => {
                   const tc = typeColor(o.type);
                   return (
                     <tr key={i}>
-                      <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{o.orderNo||'—'}</td>
+                      <td className="mono" style={{fontSize:11,color:'var(--acc)'}}>{o.orderNo||'-'}</td>
                       <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtDs(o.date)}</td>
                       <td style={{fontWeight:600,fontSize:12}}>{o.project}</td>
                       <td style={{fontSize:11}}>{o.description}</td>
                       <td><span style={{background:tc.bg,color:tc.c,borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em'}}>{o.location}</span></td>
-                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:600,color:o.amount>0?'var(--ok)':'var(--muted)'}}>{o.amount>0?fmt$(o.amount):'—'}</td>
-                      <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:600,color:o.amount>0?'var(--ok)':'var(--muted)'}}>{o.amount>0?fmt$(o.amount):'-'}</td>
+                      <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'-'}</td>
                     </tr>
                   );
                 })}
@@ -30947,15 +30950,15 @@ const Sister = ({data,setData}) => {
                   const tc = typeColor(o.type);
                   return (
                     <tr key={i}>
-                      <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.orderNo||'—'}</td>
+                      <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.orderNo||'-'}</td>
                       <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtDs(o.date)}</td>
                       <td style={{fontWeight:600}}>{o.project}</td>
                       <td style={{fontSize:11}}>{o.description}</td>
                       <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.location}</td>
-                      <td><span style={{background:tc.bg,color:tc.c,borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em',whiteSpace:'nowrap'}}>{o.type||'—'}</span></td>
-                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:o.amount>0?'var(--ok)':'var(--muted)'}}>{o.amount>0?fmt$(o.amount):'—'}</td>
+                      <td><span style={{background:tc.bg,color:tc.c,borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em',whiteSpace:'nowrap'}}>{o.type||'-'}</span></td>
+                      <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:o.amount>0?'var(--ok)':'var(--muted)'}}>{o.amount>0?fmt$(o.amount):'-'}</td>
                       <td><Badge s={o.status||'Fulfilled'}/></td>
-                      <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'—'}</td>
+                      <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.notes||'-'}</td>
                       <td style={{whiteSpace:'nowrap'}}>
                         <div style={{display:'flex',gap:3}}>
                           <button className="btn btn-g btn-xs" onClick={()=>{setForm({...o});setModal('fulfill');}}>Edit</button>
@@ -30990,10 +30993,10 @@ const Sister = ({data,setData}) => {
                     <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtDs(l.date)}</td>
                     <td style={{fontSize:11}}>{l.task}</td>
                     <td style={{fontSize:11,color:'var(--muted)'}}>{l.location}</td>
-                    <td style={{textAlign:'right',fontFamily:'monospace',color:l.onSiteHrs>0?'var(--txt)':'var(--dim)'}}>{l.onSiteHrs||'—'}</td>
-                    <td style={{textAlign:'right',fontFamily:'monospace',color:l.transferHrs>0?'var(--txt)':'var(--dim)'}}>{l.transferHrs||'—'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:l.onSiteHrs>0?'var(--txt)':'var(--dim)'}}>{l.onSiteHrs||'-'}</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:l.transferHrs>0?'var(--txt)':'var(--dim)'}}>{l.transferHrs||'-'}</td>
                     <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{l.totalHrs}h</td>
-                    <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--muted)'}}>{l.rate?'$'+l.rate:' —'}/hr</td>
+                    <td style={{textAlign:'right',fontFamily:'monospace',color:'var(--muted)'}}>{l.rate?'$'+l.rate:' -'}/hr</td>
                     <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(l.billable)}</td>
                     <td style={{whiteSpace:'nowrap'}}>
                       <div style={{display:'flex',gap:3}}>
@@ -31064,7 +31067,7 @@ const Sister = ({data,setData}) => {
         <div className="grid2">
           <Field label="Employee">
             <select value={form.employee||''} onChange={e=>setForm(f=>({...f,employee:e.target.value}))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {['Jace','Amber','Michael','Nick'].map(e=><option key={e}>{e}</option>)}
             </select>
           </Field>
@@ -31124,20 +31127,20 @@ const SHOP_DATA = {
     {size:'1/2"',decimal:'0.500"',mm:'12.70',use:'Large clearance'},
   ],
   torqueSpecs:[
-    {fastener:'10-32 SS Bolt',material:'6061 Aluminum',torqueInLb:'24–30',torqueFtLb:'2.0–2.5',notes:'Do not overtighten — strip risk'},
-    {fastener:'1/4"-20 SS Bolt',material:'6061 Aluminum',torqueInLb:'55–65',torqueFtLb:'4.6–5.4',notes:'With SS washer'},
-    {fastener:'5/16"-18 SS Bolt',material:'6061 Aluminum',torqueInLb:'115–130',torqueFtLb:'9.6–10.8',notes:'Structural use'},
-    {fastener:'3/8"-7 Lag Bolt',material:'Pressure Treated',torqueInLb:'—',torqueFtLb:'25–30',notes:'Pre-drill required'},
-    {fastener:'Cable Tensioner Set Screw',material:'Fitting Body',torqueInLb:'40–45',torqueFtLb:'3.3–3.75',notes:'Loctite 243 recommended'},
+    {fastener:'10-32 SS Bolt',material:'6061 Aluminum',torqueInLb:'24-30',torqueFtLb:'2.0-2.5',notes:'Do not overtighten - strip risk'},
+    {fastener:'1/4"-20 SS Bolt',material:'6061 Aluminum',torqueInLb:'55-65',torqueFtLb:'4.6-5.4',notes:'With SS washer'},
+    {fastener:'5/16"-18 SS Bolt',material:'6061 Aluminum',torqueInLb:'115-130',torqueFtLb:'9.6-10.8',notes:'Structural use'},
+    {fastener:'3/8"-7 Lag Bolt',material:'Pressure Treated',torqueInLb:'-',torqueFtLb:'25-30',notes:'Pre-drill required'},
+    {fastener:'Cable Tensioner Set Screw',material:'Fitting Body',torqueInLb:'40-45',torqueFtLb:'3.3-3.75',notes:'Loctite 243 recommended'},
   ],
   tigSettings:[
-    {material:'6061 Aluminum',thickness:'1/8"',ampRange:'80–100A',tungsten:'3/32" Pure/Zirconiated',filler:'4043 1/16"',gas:'100% Argon',cfh:'15–20',notes:'AC balance 70/30'},
-    {material:'6061 Aluminum',thickness:'3/16"',ampRange:'130–160A',tungsten:'1/8" Pure/Zirconiated',filler:'4043 3/32"',gas:'100% Argon',cfh:'18–22',notes:'Pre-heat may help'},
-    {material:'6061 Aluminum',thickness:'1/4"',ampRange:'180–220A',tungsten:'1/8" Pure/Zirconiated',filler:'4043 1/8"',gas:'100% Argon',cfh:'20–25',notes:'Multi-pass on thick sections'},
-    {material:'SS 316',thickness:'1/8"',ampRange:'60–90A',tungsten:'2% Thoriated or Ceriated',filler:'316L 1/16"',gas:'Argon/2%N2',cfh:'12–18',notes:'DC- polarity'},
+    {material:'6061 Aluminum',thickness:'1/8"',ampRange:'80-100A',tungsten:'3/32" Pure/Zirconiated',filler:'4043 1/16"',gas:'100% Argon',cfh:'15-20',notes:'AC balance 70/30'},
+    {material:'6061 Aluminum',thickness:'3/16"',ampRange:'130-160A',tungsten:'1/8" Pure/Zirconiated',filler:'4043 3/32"',gas:'100% Argon',cfh:'18-22',notes:'Pre-heat may help'},
+    {material:'6061 Aluminum',thickness:'1/4"',ampRange:'180-220A',tungsten:'1/8" Pure/Zirconiated',filler:'4043 1/8"',gas:'100% Argon',cfh:'20-25',notes:'Multi-pass on thick sections'},
+    {material:'SS 316',thickness:'1/8"',ampRange:'60-90A',tungsten:'2% Thoriated or Ceriated',filler:'316L 1/16"',gas:'Argon/2%N2',cfh:'12-18',notes:'DC- polarity'},
   ],
   aluminumAlloys:[
-    {alloy:'6061-T6',tensile:'45 ksi',yield:'40 ksi',elongation:'12%',machinability:'Good',weldability:'Good',uses:'Posts, rails, structural tube — primary alloy used at Maisy'},
+    {alloy:'6061-T6',tensile:'45 ksi',yield:'40 ksi',elongation:'12%',machinability:'Good',weldability:'Good',uses:'Posts, rails, structural tube - primary alloy used at Maisy'},
     {alloy:'6063-T5',tensile:'27 ksi',yield:'21 ksi',elongation:'12%',machinability:'Excellent',weldability:'Good',uses:'Architectural extrusions, handrail profile'},
     {alloy:'5052-H32',tensile:'33 ksi',yield:'28 ksi',elongation:'12%',machinability:'Fair',weldability:'Excellent',uses:'Sheet metal, backing plates'},
     {alloy:'2024-T3',tensile:'70 ksi',yield:'50 ksi',elongation:'18%',machinability:'Fair',weldability:'Poor',uses:'High-strength applications (NOT used for welded parts)'},
@@ -31174,16 +31177,16 @@ const StairCalc = () => {
 
   const pcPowder=formatPowderAngle(angleDeg);
   function formatPowderAngle(a){
-    if(a<1)return 'Flat — standard railing applies';
-    if(a<30)return `Slight pitch — consider adjustable fittings (${a}°)`;
-    if(a<45)return `Moderate stair — stair posts recommended (${a}°)`;
-    return `Steep stair (${a}°) — verify post base fitting compatibility`;
+    if(a<1)return 'Flat - standard railing applies';
+    if(a<30)return `Slight pitch - consider adjustable fittings (${a}°)`;
+    if(a<45)return `Moderate stair - stair posts recommended (${a}°)`;
+    return `Steep stair (${a}°) - verify post base fitting compatibility`;
   }
 
   const compliance=[];
   if(riseN>0&&runN>0){
-    compliance.push({code:'IRC R311.7',label:'Residential (IRC)',ok:irc_ok,detail:`Rise 4"–7¾" (${riseN}"), Run ≥10" (${runN}")`});
-    compliance.push({code:'IBC 1011.5',label:'Commercial (IBC)',ok:ibc_ok,detail:`Rise 4"–7" (${riseN}"), Run ≥11" (${runN}")`});
+    compliance.push({code:'IRC R311.7',label:'Residential (IRC)',ok:irc_ok,detail:`Rise 4"-7¾" (${riseN}"), Run ≥10" (${runN}")`});
+    compliance.push({code:'IBC 1011.5',label:'Commercial (IBC)',ok:ibc_ok,detail:`Rise 4"-7" (${riseN}"), Run ≥11" (${runN}")`});
   }
 
   return(
@@ -31279,7 +31282,7 @@ const ShopRef = ({data,setData}) => {
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
           {(data.fastenerGuide||[]).length > 0 ? (data.fastenerGuide||[]).length+' fasteners from Arsenal Supply workbook' : 'Standard fastener reference data'}
         </div>
-        <table><thead><tr><th>Gauge #</th><th>Major Dia (in)</th><th>Major Dia (mm)</th><th>Minor Dia (in)</th><th>TPI</th><th>Pilot — Soft Metal</th><th>Pilot — Hard Metal</th><th>Pilot — Plastic/Wood</th></tr></thead>
+        <table><thead><tr><th>Gauge #</th><th>Major Dia (in)</th><th>Major Dia (mm)</th><th>Minor Dia (in)</th><th>TPI</th><th>Pilot - Soft Metal</th><th>Pilot - Hard Metal</th><th>Pilot - Plastic/Wood</th></tr></thead>
           <tbody>
             {(data.fastenerGuide||[]).length > 0
               ? (data.fastenerGuide||[]).map((r,i)=>(
@@ -31353,12 +31356,12 @@ const ShopRef = ({data,setData}) => {
               <td style={{fontWeight:500,fontSize:11}}>{m.material}</td>
               <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{m.alloy}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{m.condition}</td>
-              <td style={{textAlign:'center',fontWeight:600}}>{m.tensile||'—'}</td>
-              <td style={{textAlign:'center'}}>{m.yield_||'—'}</td>
-              <td style={{textAlign:'center'}}>{m.shear||'—'}</td>
-              <td style={{textAlign:'center'}}>{m.elong||'—'}</td>
-              <td style={{textAlign:'center'}}>{m.hardness||'—'}</td>
-              <td style={{fontFamily:'monospace',fontSize:10}}>{m.density||'—'}</td>
+              <td style={{textAlign:'center',fontWeight:600}}>{m.tensile||'-'}</td>
+              <td style={{textAlign:'center'}}>{m.yield_||'-'}</td>
+              <td style={{textAlign:'center'}}>{m.shear||'-'}</td>
+              <td style={{textAlign:'center'}}>{m.elong||'-'}</td>
+              <td style={{textAlign:'center'}}>{m.hardness||'-'}</td>
+              <td style={{fontFamily:'monospace',fontSize:10}}>{m.density||'-'}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -31372,11 +31375,11 @@ const ShopRef = ({data,setData}) => {
               <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--acc)'}}>{w.thickness}</td>
               <td style={{fontSize:11}}>{w.jointType}</td>
               <td style={{fontFamily:'monospace',fontSize:10}}>{w.fillerDia}</td>
-              <td style={{textAlign:'center',fontSize:10}}>{w.fillerPerIn||'—'}</td>
+              <td style={{textAlign:'center',fontSize:10}}>{w.fillerPerIn||'-'}</td>
               <td style={{color:'var(--warn)',fontWeight:600}}>{w.ampsRange}</td>
               <td style={{fontFamily:'monospace',fontSize:10}}>{w.tungstenDia}</td>
-              <td style={{textAlign:'center',fontWeight:600}}>{w.weldTimeIn||'—'}</td>
-              <td style={{fontSize:10,color:'var(--muted)'}}>{w.weldTimeFt||'—'}</td>
+              <td style={{textAlign:'center',fontWeight:600}}>{w.weldTimeIn||'-'}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{w.weldTimeFt||'-'}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -31389,7 +31392,7 @@ const ShopRef = ({data,setData}) => {
 
       {shopTab==='postmfg'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
-          Post manufacturing reference — {(data.postsMfgList||[]).length} SKUs · MFG height, cut lengths, raw stock & tooling from GODMODE 📐 SKU Reference
+          Post manufacturing reference - {(data.postsMfgList||[]).length} SKUs · MFG height, cut lengths, raw stock & tooling from GODMODE 📐 SKU Reference
         </div>
         <table style={{minWidth:900}}>
           <thead><tr>
@@ -31407,11 +31410,11 @@ const ShopRef = ({data,setData}) => {
               <tr key={i}>
                 <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{p.partNo}</td>
                 <td style={{fontSize:11}}>{p.desc}</td>
-                <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center',whiteSpace:'nowrap'}}>{p.mfgHeight||'—'}</td>
-                <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)',textAlign:'center',whiteSpace:'nowrap'}}>{p.cutLength||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap'}}>{p.rawStock||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{p.partsRequired||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.tooling||''}>{p.tooling||'—'}</td>
+                <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center',whiteSpace:'nowrap'}}>{p.mfgHeight||'-'}</td>
+                <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)',textAlign:'center',whiteSpace:'nowrap'}}>{p.cutLength||'-'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap'}}>{p.rawStock||'-'}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{p.partsRequired||'-'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:160,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.tooling||''}>{p.tooling||'-'}</td>
               </tr>
             ))}
           </tbody>
@@ -31436,11 +31439,11 @@ const ShopRef = ({data,setData}) => {
                 <td style={{fontWeight:500}}>{m.name}</td>
                 <td style={{fontSize:10,color:'var(--muted)'}}>{m.category}</td>
                 <td style={{fontSize:11}}>{m.unit}</td>
-                <td style={{fontFamily:'monospace',fontWeight:600}}>{m.unitCost?'$'+m.unitCost:'—'}</td>
-                <td style={{fontSize:11}}>{m.vendor||'—'}</td>
-                <td style={{textAlign:'center',fontSize:11}}>{m.leadTimeDays?m.leadTimeDays+'d':'—'}</td>
-                <td style={{textAlign:'center',fontSize:11}}>{m.minOrderQty||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{m.lastUpdated||'—'}</td>
+                <td style={{fontFamily:'monospace',fontWeight:600}}>{m.unitCost?'$'+m.unitCost:'-'}</td>
+                <td style={{fontSize:11}}>{m.vendor||'-'}</td>
+                <td style={{textAlign:'center',fontSize:11}}>{m.leadTimeDays?m.leadTimeDays+'d':'-'}</td>
+                <td style={{textAlign:'center',fontSize:11}}>{m.minOrderQty||'-'}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{m.lastUpdated||'-'}</td>
               <td><div style={{display:'flex',gap:3}}>
                 <button className="btn btn-g btn-xs" onClick={()=>{setForm({...m,_key:'materialsDB',_idx:i});setModal('refitem');}}>Edit</button>
                 <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,materialsDB:(d.materialsDB||[]).filter((_,j)=>j!==i)}))}>×</button>
@@ -31460,32 +31463,32 @@ const ShopRef = ({data,setData}) => {
             <tr key={i}>
               <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
               <td style={{fontSize:11}}>{s.description}</td>
-              <td style={{textAlign:'center'}}>{s.mfgHeight||'—'}</td>
-              <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center'}}>{s.cutLength||'—'}"</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{s.rawStock||'—'}</td>
-              <td style={{fontSize:10,color:'var(--muted)'}}>{s.partsRequired||'—'}</td>
-              <td style={{fontSize:11}}>{s.tooling||'—'}</td>
-              <td style={{fontSize:11}}>{s.fixtures||'—'}</td>
+              <td style={{textAlign:'center'}}>{s.mfgHeight||'-'}</td>
+              <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center'}}>{s.cutLength||'-'}"</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{s.rawStock||'-'}</td>
+              <td style={{fontSize:10,color:'var(--muted)'}}>{s.partsRequired||'-'}</td>
+              <td style={{fontSize:11}}>{s.tooling||'-'}</td>
+              <td style={{fontSize:11}}>{s.fixtures||'-'}</td>
             </tr>
           ))}</tbody>
         </table>
       </div>}
       {shopTab==='vendorscores'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <div style={{padding:'8px 14px',borderBottom:'1px solid var(--bdr)',fontSize:11,color:'var(--muted)'}}>
-          Vendor scorecards — rated 1–5 on delivery, quality, pricing, service, lead time
+          Vendor scorecards - rated 1-5 on delivery, quality, pricing, service, lead time
         </div>
         <table><thead><tr><th>Vendor</th><th>Category</th><th>On-Time</th><th>Quality</th><th>Pricing</th><th>Service</th><th>Lead Time</th><th>Overall Score</th><th>Review Date</th><th>Reviewer</th></tr></thead>
-          <tbody>{(data.vendorScorecard||[]).length===0&&<tr><td colSpan={10}><Empty msg="No vendor scores entered yet — add scores from Purchasing"/></td></tr>}
+          <tbody>{(data.vendorScorecard||[]).length===0&&<tr><td colSpan={10}><Empty msg="No vendor scores entered yet - add scores from Purchasing"/></td></tr>}
           {(data.vendorScorecard||[]).map((v,i)=>(
             <tr key={i}>
               <td style={{fontWeight:700}}>{v.vendor}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{v.category}</td>
               {[v.onTime,v.quality,v.pricing,v.service,v.leadTime].map((score,j)=>(
-                <td key={j} style={{textAlign:'center',fontWeight:700,color:score>=4?'var(--ok)':score>=3?'var(--warn)':'var(--err)'}}>{score||'—'}/5</td>
+                <td key={j} style={{textAlign:'center',fontWeight:700,color:score>=4?'var(--ok)':score>=3?'var(--warn)':'var(--err)'}}>{score||'-'}/5</td>
               ))}
-              <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700,fontSize:14,color:v.overall>=4?'var(--ok)':v.overall>=3?'var(--warn)':'var(--err)'}}>{v.overall||'—'}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{v.reviewDate||'—'}</td>
-              <td style={{fontSize:11}}>{v.reviewer||'—'}</td>
+              <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700,fontSize:14,color:v.overall>=4?'var(--ok)':v.overall>=3?'var(--warn)':'var(--err)'}}>{v.overall||'-'}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{v.reviewDate||'-'}</td>
+              <td style={{fontSize:11}}>{v.reviewer||'-'}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -31503,11 +31506,11 @@ const ShopRef = ({data,setData}) => {
               <td style={{fontSize:11}}>{b.date}</td>
               <td style={{fontSize:11,maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.task}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{b.location}</td>
-              <td style={{textAlign:'center'}}>{b.onSiteHrs||'—'}</td>
-              <td style={{textAlign:'center'}}>{b.transferHrs||'—'}</td>
+              <td style={{textAlign:'center'}}>{b.onSiteHrs||'-'}</td>
+              <td style={{textAlign:'center'}}>{b.transferHrs||'-'}</td>
               <td style={{textAlign:'center',fontWeight:700,color:'var(--acc)'}}>{b.totalHrs}</td>
-              <td>{b.rate?fmt$(b.rate)+'/hr':'—'}</td>
-              <td style={{fontWeight:700,color:'var(--warn)'}}>{b.billable?fmt$(b.billable):'—'}</td>
+              <td>{b.rate?fmt$(b.rate)+'/hr':'-'}</td>
+              <td style={{fontWeight:700,color:'var(--warn)'}}>{b.billable?fmt$(b.billable):'-'}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -31526,7 +31529,7 @@ const ShopRef = ({data,setData}) => {
               <td style={{fontWeight:600}}>{o.project}</td>
               <td style={{fontSize:11}}>{o.desc}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{o.location}</td>
-              <td style={{fontWeight:700,color:'var(--ok)'}}>{o.value?fmt$(o.value):'—'}</td>
+              <td style={{fontWeight:700,color:'var(--ok)'}}>{o.value?fmt$(o.value):'-'}</td>
               <td style={{fontSize:10,color:'var(--muted)'}}>{o.notes}</td>
             </tr>
           ))}</tbody>
@@ -31551,13 +31554,13 @@ const ShopRef = ({data,setData}) => {
         </div>
       </Modal>}
     </div>
- 
+
   );
 };
 
 // ─── AI PANEL ─────────────────────────────────────────────────────────────────────
 const AIPanel = ({data,open,onClose}) => {
-  const [msgs,setMsgs]=useState([{role:'ai',text:'Hi Daniel — I have full visibility into your ERP: orders, inventory, production, finance, people, and automation roadmap. What do you need?'}]);
+  const [msgs,setMsgs]=useState([{role:'ai',text:'Hi Daniel - I have full visibility into your ERP: orders, inventory, production, finance, people, and automation roadmap. What do you need?'}]);
   const [input,setInput]=useState('');
   const [loading,setLoading]=useState(false);
   const ref=useRef(null);
@@ -31639,7 +31642,7 @@ const KPIDashboard = ({data,setData}) => {
         {[{l:'On-Time Delivery',v:latest.onTimeDeliveryPct,u:'%',m:'On-Time Delivery Rate'},{l:'First Pass Yield',v:latest.firstPassYieldPct,u:'%',m:'First-Pass Yield'},{l:'Avg Lead Time',v:latest.avgLeadTimeDays,u:' days'},{l:'WIP Count',v:latest.wipCount,u:' pcs'},{l:'Scrap (Week)',v:latest.scrapWasteDollar,u:'',pre:'$'},{l:'Safety Incidents',v:latest.safetyIncidents,u:''},{l:'Daily Output',v:latest.avgDailyOutput,u:' pcs/day'},{l:'Status Score',v:latest.statusScore,u:'/10'}].map((k,i)=>(
           <div key={i} style={{background:'var(--s1)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 16px'}}>
             <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:4}}>{k.l}</div>
-            <div style={{fontSize:24,fontFamily:'Barlow Condensed',fontWeight:700,color:k.v?pctColor(k.v,k.m||k.l):'var(--muted)'}}>{k.v!==undefined&&k.v!==''&&Number(k.v)!==0?(k.pre||'')+Number(k.v).toFixed(1)+k.u:'—'}</div>
+            <div style={{fontSize:24,fontFamily:'Barlow Condensed',fontWeight:700,color:k.v?pctColor(k.v,k.m||k.l):'var(--muted)'}}>{k.v!==undefined&&k.v!==''&&Number(k.v)!==0?(k.pre||'')+Number(k.v).toFixed(1)+k.u:'-'}</div>
           </div>
         ))}
       </div>
@@ -31648,15 +31651,15 @@ const KPIDashboard = ({data,setData}) => {
       </div>
       {kpiTab==='weekly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Week Ending</th><th>On-Time %</th><th>FPY %</th><th>Lead Time</th><th>WIP</th><th>Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th><th>Score</th><th/></tr></thead>
-          <tbody>{weekly.length===0&&<tr><td colSpan={11}><Empty msg="No data — click + Log Week"/></td></tr>}
+          <tbody>{weekly.length===0&&<tr><td colSpan={11}><Empty msg="No data - click + Log Week"/></td></tr>}
           {weekly.map((w,i)=>(
             <tr key={i}><td style={{fontWeight:600}}>{w.weekEnding}</td>
-              <td style={{color:pctColor(w.onTimeDeliveryPct,'On-Time Delivery Rate')}}>{w.onTimeDeliveryPct||'—'}</td>
-              <td style={{color:pctColor(w.firstPassYieldPct,'First-Pass Yield')}}>{w.firstPassYieldPct||'—'}</td>
-              <td>{w.avgLeadTimeDays||'—'}</td><td>{w.wipCount||'—'}</td>
-              <td style={{color:w.scrapWasteDollar>200?'var(--err)':''}}>{w.scrapWasteDollar?'$'+w.scrapWasteDollar:'—'}</td>
+              <td style={{color:pctColor(w.onTimeDeliveryPct,'On-Time Delivery Rate')}}>{w.onTimeDeliveryPct||'-'}</td>
+              <td style={{color:pctColor(w.firstPassYieldPct,'First-Pass Yield')}}>{w.firstPassYieldPct||'-'}</td>
+              <td>{w.avgLeadTimeDays||'-'}</td><td>{w.wipCount||'-'}</td>
+              <td style={{color:w.scrapWasteDollar>200?'var(--err)':''}}>{w.scrapWasteDollar?'$'+w.scrapWasteDollar:'-'}</td>
               <td style={{color:w.safetyIncidents>0?'var(--err)':'',fontWeight:w.safetyIncidents>0?700:400}}>{w.safetyIncidents||'0'}</td>
-              <td>{w.avgDailyOutput||'—'}</td><td>{w.reworkHours||'—'}</td><td>{w.statusScore||'—'}</td>
+              <td>{w.avgDailyOutput||'-'}</td><td>{w.reworkHours||'-'}</td><td>{w.statusScore||'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-sm" onClick={()=>{setForm({...w});setModal('weekly');}}>Edit</button>
                 <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,kpiWeekly:(d.kpiWeekly||[]).filter(x=>x.weekEnding!==w.weekEnding)}))}>Del</button>
@@ -31668,19 +31671,19 @@ const KPIDashboard = ({data,setData}) => {
       {kpiTab==='monthly'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Month</th><th>Avg On-Time %</th><th>Avg FPY %</th><th>Avg Lead Time</th><th>Avg WIP</th><th>Total Scrap $</th><th>Safety</th><th>Daily Output</th><th>Rework Hrs</th></tr></thead>
           <tbody>{monthly.length===0&&<tr><td colSpan={9}><Empty msg="No monthly data"/></td></tr>}
-          {monthly.map((m,i)=><tr key={i}><td style={{fontWeight:600}}>{m.month}</td><td>{m.avgOnTimePct||'—'}</td><td>{m.avgFpyPct||'—'}</td><td>{m.avgLeadTime||'—'}</td><td>{m.avgWip||'—'}</td><td>{m.totalScrap?'$'+m.totalScrap:'—'}</td><td>{m.totalSafety||'—'}</td><td>{m.avgDailyOutput||'—'}</td><td>{m.totalReworkHrs||'—'}</td></tr>)}
+          {monthly.map((m,i)=><tr key={i}><td style={{fontWeight:600}}>{m.month}</td><td>{m.avgOnTimePct||'-'}</td><td>{m.avgFpyPct||'-'}</td><td>{m.avgLeadTime||'-'}</td><td>{m.avgWip||'-'}</td><td>{m.totalScrap?'$'+m.totalScrap:'-'}</td><td>{m.totalSafety||'-'}</td><td>{m.avgDailyOutput||'-'}</td><td>{m.totalReworkHrs||'-'}</td></tr>)}
           </tbody>
         </table>
       </div>}
       {kpiTab==='targets'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>KPI Metric</th><th>Green Target</th><th>Yellow</th><th>Red</th><th>Unit</th><th>Notes</th></tr></thead>
-          <tbody>{targets.map((t,i)=><tr key={i}><td style={{fontWeight:600}}>{t.metric}</td><td style={{color:'var(--ok)',fontWeight:700}}>{t.green?(+t.green*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--warn)'}}>{t.yellow?(+t.yellow*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--err)'}}>{t.red?(+t.red*100).toFixed(0)+'%':'—'}</td><td style={{color:'var(--muted)'}}>{t.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td></tr>)}
+          <tbody>{targets.map((t,i)=><tr key={i}><td style={{fontWeight:600}}>{t.metric}</td><td style={{color:'var(--ok)',fontWeight:700}}>{t.green?(+t.green*100).toFixed(0)+'%':'-'}</td><td style={{color:'var(--warn)'}}>{t.yellow?(+t.yellow*100).toFixed(0)+'%':'-'}</td><td style={{color:'var(--err)'}}>{t.red?(+t.red*100).toFixed(0)+'%':'-'}</td><td style={{color:'var(--muted)'}}>{t.unit}</td><td style={{fontSize:11,color:'var(--muted)'}}>{t.notes}</td></tr>)}
           </tbody>
         </table>
       </div>}
       {kpiTab==='stations'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Station</th><th>Min/Section</th><th>Sections/Hr</th><th>Sections/Day</th><th>Labor $/Day</th><th>Consumable $/Day</th><th>Total $/Day</th></tr></thead>
-          <tbody>{station.map((s,i)=><tr key={i}><td style={{fontWeight:600}}>{s.station}</td><td>{s.timePerSectionMin?(+s.timePerSectionMin).toFixed(2):'—'}</td><td>{s.sectionsPerHour?(+s.sectionsPerHour).toFixed(1):'—'}</td><td style={{fontWeight:600,color:'var(--acc)'}}>{s.sectionsPerDay?(+s.sectionsPerDay).toFixed(0):'—'}</td><td>${s.laborDollarDay?(+s.laborDollarDay).toFixed(0):'—'}</td><td>${s.consumableDollarDay?(+s.consumableDollarDay).toFixed(2):'—'}</td><td style={{fontWeight:700}}>${s.totalProcessDollarDay?(+s.totalProcessDollarDay).toFixed(0):'—'}</td></tr>)}
+          <tbody>{station.map((s,i)=><tr key={i}><td style={{fontWeight:600}}>{s.station}</td><td>{s.timePerSectionMin?(+s.timePerSectionMin).toFixed(2):'-'}</td><td>{s.sectionsPerHour?(+s.sectionsPerHour).toFixed(1):'-'}</td><td style={{fontWeight:600,color:'var(--acc)'}}>{s.sectionsPerDay?(+s.sectionsPerDay).toFixed(0):'-'}</td><td>${s.laborDollarDay?(+s.laborDollarDay).toFixed(0):'-'}</td><td>${s.consumableDollarDay?(+s.consumableDollarDay).toFixed(2):'-'}</td><td style={{fontWeight:700}}>${s.totalProcessDollarDay?(+s.totalProcessDollarDay).toFixed(0):'-'}</td></tr>)}
           </tbody>
         </table>
       </div>}
@@ -31711,9 +31714,9 @@ const KPIDashboard = ({data,setData}) => {
 // ─── BOM ENGINE ──────────────────────────────────────────────────────────────
 // Calculates materials needed for an order based on quantities
 // Returns array of {inventoryId, sku, name, qty, unit, cat}
-// ─── BOM ENGINE v2 — Rules from Maisy_Railing_Materials_ALL_ORDERS_17.xlsx ────
-// POST ALUMINUM: 3.5ft/post @ 42in, 3.0ft/post @ 36in (RM-001 — all post types)
-// TOP RAIL: 8ft/12ft/20ft pieces — Deck Top & Stair Top = same material RM-006
+// ─── BOM ENGINE v2 - Rules from Maisy_Railing_Materials_ALL_ORDERS_17.xlsx ────
+// POST ALUMINUM: 3.5ft/post @ 42in, 3.0ft/post @ 36in (RM-001 - all post types)
+// TOP RAIL: 8ft/12ft/20ft pieces - Deck Top & Stair Top = same material RM-006
 // LAGS: fascia=2/post, surface=0. LAG WASHERS: 1 per lag (always)
 // POST SCREWS: surface=4/post, fascia=0
 // SELF TAP: 4/post (all types)
@@ -31763,12 +31766,12 @@ const calcBOM = (order) => {
   const cableColorLower = (cableColor||'').toLowerCase();
   const pcColorField = powderColor || color || '';
 
-  // Black hardware — dedicated field takes priority, then notes scan
+  // Black hardware - dedicated field takes priority, then notes scan
   const isBlackHW = hwColorLower.includes('black') || hwColorLower.includes('blk') ||
     notesLower.includes('black hardware') || notesLower.includes('blk hardware') ||
     notesLower.includes('black swage') || notesLower.includes('all black') ||
     notesLower.includes('black fastener');
-  // Black cable — dedicated field takes priority, then notes
+  // Black cable - dedicated field takes priority, then notes
   const isBlackCable = cableColorLower.includes('black') || cableColorLower.includes('blk') ||
     notesLower.includes('black cable') || notesLower.includes('blk cable');
 
@@ -31789,11 +31792,11 @@ const calcBOM = (order) => {
   items._flags = [];
   if(stairAngleFlag) items._flags.push({
     type:'MISSING_STAIR_ANGLES', severity:'warn',
-    msg:`${sp} stair post(s) present but NO stair angles specified — verify cut angles and angle bracket requirements before releasing to production`,
+    msg:`${sp} stair post(s) present but NO stair angles specified - verify cut angles and angle bracket requirements before releasing to production`,
   });
   if(!pcColorField) items._flags.push({
     type:'MISSING_COLOR', severity:'err',
-    msg:'No powder coat color specified — cannot batch by color or pull powder inventory',
+    msg:'No powder coat color specified - cannot batch by color or pull powder inventory',
   });
 
   const add = (id, name, qty, unit, cat, note='') => {
@@ -31805,13 +31808,13 @@ const calcBOM = (order) => {
   // CABLE RAIL BOM
   // ════════════════════════════════════════════════════════════════════════════
   if(isCable) {
-    // 1. POST ALUMINUM — 1"×3"×1/8" tube
+    // 1. POST ALUMINUM - 1"×3"×1/8" tube
     if(totalPosts > 0) {
       add('RM-001','6061-T6 Tube 1"×3"×1/8" (Post Alum)', totalPosts * postFtEach, 'FT','Aluminum',
         `${totalPosts} posts × ${postFtEach.toFixed(3)}ft (${postInches}" height)`);
     }
 
-    // 2. TOP RAIL — 1"×2"×1/8" tube (deck + stair = same SKU)
+    // 2. TOP RAIL - 1"×2"×1/8" tube (deck + stair = same SKU)
     const r8t  = (Number(rail8ft)||0)+(Number(stairRail8ft)||0);
     const r12t = (Number(rail12ft)||0)+(Number(stairRail12ft)||0);
     const r20t = (Number(rail20ft)||0)+(Number(stairRail20ft)||0);
@@ -31835,7 +31838,7 @@ const calcBOM = (order) => {
         swages,'EA','Hardware','Complete assemblies');
     }
 
-    // 5. ANGLE WASHERS — stair posts only, 1:1 with swages unless explicit
+    // 5. ANGLE WASHERS - stair posts only, 1:1 with swages unless explicit
     if(sp > 0 && swages > 0) {
       const awQty = (Number(angleWasherQty)||0) > 0 ? Number(angleWasherQty) : swages;
       add(useLargeWashers?'AI-010':(isBlackHW?'AI-014b':'AI-014'),
@@ -31845,23 +31848,23 @@ const calcBOM = (order) => {
         useLargeWashers?'Large washers per notes':'1:1 with swages (stair sections)');
     }
 
-    // 6. STAIR ANGLE BRACKETS — per stair run, 2 brackets per stair post per angle
+    // 6. STAIR ANGLE BRACKETS - per stair run, 2 brackets per stair post per angle
     if(stairAnglesArr.length > 0) {
       stairAnglesArr.forEach(a => {
         const aq = Number(a.qty)||0;
         if(aq > 0) add('AI-012',`Stair Angle Bracket ${a.angle}`, aq*2,'EA','Hardware',
-          `${aq} post(s) × 2 brackets @ ${a.angle}${a.notes?' — '+a.notes:''}`);
+          `${aq} post(s) × 2 brackets @ ${a.angle}${a.notes?' - '+a.notes:''}`);
       });
     } else if(sp > 0) {
-      // Unknown angle — placeholder so it shows in BOM with flag
+      // Unknown angle - placeholder so it shows in BOM with flag
       add('AI-012','Stair Angle Bracket (⚠ angle unspecified)', sp*2,'EA','Hardware',
-        `${sp} stair post(s) × 2 — verify cut angle with customer`);
+        `${sp} stair post(s) × 2 - verify cut angle with customer`);
     }
 
     // 7. RAIL CAPS
     if(railCaps > 0) add('AI-019','Handrail End Cap 3"×1"', railCaps,'EA','Hardware');
 
-    // 8. LAGS — fascia: 2/post + washers 1:1
+    // 8. LAGS - fascia: 2/post + washers 1:1
     if(mountFascia && totalPosts > 0 && !noLags) {
       const lc = (Number(lagQty)||0) > 0 ? Number(lagQty) : totalPosts * 2;
       add('AI-005','Lag Bolt SS 3/8"×5"', lc,'EA','Hardware',
@@ -31869,14 +31872,14 @@ const calcBOM = (order) => {
       add('AI-008','Lag Bolt Washer 7/16" SS', lc,'EA','Hardware','1 per lag');
     }
 
-    // 9. POST SCREWS — surface: 4/post
+    // 9. POST SCREWS - surface: 4/post
     if(isSurface && totalPosts > 0) {
       const pc = (Number(postScrewQty)||0) > 0 ? Number(postScrewQty) : totalPosts*4;
       add('AI-004','Post Screw 3/16"×2-7/8" Lock Head', pc,'EA','Hardware',
         Number(postScrewQty)>0?'From order spec':`${totalPosts} posts × 4`);
     }
 
-    // 10. SELF-TAP — 4/post all types
+    // 10. SELF-TAP - 4/post all types
     if(totalPosts > 0) {
       const sc = (Number(selfTapQty)||0) > 0 ? Number(selfTapQty) : totalPosts*4;
       add('AI-002','#11 Self-Tap Screw Sq Drive Pan Head', sc,'EA','Hardware',
@@ -31926,13 +31929,13 @@ const calcBOM = (order) => {
       add('RM-006','6061-T6 Tube 1"×2"×1/8" (Top Rail)', totalRailFtG,'FT','Aluminum', rng);
     }
 
-    // Glass panels — use explicit count or estimate (posts-1 per section)
+    // Glass panels - use explicit count or estimate (posts-1 per section)
     const panelQty = glassPanel > 0 ? glassPanel : Math.max(1, totalPosts - 1 + cp);
     const panelEst = glassPanel === 0;
     add('GL-001',`1/2" Tempered Glass Panel${panelEst?' (estimated)':''}`, panelQty,'EA','Glass',
-      panelEst?`Estimated: ${totalPosts} posts − 1/section — verify with customer`:'From order spec');
+      panelEst?`Estimated: ${totalPosts} posts - 1/section - verify with customer`:'From order spec');
 
-    // Glass clamps — industry standard: framed=4/panel, frameless=3/panel (standoffs)
+    // Glass clamps - industry standard: framed=4/panel, frameless=3/panel (standoffs)
     const clampQty = glassClamp > 0 ? glassClamp : (isGlassFrameless ? panelQty*3 : panelQty*4);
     const clampEst = glassClamp === 0;
     add('GL-002',`Glass Clamp SS316${isGlassFrameless?' Standoff':''}${clampEst?' (estimated)':''}`,
@@ -31958,7 +31961,7 @@ const calcBOM = (order) => {
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // POWDER COAT — all product types
+  // POWDER COAT - all product types
   // Coverage: 80 sqft/lb at 2-3 mil DFT (industry standard)
   // Post tube 1"×3": perimeter = 2*(1+3) = 8" = 0.667ft/ft of length
   // Rail tube 1"×2": perimeter = 2*(1+2) = 6" = 0.5ft/ft
@@ -32001,8 +32004,8 @@ const calcBOM = (order) => {
       inventoryId: powderInvId || 'PC-UNKNOWN',
       sku: powderInvId || 'PC-UNKNOWN',
       name: powderInvId
-        ? `Powder Coat — ${pcColorField}`
-        : `Powder Coat — ${pcColorField||'⚠ COLOR NOT SPECIFIED'} ⚠ not in color map`,
+        ? `Powder Coat - ${pcColorField}`
+        : `Powder Coat - ${pcColorField||'⚠ COLOR NOT SPECIFIED'} ⚠ not in color map`,
       qty: lbsNeeded,
       unit: 'LB',
       cat: 'Powder Coat',
@@ -32092,7 +32095,7 @@ const Orders = ({data, setData}) => {
       const adjLogs = bom.filter(b=>b.inventoryId&&b.inventoryId!=='PC-UNKNOWN').map(item => ({
         id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
         type:'remove', qty:item.qty,
-        reason:'Order '+rec.id+' — '+rec.customer+' (new order created)',
+        reason:'Order '+rec.id+' - '+rec.customer+' (new order created)',
         date:now(), user:'System (BOM)',
       }));
       setData(d=>({
@@ -32110,7 +32113,7 @@ const Orders = ({data, setData}) => {
     }
 
     if(is3BD && isNew){
-      const ofEntry={id:'OF-'+uid(),orderNo:rec.id,date:rec.date||now(),project:rec.customer||'',description:(rec.productType||'')+(rec.color?' — '+rec.color:''),location:'HAYDEN - BELLEVUE',amount:rec.orderTotal||0,notes:rec.notes||'',source:'3BD',type:'Transfer to Bellevue',status:'Pending',orderType:rec.orderType||'',salesPerson:rec.salesPerson||'',attachments:[]};
+      const ofEntry={id:'OF-'+uid(),orderNo:rec.id,date:rec.date||now(),project:rec.customer||'',description:(rec.productType||'')+(rec.color?' - '+rec.color:''),location:'HAYDEN - BELLEVUE',amount:rec.orderTotal||0,notes:rec.notes||'',source:'3BD',type:'Transfer to Bellevue',status:'Pending',orderType:rec.orderType||'',salesPerson:rec.salesPerson||'',attachments:[]};
       setData(d=>({...d,orderFulfillment:[...(d.orderFulfillment||[]),ofEntry]}));
     }
     setModal(null);
@@ -32125,7 +32128,7 @@ const Orders = ({data, setData}) => {
     const adjLogs = bomItems.map(item => ({
       id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
       type:'add', qty:item.qty,
-      reason:`Order ${order.id} — ${order.customer} (${reason})`,
+      reason:`Order ${order.id} - ${order.customer} (${reason})`,
       date:now(), user:'System (BOM restore)',
     }));
     setData(d => ({
@@ -32143,7 +32146,7 @@ const Orders = ({data, setData}) => {
   const cancelOrder = (orderId, reason) => {
     const order = (data.orders||[]).find(o=>o.id===orderId);
     if(!order) return;
-    restoreInventory(order, `cancelled — ${reason}`);
+    restoreInventory(order, `cancelled - ${reason}`);
     const cancelEntry = {
       id:'CXL-'+uid(), orderId, customer:order.customer,
       project:order.project||'', orderTotal:order.orderTotal||0,
@@ -32161,7 +32164,7 @@ const Orders = ({data, setData}) => {
     setCancelReasonOther('');
   };
 
-  // ── Delete order — restore inventory + remove ────────────────────────────────
+  // ── Delete order - restore inventory + remove ────────────────────────────────
   const deleteOrder = (orderId) => {
     const order = (data.orders||[]).find(o=>o.id===orderId);
     if(!order) return;
@@ -32173,12 +32176,12 @@ const Orders = ({data, setData}) => {
   };
 
   const emailTemplates = {
-    'New':          o => ({subject:'Maisy Railing — Order '+o.id+' Received',         body:'Hi '+o.customer+',\n\nThank you for your order! We received Order '+o.id+' for '+( o.project||'your project')+' and it is now in our queue.\n\nDetails:\n• Product: '+o.productType+'\n• Color: '+o.color+'\n• Line Posts: '+( o.lineQty||0)+' | Stair: '+(o.stairQty||0)+' | Corner: '+(o.cornerQty||0)+'\n• Due Date: '+(o.dueDate||'TBD')+'\n\nWe will keep you updated as your order progresses.\n\nBest regards,\nDaniel Jones | Director of Operations\nMaisy Railing | (208) 603-8149'}),
-    'Confirmed':    o => ({subject:'Maisy Railing — Order '+o.id+' Confirmed',         body:'Hi '+o.customer+',\n\nYour order '+o.id+' has been CONFIRMED and scheduled for production.\n\nProject: '+(o.project||'—')+'\nDue Date: '+(o.dueDate||'TBD')+'\nColor: '+o.color+'\n\nWe will notify you when it moves to production.\n\nBest regards,\nDaniel Jones | Maisy Railing'}),
-    'In Production':o => ({subject:'Maisy Railing — Order '+o.id+' In Production',     body:'Hi '+o.customer+',\n\nYour order '+o.id+' is now IN PRODUCTION! Our team is actively building your railing.\n\nExpected completion: '+(o.dueDate||'TBD')+'\n\nWe will notify you when it is ready to ship.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
-    'Ready to Ship':o => ({subject:'Maisy Railing — Order '+o.id+' Ready to Ship!',    body:'Hi '+o.customer+',\n\nExciting news — your order '+o.id+' is READY TO SHIP!\n\nWe will be scheduling carrier pickup shortly and you will receive a tracking number once it ships.\n\nOrder: '+o.id+' | '+o.productType+' | '+o.color+'\nBalance Due: $'+(o.balance||0).toFixed(2)+'\n\nPlease confirm your delivery address and any special instructions.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
-    'Shipped':      o => ({subject:'Maisy Railing — Order '+o.id+' Has Shipped!',      body:'Hi '+o.customer+',\n\nYour order '+o.id+' has shipped!\n\nCarrier: [Carrier Name]\nTracking #: [Tracking Number]\nEstimated Delivery: [Date]\n\nBalance Due: $'+(o.balance||0).toFixed(2)+'\n\nThank you for your business. If you have any issues please contact us immediately.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
-    'Completed':    o => ({subject:'Maisy Railing — Order '+o.id+' Complete — Thank You!', body:'Hi '+o.customer+',\n\nOrder '+o.id+' is now marked complete. Thank you for choosing Maisy Railing!\n\nWe would love your feedback. If you are happy with your railing, please consider leaving us a review.\n\nWe look forward to working with you again.\n\nBest regards,\nDaniel Jones | Maisy Railing'}),
+    'New':          o => ({subject:'Maisy Railing - Order '+o.id+' Received',         body:'Hi '+o.customer+',\n\nThank you for your order! We received Order '+o.id+' for '+( o.project||'your project')+' and it is now in our queue.\n\nDetails:\n• Product: '+o.productType+'\n• Color: '+o.color+'\n• Line Posts: '+( o.lineQty||0)+' | Stair: '+(o.stairQty||0)+' | Corner: '+(o.cornerQty||0)+'\n• Due Date: '+(o.dueDate||'TBD')+'\n\nWe will keep you updated as your order progresses.\n\nBest regards,\nDaniel Jones | Director of Operations\nMaisy Railing | (208) 603-8149'}),
+    'Confirmed':    o => ({subject:'Maisy Railing - Order '+o.id+' Confirmed',         body:'Hi '+o.customer+',\n\nYour order '+o.id+' has been CONFIRMED and scheduled for production.\n\nProject: '+(o.project||'-')+'\nDue Date: '+(o.dueDate||'TBD')+'\nColor: '+o.color+'\n\nWe will notify you when it moves to production.\n\nBest regards,\nDaniel Jones | Maisy Railing'}),
+    'In Production':o => ({subject:'Maisy Railing - Order '+o.id+' In Production',     body:'Hi '+o.customer+',\n\nYour order '+o.id+' is now IN PRODUCTION! Our team is actively building your railing.\n\nExpected completion: '+(o.dueDate||'TBD')+'\n\nWe will notify you when it is ready to ship.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
+    'Ready to Ship':o => ({subject:'Maisy Railing - Order '+o.id+' Ready to Ship!',    body:'Hi '+o.customer+',\n\nExciting news - your order '+o.id+' is READY TO SHIP!\n\nWe will be scheduling carrier pickup shortly and you will receive a tracking number once it ships.\n\nOrder: '+o.id+' | '+o.productType+' | '+o.color+'\nBalance Due: $'+(o.balance||0).toFixed(2)+'\n\nPlease confirm your delivery address and any special instructions.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
+    'Shipped':      o => ({subject:'Maisy Railing - Order '+o.id+' Has Shipped!',      body:'Hi '+o.customer+',\n\nYour order '+o.id+' has shipped!\n\nCarrier: [Carrier Name]\nTracking #: [Tracking Number]\nEstimated Delivery: [Date]\n\nBalance Due: $'+(o.balance||0).toFixed(2)+'\n\nThank you for your business. If you have any issues please contact us immediately.\n\nBest regards,\nDaniel Jones | Maisy Railing | (208) 603-8149'}),
+    'Completed':    o => ({subject:'Maisy Railing - Order '+o.id+' Complete - Thank You!', body:'Hi '+o.customer+',\n\nOrder '+o.id+' is now marked complete. Thank you for choosing Maisy Railing!\n\nWe would love your feedback. If you are happy with your railing, please consider leaving us a review.\n\nWe look forward to working with you again.\n\nBest regards,\nDaniel Jones | Maisy Railing'}),
   };
   const sendEmail = () => {
     const mailtoUrl = 'mailto:'+emailForm.to+'?subject='+encodeURIComponent(emailForm.subject)+'&body='+encodeURIComponent(emailForm.body);
@@ -32300,7 +32303,7 @@ const Orders = ({data, setData}) => {
               <div style={{fontSize:10,color:'var(--warn)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>⚠ {totalFlags.length} flag{totalFlags.length!==1?'s':''} require attention before production</div>
               {totalFlags.map((f,i)=>(
                 <div key={i} style={{fontSize:11,color:f.severity==='err'?'var(--err)':'var(--warn)',marginBottom:2}}>
-                  <strong>{f.orderId} — {f.customer}:</strong> {f.msg}
+                  <strong>{f.orderId} - {f.customer}:</strong> {f.msg}
                 </div>
               ))}
             </div>}
@@ -32349,7 +32352,7 @@ const Orders = ({data, setData}) => {
                           const r8o=(Number(o.rail8ft)||0)+(Number(o.stairRail8ft)||0);
                           const r12o=(Number(o.rail12ft)||0)+(Number(o.stairRail12ft)||0);
                           const r20o=(Number(o.rail20ft)||0)+(Number(o.stairRail20ft)||0);
-                          const railStr = [r8o&&`${r8o}×8`,r12o&&`${r12o}×12`,r20o&&`${r20o}×20`].filter(Boolean).join(', ')||'—';
+                          const railStr = [r8o&&`${r8o}×8`,r12o&&`${r12o}×12`,r20o&&`${r20o}×20`].filter(Boolean).join(', ')||'-';
                           const bom = o.bom||calcBOM(o);
                           const oFlags = (bom._flags||[]);
                           const statusC = {'New':'var(--acc)','In Production':'#f59e0b','Ready to Ship':'var(--ok)','Confirmed':'var(--warn)'};
@@ -32358,15 +32361,15 @@ const Orders = ({data, setData}) => {
                             <tr key={o.id}>
                               <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{o.id}</td>
                               <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{o.customer}</td>
-                              <td style={{fontSize:11,color:'var(--muted)',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'—'}</td>
-                              <td style={{textAlign:'center',color:(o.lineQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.lineQty||'—'}</td>
-                              <td style={{textAlign:'center',color:(o.stairQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.stairQty||'—'}</td>
-                              <td style={{textAlign:'center',color:(o.cornerQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.cornerQty||'—'}</td>
+                              <td style={{fontSize:11,color:'var(--muted)',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.project||'-'}</td>
+                              <td style={{textAlign:'center',color:(o.lineQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.lineQty||'-'}</td>
+                              <td style={{textAlign:'center',color:(o.stairQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.stairQty||'-'}</td>
+                              <td style={{textAlign:'center',color:(o.cornerQty||0)>0?'var(--txt)':'var(--dim)'}}>{o.cornerQty||'-'}</td>
                               <td style={{fontSize:11,whiteSpace:'nowrap'}}>{railStr}</td>
                               <td style={{fontSize:11,color:(o.cableColor||o.hardwareColor)?'var(--warn)':'var(--muted)'}}>{o.cableColor||'Standard SS'}</td>
                               <td style={{fontSize:11,color:(o.hardwareColor)?'var(--warn)':'var(--muted)'}}>{o.hardwareColor||'Standard SS'}</td>
                               <td><span style={{background:(statusC[o.status]||'var(--muted)')+'22',color:statusC[o.status]||'var(--muted)',border:`1px solid ${statusC[o.status]||'var(--bdr)'}44`,borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.status}</span></td>
-                              <td style={{fontSize:11,color:overdue?'var(--err)':'var(--muted)',whiteSpace:'nowrap',fontWeight:overdue?700:400}}>{o.dueDate||'—'}{overdue?' ⚠':''}</td>
+                              <td style={{fontSize:11,color:overdue?'var(--err)':'var(--muted)',whiteSpace:'nowrap',fontWeight:overdue?700:400}}>{o.dueDate||'-'}{overdue?' ⚠':''}</td>
                               <td>
                                 {oFlags.map((f,fi)=>(
                                   <div key={fi} style={{fontSize:9,color:f.severity==='err'?'var(--err)':'var(--warn)',fontWeight:700,whiteSpace:'nowrap'}} title={f.msg}>
@@ -32399,7 +32402,7 @@ const Orders = ({data, setData}) => {
                     return (
                       <div style={{padding:'10px 16px',borderTop:'1px solid var(--bdr)',background:'rgba(0,229,255,.02)'}}>
                         <div style={{fontSize:9,color:'var(--acc)',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',marginBottom:8}}>
-                          📦 Consolidated BOM — {g.orders.length} order{g.orders.length!==1?'s':''} combined
+                          📦 Consolidated BOM - {g.orders.length} order{g.orders.length!==1?'s':''} combined
                         </div>
                         {cats.map(cat=>(
                           <div key={cat} style={{marginBottom:8}}>
@@ -32419,7 +32422,7 @@ const Orders = ({data, setData}) => {
                                     <div style={{fontSize:10,fontWeight:700,color:ok?'var(--ok)':low?'var(--warn)':'var(--err)'}}>{Math.ceil(b.qty*10)/10} {b.unit}</div>
                                     <div style={{fontSize:9,color:'var(--muted)',marginTop:1}}>{b.name}</div>
                                     <div style={{fontSize:8,color:ok?'var(--ok)':low?'var(--warn)':'var(--err)',marginTop:1}}>
-                                      {ok?`✓ ${inStock} in stock`:`${inStock} in stock — need ${Math.ceil((b.qty-inStock)*10)/10} more`}
+                                      {ok?`✓ ${inStock} in stock`:`${inStock} in stock - need ${Math.ceil((b.qty-inStock)*10)/10} more`}
                                     </div>
                                   </div>
                                 );
@@ -32484,13 +32487,13 @@ const Orders = ({data, setData}) => {
                     <tbody>
                       {[...cancelLog].reverse().map((c,i)=>(
                         <tr key={i}>
-                          <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{c.cancelledAt?.split('T')[0]||'—'}</td>
+                          <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{c.cancelledAt?.split('T')[0]||'-'}</td>
                           <td style={{fontFamily:'monospace',fontSize:11,color:'var(--err)',fontWeight:700}}>{c.orderId}</td>
                           <td style={{fontWeight:600}}>{c.customer}</td>
-                          <td style={{fontSize:11,color:'var(--muted)'}}>{c.project||'—'}</td>
+                          <td style={{fontSize:11,color:'var(--muted)'}}>{c.project||'-'}</td>
                           <td><span style={{background:'rgba(239,68,68,.12)',color:'var(--err)',borderRadius:4,padding:'2px 8px',fontSize:10,fontWeight:700}}>{c.reason}</span></td>
-                          <td style={{fontSize:11,color:'var(--muted)'}}>{c.previousStatus||'—'}</td>
-                          <td style={{fontWeight:600,color:'var(--warn)'}}>{c.orderTotal?fmt$(c.orderTotal):'—'}</td>
+                          <td style={{fontSize:11,color:'var(--muted)'}}>{c.previousStatus||'-'}</td>
+                          <td style={{fontWeight:600,color:'var(--warn)'}}>{c.orderTotal?fmt$(c.orderTotal):'-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -32566,24 +32569,24 @@ const Orders = ({data, setData}) => {
                   </select>
                 </td>
                 <td style={{fontSize:11,color:isOld?'var(--err)':'var(--muted)',whiteSpace:'nowrap'}}>{o.date}</td>
-                <td style={{fontSize:11,whiteSpace:'nowrap',color:(o.dueDate&&o.dueDate<now()&&!['Completed','Shipped','Invoiced','Cancelled'].includes(o.status))?'var(--err)':'inherit'}}>{o.dueDate||'—'}</td>
+                <td style={{fontSize:11,whiteSpace:'nowrap',color:(o.dueDate&&o.dueDate<now()&&!['Completed','Shipped','Invoiced','Cancelled'].includes(o.status))?'var(--err)':'inherit'}}>{o.dueDate||'-'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap'}}>{o.customer}</td>
-                <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.shipTo||'—'}</td>
-                <td style={{fontSize:11,maxWidth:130,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.project}>{o.project||'—'}</td>
+                <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{o.shipTo||'-'}</td>
+                <td style={{fontSize:11,maxWidth:130,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.project}>{o.project||'-'}</td>
                 <td style={{fontSize:11,color:'var(--acc)',whiteSpace:'nowrap'}}>{o.productType}</td>
                 <td><span style={{background:typeColors[o.orderType]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{o.orderType||'New Order'}</span></td>
-                <td style={{textAlign:'center',color:o.lineQty>0?'var(--txt)':'var(--muted)'}}>{o.lineQty||'—'}</td>
-                <td style={{textAlign:'center',color:o.stairQty>0?'var(--txt)':'var(--muted)'}}>{o.stairQty||'—'}</td>
-                <td style={{textAlign:'center',color:o.cornerQty>0?'var(--txt)':'var(--muted)'}}>{o.cornerQty||'—'}</td>
-                <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'—'}</td>
-                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'—'}</td>
-                <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'—'}</td>
+                <td style={{textAlign:'center',color:o.lineQty>0?'var(--txt)':'var(--muted)'}}>{o.lineQty||'-'}</td>
+                <td style={{textAlign:'center',color:o.stairQty>0?'var(--txt)':'var(--muted)'}}>{o.stairQty||'-'}</td>
+                <td style={{textAlign:'center',color:o.cornerQty>0?'var(--txt)':'var(--muted)'}}>{o.cornerQty||'-'}</td>
+                <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'-'}</td>
+                <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'-'}</td>
+                <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'-'}</td>
                 <td>
                   <div style={{display:'flex',flexDirection:'column',gap:2}}>
                     <select value={o.status} onChange={e=>{
                       const newStatus = e.target.value;
                       if(newStatus==='Cancelled') {
-                        // Intercept — open cancel modal instead
+                        // Intercept - open cancel modal instead
                         setCancelModal({orderId:o.id, customer:o.customer});
                         setCancelReason('');
                         setCancelReasonOther('');
@@ -32596,7 +32599,7 @@ const Orders = ({data, setData}) => {
                     {o.cancelReason&&<div style={{fontSize:9,color:'var(--err)',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:140}} title={o.cancelReason}>✕ {o.cancelReason}</div>}
                   </div>
                 </td>
-                <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'—'}</td>
+                <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'-'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap',color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:140,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.notes||''}>{o.notes||''}</td>
                 <td style={{whiteSpace:'nowrap'}}><div style={{display:'flex',gap:4}}>
@@ -32620,11 +32623,11 @@ const Orders = ({data, setData}) => {
           <Field label="Customer PO #"><input value={form.po||''} onChange={e=>setForm(f=>({...f,po:e.target.value}))}/></Field>
           <Field label="Priority (1=Highest, 5=Lowest)">
             <select value={form.priority||3} onChange={e=>setForm(f=>({...f,priority:+e.target.value}))}>
-              <option value={1}>1 — Critical</option>
-              <option value={2}>2 — High</option>
-              <option value={3}>3 — Normal</option>
-              <option value={4}>4 — Low</option>
-              <option value={5}>5 — Minimal</option>
+              <option value={1}>1 - Critical</option>
+              <option value={2}>2 - High</option>
+              <option value={3}>3 - Normal</option>
+              <option value={4}>4 - Low</option>
+              <option value={5}>5 - Minimal</option>
             </select>
           </Field>
         </div>
@@ -32668,13 +32671,13 @@ const Orders = ({data, setData}) => {
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:10}}>
             <Field label="Mount Type">
               <select value={form.mountType||''} onChange={e=>setForm(f=>({...f,mountType:e.target.value}))}>
-                <option value="">— Select —</option>
+                <option value="">- Select -</option>
                 <option>Fascia</option><option>Surface</option><option>Core Drill</option><option>Other</option>
               </select>
             </Field>
             <Field label="Rail Type">
               <select value={form.railType||''} onChange={e=>setForm(f=>({...f,railType:e.target.value}))}>
-                <option value="">— Select —</option>
+                <option value="">- Select -</option>
                 <option>Cable</option><option>Glass Framed</option><option>Glass Frameless</option><option>Stair Only</option>
               </select>
             </Field>
@@ -32691,8 +32694,8 @@ const Orders = ({data, setData}) => {
             <Field label="Stair Posts"><input type="number" min="0" value={form.stairQty||''} onChange={e=>setForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
             <Field label="Corner Posts"><input type="number" min="0" value={form.cornerQty||''} onChange={e=>setForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
           </div>
-          {/* Top Rail — Deck Top & Stair Top = same material (RM-006 1x2 tube) */}
-          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Top Rail Pieces <span style={{color:'var(--acc)',fontWeight:400,textTransform:'none',letterSpacing:0}}>— Deck Top + Stair Top = same 1×2 aluminum</span></div>
+          {/* Top Rail - Deck Top & Stair Top = same material (RM-006 1x2 tube) */}
+          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Top Rail Pieces <span style={{color:'var(--acc)',fontWeight:400,textTransform:'none',letterSpacing:0}}>- Deck Top + Stair Top = same 1×2 aluminum</span></div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:6}}>
             <Field label="Deck 8ft"><input type="number" min="0" value={form.rail8ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,rail8ft:+e.target.value}))}/></Field>
             <Field label="Deck 12ft"><input type="number" min="0" value={form.rail12ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,rail12ft:+e.target.value}))}/></Field>
@@ -32703,8 +32706,8 @@ const Orders = ({data, setData}) => {
             <Field label="Stair 12ft"><input type="number" min="0" value={form.stairRail12ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,stairRail12ft:+e.target.value}))}/></Field>
             <Field label="Stair 20ft"><input type="number" min="0" value={form.stairRail20ft||''} placeholder="0" onChange={e=>setForm(f=>({...f,stairRail20ft:+e.target.value}))}/></Field>
           </div>
-          {/* Hardware — enter directly from order sheet */}
-          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Hardware <span style={{color:'var(--acc)',fontWeight:400,textTransform:'none',letterSpacing:0}}>— enter directly from order sheet</span></div>
+          {/* Hardware - enter directly from order sheet */}
+          <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Hardware <span style={{color:'var(--acc)',fontWeight:400,textTransform:'none',letterSpacing:0}}>- enter directly from order sheet</span></div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
             <Field label="Swages (ea)"><input type="number" min="0" value={form.swageQty||''} placeholder="0" onChange={e=>setForm(f=>({...f,swageQty:+e.target.value}))}/></Field>
             <Field label="Cable (ft)"><input type="number" min="0" value={form.cableFootage||''} placeholder="0" onChange={e=>setForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
@@ -32715,7 +32718,7 @@ const Orders = ({data, setData}) => {
             <Field label="Self Tap (ea)"><input type="number" min="0" value={form.selfTapQty||''} placeholder="auto (4/post)" onChange={e=>setForm(f=>({...f,selfTapQty:+e.target.value}))}/></Field>
             <Field label="Angle Brackets"><input type="number" min="0" value={form.angleBracketQty||''} placeholder="0" onChange={e=>setForm(f=>({...f,angleBracketQty:+e.target.value}))}/></Field>
           </div>
-          {/* Stair Angles — multiple runs, each with its own angle */}
+          {/* Stair Angles - multiple runs, each with its own angle */}
           {(()=>{
             const angles = form.stairAngles||[];
             const addAngle = () => setForm(f=>({...f,stairAngles:[...(f.stairAngles||[]),{angle:'33°',qty:1,notes:''}]}));
@@ -32725,11 +32728,11 @@ const Orders = ({data, setData}) => {
               <div style={{marginTop:10,background:'rgba(245,158,11,.06)',border:'1px solid rgba(245,158,11,.2)',borderRadius:6,padding:'10px 14px'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                   <div style={{fontSize:10,color:'var(--warn)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>
-                    Stair Angles <span style={{fontWeight:400,textTransform:'none',letterSpacing:0,color:'var(--muted)'}}>— add one entry per stair run with a different angle</span>
+                    Stair Angles <span style={{fontWeight:400,textTransform:'none',letterSpacing:0,color:'var(--muted)'}}>- add one entry per stair run with a different angle</span>
                   </div>
                   <button className="btn btn-sm" style={{border:'1px solid var(--warn)',color:'var(--warn)',fontSize:11}} onClick={addAngle}>+ Add Stair Angle</button>
                 </div>
-                {angles.length===0&&<div style={{fontSize:11,color:'var(--dim)',fontStyle:'italic'}}>No stair angles entered — click + Add Stair Angle if order includes stairs</div>}
+                {angles.length===0&&<div style={{fontSize:11,color:'var(--dim)',fontStyle:'italic'}}>No stair angles entered - click + Add Stair Angle if order includes stairs</div>}
                 {angles.map((a,i)=>(
                   <div key={i} style={{display:'grid',gridTemplateColumns:'120px 80px 1fr 32px',gap:8,marginBottom:6,alignItems:'end'}}>
                     <Field label={i===0?'Angle':''}><select value={a.angle||'33°'} onChange={e=>updateAngle(i,'angle',e.target.value)}>
@@ -32751,7 +32754,7 @@ const Orders = ({data, setData}) => {
           return (
             <div style={{background:'rgba(16,185,129,.06)',border:'1px solid rgba(16,185,129,.2)',borderRadius:6,padding:'10px 14px',marginTop:10}}>
               <div style={{fontSize:10,color:'var(--ok)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>
-                📦 Materials Required ({bom.length} items) — deducted from inventory when status → In Production
+                📦 Materials Required ({bom.length} items) - deducted from inventory when status → In Production
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'2px 12px'}}>
                 {bom.map((item,i)=>{
@@ -32773,8 +32776,8 @@ const Orders = ({data, setData}) => {
             </div>
           );
         })()}
-        <Field label="Lengths (free-form — e.g. 12x10ft, 6x8ft, 4x4ft)" style={{marginTop:10}}>
-          <input value={form.lengths||''} placeholder="e.g. 12x10ft, 6x8ft, 4x4ft — fully customizable" onChange={e=>setForm(f=>({...f,lengths:e.target.value}))}/>
+        <Field label="Lengths (free-form - e.g. 12x10ft, 6x8ft, 4x4ft)" style={{marginTop:10}}>
+          <input value={form.lengths||''} placeholder="e.g. 12x10ft, 6x8ft, 4x4ft - fully customizable" onChange={e=>setForm(f=>({...f,lengths:e.target.value}))}/>
         </Field>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:10}}>
           <Field label="Order Total ($)"><input type="number" step="0.01" value={form.orderTotal||''} onChange={e=>setForm(f=>({...f,orderTotal:+e.target.value,balance:(+e.target.value)-(f.deposit||0)}))}/></Field>
@@ -32788,7 +32791,7 @@ const Orders = ({data, setData}) => {
           <button className="btn btn-p" onClick={save} disabled={!form.customer}>Save</button>
         </div>
       </Modal>}
-      {emailModal&&<Modal title={'Send Order Update — '+emailModal} onClose={()=>setEmailModal(null)} lg>
+      {emailModal&&<Modal title={'Send Order Update - '+emailModal} onClose={()=>setEmailModal(null)} lg>
         <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,padding:'10px 14px',marginBottom:12,fontSize:12,color:'var(--acc)'}}>
           ✉ Opens your default email client (Outlook, Apple Mail, Gmail, etc.) with this message pre-filled. Update tracking numbers or delivery details before sending.
         </div>
@@ -32809,7 +32812,7 @@ const Orders = ({data, setData}) => {
             <button className="btn btn-g btn-sm" onClick={()=>{setCancelModal(null);setCancelReason('');setCancelReasonOther('');}}>✕</button>
           </div>
           <div style={{background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'8px 12px',marginBottom:16,fontSize:12}}>
-            <strong>{cancelModal.orderId}</strong> — {cancelModal.customer}
+            <strong>{cancelModal.orderId}</strong> - {cancelModal.customer}
             <div style={{fontSize:10,color:'var(--muted)',marginTop:3}}>Cancelling this order will automatically restore all allocated inventory back to stock.</div>
           </div>
           <Field label="Cancellation Reason *">
@@ -32994,7 +32997,7 @@ const SalesPipeline = ({data, setData}) => {
                   <td><span style={{background:stageColors[d.stage]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{d.stage}</span></td>
                   <td style={{textAlign:'center',fontWeight:700,color:d.probability>=70?'var(--ok)':d.probability>=40?'var(--warn)':'var(--muted)'}}>{d.probability}%</td>
                   <td style={{fontSize:11,color:'var(--acc)',fontWeight:600}}>{d.rep}</td>
-                  <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{d.expectedClose||'—'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{d.expectedClose||'-'}</td>
                   <td style={{fontSize:10,color:'var(--muted)',maxWidth:130,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.notes}>{d.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
                     <button className="btn btn-g btn-xs" onClick={()=>{setForm({...d});setModal('deal');}}>Edit</button>
@@ -33014,7 +33017,7 @@ const SalesPipeline = ({data, setData}) => {
           <Field label="Stage"><select value={form.stage||'Lead'} onChange={e=>setForm(f=>({...f,stage:e.target.value}))}>{stages.map(s=><option key={s}>{s}</option>)}</select></Field>
           <Field label="Customer *"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
           <Field label="Project"><input value={form.project||''} onChange={e=>setForm(f=>({...f,project:e.target.value}))}/></Field>
-          <Field label="Rep"><select value={form.rep||''} onChange={e=>setForm(f=>({...f,rep:e.target.value}))}><option value="">— Select —</option>{salesReps.map(r=><option key={r}>{r}</option>)}</select></Field>
+          <Field label="Rep"><select value={form.rep||''} onChange={e=>setForm(f=>({...f,rep:e.target.value}))}><option value="">- Select -</option>{salesReps.map(r=><option key={r}>{r}</option>)}</select></Field>
           <Field label="Deal Amount ($)"><input type="number" step="0.01" value={form.amount||''} onChange={e=>setForm(f=>({...f,amount:+e.target.value}))}/></Field>
           <Field label="Probability %"><input type="number" min="0" max="100" value={form.probability||''} onChange={e=>setForm(f=>({...f,probability:+e.target.value}))}/></Field>
           <Field label="Product Type"><select value={form.productType||'Cable Rail'} onChange={e=>setForm(f=>({...f,productType:e.target.value}))}>{['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
@@ -33077,7 +33080,7 @@ const Commissions = ({data, setData}) => {
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:18}}>
         <StatCard label="Total Commissionable Sales" value={fmt$(totalSales)} icon="📊" color="var(--acc)" sub={completedOrders.filter(o=>getRate(o.rep)>0).length+' deals'}/>
         <StatCard label="Total Commissions Owed"     value={fmt$(totalCommissions)} icon="💵" color="var(--warn)" sub="YTD all reps"/>
-        <StatCard label="Avg Commission Rate"         value={allStats.length?(allStats.reduce((s,r)=>s+r.rate,0)/allStats.length).toFixed(1)+'%':'—'} icon="%" color="var(--ok)" sub="across active reps"/>
+        <StatCard label="Avg Commission Rate"         value={allStats.length?(allStats.reduce((s,r)=>s+r.rate,0)/allStats.length).toFixed(1)+'%':'-'} icon="%" color="var(--ok)" sub="across active reps"/>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12,marginBottom:20}}>
@@ -33120,7 +33123,7 @@ const Commissions = ({data, setData}) => {
                   <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{o.id}</td>
                   <td style={{fontSize:11,color:'var(--muted)'}}>{o.date}</td>
                   <td style={{fontWeight:500}}>{o.customer}</td>
-                  <td style={{fontWeight:600,color:'var(--acc)'}}>{o.rep||'—'}</td>
+                  <td style={{fontWeight:600,color:'var(--acc)'}}>{o.rep||'-'}</td>
                   <td style={{fontWeight:700,color:'var(--ok)'}}>{fmt$(o.amount)}</td>
                   <td style={{textAlign:'center',color:'var(--muted)'}}>{rate}%</td>
                   <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{fmt$(comm)}</td>
@@ -33139,7 +33142,7 @@ const Commissions = ({data, setData}) => {
               <tr key={i}>
                 <td style={{fontWeight:600}}>{r.rep}</td>
                 <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)'}}>{r.rate}%</td>
-                <td style={{textAlign:'center'}}>{r.active?'✅':'—'}</td>
+                <td style={{textAlign:'center'}}>{r.active?'✅':'-'}</td>
                 <td style={{fontSize:11,color:'var(--muted)'}}>{r.notes}</td>
                 <td><button className="btn btn-g btn-xs" onClick={()=>{setForm({...r});setModal('editrate');}}>Edit</button></td>
               </tr>
@@ -33226,12 +33229,12 @@ const Payments = ({data, setData}) => {
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{r.id}</td>
                 <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{r.date}</td>
                 <td style={{fontWeight:500}}>{r.customer}</td>
-                <td style={{fontFamily:'monospace',fontSize:10}}>{r.orderId||'—'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10}}>{r.orderId||'-'}</td>
                 <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{fmt$(r.amount)}</td>
                 <td style={{fontSize:11}}>{r.method}</td>
                 <td><span style={{background:typeColors[r.type]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700}}>{r.type}</span></td>
                 <td><span style={{background:statusColors[r.status]||'var(--s2)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700}}>{r.status}</span></td>
-                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{r.ref||'—'}</td>
+                <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{r.ref||'-'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.notes}>{r.notes||''}</td>
                 <td><div style={{display:'flex',gap:3}}>
                   <button className="btn btn-g btn-xs" onClick={()=>{setForm({...r});setModal('record');}}>Edit</button>
@@ -33245,7 +33248,7 @@ const Payments = ({data, setData}) => {
 
       {payTab==='vault'&&<>
         <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'10px 14px',marginBottom:14,fontSize:12,color:'var(--warn)'}}>
-          🔒 Card vault stores last 4 digits only — never enter full card numbers. For live processing, connect Stripe or Square via API.
+          🔒 Card vault stores last 4 digits only - never enter full card numbers. For live processing, connect Stripe or Square via API.
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:12}}>
           {methods.map((m,i)=>(
@@ -33264,7 +33267,7 @@ const Payments = ({data, setData}) => {
               {m.notes&&<div style={{marginTop:8,fontSize:10,color:'var(--muted)',borderTop:'1px solid var(--bdr)',paddingTop:6}}>{m.notes}</div>}
             </div>
           ))}
-          {methods.length===0&&<div style={{gridColumn:'1/-1',textAlign:'center',padding:40,color:'var(--muted)',fontSize:13}}>No payment methods saved — click + Add Method</div>}
+          {methods.length===0&&<div style={{gridColumn:'1/-1',textAlign:'center',padding:40,color:'var(--muted)',fontSize:13}}>No payment methods saved - click + Add Method</div>}
         </div>
       </>}
 
@@ -33287,7 +33290,7 @@ const Payments = ({data, setData}) => {
         </div>
       </Modal>}
       {modal==='method'&&<Modal title={methods.find(m=>m.id===form.id)?'Edit Payment Method':'Add Payment Method'} onClose={()=>setModal(null)}>
-        <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>Enter last 4 digits only — never store full card numbers</div>
+        <div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>Enter last 4 digits only - never store full card numbers</div>
         <div className="grid2">
           <Field label="Label"><input value={form.label||''} placeholder="Chase Visa - Main" onChange={e=>setForm(f=>({...f,label:e.target.value}))}/></Field>
           <Field label="Type"><select value={form.type||'Visa'} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{['Visa','MasterCard','Amex','Discover','ACH','Check','Wire'].map(t=><option key={t}>{t}</option>)}</select></Field>
@@ -33450,7 +33453,7 @@ const TaxCenter = ({data, setData}) => {
               Live Address-Level Tax Lookup
             </div>
             {!settings.accountId&&<div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.3)',borderRadius:6,padding:'10px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>
-              ⚠ No API key configured — go to Avatax Setup tab first
+              ⚠ No API key configured - go to Avatax Setup tab first
             </div>}
             <Field label="Street Address (optional)">
               <input value={avAddr.line1} placeholder="1234 Main St" onChange={e=>setAvAddr(a=>({...a,line1:e.target.value}))}/>
@@ -33476,7 +33479,7 @@ const TaxCenter = ({data, setData}) => {
           <div className="card" style={{marginTop:12,padding:'12px 14px',background:'rgba(0,229,255,.04)',border:'1px solid rgba(0,229,255,.15)'}}>
             <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,color:'var(--acc)',letterSpacing:'.1em',marginBottom:6}}>ABOUT AVATAX</div>
             <div style={{fontSize:11,color:'var(--muted)',lineHeight:1.7}}>
-              Returns exact combined rate including state + county + city + special district taxes for any US address. 
+              Returns exact combined rate including state + county + city + special district taxes for any US address.
               Handles nexus, exemptions, and product taxability automatically.
             </div>
             <a href="https://developer.avalara.com/avatax/get-started/" target="_blank" rel="noopener noreferrer" style={{display:'block',marginTop:10,textDecoration:'none'}}>
@@ -33577,14 +33580,14 @@ const TaxCenter = ({data, setData}) => {
             <strong style={{color:'var(--txt)'}}>Ship From:</strong> 8600 N Hillsdale Dr, Hayden, ID 83835 (hardcoded as Maisy Railing origin)
           </div>
           {settings.accountId&&settings.licenseKey&&<div style={{marginTop:10,display:'flex',alignItems:'center',gap:6,color:'var(--ok)',fontSize:12,fontWeight:600}}>
-            <span>✓</span><span>Credentials saved — go to Live Tax Lookup to test</span>
+            <span>✓</span><span>Credentials saved - go to Live Tax Lookup to test</span>
           </div>}
         </div>
         <div className="card">
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:14}}>Setup Guide</div>
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {[
-              {step:'1', label:'Create Avalara Account', desc:'Go to avalara.com and sign up. Free tier includes 50 transactions/month — more than enough for estimates.', link:'https://www.avalara.com/us/en/get-started.html'},
+              {step:'1', label:'Create Avalara Account', desc:'Go to avalara.com and sign up. Free tier includes 50 transactions/month - more than enough for estimates.', link:'https://www.avalara.com/us/en/get-started.html'},
               {step:'2', label:'Get API Credentials', desc:'In the Avalara admin console: Settings → License and API Keys → Generate license key. Copy your Account ID and License Key.', link:'https://admin.avalara.com'},
               {step:'3', label:'Start in Sandbox', desc:'Use the Sandbox environment first to verify the integration works before switching to Production.', link:'https://sandbox-rest.avatax.com'},
               {step:'4', label:'Enter Credentials Above', desc:'Paste your Account ID and License Key in the form. Then go to Live Tax Lookup and test with a real address.', link:null},
@@ -33611,7 +33614,7 @@ const TaxCenter = ({data, setData}) => {
           <table>
             <thead><tr><th>Cert #</th><th>Customer</th><th>State</th><th>Certificate #</th><th>Issued</th><th>Expires</th><th>Status</th><th>Tax Exempt</th><th>Notes</th><th></th></tr></thead>
             <tbody>
-              {certs.length===0&&<tr><td colSpan={10}><Empty msg="No resale certificates on file — click + Add Certificate"/></td></tr>}
+              {certs.length===0&&<tr><td colSpan={10}><Empty msg="No resale certificates on file - click + Add Certificate"/></td></tr>}
               {certs.map((c,i)=>(
                 <tr key={i}>
                   <td style={{fontFamily:'monospace',fontSize:10,color:'var(--acc)'}}>{c.id}</td>
@@ -33621,7 +33624,7 @@ const TaxCenter = ({data, setData}) => {
                   <td style={{fontSize:11,color:'var(--muted)'}}>{c.issueDate}</td>
                   <td style={{fontSize:11,color:c.status==='Expired'?'var(--err)':'inherit'}}>{c.expDate}</td>
                   <td><span style={{background:c.status==='Active'?'var(--ok)':c.status==='Expired'?'var(--err)':'var(--warn)',color:'#fff',borderRadius:4,padding:'2px 6px',fontSize:10,fontWeight:700}}>{c.status}</span></td>
-                  <td style={{textAlign:'center'}}>{c.taxExempt?'✅':'—'}</td>
+                  <td style={{textAlign:'center'}}>{c.taxExempt?'✅':'-'}</td>
                   <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={c.notes}>{c.notes||''}</td>
                   <td><div style={{display:'flex',gap:3}}>
                     <button className="btn btn-g btn-xs" onClick={()=>{setForm({...c});setModal('cert');}}>Edit</button>
@@ -33654,7 +33657,7 @@ const TaxCenter = ({data, setData}) => {
               <tr key={s}>
                 <td style={{fontWeight:600}}>{s}</td>
                 <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:r===0?'var(--ok)':r>=7?'var(--err)':'var(--warn)'}}>{r}%</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{r===0?'No sales tax':r>=7?'High — verify city rates':r<=3?'Low state rate':''}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{r===0?'No sales tax':r>=7?'High - verify city rates':r<=3?'Low state rate':''}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -33667,7 +33670,7 @@ const TaxCenter = ({data, setData}) => {
           <Field label="Customer"><input value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))}/></Field>
           <Field label="State">
             <select value={form.state||''} onChange={e=>setForm(f=>({...f,state:e.target.value}))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {states.map(s=><option key={s}>{s}</option>)}
               <option value="Multi">Multi-State</option>
             </select>
@@ -33757,7 +33760,7 @@ const ShipCalc = ({data, setData}) => {
             <Field label="Number of Packages" style={{marginTop:10}}><input type="number" min="1" value={pkgs} onChange={e=>setPkgs(e.target.value)}/></Field>
             <Field label="Destination State" style={{marginTop:10}}>
               <select value={destState} onChange={e=>setDestState(e.target.value)}>
-                <option value="">— Select State —</option>
+                <option value="">- Select State -</option>
                 {states.map(s=><option key={s}>{s}</option>)}
               </select>
             </Field>
@@ -33842,7 +33845,7 @@ const QuickBooks = ({data, setData}) => {
     setLastResult({action, status, detail});
   };
 
-  // ── QB API helper (uses proxy pattern — calls QB sandbox/production) ────
+  // ── QB API helper (uses proxy pattern - calls QB sandbox/production) ────
   const qbFetch = async (path, method='GET', body=null) => {
     const base = qb.environment==='production'
       ? 'https://quickbooks.api.intuit.com'
@@ -33938,7 +33941,7 @@ const QuickBooks = ({data, setData}) => {
 
   // ── Sync All: customers + unpaid invoices + new payments ─────────────
   const syncAll = async () => {
-    if(!qb.connected||!qb.accessToken) { logSync('Sync All','Error','Not connected — enter credentials in Setup tab'); return; }
+    if(!qb.connected||!qb.accessToken) { logSync('Sync All','Error','Not connected - enter credentials in Setup tab'); return; }
     setSyncing({ALL:true});
     let pushed = 0;
     for(const c of customers.filter(c=>!c.qbId).slice(0,20)){
@@ -33955,7 +33958,7 @@ const QuickBooks = ({data, setData}) => {
     setSyncing({});
   };
 
-  // ── QB OAuth — opens Intuit auth page ────────────────────────────────
+  // ── QB OAuth - opens Intuit auth page ────────────────────────────────
   const startOAuth = () => {
     if(!qb.clientId) { alert('Enter your Client ID in the Setup tab first.'); return; }
     const scope = 'com.intuit.quickbooks.accounting+com.intuit.quickbooks.payment';
@@ -33992,7 +33995,7 @@ const QuickBooks = ({data, setData}) => {
           <div className="hd" style={{fontSize:22}}>QuickBooks Integration</div>
           <div style={{display:'flex',gap:6,marginTop:5,flexWrap:'wrap'}}>
             {qb.connected
-              ? <span className="chip" style={{background:'rgba(16,185,129,.2)',color:'var(--ok)'}}>✓ Connected — {qb.environment}</span>
+              ? <span className="chip" style={{background:'rgba(16,185,129,.2)',color:'var(--ok)'}}>✓ Connected - {qb.environment}</span>
               : <span className="chip" style={{background:'rgba(239,68,68,.15)',color:'var(--err)'}}>Not Connected</span>}
             {qb.lastSync&&<span className="chip">Last sync: {qb.lastSync}</span>}
           </div>
@@ -34066,7 +34069,7 @@ const QuickBooks = ({data, setData}) => {
                   ? <span style={{color:'var(--ok)',fontWeight:600,fontSize:11}}>✓ QB#{inv.qbId}</span>
                   : <span style={{color:'var(--warn)',fontSize:11}}>Not synced</span>}
                 </td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{inv.qbSynced||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{inv.qbSynced||'-'}</td>
                 <td><button className="btn btn-g btn-xs" onClick={()=>syncInvoice(inv)} disabled={syncing[inv.id]||!qb.connected}>{syncing[inv.id]?'...':'Push to QB'}</button></td>
               </tr>
             ))}
@@ -34090,7 +34093,7 @@ const QuickBooks = ({data, setData}) => {
                   ? <span style={{color:'var(--ok)',fontWeight:600,fontSize:11}}>✓ QB#{p.qbId}</span>
                   : <span style={{color:p.status==='Captured'?'var(--warn)':'var(--muted)',fontSize:11}}>{p.status==='Captured'?'Pending sync':'Not captured'}</span>}
                 </td>
-                <td style={{fontSize:10,color:'var(--muted)'}}>{p.qbSynced||'—'}</td>
+                <td style={{fontSize:10,color:'var(--muted)'}}>{p.qbSynced||'-'}</td>
                 <td><button className="btn btn-g btn-xs" onClick={()=>syncPayment(p)} disabled={syncing[p.id]||p.status!=='Captured'||!qb.connected}>{syncing[p.id]?'...':p.status==='Captured'?'Push to QB':'N/A'}</button></td>
               </tr>
             ))}
@@ -34106,8 +34109,8 @@ const QuickBooks = ({data, setData}) => {
             {customers.map((c,i)=>(
               <tr key={i}>
                 <td style={{fontWeight:600}}>{c.name}</td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{c.email||'—'}</td>
-                <td style={{fontSize:11}}>{c.phone||'—'}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{c.email||'-'}</td>
+                <td style={{fontSize:11}}>{c.phone||'-'}</td>
                 <td>{c.qbId
                   ? <span style={{color:'var(--ok)',fontWeight:600,fontSize:11}}>✓ QB#{c.qbId}</span>
                   : <span style={{color:'var(--warn)',fontSize:11}}>Not synced</span>}
@@ -34160,7 +34163,7 @@ const QuickBooks = ({data, setData}) => {
             {n:'1',t:'Create Intuit Developer Account',d:'Go to developer.intuit.com and sign in with your QuickBooks credentials.',l:'https://developer.intuit.com'},
             {n:'2',t:'Create a New App',d:'Dashboard → Create an App → QuickBooks Online and Payments. Select scopes: Accounting + Payments.',l:'https://developer.intuit.com/app/developer/myapps'},
             {n:'3',t:'Get Client ID + Secret',d:'Under your app → Keys & OAuth → Copy the Client ID and Client Secret for the sandbox environment.',l:null},
-            {n:'4',t:'Get Your Company ID',d:'Log into QuickBooks Online → in the URL you will see /app/... after a number — that number is your Company/Realm ID.',l:'https://app.qbo.intuit.com'},
+            {n:'4',t:'Get Your Company ID',d:'Log into QuickBooks Online → in the URL you will see /app/... after a number - that number is your Company/Realm ID.',l:'https://app.qbo.intuit.com'},
             {n:'5',t:'Run OAuth + Get Tokens',d:'Enter Client ID above, click Start OAuth Authorization, log in with QuickBooks, and paste the returned access token and refresh token.',l:null},
             {n:'6',t:'Test in Sandbox First',d:'Keep environment set to Sandbox and push one test invoice to verify. Switch to Production when confirmed.',l:null},
           ].map(s=>(
@@ -34337,11 +34340,11 @@ const OrderImport = ({data, setData}) => {
     const isPDF = /\.pdf$/i.test(filename);
     const isImage = /\.(png|jpg|jpeg)$/i.test(filename);
 
-    if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
+    if(!aiApiKey) throw new Error('No API key - add your Anthropic API key in the Setup tab');
 
-    // Check file size — warn if over 4MB base64 encoded (~3MB raw)
+    // Check file size - warn if over 4MB base64 encoded (~3MB raw)
     if(buffer.byteLength > 3 * 1024 * 1024) {
-      throw new Error('File too large (' + (buffer.byteLength/1024/1024).toFixed(1) + 'MB) — Anthropic limit is ~4MB. Try a smaller file.');
+      throw new Error('File too large (' + (buffer.byteLength/1024/1024).toFixed(1) + 'MB) - Anthropic limit is ~4MB. Try a smaller file.');
     }
 
     const base64 = toBase64(buffer);
@@ -34409,18 +34412,18 @@ Return ONLY the JSON object, no other text.`;
 
   // ── Parse text content (from Excel) with Claude ──────────────────────────
   const parseWithClaudeText = async (text, filename) => {
-    if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
+    if(!aiApiKey) throw new Error('No API key - add your Anthropic API key in the Setup tab');
     const prompt = `You are reading a railing order form for Maisy Railing (custom aluminum railing, Hayden ID). The content below was extracted from an Excel order file.
 
 IMPORTANT MATERIAL RULES for Maisy Railing orders:
 - "Deck Top" and "Stair Top" are both the same top rail aluminum material (1x2 tube), just different lengths
-- Top rail pieces come in 8ft, 12ft, and 20ft lengths — capture each count separately
-- Swages are complete cable termination assemblies — capture total count as-is
-- Angle washers (also called "swage washers") — capture count if listed
-- Rail caps = handrail end caps — capture count
-- Lags = lag bolts — capture count
-- Post screws = post base plate screws — capture count
-- Self tap = self-tapping screws — capture count
+- Top rail pieces come in 8ft, 12ft, and 20ft lengths - capture each count separately
+- Swages are complete cable termination assemblies - capture total count as-is
+- Angle washers (also called "swage washers") - capture count if listed
+- Rail caps = handrail end caps - capture count
+- Lags = lag bolts - capture count
+- Post screws = post base plate screws - capture count
+- Self tap = self-tapping screws - capture count
 - Cable footage = total cable length in feet
 
 Extract ALL order information and return as a single JSON object. Use empty string or 0 if not found.
@@ -34534,7 +34537,7 @@ Return ONLY the JSON object, no other text.`;
     stairRail8ft:     Number(row.stairRail8ft || row['8ft Stair Top'] || row['8 Stair Top'] || 0),
     stairRail12ft:    Number(row.stairRail12ft || row['12 Stair Top'] || 0),
     stairRail20ft:    Number(row.stairRail20ft || row['20ft Stair Top'] || 0),
-    // Hardware — captured directly from order
+    // Hardware - captured directly from order
     railCapQty:       Number(row.railCapQty || row['Rail Caps'] || row['Rail Cap'] || 0),
     swageQty:         Number(row.swageQty || row['Swages'] || row['Swage'] || 0),
     angleWasherQty:   Number(row.angleWasherQty || row['Angle Washers'] || row['Angle Washer'] || 0),
@@ -34545,7 +34548,7 @@ Return ONLY the JSON object, no other text.`;
     angleBracketQty:  Number(row.angleBracketQty || row['Angle Brackets'] || row['Angle Bracket'] || 0),
     glassPanelQty:    Number(row.glassPanelQty || row['Deck Glass'] || row['Glass Panels'] || 0),
     glassClampQty:    Number(row.glassClampQty || row['Glass Clamps'] || row['Glass Clamp'] || 0),
-    // Stair angles — array of {angle, qty} objects e.g. [{angle:'33°', qty:2},{angle:'37°', qty:1}]
+    // Stair angles - array of {angle, qty} objects e.g. [{angle:'33°', qty:2},{angle:'37°', qty:1}]
     stairAngles:      row.stairAngles || [],
     // Legacy/fallback fields
     topRailQty:       Number(row.topRailQty || row['Top Rail'] || 0),
@@ -34598,7 +34601,7 @@ Return ONLY the JSON object, no other text.`;
     setChecking(true);
     try {
       const files = await fetchOneDriveFiles();
-      // Map ALL files — ignore import log and existing queue
+      // Map ALL files - ignore import log and existing queue
       setData(d => ({
         ...d,
         importQueue: files.map(f => ({
@@ -34608,7 +34611,7 @@ Return ONLY the JSON object, no other text.`;
           status: 'pending'
         })),
         importLog: [{id:'IMP-'+uid(), ts:now(), file:'Force Re-scan', fileId:null, status:'Info',
-          detail: files.length + ' files loaded — all import history bypassed. Duplicate orders will NOT be auto-detected on confirm.'
+          detail: files.length + ' files loaded - all import history bypassed. Duplicate orders will NOT be auto-detected on confirm.'
         }, ...(d.importLog||[]).slice(0,99)],
         oneDriveSettings:{...(d.oneDriveSettings||{}), lastCheck:now()}
       }));
@@ -34636,7 +34639,7 @@ Return ONLY the JSON object, no other text.`;
       if(/\.xlsx?$/i.test(qItem.name)) {
         // Convert Excel to text, use Claude to extract single order (prevents 1-row-per-draft)
         const xlsxText = await parseExcel(buffer);
-        if(!aiApiKey) throw new Error('No API key — add your Anthropic API key in the Setup tab');
+        if(!aiApiKey) throw new Error('No API key - add your Anthropic API key in the Setup tab');
         const extracted = await parseWithClaudeText(xlsxText, qItem.name);
         draftsToAdd = [rowToDraft(extracted, qItem.name)];
       } else {
@@ -34648,7 +34651,7 @@ Return ONLY the JSON object, no other text.`;
         orderDrafts: [...(d.orderDrafts||[]), ...draftsToAdd],
         importQueue: (d.importQueue||[]).filter(q=>q.id!==qItem.id),
       }));
-      const successEntry = {id:'IMP-'+uid(), ts:now(), file:qItem.name, fileId:qItem.id, status:'Success', detail:draftsToAdd.length+' draft order(s) created — review in Drafts tab'};
+      const successEntry = {id:'IMP-'+uid(), ts:now(), file:qItem.name, fileId:qItem.id, status:'Success', detail:draftsToAdd.length+' draft order(s) created - review in Drafts tab'};
       setData(d => ({...d, importLog:[successEntry, ...(d.importLog||[]).slice(0,99)]}));
     } catch(e) {
       setData(d=>({...d, importQueue:(d.importQueue||[]).map(q=>q.id===qItem.id?{...q,status:'error',error:e.message}:q)}));
@@ -34674,14 +34677,14 @@ Return ONLY the JSON object, no other text.`;
     const adjLogs = bom.filter(b=>b.inventoryId&&b.inventoryId!=='PC-UNKNOWN').map(item => ({
       id:'ADJ-'+uid(), inventoryId:item.inventoryId, itemName:item.name,
       type:'remove', qty:item.qty,
-      reason:'Order '+newOrder.id+' — '+newOrder.customer+' (confirmed from import)',
+      reason:'Order '+newOrder.id+' - '+newOrder.customer+' (confirmed from import)',
       date:now(), user:'System (BOM)',
     }));
     setData(d => ({
       ...d,
       orders: [...(d.orders||[]), newOrder],
       orderDrafts: (d.orderDrafts||[]).filter(dr=>dr.id!==draftForm.id),
-      // Deduct inventory immediately — allow negatives
+      // Deduct inventory immediately - allow negatives
       inventory: d.inventory.map(inv => {
         const bomItem = bom.find(b=>b.inventoryId===inv.id);
         if(!bomItem) return inv;
@@ -34689,7 +34692,7 @@ Return ONLY the JSON object, no other text.`;
       }),
       adjustmentLog: [...adjLogs, ...(d.adjustmentLog||[])],
     }));
-    addLog(draftForm.sourceFile, 'Confirmed', 'Created '+newOrder.id+' for '+newOrder.customer+' — BOM: '+bom.length+' items, inventory deducted');
+    addLog(draftForm.sourceFile, 'Confirmed', 'Created '+newOrder.id+' for '+newOrder.customer+' - BOM: '+bom.length+' items, inventory deducted');
     setDraftModal(null);
   };
 
@@ -34707,7 +34710,7 @@ Return ONLY the JSON object, no other text.`;
         let draftsToAdd = [];
         if(/\.xlsx?$/i.test(file.name)) {
           const xlsxText = await parseExcel(buffer);
-          if(!aiApiKey) throw new Error('No API key — add Anthropic API key in Setup tab');
+          if(!aiApiKey) throw new Error('No API key - add Anthropic API key in Setup tab');
           const extracted = await parseWithClaudeText(xlsxText, file.name);
           draftsToAdd = [rowToDraft(extracted, file.name)];
         } else {
@@ -34764,7 +34767,7 @@ Return ONLY the JSON object, no other text.`;
 
       {parsing && <div style={{background:'rgba(0,229,255,.08)',border:'1px solid rgba(0,229,255,.25)',borderRadius:8,padding:'12px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
         <div style={{width:16,height:16,border:'2px solid var(--acc)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
-        <span style={{fontSize:12,color:'var(--acc)'}}>Parsing {typeof parsing==='string'?parsing:'file'} with AI — extracting order data...</span>
+        <span style={{fontSize:12,color:'var(--acc)'}}>Parsing {typeof parsing==='string'?parsing:'file'} with AI - extracting order data...</span>
       </div>}
 
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
@@ -34781,7 +34784,7 @@ Return ONLY the JSON object, no other text.`;
         {pendingCount===0&&queue.length===0&&<div style={{textAlign:'center',padding:'60px 20px',color:'var(--muted)'}}>
           <div style={{fontSize:36,marginBottom:12}}>📥</div>
           <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>No files in queue</div>
-          <div style={{fontSize:12}}>Connect OneDrive and it will automatically check your orders folder every hour — or upload a file manually using the button above.</div>
+          <div style={{fontSize:12}}>Connect OneDrive and it will automatically check your orders folder every hour - or upload a file manually using the button above.</div>
         </div>}
         {queue.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
           <table>
@@ -34791,8 +34794,8 @@ Return ONLY the JSON object, no other text.`;
                 <tr key={i}>
                   <td style={{fontWeight:600,fontSize:12}}>{q.name}</td>
                   <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={q.folder}>{q.folder||'root'}</td>
-                  <td style={{fontSize:11,color:'var(--muted)'}}>{q.size?(q.size/1024).toFixed(1)+'kb':'—'}</td>
-                  <td style={{fontSize:11,color:'var(--muted)'}}>{q.modified?q.modified.split('T')[0]:'—'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{q.size?(q.size/1024).toFixed(1)+'kb':'-'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{q.modified?q.modified.split('T')[0]:'-'}</td>
                   <td>
                     {q.status==='pending'&&<span style={{background:'rgba(245,158,11,.2)',color:'var(--warn)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>Pending</span>}
                     {q.status==='processing'&&<span style={{background:'rgba(0,229,255,.15)',color:'var(--acc)',borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>Processing...</span>}
@@ -34825,9 +34828,9 @@ Return ONLY the JSON object, no other text.`;
         </div>}
         {drafts.length>0&&<>
           <div style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:12,color:'var(--muted)'}}>{drafts.length} draft{drafts.length!==1?'s':''} waiting — verify every field against the original file before confirming</div>
+            <div style={{fontSize:12,color:'var(--muted)'}}>{drafts.length} draft{drafts.length!==1?'s':''} waiting - verify every field against the original file before confirming</div>
             <div style={{display:'flex',gap:6}}>
-              <span style={{fontSize:10,background:'rgba(245,158,11,.2)',color:'var(--warn)',borderRadius:3,padding:'2px 8px',fontWeight:700}}>⚠ Amber = empty/zero — check original</span>
+              <span style={{fontSize:10,background:'rgba(245,158,11,.2)',color:'var(--warn)',borderRadius:3,padding:'2px 8px',fontWeight:700}}>⚠ Amber = empty/zero - check original</span>
               <span style={{fontSize:10,background:'rgba(239,68,68,.2)',color:'var(--err)',borderRadius:3,padding:'2px 8px',fontWeight:700}}>✕ Red = suspicious value</span>
             </div>
           </div>
@@ -34841,13 +34844,13 @@ Return ONLY the JSON object, no other text.`;
               if(d.orderTotal>0&&d.orderTotal<100) flags.push('total-low');
 
               const Field2 = ({label, value, type='text', warn=false, err=false}) => {
-                const empty = value===''||value===0||value===null||value===undefined||value==='—';
+                const empty = value===''||value===0||value===null||value===undefined||value==='-';
                 const bg = err?'rgba(239,68,68,.12)':warn?'rgba(245,158,11,.1)':empty?'rgba(245,158,11,.07)':'var(--s2)';
                 const bc = err?'rgba(239,68,68,.4)':warn?'rgba(245,158,11,.35)':empty?'rgba(245,158,11,.2)':'transparent';
                 return (
                   <div style={{background:bg,border:'1px solid '+bc,borderRadius:5,padding:'5px 9px'}}>
                     <div style={{fontSize:9,color:empty?'var(--warn)':err?'var(--err)':'var(--muted)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700}}>{label}{empty?' ⚠':''}</div>
-                    <div style={{fontSize:12,fontWeight:600,marginTop:1,color:empty?'var(--warn)':err?'var(--err)':'var(--txt)'}}>{empty?'—':String(value)}</div>
+                    <div style={{fontSize:12,fontWeight:600,marginTop:1,color:empty?'var(--warn)':err?'var(--err)':'var(--txt)'}}>{empty?'-':String(value)}</div>
                   </div>
                 );
               };
@@ -34913,7 +34916,7 @@ Return ONLY the JSON object, no other text.`;
                       <Field2 label="Stair Posts" value={d.stairQty||0}/>
                       <Field2 label="Corner Posts" value={d.cornerQty||0}/>
                     </div>
-                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Top Rail <span style={{color:'var(--muted)',fontWeight:400,textTransform:'none',letterSpacing:0}}>— Deck + Stair = same material</span></div>
+                    <div style={{fontSize:9,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Top Rail <span style={{color:'var(--muted)',fontWeight:400,textTransform:'none',letterSpacing:0}}>- Deck + Stair = same material</span></div>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:6,marginBottom:8}}>
                       <Field2 label="Deck 8ft"   value={d.rail8ft||0}/>
                       <Field2 label="Deck 12ft"  value={d.rail12ft||0}/>
@@ -34965,7 +34968,7 @@ Return ONLY the JSON object, no other text.`;
                       {(d.stairAngles||[]).map((a,i)=>(
                         <div key={i} style={{background:'rgba(245,158,11,.15)',borderRadius:4,padding:'4px 10px',fontSize:11,fontWeight:700}}>
                           <span style={{color:'var(--warn)',fontSize:14,fontFamily:'Barlow Condensed'}}>{a.angle}</span>
-                          <span style={{color:'var(--muted)',fontWeight:400,marginLeft:6,fontSize:10}}>× {a.qty} post{a.qty!==1?'s':''}{a.notes?' — '+a.notes:''}</span>
+                          <span style={{color:'var(--muted)',fontWeight:400,marginLeft:6,fontSize:10}}>× {a.qty} post{a.qty!==1?'s':''}{a.notes?' - '+a.notes:''}</span>
                         </div>
                       ))}
                     </div>
@@ -35014,7 +35017,7 @@ Return ONLY the JSON object, no other text.`;
             <div style={{display:'flex',gap:8}}>
               <input type="password" value={aiApiKey} onChange={e=>{setAiApiKey(e.target.value);try{sessionStorage.setItem('maisy_ai_key',e.target.value);}catch(ex){}}} placeholder="sk-ant-... (required to parse PDFs and images)" style={{flex:1,fontFamily:'monospace',fontSize:11}}/>
             </div>
-            <div style={{fontSize:9,color:'var(--muted)',marginTop:3}}>Stored in session only — not saved to disk. Re-enter after refresh. Excel files parse without a key.</div>
+            <div style={{fontSize:9,color:'var(--muted)',marginTop:3}}>Stored in session only - not saved to disk. Re-enter after refresh. Excel files parse without a key.</div>
           </Field>
           <Field label="Tenant ID">
             <input value={od.tenantId||'common'} onChange={e=>saveOD({tenantId:e.target.value})} placeholder="common"/>
@@ -35026,7 +35029,7 @@ Return ONLY the JSON object, no other text.`;
             <input value={od.folderPath||''} onChange={e=>saveOD({folderPath:e.target.value})} placeholder="Orders"/>
           </Field>
           <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:5,padding:'8px 12px',fontSize:10,color:'var(--muted)',lineHeight:1.6}}>
-            Set this to your top-level orders folder (e.g. <strong style={{color:'var(--acc)'}}>Orders</strong>). The ERP will automatically scan all subfolders inside it — 2026-March, 2025-December, etc. — and find every order file across all months and years.
+            Set this to your top-level orders folder (e.g. <strong style={{color:'var(--acc)'}}>Orders</strong>). The ERP will automatically scan all subfolders inside it - 2026-March, 2025-December, etc. - and find every order file across all months and years.
           </div>
           <div style={{marginTop:10,display:'flex',alignItems:'center',gap:10}}>
             <input type="checkbox" id="autoCheck" checked={od.autoCheck!==false} onChange={e=>saveOD({autoCheck:e.target.checked})}/>
@@ -35050,15 +35053,15 @@ Return ONLY the JSON object, no other text.`;
             </button>
             {od.accessToken&&<button className="btn btn-g" onClick={checkOneDrive} disabled={checking}>{checking?'Checking...':'Test Connection'}</button>}
           </div>
-          {od.connected&&od.accessToken&&<div style={{marginTop:10,fontSize:11,color:'var(--ok)',fontWeight:600}}>✓ Connected — folder: {od.folderPath||'root'}</div>}
+          {od.connected&&od.accessToken&&<div style={{marginTop:10,fontSize:11,color:'var(--ok)',fontWeight:600}}>✓ Connected - folder: {od.folderPath||'root'}</div>}
         </div>
         <div className="card">
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:15,marginBottom:14}}>Azure App Setup Guide</div>
           {[
-            {n:'1',t:'Go to Azure Portal',d:'Open portal.azure.com and sign in with your Microsoft 365 account — the same one you use for OneDrive.',l:'portal.azure.com'},
+            {n:'1',t:'Go to Azure Portal',d:'Open portal.azure.com and sign in with your Microsoft 365 account - the same one you use for OneDrive.',l:'portal.azure.com'},
             {n:'2',t:'Register a New App',d:'Search "App registrations" → New registration. Name it "Maisy Railing ERP". Under Supported account types, choose "Accounts in any organizational directory and personal accounts."',l:null},
             {n:'3',t:'Set the Redirect URI',d:'After creating the app, go to Authentication → Add a platform → Single-page application. Set the redirect URI to: https://maisy-erp.vercel.app',l:null},
-            {n:'4',t:'Copy Your Application (Client) ID',d:'Go to the app Overview page. Copy the Application (client) ID — it looks like a long string of letters and numbers with dashes.',l:null},
+            {n:'4',t:'Copy Your Application (Client) ID',d:'Go to the app Overview page. Copy the Application (client) ID - it looks like a long string of letters and numbers with dashes.',l:null},
             {n:'5',t:'Set API Permissions',d:'Go to API permissions → Add a permission → Microsoft Graph → Delegated permissions. Add: Files.Read, Files.ReadWrite, offline_access, User.Read. Click Grant admin consent.',l:null},
             {n:'6',t:'Paste Client ID + Start OAuth',d:'Come back here, paste the Client ID, set your folder path (e.g. Orders/2026-March), and click Start Microsoft OAuth. Sign in to Microsoft and authorize. Paste the returned token.',l:null},
           ].map(s=>(
@@ -35072,7 +35075,7 @@ Return ONLY the JSON object, no other text.`;
             </div>
           ))}
           <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:6,padding:'10px 12px',marginTop:8,fontSize:10,color:'var(--warn)'}}>
-            Note: The auto-check runs hourly while this ERP tab is open. For true 24/7 background checking, I can set up a Power Automate flow or small serverless function — ask Daniel.
+            Note: The auto-check runs hourly while this ERP tab is open. For true 24/7 background checking, I can set up a Power Automate flow or small serverless function - ask Daniel.
           </div>
         </div>
       </div>}
@@ -35098,7 +35101,7 @@ Return ONLY the JSON object, no other text.`;
 
       {draftModal&&<Modal title="Edit & Confirm Draft Order" onClose={()=>setDraftModal(null)} lg>
         <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.25)',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:11,color:'var(--warn)'}}>
-          📁 {draftForm.sourceFile} — correct any fields before confirming to create a live order
+          📁 {draftForm.sourceFile} - correct any fields before confirming to create a live order
         </div>
 
         {/* Customer */}
@@ -35122,8 +35125,8 @@ Return ONLY the JSON object, no other text.`;
         <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Rail Specs</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
           <Field label="Product Type"><select value={draftForm.productType||'Cable Rail'} onChange={e=>setDraftForm(f=>({...f,productType:e.target.value}))}>{['Cable Rail','Glass Rail','Stair Rail','Specialty','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
-          <Field label="Mount Type"><select value={draftForm.mountType||''} onChange={e=>setDraftForm(f=>({...f,mountType:e.target.value}))}><option value="">— Select —</option>{['Fascia','Surface','Core Drill','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
-          <Field label="Rail Type"><select value={draftForm.railType||''} onChange={e=>setDraftForm(f=>({...f,railType:e.target.value}))}><option value="">— Select —</option>{['Cable','Glass Framed','Glass Frameless','Stair Only'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Mount Type"><select value={draftForm.mountType||''} onChange={e=>setDraftForm(f=>({...f,mountType:e.target.value}))}><option value="">- Select -</option>{['Fascia','Surface','Core Drill','Other'].map(t=><option key={t}>{t}</option>)}</select></Field>
+          <Field label="Rail Type"><select value={draftForm.railType||''} onChange={e=>setDraftForm(f=>({...f,railType:e.target.value}))}><option value="">- Select -</option>{['Cable','Glass Framed','Glass Frameless','Stair Only'].map(t=><option key={t}>{t}</option>)}</select></Field>
           <Field label="Height"><select value={draftForm.height||'42'} onChange={e=>setDraftForm(f=>({...f,height:e.target.value}))}><option value="36">36"</option><option value="42">42"</option><option value="Custom">Custom</option></select></Field>
           <Field label="Color"><input value={draftForm.color||''} onChange={e=>setDraftForm(f=>({...f,color:e.target.value}))}/></Field>
           <Field label="Order Type"><select value={draftForm.orderType||'New Order'} onChange={e=>setDraftForm(f=>({...f,orderType:e.target.value}))}>{['New Order','Re-Work','Warranty','Sample','Rush'].map(t=><option key={t}>{t}</option>)}</select></Field>
@@ -35136,7 +35139,7 @@ Return ONLY the JSON object, no other text.`;
           <Field label="Stair Posts"><input type="number" min="0" value={draftForm.stairQty||''} onChange={e=>setDraftForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
           <Field label="Corner Posts"><input type="number" min="0" value={draftForm.cornerQty||''} onChange={e=>setDraftForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
         </div>
-        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Top Rail <span style={{color:'var(--muted)',fontWeight:400}}>— Deck + Stair = same material</span></div>
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Top Rail <span style={{color:'var(--muted)',fontWeight:400}}>- Deck + Stair = same material</span></div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:6}}>
           <Field label="Deck 8ft"><input type="number" min="0" value={draftForm.rail8ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,rail8ft:+e.target.value}))}/></Field>
           <Field label="Deck 12ft"><input type="number" min="0" value={draftForm.rail12ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,rail12ft:+e.target.value}))}/></Field>
@@ -35147,7 +35150,7 @@ Return ONLY the JSON object, no other text.`;
           <Field label="Stair 12ft"><input type="number" min="0" value={draftForm.stairRail12ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,stairRail12ft:+e.target.value}))}/></Field>
           <Field label="Stair 20ft"><input type="number" min="0" value={draftForm.stairRail20ft||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,stairRail20ft:+e.target.value}))}/></Field>
         </div>
-        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Hardware <span style={{color:'var(--muted)',fontWeight:400}}>— from order sheet</span></div>
+        <div style={{fontSize:10,fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',borderBottom:'1px solid var(--bdr)',paddingBottom:4,marginBottom:8}}>Hardware <span style={{color:'var(--muted)',fontWeight:400}}>- from order sheet</span></div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:8}}>
           <Field label="Swages"><input type="number" min="0" value={draftForm.swageQty||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,swageQty:+e.target.value}))}/></Field>
           <Field label="Cable (ft)"><input type="number" min="0" value={draftForm.cableFootage||''} placeholder="0" onChange={e=>setDraftForm(f=>({...f,cableFootage:+e.target.value}))}/></Field>
@@ -35170,7 +35173,7 @@ Return ONLY the JSON object, no other text.`;
                 <div style={{fontSize:10,color:'var(--warn)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>Stair Angles</div>
                 <button className="btn btn-sm" style={{border:'1px solid var(--warn)',color:'var(--warn)',fontSize:11}} onClick={addAngle}>+ Add</button>
               </div>
-              {angles.length===0&&<div style={{fontSize:11,color:'var(--dim)',fontStyle:'italic'}}>No stair angles — add if order includes stairs at specific angles</div>}
+              {angles.length===0&&<div style={{fontSize:11,color:'var(--dim)',fontStyle:'italic'}}>No stair angles - add if order includes stairs at specific angles</div>}
               {angles.map((a,i)=>(
                 <div key={i} style={{display:'grid',gridTemplateColumns:'120px 80px 1fr 32px',gap:8,marginBottom:6,alignItems:'end'}}>
                   <Field label={i===0?'Angle':''}><select value={a.angle||'33°'} onChange={e=>updateAngle(i,'angle',e.target.value)}>
@@ -35211,7 +35214,7 @@ Return ONLY the JSON object, no other text.`;
         <Field label="Notes" style={{marginTop:10}}><textarea rows={2} value={draftForm.notes||''} onChange={e=>setDraftForm(f=>({...f,notes:e.target.value}))}/></Field>
 
         <div style={{display:'flex',gap:8,marginTop:14}}>
-          <button className="btn btn-p" onClick={confirmDraft} disabled={!draftForm.customer}>✓ Confirm — Create Order</button>
+          <button className="btn btn-p" onClick={confirmDraft} disabled={!draftForm.customer}>✓ Confirm - Create Order</button>
           <button className="btn" onClick={()=>setDraftModal(null)}>Cancel</button>
           <button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>{discardDraft(draftForm.id);setDraftModal(null);}}>Discard Draft</button>
         </div>
@@ -35226,12 +35229,12 @@ Return ONLY the JSON object, no other text.`;
               <div className="hd" style={{fontSize:18,color:'var(--warn)'}}>Force Re-Import All Files</div>
             </div>
             <div style={{background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.25)',borderRadius:6,padding:'12px 14px',margin:'16px 0',fontSize:12,lineHeight:1.7}}>
-              <strong style={{color:'var(--err)'}}>This will replace your entire import queue</strong> with ALL files from OneDrive — including files you already imported, files you discarded, and files from previous months.<br/><br/>
-              It does <strong>NOT</strong> create duplicate orders automatically — you still review and confirm each draft individually.<br/><br/>
+              <strong style={{color:'var(--err)'}}>This will replace your entire import queue</strong> with ALL files from OneDrive - including files you already imported, files you discarded, and files from previous months.<br/><br/>
+              It does <strong>NOT</strong> create duplicate orders automatically - you still review and confirm each draft individually.<br/><br/>
               Use this when you need to re-import a file you discarded or when the queue got out of sync.
             </div>
             <div style={{background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:6,padding:'10px 14px',marginBottom:16,fontSize:11,color:'var(--warn)'}}>
-              💡 <strong>Repeat customers are fine</strong> — the ERP tracks orders by Order ID, not by customer name. Same customer, different month = different order number = no conflict.
+              💡 <strong>Repeat customers are fine</strong> - the ERP tracks orders by Order ID, not by customer name. Same customer, different month = different order number = no conflict.
             </div>
             <div style={{display:'flex',gap:10}}>
               <button className="btn btn-g" style={{flex:1}} onClick={()=>setForceModal(false)}>Cancel</button>
@@ -35295,12 +35298,12 @@ const SRSCatalog = ({data,setData}) => {
                 <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700}}>{s.sku}</td>
                 <td style={{fontWeight:500}}>{s.commonName}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:180,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.techDesc}>{s.techDesc}</td>
-                <td style={{textAlign:'center',fontWeight:600}}>{s.srsStock||'—'}</td>
+                <td style={{textAlign:'center',fontWeight:600}}>{s.srsStock||'-'}</td>
                 <td style={{fontFamily:'monospace',fontSize:10}}>{s.gs1Prefix}</td>
                 <td style={{fontFamily:'monospace',fontSize:10,color:'var(--muted)'}}>{s.gtin}</td>
                 <td style={{fontFamily:'monospace',fontSize:10}}>{s.gtin12}</td>
-                <td style={{textAlign:'center'}}>{s.weightLb||'—'}</td>
-                <td style={{textAlign:'center'}}>{s.length||'—'}</td>
+                <td style={{textAlign:'center'}}>{s.weightLb||'-'}</td>
+                <td style={{textAlign:'center'}}>{s.length||'-'}</td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-sm" onClick={()=>{setForm({...s});setModal('sku');}}>Edit</button>
                   <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,srsCatalog:(d.srsCatalog||[]).filter((_,j)=>j!==i)}))}>Del</button>
@@ -35313,7 +35316,7 @@ const SRSCatalog = ({data,setData}) => {
       {srsTab==='dims'&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table><thead><tr><th>Common Name</th><th>Weight (lb)</th><th>Length</th><th>Width</th><th>Height</th></tr></thead>
           <tbody>{dims.length===0&&<tr><td colSpan={5}><Empty msg="No dimension data"/></td></tr>}
-          {dims.map((d,i)=><tr key={i}><td>{d.commonName}</td><td>{d.weightLb||'—'}</td><td>{d.length||'—'}</td><td>{d.width||'—'}</td><td>{d.height||'—'}</td></tr>)}
+          {dims.map((d,i)=><tr key={i}><td>{d.commonName}</td><td>{d.weightLb||'-'}</td><td>{d.length||'-'}</td><td>{d.width||'-'}</td><td>{d.height||'-'}</td></tr>)}
           </tbody>
         </table>
       </div>}
@@ -35393,9 +35396,9 @@ const LegacyOrders = ({data,setData}) => {
               <td style={{fontSize:10,color:'var(--acc)'}}>{o.productType}</td>
               <td style={{fontSize:11,color:'var(--muted)'}}>{o.date}</td>
               <td style={{fontSize:11}}>{o.shipTo}</td>
-              <td style={{textAlign:'center'}}>{o.qty1||'—'}</td>
-              <td style={{textAlign:'center'}}>{o.qty2||'—'}</td>
-              <td style={{textAlign:'center'}}>{o.qty3||'—'}</td>
+              <td style={{textAlign:'center'}}>{o.qty1||'-'}</td>
+              <td style={{textAlign:'center'}}>{o.qty2||'-'}</td>
+              <td style={{textAlign:'center'}}>{o.qty3||'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-sm" onClick={()=>{setForm({...o});setModal('order');}}>Edit</button>
                 <button className="btn btn-d btn-sm" onClick={()=>setData(d=>({...d,legacyOrders:(d.legacyOrders||[]).filter(x=>x.id!==o.id)}))}>Del</button>
@@ -35457,7 +35460,7 @@ const WorkOrders = ({data, setData}) => {
           <td style="padding:7px 10px;font-size:11px;font-weight:600">${item.name}</td>
           <td style="padding:7px 10px;text-align:center;font-size:12px;font-weight:700">${item.qty}</td>
           <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">${item.unit}</td>
-          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">${item.note||'—'}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">${item.note||'-'}</td>
           <td style="padding:7px 10px;text-align:center;font-size:11px;font-weight:700;color:${ok?'#065f46':'#991b1b'}">${onHand}</td>
           <td style="padding:7px 10px;text-align:center">
             <div style="width:16px;height:16px;border:2px solid #d1d5db;border-radius:3px;display:inline-block"></div>
@@ -35479,7 +35482,7 @@ const WorkOrders = ({data, setData}) => {
 <html>
 <head>
 <meta charset="utf-8">
-<title>Work Order — ${order.id}</title>
+<title>Work Order - ${order.id}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Arial',sans-serif;font-size:12px;color:#1a1a2e;background:#fff;padding:24px}
@@ -35532,12 +35535,12 @@ const WorkOrders = ({data, setData}) => {
 <div class="section">
   <div class="section-title">Order Information</div>
   <div class="grid3">
-    <div class="field"><div class="field-label">Customer</div><div class="field-val big">${order.customer||'—'}</div></div>
-    <div class="field"><div class="field-label">Project</div><div class="field-val">${order.project||'—'}</div></div>
-    <div class="field"><div class="field-label">PO #</div><div class="field-val">${order.po||'—'}</div></div>
-    <div class="field"><div class="field-label">Product Type</div><div class="field-val">${order.productType||'—'}</div></div>
-    <div class="field"><div class="field-label">Mount / Rail</div><div class="field-val">${[order.mountType,order.railType].filter(Boolean).join(' — ')||'—'}</div></div>
-    <div class="field"><div class="field-label">Post Height</div><div class="field-val">${order.height||'—'}"</div></div>
+    <div class="field"><div class="field-label">Customer</div><div class="field-val big">${order.customer||'-'}</div></div>
+    <div class="field"><div class="field-label">Project</div><div class="field-val">${order.project||'-'}</div></div>
+    <div class="field"><div class="field-label">PO #</div><div class="field-val">${order.po||'-'}</div></div>
+    <div class="field"><div class="field-label">Product Type</div><div class="field-val">${order.productType||'-'}</div></div>
+    <div class="field"><div class="field-label">Mount / Rail</div><div class="field-val">${[order.mountType,order.railType].filter(Boolean).join(' - ')||'-'}</div></div>
+    <div class="field"><div class="field-label">Post Height</div><div class="field-val">${order.height||'-'}"</div></div>
   </div>
 </div>
 
@@ -35548,7 +35551,7 @@ const WorkOrders = ({data, setData}) => {
     <div>
       <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:3px">Color Code / Name</div>
       <div style="font-size:20px;font-weight:900;letter-spacing:.04em">${order.color||'NOT SPECIFIED'}</div>
-      ${powderCoat&&powderCoat.inventoryId!=='PC-UNKNOWN'?`<div style="font-size:10px;opacity:.6;margin-top:3px">Inventory: ${powderCoat.inventoryId}</div>`:'<div style="font-size:10px;color:#f87171;margin-top:3px">⚠ Color not matched to inventory — verify manually</div>'}
+      ${powderCoat&&powderCoat.inventoryId!=='PC-UNKNOWN'?`<div style="font-size:10px;opacity:.6;margin-top:3px">Inventory: ${powderCoat.inventoryId}</div>`:'<div style="font-size:10px;color:#f87171;margin-top:3px">⚠ Color not matched to inventory - verify manually</div>'}
     </div>
     <div style="text-align:center">
       <div style="font-size:9px;opacity:.7;margin-bottom:3px">Posts to Coat</div>
@@ -35556,7 +35559,7 @@ const WorkOrders = ({data, setData}) => {
     </div>
     <div style="text-align:center">
       <div style="font-size:9px;opacity:.7;margin-bottom:3px">Powder Needed</div>
-      <div style="font-size:28px;font-weight:900">${powderCoat?powderCoat.qty:'—'}</div>
+      <div style="font-size:28px;font-weight:900">${powderCoat?powderCoat.qty:'-'}</div>
       <div style="font-size:9px;opacity:.7">lbs</div>
     </div>
     <div style="text-align:center">
@@ -35587,7 +35590,7 @@ const WorkOrders = ({data, setData}) => {
 
 <!-- BOM Pick List -->
 <div class="section">
-  <div class="section-title">Materials Pick List — Pull from Inventory</div>
+  <div class="section-title">Materials Pick List - Pull from Inventory</div>
   <table>
     <thead>
       <tr>
@@ -35622,7 +35625,7 @@ ${order.notes ? `<div class="section">
   <div class="section-title">Notes / Special Instructions</div>
   <div style="border:1px solid #e5e7eb;border-radius:5px;padding:10px 12px;font-size:12px;background:#fffbeb;">${order.notes}</div>
 </div>` : ''}
-${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware')||n.includes('black cable')||n.includes('all black')||n.includes('blk hardware')||n.includes('black swage')){ return `<div class="section"><div style="background:#7f1d1d;color:#fca5a5;border:2px solid #ef4444;border-radius:6px;padding:12px 16px;font-weight:900;font-size:13px;letter-spacing:.06em;text-transform:uppercase">⚠ BLACK HARDWARE — Customer requested per order notes. Use: black cable, black swages, black angle washers.</div></div>`; } return ''; })()}
+${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware')||n.includes('black cable')||n.includes('all black')||n.includes('blk hardware')||n.includes('black swage')){ return `<div class="section"><div style="background:#7f1d1d;color:#fca5a5;border:2px solid #ef4444;border-radius:6px;padding:12px 16px;font-weight:900;font-size:13px;letter-spacing:.06em;text-transform:uppercase">⚠ BLACK HARDWARE - Customer requested per order notes. Use: black cable, black swages, black angle washers.</div></div>`; } return ''; })()}
 
 <!-- Footer -->
 <div class="footer">
@@ -35690,17 +35693,17 @@ ${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware'
                 <tr key={o.id} style={{background:selected?.id===o.id?'rgba(0,229,255,.06)':undefined}}>
                   <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.id}</td>
                   <td style={{fontWeight:600}}>{o.customer}</td>
-                  <td style={{fontSize:11,color:'var(--muted)'}}>{o.project||'—'}</td>
-                  <td style={{fontSize:11}}>{o.productType||'—'}</td>
-                  <td style={{fontSize:11,color:'var(--muted)'}}>{o.mountType||'—'}</td>
-                  <td style={{fontSize:10,color:'var(--muted)'}}>{o.color||'—'}</td>
-                  <td style={{textAlign:'center',fontWeight:700,fontFamily:'monospace'}}>{totalPosts||'—'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{o.project||'-'}</td>
+                  <td style={{fontSize:11}}>{o.productType||'-'}</td>
+                  <td style={{fontSize:11,color:'var(--muted)'}}>{o.mountType||'-'}</td>
+                  <td style={{fontSize:10,color:'var(--muted)'}}>{o.color||'-'}</td>
+                  <td style={{textAlign:'center',fontWeight:700,fontFamily:'monospace'}}>{totalPosts||'-'}</td>
                   <td><span style={{background:{'New':'var(--acc)','Confirmed':'var(--warn)','In Production':'#f59e0b','Ready to Ship':'var(--ok)','Completed':'var(--muted)'}[o.status]||'var(--s3)',color:o.status==='New'?'#000':'#fff',borderRadius:3,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.05em',textTransform:'uppercase',whiteSpace:'nowrap'}}>{o.status}</span></td>
-                  <td style={{fontSize:11,color:isOverdue?'var(--err)':'var(--muted)',fontWeight:isOverdue?700:400,whiteSpace:'nowrap'}}>{o.dueDate||'—'}</td>
+                  <td style={{fontSize:11,color:isOverdue?'var(--err)':'var(--muted)',fontWeight:isOverdue?700:400,whiteSpace:'nowrap'}}>{o.dueDate||'-'}</td>
                   <td style={{textAlign:'center'}}>
                     {hasBOM
                       ? <span style={{color:'var(--ok)',fontWeight:700,fontSize:12}}>✓</span>
-                      : <span style={{color:'var(--dim)',fontSize:11}}>—</span>}
+                      : <span style={{color:'var(--dim)',fontSize:11}}>-</span>}
                   </td>
                   <td>
                     <button className="btn btn-p btn-sm" onClick={()=>printWO(o)}>
@@ -35715,9 +35718,9 @@ ${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware'
       </div>
 
       <div style={{marginTop:14,padding:'10px 14px',background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,fontSize:11,color:'var(--muted)'}}>
-        💡 <strong style={{color:'var(--acc)'}}>Work orders generate automatically</strong> from the BOM stored on each order. 
-        Orders confirmed from Order Import will have a complete BOM. 
-        Manually entered orders need quantities filled in to generate an accurate BOM. 
+        💡 <strong style={{color:'var(--acc)'}}>Work orders generate automatically</strong> from the BOM stored on each order.
+        Orders confirmed from Order Import will have a complete BOM.
+        Manually entered orders need quantities filled in to generate an accurate BOM.
         The printed work order includes the full pick list, station sign-off checkboxes, and powder coat callout.
       </div>
     </div>
@@ -35795,9 +35798,9 @@ const BuildSchedule = ({data, setData}) => {
                 return (<tr key={o.id}>
                   <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{o.id}</td>
                   <td style={{fontWeight:600}}>{o.customer}</td>
-                  <td style={{fontSize:11}}>{o.productType||'—'}</td>
-                  <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700}}>{totalPosts||'—'}</td>
-                  <td style={{fontSize:11,whiteSpace:'nowrap',color:o.dueDate&&o.dueDate<now()?'var(--err)':'var(--muted)'}}>{o.dueDate||'—'}</td>
+                  <td style={{fontSize:11}}>{o.productType||'-'}</td>
+                  <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700}}>{totalPosts||'-'}</td>
+                  <td style={{fontSize:11,whiteSpace:'nowrap',color:o.dueDate&&o.dueDate<now()?'var(--err)':'var(--muted)'}}>{o.dueDate||'-'}</td>
                   <td><StatusSelect value={o.status||'Queued'} options={['Queued','In Production','On Hold','Complete']} onChange={v=>setData(d=>({...d,buildSchedule:(d.buildSchedule||[]).map(x=>x.id===o.id?{...x,status:v}:x)}))}/></td>
                   <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700,color:{'1':'var(--err)','2':'#f97316','3':'var(--warn)','4':'var(--acc)','5':'var(--muted)'}[o.priority||3]}}>{o.priority||3}</td>
                   {stations.map(s=>{
@@ -35816,7 +35819,7 @@ const BuildSchedule = ({data, setData}) => {
             </table>
           </div>
         </div>}
-        {queuedOrders.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No active orders — confirm orders on the Orders page to populate the schedule</div>}
+        {queuedOrders.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No active orders - confirm orders on the Orders page to populate the schedule</div>}
       </div>}
 
       {bsTab==='output'&&<div className="card" style={{padding:0,overflow:'auto'}}>
@@ -35848,8 +35851,8 @@ const BuildSchedule = ({data, setData}) => {
         <div className="card" style={{background:'rgba(239,68,68,.06)',border:'1px solid rgba(239,68,68,.25)'}}>
           <div className="hd" style={{fontSize:14,color:'var(--err)',marginBottom:8}}>⚠ Bottleneck: {bottleneck.station}</div>
           <div style={{fontSize:12,color:'var(--muted)',lineHeight:1.7}}>
-            Welding limits overall throughput to <strong style={{color:'var(--txt)'}}>6 sections/day</strong> regardless of capacity at other stations. 
-            All other stations run faster — they sit idle waiting for welding. 
+            Welding limits overall throughput to <strong style={{color:'var(--txt)'}}>6 sections/day</strong> regardless of capacity at other stations.
+            All other stations run faster - they sit idle waiting for welding.
             To increase total output, focus investment on welding capacity: second welder, improved fixtures, or robotic welding integration per the Automation Roadmap.
           </div>
         </div>
@@ -35886,7 +35889,7 @@ const ProcessTracker = ({data}) => {
         {task:'Cut top rail (6063-T6 tubing)',min:1.5,notes:'8ft nominal length'},
         {task:'Cut bottom rail',min:1.5,notes:'Per section'},
         {task:'Cut pickets / balusters',min:8,notes:'~12-16 pickets @ 30sec each'},
-        {task:'Deburr all cut ends',min:5,notes:'Scotch-Brite or file — all edges'},
+        {task:'Deburr all cut ends',min:5,notes:'Scotch-Brite or file - all edges'},
         {task:'Inspect & stage cut parts',min:3,notes:'Count, bundle, label'},
       ]
     },
@@ -35899,9 +35902,9 @@ const ProcessTracker = ({data}) => {
         {task:'Load first workpiece into fixture',min:1.5,notes:'Clamp profile, verify seating'},
         {task:'Run first piece (prove out)',min:3,notes:'Slow feed first pass to verify'},
         {task:'Inspect first piece',min:2,notes:'Calipers, go/no-go gauges'},
-        {task:'Run top rail — drill picket holes',min:4,notes:'12-16 holes per 8ft section'},
-        {task:'Run bottom rail — drill picket holes',min:4,notes:'Mirror pattern of top rail'},
-        {task:'Run pickets / balusters',min:8,notes:'Batch run — all in one fixture load'},
+        {task:'Run top rail - drill picket holes',min:4,notes:'12-16 holes per 8ft section'},
+        {task:'Run bottom rail - drill picket holes',min:4,notes:'Mirror pattern of top rail'},
+        {task:'Run pickets / balusters',min:8,notes:'Batch run - all in one fixture load'},
         {task:'Unload & inspect batch',min:3,notes:'Count, check hole placement'},
         {task:'Clean CNC table',min:2,notes:'Vacuum chips, wipe table'},
       ]
@@ -35911,11 +35914,11 @@ const ProcessTracker = ({data}) => {
       tasks:[
         {task:'Set up welding fixture',min:5,notes:'Clamp rails and pickets to fixture'},
         {task:'Tack weld all joints',min:15,notes:'4 tacks per picket joint minimum'},
-        {task:'Full weld top rail joints',min:20,notes:'TIG weld — full penetration'},
-        {task:'Full weld bottom rail joints',min:20,notes:'TIG weld — full penetration'},
+        {task:'Full weld top rail joints',min:20,notes:'TIG weld - full penetration'},
+        {task:'Full weld bottom rail joints',min:20,notes:'TIG weld - full penetration'},
         {task:'Weld end caps',min:8,notes:'Both ends, both rails'},
         {task:'Grind weld seams flush',min:10,notes:'4.5" angle grinder'},
-        {task:'Inspect welds — visual QC',min:5,notes:'No porosity, undercut, or cold welds'},
+        {task:'Inspect welds - visual QC',min:5,notes:'No porosity, undercut, or cold welds'},
         {task:'Stage for grinding',min:5,notes:'Bundle and label'},
       ]
     },
@@ -35924,16 +35927,16 @@ const ProcessTracker = ({data}) => {
       tasks:[
         {task:'Grind weld flash and seams',min:12,notes:'Angle grinder + flap disc'},
         {task:'Scotch-Brite surface blend',min:10,notes:'Uniform surface finish'},
-        {task:'Sand all edges and corners',min:8,notes:'Remove sharp edges — safety'},
+        {task:'Sand all edges and corners',min:8,notes:'Remove sharp edges - safety'},
         {task:'Final surface inspection',min:5,notes:'Reject if visible scratches'},
-        {task:'Clean with solvent wipe',min:3,notes:'IPA wipe — remove oils for powder'},
+        {task:'Clean with solvent wipe',min:3,notes:'IPA wipe - remove oils for powder'},
         {task:'Stage for powder coat',min:3,notes:'Rack and label'},
       ]
     },
     powder: {
       name:'5. Powder Coating', rate:27.00,
       tasks:[
-        {task:'Pre-inspection — verify surface clean',min:2,notes:'Reject back to grinding if issues'},
+        {task:'Pre-inspection - verify surface clean',min:2,notes:'Reject back to grinding if issues'},
         {task:'Hang parts on rack',min:4,notes:'Proper spacing, ground connections'},
         {task:'Outgassing bake (aluminum)',min:10,notes:'400°F for 10 min'},
         {task:'Cool to ambient temperature',min:5,notes:'Must cool before pretreat'},
@@ -35941,9 +35944,9 @@ const ProcessTracker = ({data}) => {
         {task:'Dry parts',min:5,notes:'Forced air + oven flash'},
         {task:'Mask areas not to be coated',min:3,notes:'Silicone plugs, high-temp tape'},
         {task:'Set up powder gun',min:2,notes:'kV, flow rate, air pressure'},
-        {task:'Apply powder coat',min:8,notes:'2 passes — even coverage'},
+        {task:'Apply powder coat',min:8,notes:'2 passes - even coverage'},
         {task:'Cure in oven',min:20,notes:'400°F for 20 min'},
-        {task:'Cool and inspect DFT',min:10,notes:'2-3 mil target — use DFT gauge'},
+        {task:'Cool and inspect DFT',min:10,notes:'2-3 mil target - use DFT gauge'},
       ]
     },
     assembly: {
@@ -35962,7 +35965,7 @@ const ProcessTracker = ({data}) => {
       name:'7. Quality Control', rate:24.30,
       tasks:[
         {task:'Verify order against BOM',min:3,notes:'Count all components'},
-        {task:'Inspect powder coat finish',min:5,notes:'DFT gauge, visual — no runs, sags'},
+        {task:'Inspect powder coat finish',min:5,notes:'DFT gauge, visual - no runs, sags'},
         {task:'Check weld quality',min:5,notes:'Visual + tap test'},
         {task:'Verify dimensions',min:5,notes:'Height, length, hole spacing'},
         {task:'Check hardware completeness',min:3,notes:'All fasteners, caps, tensioners'},
@@ -35974,7 +35977,7 @@ const ProcessTracker = ({data}) => {
     packaging: {
       name:'8. Packaging & Shipping', rate:27.00,
       tasks:[
-        {task:'Wrap each piece in poly tubing',min:5,notes:'6mil poly — full coverage'},
+        {task:'Wrap each piece in poly tubing',min:5,notes:'6mil poly - full coverage'},
         {task:'Bundle sections together',min:4,notes:'Strapping, edge protectors'},
         {task:'Apply labels and paperwork',min:3,notes:'Ship label, packing list, order ID'},
         {task:'Palletize if LTL',min:8,notes:'Stretch wrap, secure to pallet'},
@@ -35993,7 +35996,7 @@ const ProcessTracker = ({data}) => {
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Process Tracker</div>
-          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Step-by-step task breakdown for each production station — times, labor costs, and notes</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Step-by-step task breakdown for each production station - times, labor costs, and notes</div>
         </div>
       </div>
       <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
@@ -36072,7 +36075,7 @@ const ShiftHandoff = ({data, setData}) => {
           <div key={i} className="card" style={{borderLeft:'4px solid '+((l.stationsDown&&l.stationsDown!=='None')||(l.qualityIssues&&l.qualityIssues!=='None')||(l.safetyIssues&&l.safetyIssues!=='None')?'var(--err)':'var(--ok)')}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
               <div>
-                <div style={{fontWeight:700,fontSize:14}}>{l.date} — {l.shiftLead}</div>
+                <div style={{fontWeight:700,fontSize:14}}>{l.date} - {l.shiftLead}</div>
                 <div style={{display:'flex',gap:12,marginTop:4}}>
                   <span style={{fontSize:11,color:'var(--ok)'}}><strong>{l.ordersCompleted}</strong> completed</span>
                   <span style={{fontSize:11,color:'var(--warn)'}}><strong>{l.ordersInProgress}</strong> in progress</span>
@@ -36103,7 +36106,7 @@ const ShiftHandoff = ({data, setData}) => {
       {modal==='edit'&&<Modal title="Shift Handoff" onClose={()=>setModal(null)} lg>
         <div className="grid2">
           <Field label="Date"><input type="date" value={form.date||''} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
-          <Field label="Shift Lead"><select value={form.shiftLead||''} onChange={e=>setForm(f=>({...f,shiftLead:e.target.value}))}><option value="">—</option>{['Daniel','Amber','Jace','Michael','Nick'].map(n=><option key={n}>{n}</option>)}</select></Field>
+          <Field label="Shift Lead"><select value={form.shiftLead||''} onChange={e=>setForm(f=>({...f,shiftLead:e.target.value}))}><option value="">-</option>{['Daniel','Amber','Jace','Michael','Nick'].map(n=><option key={n}>{n}</option>)}</select></Field>
           <Field label="Orders Completed"><input type="number" min="0" value={form.ordersCompleted||''} onChange={e=>setForm(f=>({...f,ordersCompleted:+e.target.value}))}/></Field>
           <Field label="Orders In Progress"><input type="number" min="0" value={form.ordersInProgress||''} onChange={e=>setForm(f=>({...f,ordersInProgress:+e.target.value}))}/></Field>
         </div>
@@ -36207,7 +36210,7 @@ const Calculators = () => {
 
       {calcTab==='material'&&<div className="grid2" style={{gap:20}}>
         <div className="card">
-          <div className="hd" style={{fontSize:13,marginBottom:14}}>Inputs — Linear Material</div>
+          <div className="hd" style={{fontSize:13,marginBottom:14}}>Inputs - Linear Material</div>
           <CalcField label="Total Roll/Coil Length" value={mc.rollLength} onChange={v=>setMc(m=>({...m,rollLength:+v}))} unit="ft"/>
           <CalcField label="Total Purchase Price" value={mc.purchasePrice} onChange={v=>setMc(m=>({...m,purchasePrice:+v}))} step="0.01" unit="$"/>
           <CalcField label="Scrap / Waste Factor" value={mc.waste} onChange={v=>setMc(m=>({...m,waste:+v}))} unit="%"/>
@@ -36293,7 +36296,7 @@ const Calculators = () => {
               <span style={{fontFamily:'monospace',color:'var(--acc)'}}>{Math.tan(deg*Math.PI/180).toFixed(3)} slope</span>
             </div>
           ))}
-          <div style={{marginTop:10,fontSize:10,color:'var(--muted)'}}>Stair rail typically 33–37°</div>
+          <div style={{marginTop:10,fontSize:10,color:'var(--muted)'}}>Stair rail typically 33-37°</div>
         </div>
       </div>}
     </div>
@@ -36305,7 +36308,7 @@ const FacilityMove = ({data, setData}) => {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
   const tasks = data.facilityMoveTasks || [];
-  const overview = data.facilityMoveOverview || {currentFacility:'15,000 sq ft — Hayden, ID',newFacility:'',targetDate:'',downtime:'',budget:0,coordinator:'Daniel Jones'};
+  const overview = data.facilityMoveOverview || {currentFacility:'15,000 sq ft - Hayden, ID',newFacility:'',targetDate:'',downtime:'',budget:0,coordinator:'Daniel Jones'};
   const saveTask = () => {
     const rec = {...form, id:form.id||'FM-'+uid()};
     if(!tasks.find(t=>t.id===rec.id)) setData(d=>({...d,facilityMoveTasks:[...(d.facilityMoveTasks||[]),rec]}));
@@ -36347,7 +36350,7 @@ const FacilityMove = ({data, setData}) => {
           ))}
         </div>
       </div>
-      {tasks.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No tasks yet — add move budget items and tasks</div>}
+      {tasks.length===0&&<div className="card" style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No tasks yet - add move budget items and tasks</div>}
       {tasks.length>0&&<div className="card" style={{padding:0,overflow:'auto'}}>
         <table>
           <thead><tr><th>Category</th><th>Description</th><th style={{textAlign:'right'}}>Est. Cost</th><th style={{textAlign:'right'}}>Actual</th><th style={{textAlign:'right'}}>Variance</th><th>Vendor</th><th>Status</th><th>Due</th><th/></tr></thead>
@@ -36355,12 +36358,12 @@ const FacilityMove = ({data, setData}) => {
             <tr key={i}>
               <td style={{fontSize:11,color:'var(--muted)'}}>{t.category}</td>
               <td style={{fontWeight:500}}>{t.description}</td>
-              <td style={{textAlign:'right',fontFamily:'monospace'}}>{t.estimated?fmt$(t.estimated):'—'}</td>
-              <td style={{textAlign:'right',fontFamily:'monospace'}}>{t.actual?fmt$(t.actual):'—'}</td>
-              <td style={{textAlign:'right',fontFamily:'monospace',color:(t.actual||0)>(t.estimated||0)?'var(--err)':'var(--ok)'}}>{t.estimated&&t.actual?fmt$(t.actual-t.estimated):'—'}</td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{t.vendor||'—'}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{t.estimated?fmt$(t.estimated):'-'}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace'}}>{t.actual?fmt$(t.actual):'-'}</td>
+              <td style={{textAlign:'right',fontFamily:'monospace',color:(t.actual||0)>(t.estimated||0)?'var(--err)':'var(--ok)'}}>{t.estimated&&t.actual?fmt$(t.actual-t.estimated):'-'}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{t.vendor||'-'}</td>
               <td><StatusSelect value={t.status||'Planned'} options={['Planned','In Progress','Complete','On Hold','Cancelled']} onChange={v=>setData(d=>({...d,facilityMoveTasks:(d.facilityMoveTasks||[]).map(x=>x.id===t.id?{...x,status:v}:x)}))}/></td>
-              <td style={{fontSize:11,color:'var(--muted)'}}>{t.dueDate||'—'}</td>
+              <td style={{fontSize:11,color:'var(--muted)'}}>{t.dueDate||'-'}</td>
               <td><div style={{display:'flex',gap:4}}>
                 <button className="btn btn-g btn-xs" onClick={()=>{setForm({...t});setModal('task');}}>Edit</button>
                 <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,facilityMoveTasks:(d.facilityMoveTasks||[]).filter(x=>x.id!==t.id)}))}>×</button>
@@ -36370,8 +36373,8 @@ const FacilityMove = ({data, setData}) => {
           <tr style={{borderTop:'2px solid var(--bdr2)',background:'var(--s2)'}}>
             <td colSpan={2} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',paddingLeft:12}}>TOTAL</td>
             <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{fmt$(totalBudget)}</td>
-            <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{totalActual?fmt$(totalActual):'—'}</td>
-            <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:totalActual>totalBudget?'var(--err)':'var(--ok)'}}>{totalActual?fmt$(totalActual-totalBudget):'—'}</td>
+            <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700}}>{totalActual?fmt$(totalActual):'-'}</td>
+            <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:700,color:totalActual>totalBudget?'var(--err)':'var(--ok)'}}>{totalActual?fmt$(totalActual-totalBudget):'-'}</td>
             <td colSpan={4}></td>
           </tr>
           </tbody>
@@ -36416,7 +36419,7 @@ const EmployeeReviews = ({data, setData}) => {
       <InfoBanner pageId="employeereviews"/>
       <div className="section-hd">
         <div><div className="hd" style={{fontSize:22}}>Employee Reviews</div>
-          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Quarterly performance scoring — Amber, Jace, Michael, Nick</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Quarterly performance scoring - Amber, Jace, Michael, Nick</div>
         </div>
         <button className="btn btn-p" onClick={()=>{setForm({id:'',employee:'Amber',quarter:'Q1 2026',competency:'Production Output',rating:3,notes:''});setModal('edit');}}>+ Add Review Score</button>
       </div>
@@ -36436,7 +36439,7 @@ const EmployeeReviews = ({data, setData}) => {
                 <td style={{textAlign:'center'}}>
                   <span style={{background:(ratingColors[r.rating]||'var(--muted)')+'22',color:ratingColors[r.rating]||'var(--muted)',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,padding:'2px 10px',borderRadius:4}}>{r.rating}/5</span>
                 </td>
-                <td style={{fontSize:11,color:'var(--muted)'}}>{r.notes||'—'}</td>
+                <td style={{fontSize:11,color:'var(--muted)'}}>{r.notes||'-'}</td>
                 <td><div style={{display:'flex',gap:4}}>
                   <button className="btn btn-g btn-xs" onClick={()=>{setForm({...r});setModal('edit');}}>Edit</button>
                   <button className="btn btn-d btn-xs" onClick={()=>setData(d=>({...d,employeeReviews:(d.employeeReviews||[]).filter(x=>x.id!==r.id)}))}>×</button>
@@ -36460,7 +36463,7 @@ const EmployeeReviews = ({data, setData}) => {
               {employees.flatMap(emp=>quarters.slice(0,2).map(q=>{
                 const r = reviews.find(x=>x.employee===emp&&x.quarter===q&&x.competency===comp);
                 return <td key={emp+q} style={{textAlign:'center'}}>
-                  {r?<span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,color:ratingColors[r.rating]||'var(--muted)'}}>{r.rating}</span>:<span style={{color:'var(--dim)',fontSize:11}}>—</span>}
+                  {r?<span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:14,color:ratingColors[r.rating]||'var(--muted)'}}>{r.rating}</span>:<span style={{color:'var(--dim)',fontSize:11}}>-</span>}
                 </td>;
               }))}
             </tr>
@@ -36472,7 +36475,7 @@ const EmployeeReviews = ({data, setData}) => {
           <Field label="Employee"><select value={form.employee||'Amber'} onChange={e=>setForm(f=>({...f,employee:e.target.value}))}>{employees.map(e=><option key={e}>{e}</option>)}</select></Field>
           <Field label="Quarter"><select value={form.quarter||'Q1 2026'} onChange={e=>setForm(f=>({...f,quarter:e.target.value}))}>{quarters.map(q=><option key={q}>{q}</option>)}</select></Field>
           <Field label="Competency"><select value={form.competency||competencies[0]} onChange={e=>setForm(f=>({...f,competency:e.target.value}))}>{competencies.map(c=><option key={c}>{c}</option>)}</select></Field>
-          <Field label="Rating (1-5)"><select value={form.rating||3} onChange={e=>setForm(f=>({...f,rating:+e.target.value}))}>{[5,4,3,2,1].map(n=><option key={n} value={n}>{n} — {['','Needs Work','Below Avg','Meets Expectations','Above Avg','Outstanding'][n]}</option>)}</select></Field>
+          <Field label="Rating (1-5)"><select value={form.rating||3} onChange={e=>setForm(f=>({...f,rating:+e.target.value}))}>{[5,4,3,2,1].map(n=><option key={n} value={n}>{n} - {['','Needs Work','Below Avg','Meets Expectations','Above Avg','Outstanding'][n]}</option>)}</select></Field>
         </div>
         <Field label="Notes" style={{marginTop:8}}><textarea rows={2} value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></Field>
         <div style={{display:'flex',gap:8,marginTop:12}}><button className="btn btn-p" onClick={save}>Save</button><button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button></div>
@@ -36583,38 +36586,38 @@ const OpsReference = () => {
   const [opsTab, setOpsTab] = useState('daily');
   const PLAYBOOK = {
     daily:{label:'Daily',items:[
-      {id:'D-01',task:'Start day with shop meeting — assign work orders for day',owner:'Dir. of Ops',tool:'Whiteboard'},
-      {id:'D-02',task:'List daily goals on whiteboard — update production board',owner:'Dir. of Ops',tool:'Whiteboard'},
+      {id:'D-01',task:'Start day with shop meeting - assign work orders for day',owner:'Dir. of Ops',tool:'Whiteboard'},
+      {id:'D-02',task:'List daily goals on whiteboard - update production board',owner:'Dir. of Ops',tool:'Whiteboard'},
       {id:'D-03',task:'Review/adjust time punches for previous day',owner:'Dir. of Ops',tool:'Gusto'},
       {id:'D-04',task:'Monitor shop progress and adjust for issues',owner:'Dir. of Ops',tool:'Floor Walk'},
-      {id:'D-05',task:'Update ERP — order statuses, inventory movements',owner:'Dir. of Ops',tool:'This ERP'},
+      {id:'D-05',task:'Update ERP - order statuses, inventory movements',owner:'Dir. of Ops',tool:'This ERP'},
       {id:'D-06',task:'End-of-day shift handoff entry',owner:'Shift Lead',tool:'This ERP'},
       {id:'D-07',task:'Review next-day orders and pull BOM for tomorrow',owner:'Dir. of Ops',tool:'This ERP'},
     ]},
     weekly:{label:'Weekly',items:[
-      {id:'W-01',task:'Review open orders vs due dates — flag any at-risk',owner:'Dir. of Ops',tool:'Orders Page'},
+      {id:'W-01',task:'Review open orders vs due dates - flag any at-risk',owner:'Dir. of Ops',tool:'Orders Page'},
       {id:'W-02',task:'Cycle count critical inventory items',owner:'Dir. of Ops',tool:'Inventory Page'},
       {id:'W-03',task:'Review reorder needs and place purchase orders',owner:'Dir. of Ops',tool:'Purchasing Page'},
       {id:'W-04',task:'Process payroll',owner:'Dir. of Ops',tool:'Gusto'},
       {id:'W-05',task:'Update KPI scoreboard',owner:'Dir. of Ops',tool:'KPI Page'},
-      {id:'W-06',task:'Review ship cost log — verify all shipments logged',owner:'Dir. of Ops',tool:'Shipping Page'},
+      {id:'W-06',task:'Review ship cost log - verify all shipments logged',owner:'Dir. of Ops',tool:'Shipping Page'},
       {id:'W-07',task:'Download ERP backup',owner:'Dir. of Ops',tool:'This ERP (💾 Backup)'},
     ]},
     monthly:{label:'Monthly',items:[
-      {id:'M-01',task:'Full inventory count — all categories',owner:'Dir. of Ops',tool:'Inventory Page'},
+      {id:'M-01',task:'Full inventory count - all categories',owner:'Dir. of Ops',tool:'Inventory Page'},
       {id:'M-02',task:'Enter monthly P&L data',owner:'Dir. of Ops',tool:'Finance Page'},
-      {id:'M-03',task:'Review vendor scorecards — update ratings',owner:'Dir. of Ops',tool:'Shop Reference'},
+      {id:'M-03',task:'Review vendor scorecards - update ratings',owner:'Dir. of Ops',tool:'Shop Reference'},
       {id:'M-04',task:'Review employee efficiency metrics',owner:'Dir. of Ops',tool:'People Page'},
       {id:'M-05',task:'Review and update automation roadmap progress',owner:'Dir. of Ops',tool:'Automation Page'},
-      {id:'M-06',task:'Review scrap & waste log — identify root causes',owner:'Dir. of Ops',tool:'People Page'},
-      {id:'M-07',task:'Customer issue review — close out resolved items',owner:'Dir. of Ops',tool:'Customers Page'},
+      {id:'M-06',task:'Review scrap & waste log - identify root causes',owner:'Dir. of Ops',tool:'People Page'},
+      {id:'M-07',task:'Customer issue review - close out resolved items',owner:'Dir. of Ops',tool:'Customers Page'},
     ]},
     standards:{label:'Standards',items:[
       {id:'S-01',task:'Post height tolerance: ±1/8" from spec',owner:'QC',tool:'Caliper'},
-      {id:'S-02',task:'Powder coat DFT: 2.0–3.0 mil target',owner:'Powder Room',tool:'DFT Gauge'},
+      {id:'S-02',task:'Powder coat DFT: 2.0-3.0 mil target',owner:'Powder Room',tool:'DFT Gauge'},
       {id:'S-03',task:'Weld visual inspection: no porosity, undercut, or cold lap',owner:'Welder',tool:'Visual + Light'},
       {id:'S-04',task:'Hole placement tolerance: ±1/16" from CNC program',owner:'CNC Operator',tool:'Caliper'},
-      {id:'S-05',task:'Cable tension: 200–250 lbs per run (check with tensiometer)',owner:'Assembly',tool:'Tensiometer'},
+      {id:'S-05',task:'Cable tension: 200-250 lbs per run (check with tensiometer)',owner:'Assembly',tool:'Tensiometer'},
       {id:'S-06',task:'All sharp edges deburred before powder coat',owner:'Grinding',tool:'File/Scotch-Brite'},
       {id:'S-07',task:'Every order ships with packing list matching BOM',owner:'Shipping',tool:'This ERP'},
     ]},
@@ -36805,13 +36808,13 @@ const ProcessCostAnalysis = () => {
     cutting: {
       title:'1. Material Cutting', rate:31.05, rateNote:'Material Handler / Saw Operator $23/hr burdened',
       tasks:[
-        {task:'Pull work order & verify material spec', min:1.5, notes:'Per piece — verify spec/alloy'},
+        {task:'Pull work order & verify material spec', min:1.5, notes:'Per piece - verify spec/alloy'},
         {task:'Retrieve stock from rack',              min:2.0, notes:'Crane for 20ft, manual for posts'},
         {task:'Inspect raw material',                  min:1.0, notes:'Check dents, scratches'},
         {task:'Measure & mark cut line',               min:1.0, notes:'Single cut line per piece'},
-        {task:'Set up saw / verify blade & fence',     min:0.5, notes:'One-time per batch — amortized'},
+        {task:'Set up saw / verify blade & fence',     min:0.5, notes:'One-time per batch - amortized'},
         {task:'Make cut (MEASURED: 5 sec per cut)',    min:0.083,notes:'MEASURED: 5 sec actual cut time'},
-        {task:'Stair angle cut (if stair post)',       min:P.stairCut?0.067:0, notes:'MEASURED: 4 sec — 0 if not stair'},
+        {task:'Stair angle cut (if stair post)',       min:P.stairCut?0.067:0, notes:'MEASURED: 4 sec - 0 if not stair'},
         {task:'Deburr cut ends',                       min:0.5, notes:'File both cut ends'},
         {task:'Verify cut length',                     min:0.25,notes:'Quick tape measure check'},
         {task:'Stage piece for next process',          min:0.25,notes:'Place on cart with order tag'},
@@ -36832,7 +36835,7 @@ const ProcessCostAnalysis = () => {
       tasks:[
         {task:'Pull piece from cutting staging',       min:0.5,  notes:'Transfer from cutting output'},
         {task:'Clamp piece in drill press vise',       min:0.5,  notes:'MEASURED: 30 sec to set up vise'},
-        {task:'Set drill press to correct speed/feed', min:0.25, notes:'RPM chart posted — one-time per batch'},
+        {task:'Set drill press to correct speed/feed', min:0.25, notes:'RPM chart posted - one-time per batch'},
         {task:'Drill each hole (per holes × sec/hole)',min:Math.round(P.holes*P.secPerHole/60*1000)/1000, notes:`${P.holes} holes × ${P.secPerHole} sec = ${P.holes*P.secPerHole} sec total`},
         {task:'Deburr all holes',                      min:0.5,  notes:'Countersink bit or deburr tool'},
         {task:'Blow off chips',                        min:0.25, notes:'Compressed air quick blow'},
@@ -36858,8 +36861,8 @@ const ProcessCostAnalysis = () => {
         {task:'Load first workpiece into fixture',      min:1.5, notes:'Clamp profile, verify seating'},
         {task:'Run first piece (prove out)',            min:3,   notes:'Slow feed first pass to verify'},
         {task:'Inspect first piece',                    min:2,   notes:'Calipers, go/no-go gauges'},
-        {task:'Run top rail — drill picket holes',      min:4,   notes:'12-16 holes per 8ft section'},
-        {task:'Run bottom rail — drill picket holes',   min:4,   notes:'Mirror pattern of top rail'},
+        {task:'Run top rail - drill picket holes',      min:4,   notes:'12-16 holes per 8ft section'},
+        {task:'Run bottom rail - drill picket holes',   min:4,   notes:'Mirror pattern of top rail'},
         {task:'Route / mill post connection profiles',  min:3,   notes:'Slot cuts for post brackets'},
         {task:'Drill mounting holes in posts',          min:2.5, notes:'Anchor bolt pattern per spec'},
         {task:'Chamfer / countersink holes',            min:2,   notes:'Countersink bit, CNC or hand'},
@@ -36885,17 +36888,17 @@ const ProcessCostAnalysis = () => {
     welding: {
       title:'3. Welding & Fabrication (TIG)', rate:32.40, rateNote:'Welder/Fabricator TIG $24/hr burdened',
       tasks:[
-        {task:'Check work order / weld drawing',        min:0.5, notes:'Per piece — verify joint type, filler'},
+        {task:'Check work order / weld drawing',        min:0.5, notes:'Per piece - verify joint type, filler'},
         {task:'Align item in fixture & clamp',          min:1.0, notes:'MEASURED: 1 min to align in fixture'},
         {task:'Tack weld (2-3 tacks)',                  min:0.5, notes:'Quick tacks to hold before full weld'},
-        {task:`Full weld — ${P.weldIn} weld inches`,   min:Math.round((P.weldIn/8)*2.5*100)/100, notes:'MEASURED: 2.5 min per 8" weld on 2×2'},
-        {task:'QC weld — visual inspection',            min:0.5, notes:'Check penetration, porosity, undercut'},
+        {task:`Full weld - ${P.weldIn} weld inches`,   min:Math.round((P.weldIn/8)*2.5*100)/100, notes:'MEASURED: 2.5 min per 8" weld on 2×2'},
+        {task:'QC weld - visual inspection',            min:0.5, notes:'Check penetration, porosity, undercut'},
         {task:'Remove from fixture & stage',            min:0.5, notes:'Unclamp, place on rack for next station'},
       ],
       consumables:[
         {item:'Argon Gas (100%)',      unit:'cu.ft.',qty:2.5,  cost:0.065, total:0.1625, notes:'~2.5 cu ft per piece at 15 CFH'},
-        {item:'Filler Rod — 4043',     unit:'rod',   qty:1.5,  cost:0.42,  total:0.63,   notes:'~1.5 rods per piece'},
-        {item:'Filler Rod — 5356',     unit:'rod',   qty:0.75, cost:0.48,  total:0.36,   notes:'Structural joints'},
+        {item:'Filler Rod - 4043',     unit:'rod',   qty:1.5,  cost:0.42,  total:0.63,   notes:'~1.5 rods per piece'},
+        {item:'Filler Rod - 5356',     unit:'rod',   qty:0.75, cost:0.48,  total:0.36,   notes:'Structural joints'},
         {item:'Tungsten Electrode',    unit:'each',  qty:0.05, cost:3.85,  total:0.1925, notes:'~20 pieces/electrode'},
         {item:'Acetone (weld prep)',   unit:'oz',    qty:0.5,  cost:0.09,  total:0.045,  notes:'IPA/acetone wipe before weld'},
         {item:'TIG Torch Kit (amort)', unit:'kit',   qty:0.005,cost:18.50, total:0.0925, notes:'Consumable tip/collet wear'},
@@ -36911,9 +36914,9 @@ const ProcessCostAnalysis = () => {
       title:'4. Powder Coat Prep (Grinding/Sanding)', rate:31.05, rateNote:'Grinder/Finisher $23/hr burdened',
       tasks:[
         {task:'Retrieve piece from welding staging',     min:0.5,  notes:'Check weld quality on receipt'},
-        {task:'Grind weld seam(s) flush',                min:8.0,  notes:'Angle grinder + flap disc — per weld'},
+        {task:'Grind weld seam(s) flush',                min:8.0,  notes:'Angle grinder + flap disc - per weld'},
         {task:'Blend grind area with Scotch-Brite',      min:6.0,  notes:'120-grit blend for uniform surface'},
-        {task:'Deburr all holes & edges',                min:3.0,  notes:'Deburr tool + file — all features'},
+        {task:'Deburr all holes & edges',                min:3.0,  notes:'Deburr tool + file - all features'},
         {task:'Inspect surface for defects',             min:3.0,  notes:'Check scratches, pits, toolmarks'},
         {task:'IPA/acetone wipe-down',                   min:4.0,  notes:'Remove all oils, fingerprints'},
         {task:'Mask threads/bearing surfaces',           min:4.0,  notes:'Silicone plugs + high-temp tape'},
@@ -36929,7 +36932,7 @@ const ProcessCostAnalysis = () => {
         {item:'Deburr/Carbide Burr (amort)', unit:'each', qty:0.033, cost:12.00, total:0.396,  notes:'~30 pieces/tool'},
         {item:'IPA / Acetone Solvent',       unit:'oz',   qty:2.0,   cost:0.085, total:0.17,   notes:'~2 oz/piece for full wipe'},
         {item:'High-Temp Masking Tape',      unit:'ft',   qty:1.5,   cost:0.18,  total:0.27,   notes:'Mask holes, threads'},
-        {item:'Silicone Masking Plugs',      unit:'each', qty:4.0,   cost:0.25,  total:1.00,   notes:'Reusable — amortized ~10 uses'},
+        {item:'Silicone Masking Plugs',      unit:'each', qty:4.0,   cost:0.25,  total:1.00,   notes:'Reusable - amortized ~10 uses'},
         {item:'Nitrile Gloves',              unit:'pair', qty:2.0,   cost:0.18,  total:0.36,   notes:'Change gloves after solvent wipe'},
       ],
       equipment:[
@@ -36941,25 +36944,25 @@ const ProcessCostAnalysis = () => {
     pccoat: {
       title:'5. Powder Coating', rate:31.05, rateNote:'Powder Coat Technician $23/hr burdened',
       tasks:[
-        {task:'Pre-inspection — verify surface clean',   min:0.5,   notes:'Per piece — reject to prep if issues'},
+        {task:'Pre-inspection - verify surface clean',   min:0.5,   notes:'Per piece - reject to prep if issues'},
         {task:'Load piece onto rack',                    min:0.5,   notes:'MEASURED: 30 sec load per piece'},
         {task:'Mask areas not to be coated',             min:0.75,  notes:'Silicone plugs + high-temp tape'},
         {task:'Gun setup (amort. by rack qty)',          min:Math.round(10/P.rackQty*1000)/1000, notes:`10 min setup ÷ ${P.rackQty} rack qty`},
         {task:'Spray (amort. by rack qty)',              min:Math.round(35/P.rackQty*1000)/1000, notes:`35 min spray ÷ ${P.rackQty} rack qty`},
         {task:'Push rack into oven (amort.)',            min:Math.round(3/P.rackQty*1000)/1000,  notes:'3 min ÷ rack qty'},
-        {task:'BAKE — cure in oven (amort.)',            min:Math.round(60/P.rackQty*1000)/1000, notes:'MEASURED: 60 min bake ÷ rack qty'},
+        {task:'BAKE - cure in oven (amort.)',            min:Math.round(60/P.rackQty*1000)/1000, notes:'MEASURED: 60 min bake ÷ rack qty'},
         {task:'Remove rack from oven (amort.)',          min:Math.round(3/P.rackQty*1000)/1000,  notes:'3 min ÷ rack qty'},
         {task:'Cool down before handling (amort.)',      min:Math.round(30/P.rackQty*1000)/1000, notes:'~30 min cool ÷ rack qty'},
         {task:'Unload piece from rack',                  min:0.5,   notes:'MEASURED: 30 sec unload per piece'},
-        {task:'Remove masking',                          min:0.5,   notes:'Pull plugs, tape — per piece'},
-        {task:'Final inspect — DFT, adhesion, color',   min:0.75,  notes:'DFT gauge, visual, color chip'},
+        {task:'Remove masking',                          min:0.5,   notes:'Pull plugs, tape - per piece'},
+        {task:'Final inspect - DFT, adhesion, color',   min:0.75,  notes:'DFT gauge, visual, color chip'},
         {task:'Touch-up / re-spray rejects (avg 5%)',   min:0.30,  notes:'~5% rejection rate; spot re-spray'},
         {task:'Stage piece for next process',           min:0.25,  notes:'Protective spacing on cart'},
       ],
       consumables:[
         {item:'Powder Coat Material (avg)',  unit:'lb',   qty:0.029, cost:4.50,  total:0.1305, notes:'~2.33 sqft/post ÷ 80 sqft/lb'},
         {item:'High-Temp Masking Tape',     unit:'ft',   qty:1.0,   cost:0.18,  total:0.18,   notes:'Mask holes, threads'},
-        {item:'Silicone Masking Plugs',     unit:'each', qty:3.0,   cost:0.25,  total:0.75,   notes:'Reusable — amortized'},
+        {item:'Silicone Masking Plugs',     unit:'each', qty:3.0,   cost:0.25,  total:0.75,   notes:'Reusable - amortized'},
         {item:'Nitrile Gloves',             unit:'pair', qty:1.0,   cost:0.18,  total:0.18,   notes:'One pair per rack operation'},
         {item:'IPA Final Wipe',             unit:'oz',   qty:0.5,   cost:0.085, total:0.0425, notes:'Final wipe before spray'},
       ],
@@ -36984,10 +36987,10 @@ const ProcessCostAnalysis = () => {
       title:'7. Quality Control & Inspection', rate:35.10, rateNote:'QC Inspector $26/hr burdened',
       tasks:[
         {task:'Pull work order & BOM from batch',       min:1.0,  notes:'Verify correct order / piece'},
-        {task:'Dimensional inspection — height/length', min:3.0,  notes:'Tape measure + caliper; ±1/16" tol'},
+        {task:'Dimensional inspection - height/length', min:3.0,  notes:'Tape measure + caliper; ±1/16" tol'},
         {task:'Powder coat inspection',                 min:3.0,  notes:'DFT gauge (2.0-3.0 mil), visual'},
         {task:'Color verification',                     min:1.0,  notes:'Compare to Cardinal color chip'},
-        {task:'Weld inspection — visual',               min:3.0,  notes:'No porosity, undercut, cold lap'},
+        {task:'Weld inspection - visual',               min:3.0,  notes:'No porosity, undercut, cold lap'},
         {task:'Hole pattern / placement check',         min:2.0,  notes:'Caliper check critical dims'},
         {task:'Hardware completeness check',            min:2.0,  notes:'Count fasteners vs BOM'},
         {task:'Surface finish / scratch check',         min:3.0,  notes:'Reject if visible defects > tol'},
@@ -37013,17 +37016,17 @@ const ProcessCostAnalysis = () => {
       title:'8. Packaging & Shipping', rate:35.10, rateNote:'Packaging/Shipping $26/hr burdened',
       tasks:[
         {task:'Pull order from QC pass staging',       min:2.0,  notes:'Match order tag to packing list'},
-        {task:'Wrap each piece in poly tubing',        min:5.0,  notes:'6-mil poly — full coverage'},
+        {task:'Wrap each piece in poly tubing',        min:5.0,  notes:'6-mil poly - full coverage'},
         {task:'Apply foam/bubble on ends',             min:3.0,  notes:'Corner & end protection'},
         {task:'Bundle sections together',              min:4.0,  notes:'Strap, edge protectors, foam'},
-        {task:'Build custom crate/box if required',    min:8.0,  notes:'LTL shipments — wood crate'},
+        {task:'Build custom crate/box if required',    min:8.0,  notes:'LTL shipments - wood crate'},
         {task:'Generate packing list & labels',        min:3.0,  notes:'ERP packing list + ship label'},
         {task:'Apply all shipping labels',             min:2.0,  notes:'Ship label, packing list, order ID'},
         {task:'Weigh & measure shipment',              min:3.0,  notes:'LTL: freight class, dimensions'},
         {task:'Palletize if LTL freight',              min:8.0,  notes:'Stretch wrap, pallet, secure'},
         {task:'Photograph shipment',                   min:2.0,  notes:'Proof of packaging per quality SOP'},
         {task:'Schedule carrier pickup / book BOL',   min:5.0,  notes:'Call carrier or portal booking'},
-        {task:'Update ERP — shipped + tracking',       min:2.0,  notes:'Enter tracking, mark shipped'},
+        {task:'Update ERP - shipped + tracking',       min:2.0,  notes:'Enter tracking, mark shipped'},
         {task:'File packing list in order folder',     min:1.0,  notes:'Archive for warranty reference'},
       ],
       consumables:[
@@ -37062,8 +37065,8 @@ const ProcessCostAnalysis = () => {
     {item:'End Mill 3/8" carbide',        process:'CNC',       unit:'each', qtyPerSec:0.0083, unitCost:28.5,  costPerSec:0.237},
     {item:'CNC Cutting Fluid (flood)',    process:'CNC',       unit:'gal',  qtyPerSec:0.015,  unitCost:32,    costPerSec:0.48},
     {item:'Argon Gas (100%)',             process:'Welding',   unit:'cu.ft',qtyPerSec:15,     unitCost:0.065, costPerSec:0.975},
-    {item:'Filler Rod — 4043',            process:'Welding',   unit:'rod',  qtyPerSec:8,      unitCost:0.42,  costPerSec:3.36},
-    {item:'Filler Rod — 5356',            process:'Welding',   unit:'rod',  qtyPerSec:4,      unitCost:0.48,  costPerSec:1.92},
+    {item:'Filler Rod - 4043',            process:'Welding',   unit:'rod',  qtyPerSec:8,      unitCost:0.42,  costPerSec:3.36},
+    {item:'Filler Rod - 5356',            process:'Welding',   unit:'rod',  qtyPerSec:4,      unitCost:0.48,  costPerSec:1.92},
     {item:'Tungsten Electrode',           process:'Welding',   unit:'each', qtyPerSec:0.25,   unitCost:3.85,  costPerSec:0.963},
     {item:'Acetone (weld prep)',           process:'Welding',   unit:'oz',   qtyPerSec:3,      unitCost:0.09,  costPerSec:0.27},
     {item:'Flap Disc 4.5" 40-grit',       process:'PC Prep',   unit:'each', qtyPerSec:0.05,   unitCost:3.5,   costPerSec:0.175},
@@ -37115,10 +37118,10 @@ const ProcessCostAnalysis = () => {
     return (
       <div>
         <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,padding:'8px 14px',marginBottom:14,fontSize:11,color:'var(--acc)'}}>
-          <strong>{sd.title}</strong> — {sd.rateNote}
+          <strong>{sd.title}</strong> - {sd.rateNote}
         </div>
         {/* Task Breakdown */}
-        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Task Breakdown — Per Piece</div>
+        <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>Task Breakdown - Per Piece</div>
         <div className="card" style={{padding:0,overflow:'auto',marginBottom:16}}>
           <table>
             <thead><tr>
@@ -37237,7 +37240,7 @@ const ProcessCostAnalysis = () => {
       <div className="section-hd">
         <div>
           <div className="hd" style={{fontSize:22}}>Process Cost Analysis</div>
-          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Per-piece cost & time analysis — every calculation is for ONE individual piece</div>
+          <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>Per-piece cost & time analysis - every calculation is for ONE individual piece</div>
         </div>
         {/* Product Selector */}
         <div style={{display:'flex',alignItems:'center',gap:10,background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.3)',borderRadius:8,padding:'8px 16px'}}>
@@ -37300,7 +37303,7 @@ const ProcessCostAnalysis = () => {
         {/* Product Properties */}
         <div className="card" style={{marginBottom:16}}>
           <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--warn)',marginBottom:10}}>
-            Selected Product Properties — {selectedProduct}
+            Selected Product Properties - {selectedProduct}
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
             {[
@@ -37325,7 +37328,7 @@ const ProcessCostAnalysis = () => {
 
         {/* Cost Summary Table */}
         <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--acc)',marginBottom:8}}>
-          Process Cost & Time Summary — Per Piece — {selectedProduct}
+          Process Cost & Time Summary - Per Piece - {selectedProduct}
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <table style={{minWidth:800}}>
@@ -37356,7 +37359,7 @@ const ProcessCostAnalysis = () => {
                     <Cell v={'$'+s.energy.toFixed(5)}/>
                     <Cell v={'$'+s.deprec.toFixed(4)}/>
                     <Cell v={'$'+s.total.toFixed(4)} bold color='var(--warn)'/>
-                    <Cell v={s.pcsDay>0?s.pcsDay:'—'} color={s.pcsDay>0&&s.pcsDay<10?'var(--err)':undefined}/>
+                    <Cell v={s.pcsDay>0?s.pcsDay:'-'} color={s.pcsDay>0&&s.pcsDay<10?'var(--err)':undefined}/>
                   </tr>
                 );
               })}
@@ -37372,7 +37375,7 @@ const ProcessCostAnalysis = () => {
               </tr>
               <tr style={{background:'rgba(239,68,68,.06)'}}>
                 <td colSpan={8} style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:12,padding:'8px 12px',color:'var(--err)'}}>
-                  ⚠ BOTTLENECK STATION: {bottleneckStation.name} — {bottleneckStation.min.toFixed(2)} min/piece → {systemOutputPerDay} pieces/day system maximum
+                  ⚠ BOTTLENECK STATION: {bottleneckStation.name} - {bottleneckStation.min.toFixed(2)} min/piece → {systemOutputPerDay} pieces/day system maximum
                 </td>
               </tr>
             </tbody>
@@ -37480,7 +37483,7 @@ const ProcessCostAnalysis = () => {
                   </td>
                   <td style={{textAlign:'center'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-                      <button onClick={()=>setWorkers(ww=>({...ww,[s.key]:Math.max(1,w-1)}))} style={{background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:4,width:24,height:24,cursor:'pointer',color:'var(--txt)',fontWeight:700}}>−</button>
+                      <button onClick={()=>setWorkers(ww=>({...ww,[s.key]:Math.max(1,w-1)}))} style={{background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:4,width:24,height:24,cursor:'pointer',color:'var(--txt)',fontWeight:700}}>-</button>
                       <span style={{fontFamily:'monospace',fontWeight:700,width:20,textAlign:'center'}}>{w}</span>
                       <button onClick={()=>setWorkers(ww=>({...ww,[s.key]:Math.min(5,w+1)}))} style={{background:'var(--s3)',border:'1px solid var(--bdr)',borderRadius:4,width:24,height:24,cursor:'pointer',color:'var(--txt)',fontWeight:700}}>+</button>
                     </div>
@@ -37564,7 +37567,7 @@ const ProcessCostAnalysis = () => {
           return (
             <div key={k}>
               <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,padding:'10px 16px',marginBottom:16,fontSize:11,color:'var(--acc)'}}>
-                <strong>{g.title}</strong> — Cycle time: {g.cycleMin} min/pc · {g.workers} worker(s) · {(g.targetEff*100).toFixed(0)}% efficiency target
+                <strong>{g.title}</strong> - Cycle time: {g.cycleMin} min/pc · {g.workers} worker(s) · {(g.targetEff*100).toFixed(0)}% efficiency target
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
                 {[
@@ -37586,7 +37589,7 @@ const ProcessCostAnalysis = () => {
                     {p:'Cycle Time per Unit',    v:g.cycleMin+' min',      n:'Total time per piece at this station'},
                     {p:'Efficiency Factor',       v:(g.targetEff*100)+'%',  n:'Accounts for micro-breaks, minor delays'},
                     {p:'Productive Hours/Shift', v:G.prodHrs+' hrs',        n:'10-hr shift minus breaks'},
-                    {p:'Hourly Goal',            v:Math.ceil(targetPerHr)+' pcs/hr',n:'Rounded up — target to communicate'},
+                    {p:'Hourly Goal',            v:Math.ceil(targetPerHr)+' pcs/hr',n:'Rounded up - target to communicate'},
                     {p:'Daily Goal',             v:Math.round(targetPerDay)+' pcs', n:G.prodHrs+' hrs × '+targetPerHr.toFixed(2)+' pcs/hr'},
                     {p:'Weekly Goal',            v:Math.round(targetPerWeek)+' pcs',n:G.daysPerWeek+' days × daily goal'},
                     {p:'Monthly Goal',           v:Math.round(targetPerMonth)+' pcs',n:G.daysPerMonth+' days × daily goal'},
@@ -37630,6 +37633,15 @@ const InventoryBellevue = ({data, setData, user}) => {
   // Adjustments filter
   const [adjSearch,setAdjSearch]=useState('');
   const [adjType,setAdjType]=useState('All');
+  // Transfers
+  const EMPTY_XFR = {materialName:'',materialId:'',materialUnit:'',qtyTransferred:'',qtyReceived:'',transferDate:now(),receivedDate:'',transferredBy:'',receivedBy:'',truckDriver:'',trailerOrTruck:'',fromLocation:'Hayden Shop',toLocation:'Bellevue Warehouse',reason:'',notes:'',orderRef:'',poRef:'',condition:'Good',status:'In Transit',discrepancyNote:'',estValue:''};
+  const [xfrForm,setXfrForm]=useState(EMPTY_XFR);
+  const [xfrModal,setXfrModal]=useState(null);
+  const [xfrSelected,setXfrSelected]=useState(null);
+  const [xfrSearch,setXfrSearch]=useState('');
+  const [xfrStatus,setXfrStatus]=useState('All');
+  const [xfrSortCol,setXfrSortCol]=useState('transferDate');
+  const [xfrSortDir,setXfrSortDir]=useState('desc');
 
   const doSort=(col)=>{if(iSort===col){setIDir(d=>d==='asc'?'desc':'asc');}else{setISort(col);setIDir('asc');}};
   const SI=({col})=>iSort===col?(iDir==='asc'?' ▲':' ▼'):'';
@@ -37697,7 +37709,7 @@ const InventoryBellevue = ({data, setData, user}) => {
       <InfoBanner pageId="inventory"/>
       <div className="section-hd">
         <div>
-          <div className="hd" style={{fontSize:22}}>Inventory — Bellevue Warehouse</div>
+          <div className="hd" style={{fontSize:22}}>Inventory - Bellevue Warehouse</div>
           <div style={{display:'flex',gap:6,marginTop:5}}>
             <span className="chip">{fmt$(totalVal)} total value</span>
             <span className="chip" style={{color:low.length?'var(--warn)':undefined}}>{low.length} low stock</span>
@@ -37717,7 +37729,7 @@ const InventoryBellevue = ({data, setData, user}) => {
       {low.length>0&&<div className="alert-bar alert-warn"><span style={{color:'var(--warn)'}}>⚠</span><span><strong>Low Stock:</strong> {low.map(i=>`${i.name} (${i.qty} ${i.unit})`).join(' · ')}</span></div>}
 
       <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
-        {['items','adjustments'].map(t=><button key={t} className={'tab'+(bvTab===t?' on':'')} onClick={()=>setBvTab(t)} style={{textTransform:'capitalize'}}>{t==='adjustments'?'Adjustment Log':t}</button>)}
+        {[{id:'items',label:'Items'},{id:'adjustments',label:'Adjustment Log'},{id:'transfers',label:'Hayden → Bellevue Transfers'}].map(t=><button key={t.id} className={'tab'+(bvTab===t.id?' on':'')} onClick={()=>setBvTab(t.id)}>{t.label}</button>)}
       </div>
 
       {/* ITEMS TAB */}
@@ -37750,7 +37762,7 @@ const InventoryBellevue = ({data, setData, user}) => {
             </tr>
           </thead>
           <tbody>
-            {inv.length===0&&<tr><td colSpan={9} style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No items yet — click "+ Add Item" to start tracking Bellevue inventory</td></tr>}
+            {inv.length===0&&<tr><td colSpan={9} style={{textAlign:'center',padding:40,color:'var(--muted)'}}>No items yet - click "+ Add Item" to start tracking Bellevue inventory</td></tr>}
             {filtered.map(i=>{const l=i.qty<=i.reorder;return(
               <tr key={i.id}>
                 <td className="mono" style={{fontSize:10.5,color:'var(--muted)'}}>{i.sku}</td>
@@ -37778,7 +37790,7 @@ const InventoryBellevue = ({data, setData, user}) => {
           <div className="grid2" style={{marginBottom:12}}>
             <Field label="Item">
               <select value={adjForm.inventoryId} onChange={e=>setAdjForm(f=>({...f,inventoryId:e.target.value}))}>
-                <option value="">— Select Item —</option>
+                <option value="">- Select Item -</option>
                 {inv.map(i=><option key={i.id} value={i.id}>{i.name} (On Hand: {i.qty} {i.unit})</option>)}
               </select>
             </Field>
@@ -37797,7 +37809,7 @@ const InventoryBellevue = ({data, setData, user}) => {
         </div>
         <div className="card" style={{padding:0,overflow:'auto'}}>
           <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-            <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Adjustment History — Bellevue</span>
+            <span style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13}}>Adjustment History - Bellevue</span>
             <div style={{display:'flex',gap:6}}>
               <input value={adjSearch} onChange={e=>setAdjSearch(e.target.value)} className="search" placeholder="Search item or reason…" style={{width:200}}/>
               <select value={adjType} onChange={e=>setAdjType(e.target.value)} className="search" style={{width:120}}><option value="All">All Types</option><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select>
@@ -37821,6 +37833,343 @@ const InventoryBellevue = ({data, setData, user}) => {
           </table>
         </div>
       </>}
+
+      {/* TRANSFERS TAB */}
+      {bvTab==='transfers'&&(()=>{
+        const transfers = data.bellevueTransfers || [];
+        const XFR_STATUS = ['In Transit','Received - Full','Received - Short','Received - Damaged','Cancelled'];
+        const XFR_REASONS = [
+          'Scheduled Bulk Replenishment',
+          'Low Stock - Emergency Transfer',
+          'Customer Order Fulfillment',
+          'Project Staging',
+          'Seasonal Stock Build',
+          'Surplus Redistribution',
+          'Powder Coat Color Prep',
+          'Hardware Restock',
+          'Other',
+        ];
+        const saveXfr = () => {
+          if (!xfrForm.materialName || !xfrForm.qtyTransferred) return;
+          const isEdit = transfers.find(x=>x.id===xfrForm.id);
+          const rec = isEdit ? {...xfrForm} : {...xfrForm, id:'XFR-'+uid(), createdAt:ts(), createdBy:user?.name||''};
+
+          // Auto-update Bellevue inventory when received
+          const isReceived = rec.status==='Received - Full'||rec.status==='Received - Short'||rec.status==='Received - Damaged';
+          const prevRec = isEdit ? transfers.find(x=>x.id===rec.id) : null;
+          const wasReceived = prevRec && (prevRec.status==='Received - Full'||prevRec.status==='Received - Short'||prevRec.status==='Received - Damaged');
+          const receivedQty = +(rec.qtyReceived||rec.qtyTransferred)||0;
+          const prevQty = wasReceived ? (+(prevRec.qtyReceived||prevRec.qtyTransferred)||0) : 0;
+          const qtyDelta = isReceived ? (receivedQty - prevQty) : (wasReceived ? -prevQty : 0);
+
+          setData(d=>{
+            let newBelvInv = [...(d.bellevueInventory||[])];
+            if (qtyDelta !== 0 && rec.materialName) {
+              // Try to find existing item in Bellevue inventory by materialId or name
+              const existingIdx = newBelvInv.findIndex(i=>
+                (rec.materialId && i.id===rec.materialId) ||
+                i.name.toLowerCase()===rec.materialName.toLowerCase()
+              );
+              if (existingIdx >= 0) {
+                // Update existing item qty
+                newBelvInv = newBelvInv.map((item,idx)=>idx===existingIdx
+                  ? {...item, qty: Math.max(0, (item.qty||0) + qtyDelta)}
+                  : item
+                );
+              } else if (qtyDelta > 0) {
+                // Create new Bellevue inventory item from transfer data
+                const srcItem = (d.rawMaterials||[]).find(m=>m.id===rec.materialId)||(d.inventory||[]).find(m=>m.id===rec.materialId);
+                newBelvInv = [{
+                  id: rec.materialId||('BVI-'+uid()),
+                  sku: srcItem?.sku||srcItem?.id||rec.materialId||'',
+                  name: rec.materialName,
+                  cat: srcItem?.cat||srcItem?.type||'Raw Material',
+                  qty: qtyDelta,
+                  unit: rec.materialUnit||srcItem?.unit||'ft',
+                  reorder: srcItem?.reorder||0,
+                  cost: rec.unitCost||srcItem?.cost||0,
+                  loc: 'Bellevue WH',
+                  notes: `Auto-added from transfer ${rec.id}`,
+                }, ...newBelvInv];
+              }
+            }
+            const newTransfers = isEdit
+              ? (d.bellevueTransfers||[]).map(x=>x.id===rec.id?rec:x)
+              : [rec,...(d.bellevueTransfers||[])];
+            return {...d, bellevueTransfers: newTransfers, bellevueInventory: newBelvInv};
+          });
+          setXfrModal(null);
+          setXfrForm(EMPTY_XFR);
+        };
+        const deleteXfr = (id) => {
+          if (!window.confirm('Delete this transfer record?')) return;
+          setData(d=>({...d, bellevueTransfers:(d.bellevueTransfers||[]).filter(x=>x.id!==id)}));
+          setXfrModal(null);
+        };
+        const xfrColor = (s) => {
+          if (s==='Received - Full') return {bg:'rgba(16,185,129,.12)',c:'var(--ok)',b:'rgba(16,185,129,.3)'};
+          if (s==='Received - Short') return {bg:'rgba(245,158,11,.12)',c:'var(--warn)',b:'rgba(245,158,11,.3)'};
+          if (s==='Received - Damaged') return {bg:'rgba(239,68,68,.12)',c:'var(--err)',b:'rgba(239,68,68,.3)'};
+          if (s==='In Transit') return {bg:'rgba(59,130,246,.12)',c:'#60a5fa',b:'rgba(59,130,246,.3)'};
+          return {bg:'rgba(100,116,139,.12)',c:'var(--muted)',b:'rgba(100,116,139,.3)'};
+        };
+        const filtered = transfers.filter(x=>{
+          const q = xfrSearch.toLowerCase();
+          return (!q || (x.materialName||'').toLowerCase().includes(q) || (x.transferredBy||'').toLowerCase().includes(q) || (x.orderRef||'').toLowerCase().includes(q) || (x.reason||'').toLowerCase().includes(q) || (x.truckDriver||'').toLowerCase().includes(q)) &&
+            (xfrStatus==='All' || x.status===xfrStatus);
+        }).sort((a,b)=>{
+          const av=a[xfrSortCol]||'', bv=b[xfrSortCol]||'';
+          return xfrSortDir==='asc'?(av>bv?1:-1):(av<bv?1:-1);
+        });
+        const xSort = (col) => { if(xfrSortCol===col) setXfrSortDir(d=>d==='asc'?'desc':'asc'); else {setXfrSortCol(col);setXfrSortDir('desc');} };
+        const XIcon = ({col}) => <span style={{opacity:.4,fontSize:9,marginLeft:2}}>{xfrSortCol===col?(xfrSortDir==='asc'?'▲':'▼'):'⇅'}</span>;
+
+        const totalTransferred = transfers.reduce((s,x)=>s+(+x.qtyTransferred||0),0);
+        const totalReceived = transfers.reduce((s,x)=>s+(+x.qtyReceived||0),0);
+        const inTransit = transfers.filter(x=>x.status==='In Transit').length;
+        const discrepancies = transfers.filter(x=>x.status==='Received - Short'||x.status==='Received - Damaged').length;
+        const totalValue = transfers.reduce((s,x)=>s+(+x.estValue||0),0);
+
+        return (<>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
+            <div style={{fontSize:12,color:'var(--muted)'}}>Track every bulk material transfer from Hayden shop to Bellevue warehouse — what was sent, who drove it, what arrived, and any discrepancies.</div>
+            <button className="btn btn-p" onClick={()=>{setXfrForm(EMPTY_XFR);setXfrModal('form');}}>+ Log Transfer</button>
+          </div>
+
+          <StatRow cols={5}>
+            <StatCard label="Total Transfers" value={transfers.length} small/>
+            <StatCard label="In Transit" value={inTransit} color={inTransit>0?'#60a5fa':undefined} small/>
+            <StatCard label="Discrepancies" value={discrepancies} color={discrepancies>0?'var(--warn)':undefined} small/>
+            <StatCard label="Total Est. Value" value={fmt$(totalValue)} color="var(--acc)" small/>
+            <StatCard label="Qty Variance" value={(totalTransferred-totalReceived).toFixed(1)} color={(totalTransferred-totalReceived)>0?'var(--warn)':undefined} small/>
+          </StatRow>
+
+          <div className="card" style={{padding:'10px 14px',marginBottom:12,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+            <input value={xfrSearch} onChange={e=>setXfrSearch(e.target.value)} className="search" placeholder="Search material, driver, order, reason..." style={{flex:'1 1 220px',minWidth:180}}/>
+            <select value={xfrStatus} onChange={e=>setXfrStatus(e.target.value)} className="search" style={{minWidth:160}}>
+              <option value="All">All Statuses</option>
+              {XFR_STATUS.map(s=><option key={s}>{s}</option>)}
+            </select>
+            <button className="btn btn-sm" style={{color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setXfrSearch('');setXfrStatus('All');}}>Reset</button>
+            <span style={{fontSize:10,color:'var(--muted)'}}>{filtered.length} record{filtered.length!==1?'s':''}</span>
+          </div>
+
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <table>
+              <thead><tr>
+                <th onClick={()=>xSort('id')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>ID <XIcon col="id"/></th>
+                <th onClick={()=>xSort('transferDate')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Transfer Date <XIcon col="transferDate"/></th>
+                <th onClick={()=>xSort('receivedDate')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Received Date <XIcon col="receivedDate"/></th>
+                <th onClick={()=>xSort('materialName')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Material <XIcon col="materialName"/></th>
+                <th className="center" onClick={()=>xSort('qtyTransferred')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Sent <XIcon col="qtyTransferred"/></th>
+                <th className="center" onClick={()=>xSort('qtyReceived')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Received <XIcon col="qtyReceived"/></th>
+                <th className="center">Variance</th>
+                <th onClick={()=>xSort('reason')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Reason <XIcon col="reason"/></th>
+                <th onClick={()=>xSort('truckDriver')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Driver <XIcon col="truckDriver"/></th>
+                <th onClick={()=>xSort('status')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Status <XIcon col="status"/></th>
+                <th onClick={()=>xSort('transferredBy')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>By <XIcon col="transferredBy"/></th>
+                <th></th>
+              </tr></thead>
+              <tbody>
+                {filtered.length===0&&<tr><td colSpan={12}><Empty msg="No transfers logged yet"/></td></tr>}
+                {filtered.map(x=>{
+                  const sc=xfrColor(x.status);
+                  const variance = (x.qtyReceived!==''&&x.qtyTransferred!=='')?(+x.qtyReceived-(+x.qtyTransferred)):null;
+                  return (
+                    <tr key={x.id} style={{cursor:'pointer'}} onClick={()=>{setXfrSelected(x);setXfrModal('detail');}}>
+                      <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{x.id}</td>
+                      <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{fmtD(x.transferDate)}</td>
+                      <td style={{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}}>{x.receivedDate?fmtD(x.receivedDate):'—'}</td>
+                      <td style={{fontWeight:500,fontSize:12,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{x.materialName}</td>
+                      <td className="center mono" style={{fontWeight:700}}>{x.qtyTransferred} <span style={{color:'var(--muted)',fontSize:10}}>{x.materialUnit}</span></td>
+                      <td className="center mono" style={{fontWeight:700,color:x.qtyReceived?'var(--ok)':'var(--muted)'}}>{x.qtyReceived||'—'} <span style={{color:'var(--muted)',fontSize:10}}>{x.qtyReceived?x.materialUnit:''}</span></td>
+                      <td className="center mono" style={{fontWeight:700,color:variance===null?'var(--muted)':variance<0?'var(--err)':variance>0?'var(--warn)':'var(--ok)'}}>{variance===null?'—':variance===0?'✓':(variance>0?'+':'')+variance}</td>
+                      <td style={{fontSize:11,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{x.reason||'—'}</td>
+                      <td style={{fontSize:11,color:'var(--muted)'}}>{x.truckDriver||'—'}</td>
+                      <td><span style={{background:sc.bg,color:sc.c,border:`1px solid ${sc.b}`,borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',whiteSpace:'nowrap'}}>{x.status}</span></td>
+                      <td style={{fontSize:11,color:'var(--muted)'}}>{x.transferredBy||'—'}</td>
+                      <td onClick={e=>e.stopPropagation()}>
+                        <button className="btn btn-sm" style={{fontSize:10,padding:'2px 8px'}} onClick={()=>{setXfrForm({...x});setXfrModal('form');}}>Edit</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* TRANSFER FORM MODAL */}
+          {xfrModal==='form'&&(
+            <Modal title={xfrForm.id?'Edit Transfer Record':'Log Hayden → Bellevue Transfer'} onClose={()=>setXfrModal(null)} xl>
+              <SectionHeader label="What Was Transferred"/>
+              <div className="grid2">
+                <Field label="Material (from Hayden inventory)">
+                  <select value={xfrForm.materialId} onChange={e=>{const m=(data.rawMaterials||[]).find(x=>x.id===e.target.value)||(data.inventory||[]).find(x=>x.id===e.target.value);const qty=xfrForm.qtyTransferred||0;setXfrForm(f=>({...f,materialId:e.target.value,materialName:m?.name||e.target.value,materialUnit:m?.unit||'',unitCost:m?.cost||0,estValue:m?.cost&&qty?(+(m.cost*+qty).toFixed(2)):f.estValue}));}}>
+                    <option value="">Select or enter manually below</option>
+                    <optgroup label="Raw Materials">{(data.rawMaterials||[]).map(m=><option key={m.id} value={m.id}>{m.name} — {fmt$(m.cost||0)}/{m.unit} (On Hand: {m.qty} {m.unit})</option>)}</optgroup>
+                    <optgroup label="Inventory">{(data.inventory||[]).map(m=><option key={m.id} value={m.id}>{m.name} — {fmt$(m.cost||0)}/{m.unit||'ea'} (On Hand: {m.qty} {m.unit||'ea'})</option>)}</optgroup>
+                  </select>
+                </Field>
+                <Field label="Material Name (manual override)">
+                  <input value={xfrForm.materialName} onChange={e=>setXfrForm(f=>({...f,materialName:e.target.value}))} placeholder="e.g. 6061-T6 Tube 2x2x1/8, Matte Black Powder..."/>
+                </Field>
+                <Field label="Qty Sent *">
+                  <input type="text" inputMode="decimal" value={xfrForm.qtyTransferred} onChange={e=>{const q=e.target.value;setXfrForm(f=>({...f,qtyTransferred:q,estValue:f.unitCost&&q?(+(f.unitCost*+q).toFixed(2)):''}));}} placeholder="0"/>
+                </Field>
+                <Field label="Unit">
+                  <input value={xfrForm.materialUnit} onChange={e=>setXfrForm(f=>({...f,materialUnit:e.target.value}))} placeholder="FT, LB, EA, GAL, BOX..."/>
+                </Field>
+                <Field label="Est. Value ($)">
+                  <input type="text" inputMode="decimal" value={xfrForm.estValue} onChange={e=>setXfrForm(f=>({...f,estValue:e.target.value}))} placeholder="0.00"/>
+                </Field>
+                <Field label="Material Condition at Departure">
+                  <select value={xfrForm.condition} onChange={e=>setXfrForm(f=>({...f,condition:e.target.value}))}>
+                    <option>Good</option>
+                    <option>Minor Surface Damage</option>
+                    <option>Partial - Short Cut Pieces</option>
+                    <option>Returned / Surplus</option>
+                    <option>Other</option>
+                  </select>
+                </Field>
+              </div>
+
+              <SectionHeader label="Transfer Details"/>
+              <div className="grid2">
+                <Field label="From Location">
+                  <input value={xfrForm.fromLocation} onChange={e=>setXfrForm(f=>({...f,fromLocation:e.target.value}))} placeholder="Hayden Shop"/>
+                </Field>
+                <Field label="To Location">
+                  <input value={xfrForm.toLocation} onChange={e=>setXfrForm(f=>({...f,toLocation:e.target.value}))} placeholder="Bellevue Warehouse"/>
+                </Field>
+                <Field label="Date Transferred *">
+                  <input type="date" value={xfrForm.transferDate} onChange={e=>setXfrForm(f=>({...f,transferDate:e.target.value}))}/>
+                </Field>
+                <Field label="Transferred / Loaded By">
+                  <input value={xfrForm.transferredBy} onChange={e=>setXfrForm(f=>({...f,transferredBy:e.target.value}))} placeholder="Who loaded and sent it"/>
+                </Field>
+                <Field label="Truck Driver / Courier">
+                  <input value={xfrForm.truckDriver} onChange={e=>setXfrForm(f=>({...f,truckDriver:e.target.value}))} placeholder="Driver name"/>
+                </Field>
+                <Field label="Trailer / Truck ID">
+                  <input value={xfrForm.trailerOrTruck} onChange={e=>setXfrForm(f=>({...f,trailerOrTruck:e.target.value}))} placeholder="Truck plate, trailer #, van #..."/>
+                </Field>
+                <Field label="Linked Order / Job Ref">
+                  <input value={xfrForm.orderRef} onChange={e=>setXfrForm(f=>({...f,orderRef:e.target.value}))} placeholder="Order ID, job name, or project"/>
+                </Field>
+                <Field label="PO / Internal Reference">
+                  <input value={xfrForm.poRef} onChange={e=>setXfrForm(f=>({...f,poRef:e.target.value}))} placeholder="PO number or internal ref"/>
+                </Field>
+              </div>
+
+              <SectionHeader label="Reason for Transfer"/>
+              <div className="grid2">
+                <Field label="Reason">
+                  <select value={xfrForm.reason} onChange={e=>setXfrForm(f=>({...f,reason:e.target.value}))}>
+                    <option value="">Select reason</option>
+                    {XFR_REASONS.map(r=><option key={r}>{r}</option>)}
+                  </select>
+                </Field>
+                <Field label="Notes">
+                  <input value={xfrForm.notes} onChange={e=>setXfrForm(f=>({...f,notes:e.target.value}))} placeholder="Any additional context, special handling, urgency..."/>
+                </Field>
+              </div>
+
+              <SectionHeader label="Receipt Confirmation (fill when Bellevue receives it)"/>
+              <div className="grid2">
+                <Field label="Status">
+                  <select value={xfrForm.status} onChange={e=>setXfrForm(f=>({...f,status:e.target.value}))}>
+                    {XFR_STATUS.map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </Field>
+                <Field label="Date Received at Bellevue">
+                  <input type="date" value={xfrForm.receivedDate} onChange={e=>setXfrForm(f=>({...f,receivedDate:e.target.value}))}/>
+                </Field>
+                <Field label="Qty Actually Received">
+                  <input type="text" inputMode="decimal" value={xfrForm.qtyReceived} onChange={e=>setXfrForm(f=>({...f,qtyReceived:e.target.value}))} placeholder="0 — fill on receipt"/>
+                </Field>
+                <Field label="Received By">
+                  <input value={xfrForm.receivedBy} onChange={e=>setXfrForm(f=>({...f,receivedBy:e.target.value}))} placeholder="Who received and checked it in"/>
+                </Field>
+                <Field label="Discrepancy / Damage Notes" style={{gridColumn:'span 2'}}>
+                  <input value={xfrForm.discrepancyNote} onChange={e=>setXfrForm(f=>({...f,discrepancyNote:e.target.value}))} placeholder="Short count, damage, wrong item, missing hardware..."/>
+                </Field>
+              </div>
+
+              <div style={{display:'flex',gap:8,marginTop:16}}>
+                <button className="btn btn-p" onClick={saveXfr} disabled={!xfrForm.materialName||!xfrForm.qtyTransferred}>{xfrForm.id?'Save Changes':'Log Transfer'}</button>
+                <button className="btn btn-g" onClick={()=>setXfrModal(null)}>Cancel</button>
+                {xfrForm.id&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>deleteXfr(xfrForm.id)}>Delete</button>}
+              </div>
+            </Modal>
+          )}
+
+          {/* TRANSFER DETAIL MODAL */}
+          {xfrModal==='detail'&&xfrSelected&&(()=>{
+            const x=xfrSelected;
+            const sc=xfrColor(x.status);
+            const variance = (x.qtyReceived!==''&&x.qtyReceived!==undefined&&x.qtyTransferred!=='')?(+x.qtyReceived-(+x.qtyTransferred)):null;
+            return (
+              <Modal title={'Transfer Record - '+x.id} onClose={()=>setXfrModal(null)} xl>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:16}}>
+                  <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 14px'}}>
+                    <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:4}}>Material</div>
+                    <div style={{fontWeight:700,fontSize:14,marginBottom:2}}>{x.materialName}</div>
+                    <div style={{fontSize:11,color:'var(--muted)'}}>{x.condition}</div>
+                  </div>
+                  <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 14px'}}>
+                    <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:4}}>Qty Sent → Received</div>
+                    <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:22}}>{x.qtyTransferred} <span style={{color:'var(--muted)',fontSize:13}}>→</span> <span style={{color:x.qtyReceived?'var(--ok)':'var(--muted)'}}>{x.qtyReceived||'?'}</span> <span style={{fontSize:13,color:'var(--muted)'}}>{x.materialUnit}</span></div>
+                    {variance!==null&&<div style={{fontSize:11,color:variance===0?'var(--ok)':variance<0?'var(--err)':'var(--warn)',fontWeight:600,marginTop:2}}>{variance===0?'✓ No variance':variance<0?`▼ Short by ${Math.abs(variance)}`:`▲ Over by ${variance}`}</div>}
+                  </div>
+                  <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 14px'}}>
+                    <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:6}}>Status</div>
+                    <span style={{background:sc.bg,color:sc.c,border:`1px solid ${sc.b}`,borderRadius:4,padding:'3px 10px',fontSize:11,fontWeight:700,fontFamily:'Barlow Condensed'}}>{x.status}</span>
+                    {x.estValue>0&&<div style={{fontSize:12,color:'var(--acc)',fontFamily:'Barlow Condensed',fontWeight:700,marginTop:6}}>{fmt$(x.estValue)}</div>}
+                  </div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:14}}>
+                  <div>
+                    <SectionHeader label="Departure - Hayden"/>
+                    <div style={{fontSize:12,lineHeight:1.9}}>
+                      <div><span style={{color:'var(--muted)'}}>Date: </span>{fmtD(x.transferDate)}</div>
+                      <div><span style={{color:'var(--muted)'}}>From: </span>{x.fromLocation||'Hayden Shop'}</div>
+                      <div><span style={{color:'var(--muted)'}}>Loaded By: </span>{x.transferredBy||'—'}</div>
+                      <div><span style={{color:'var(--muted)'}}>Driver: </span>{x.truckDriver||'—'}</div>
+                      <div><span style={{color:'var(--muted)'}}>Vehicle: </span>{x.trailerOrTruck||'—'}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <SectionHeader label="Arrival - Bellevue"/>
+                    <div style={{fontSize:12,lineHeight:1.9}}>
+                      <div><span style={{color:'var(--muted)'}}>Date: </span>{x.receivedDate?fmtD(x.receivedDate):'Not yet received'}</div>
+                      <div><span style={{color:'var(--muted)'}}>To: </span>{x.toLocation||'Bellevue Warehouse'}</div>
+                      <div><span style={{color:'var(--muted)'}}>Received By: </span>{x.receivedBy||'—'}</div>
+                      {x.discrepancyNote&&<div style={{marginTop:4,background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:6,padding:'6px 10px'}}><span style={{color:'var(--err)',fontWeight:600}}>Discrepancy: </span>{x.discrepancyNote}</div>}
+                    </div>
+                  </div>
+                </div>
+                {(x.reason||x.notes||x.orderRef||x.poRef)&&(
+                  <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 16px',marginBottom:14}}>
+                    <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--muted)',marginBottom:8}}>Reference</div>
+                    <div style={{fontSize:12,lineHeight:1.8}}>
+                      {x.reason&&<div><span style={{color:'var(--muted)'}}>Reason: </span>{x.reason}</div>}
+                      {x.orderRef&&<div><span style={{color:'var(--muted)'}}>Order / Job: </span>{x.orderRef}</div>}
+                      {x.poRef&&<div><span style={{color:'var(--muted)'}}>PO / Ref: </span>{x.poRef}</div>}
+                      {x.notes&&<div><span style={{color:'var(--muted)'}}>Notes: </span>{x.notes}</div>}
+                    </div>
+                  </div>
+                )}
+                <div style={{fontSize:10,color:'var(--muted)',marginBottom:14}}>Logged by {x.createdBy||'—'} on {x.createdAt||'—'}</div>
+                <div style={{display:'flex',gap:8}}>
+                  <button className="btn btn-p" onClick={()=>{setXfrForm({...x});setXfrModal('form');}}>Edit</button>
+                  <button className="btn btn-g" onClick={()=>setXfrModal(null)}>Close</button>
+                  <button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>deleteXfr(x.id)}>Delete</button>
+                </div>
+              </Modal>
+            );
+          })()}
+        </>);
+      })()}
 
       {/* ITEM MODAL */}
       {modal==='item'&&<Modal title={inv.find(i=>i.id===form.id)?'Edit Item':'Add Item'} onClose={()=>setModal(null)}>
@@ -37848,7 +38197,7 @@ const InventoryBellevue = ({data, setData, user}) => {
 const PrintCenter = ({data}) => {
   const docs = [
     {cat:'Shop Floor',items:[
-      {icon:'📋',title:'Daily Huddle Board',desc:'Standup form — one per shift.',action:()=>printHuddleBoard()},
+      {icon:'📋',title:'Daily Huddle Board',desc:'Standup form - one per shift.',action:()=>printHuddleBoard()},
       {icon:'🔧',title:'All Work Orders',desc:(data.workOrders||[]).length+' active work order travelers.',action:()=>(data.workOrders||[]).forEach(w=>setTimeout(()=>printWorkOrder(w),150))},
       {icon:'📊',title:'Training Matrix',desc:'Cross-training skills snapshot.',action:()=>printTrainingMatrix(data)},
       {icon:'⚠️',title:'Safety Log + Blank Form',desc:(data.safetyLog||[]).length+' incidents. Includes blank report form.',action:()=>printSafetyLog(data)},
@@ -37897,6 +38246,7 @@ const normalizeData = (d) => {
   if (!d.inventory) d.inventory = [...(d.rawMaterials||[]).map(i=>({...i,sku:i.id,type:'Raw Material'})),...(d.assemblyItems||[]).map(i=>({...i,sku:i.id,type:'Assembly'})),...(d.shopConsumables||[]).map(i=>({...i,sku:i.id,type:'Consumable'}))];
   if (!d.bellevueInventory) d.bellevueInventory = [];
   if (!d.bellevueAdjLog) d.bellevueAdjLog = [];
+  if (!d.bellevueTransfers) d.bellevueTransfers = [];
   if (!d.shipments) d.shipments = (d.shipCostLog||[]).map((s,i)=>({...s,id:s.poRef||s.tracking||`SHP-${i+1}`,status:'Delivered'}));
   // Sanitize: ensure every shipment has a unique non-blank id
   const shipIds = new Set();
@@ -37960,6 +38310,449 @@ const normalizeData = (d) => {
   return d;
 };
 
+
+// ─── MATERIAL PULL TRACKER ─────────────────────────────────────────────────
+const PULL_REASONS = [
+  'Rush / Hot Job Needed It',
+  'Material Shortage - None in Stock',
+  'Incorrect Material Ordered for New Job',
+  'Shop Error - Wrong Material Pulled',
+  'Customer Delay - Order Not Ready',
+  'Powder Coat Color Match',
+  'Damaged Material on New Order',
+  'Supervisor Decision',
+  'Emergency / Last Minute Change',
+  'Other',
+];
+const PULL_STATUS = ['Pending Replacement','Replaced - Returned to Order','Not Replaced - Order Affected','Resolved'];
+
+const MaterialPulls = ({data,setData,user}) => {
+  const pulls = data.materialPulls || [];
+  const orders = data.orders || [];
+  const rawMats = data.rawMaterials || [];
+  const inventory = data.inventory || [];
+  const allMaterials = [
+    ...rawMats.map(m=>({id:m.id,name:m.name,unit:m.unit,source:'raw'})),
+    ...inventory.map(m=>({id:m.id,name:m.name,unit:m.unit||'ea',source:'inv'})),
+  ];
+
+  const EMPTY_FORM = {
+    robbedOrderId:'', robbedCustomer:'', robbedPO:'', robbedProject:'',
+    sentToOrderId:'', sentToCustomer:'', sentToProject:'',
+    materialId:'', materialName:'', materialUnit:'',
+    qtyPulled:'', reason:'', reasonDetail:'',
+    pulledBy: user?.name||'', pulledDate: now(),
+    status:'Pending Replacement', replacedQty:'', resolutionNote:'',
+    estCost:'', impact:'',
+  };
+
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [modal, setModal] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterReason, setFilterReason] = useState('All');
+  const [sortCol, setSortCol] = useState('pulledDate');
+  const [sortDir, setSortDir] = useState('desc');
+  const [tab, setTab] = useState('log');
+
+  const savePull = () => {
+    if (!form.materialName || !form.reason) return;
+    const isEdit = pulls.find(p=>p.id===form.id);
+    if (isEdit) {
+      setData(d=>({...d, materialPulls: d.materialPulls.map(p=>p.id===form.id?{...form}:p)}));
+    } else {
+      const rec = {...form, id:'MP-'+uid(), createdAt:ts(), createdBy:user?.name||''};
+      setData(d=>({...d, materialPulls:[rec,...(d.materialPulls||[])]}));
+    }
+    setModal(null);
+    setForm(EMPTY_FORM);
+  };
+
+  const deletePull = (id) => {
+    if (!window.confirm('Delete this pull record?')) return;
+    setData(d=>({...d, materialPulls:(d.materialPulls||[]).filter(p=>p.id!==id)}));
+    setModal(null);
+  };
+
+  const openAdd = () => { setForm(EMPTY_FORM); setModal('add'); };
+  const openEdit = (p) => { setForm({...p}); setModal('add'); };
+  const openDetail = (p) => { setSelected(p); setModal('detail'); };
+
+  const handleOrderSelect = (orderId) => {
+    const o = orders.find(x=>x.id===orderId);
+    setForm(f=>({...f, robbedOrderId:orderId, robbedCustomer:o?.customer||'', robbedPO:o?.po||'', robbedProject:o?.project||''}));
+  };
+  const handleSentToSelect = (orderId) => {
+    const o = orders.find(x=>x.id===orderId);
+    setForm(f=>({...f, sentToOrderId:orderId, sentToCustomer:o?.customer||'', sentToProject:o?.project||''}));
+  };
+
+  const handleMaterialSelect = (matId) => {
+    const m = allMaterials.find(x=>x.id===matId);
+    setForm(f=>({...f, materialId:matId, materialName:m?.name||matId, materialUnit:m?.unit||''}));
+  };
+
+  const filtered = pulls.filter(p=>{
+    const q = search.toLowerCase();
+    const matchSearch = !q ||
+      (p.robbedOrderId||'').toLowerCase().includes(q) ||
+      (p.robbedCustomer||'').toLowerCase().includes(q) ||
+      (p.sentToOrderId||'').toLowerCase().includes(q) ||
+      (p.sentToCustomer||'').toLowerCase().includes(q) ||
+      (p.materialName||'').toLowerCase().includes(q) ||
+      (p.reason||'').toLowerCase().includes(q) ||
+      (p.pulledBy||'').toLowerCase().includes(q);
+    const matchStatus = filterStatus==='All' || p.status===filterStatus;
+    const matchReason = filterReason==='All' || p.reason===filterReason;
+    return matchSearch && matchStatus && matchReason;
+  }).sort((a,b)=>{
+    const av=a[sortCol]||'', bv=b[sortCol]||'';
+    return sortDir==='asc'?(av>bv?1:-1):(av<bv?1:-1);
+  });
+
+  const sort = (col) => {
+    if (sortCol===col) setSortDir(d=>d==='asc'?'desc':'asc');
+    else { setSortCol(col); setSortDir('desc'); }
+  };
+  const SortIcon = ({col}) => <span style={{opacity:.4,fontSize:9,marginLeft:2}}>{sortCol===col?(sortDir==='asc'?'▲':'▼'):'⇅'}</span>;
+
+  const totalPulls = pulls.length;
+  const pendingPulls = pulls.filter(p=>p.status==='Pending Return'||p.status==='Pending Disposition').length;
+  const unresolved = pulls.filter(p=>p.status==='Not Replaced - Order Affected').length;
+  const returnedCount = pulls.filter(p=>p.status==='Replaced - Returned to Order'||p.status==='Resolved').length;
+  const totalWaste = 0;
+  const totalCost = pulls.reduce((s,p)=>s+(+p.estCost||0),0);
+
+  const reasonCounts = {};
+  pulls.forEach(p=>{ reasonCounts[p.reason]=(reasonCounts[p.reason]||0)+1; });
+  const topReasons = Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30);
+  const recent30 = pulls.filter(p=>p.pulledDate && new Date(p.pulledDate)>=cutoff).length;
+
+  const statusColor = (s) => {
+    if (s==='Replaced - Returned to Order') return {bg:'rgba(16,185,129,.12)',c:'var(--ok)',b:'rgba(16,185,129,.3)'};
+    if (s==='Resolved') return {bg:'rgba(16,185,129,.12)',c:'var(--ok)',b:'rgba(16,185,129,.3)'};
+    if (s==='Not Replaced - Order Affected') return {bg:'rgba(239,68,68,.12)',c:'var(--err)',b:'rgba(239,68,68,.3)'};
+    if (s==='Pending Replacement') return {bg:'rgba(245,158,11,.12)',c:'var(--warn)',b:'rgba(245,158,11,.3)'};
+    return {bg:'rgba(100,116,139,.12)',c:'var(--muted)',b:'rgba(100,116,139,.3)'};
+  };
+
+  return (
+    <div style={{padding:'20px 24px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20,flexWrap:'wrap',gap:10}}>
+        <div>
+          <div className="hd" style={{fontSize:22,marginBottom:4}}>Material Pull Tracker</div>
+          <div style={{fontSize:12,color:'var(--muted)'}}>Track materials pulled from customer orders - quantity, reason, and final disposition.</div>
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <div style={{display:'flex',background:'var(--s2)',borderRadius:6,border:'1px solid var(--bdr)',overflow:'hidden'}}>
+            {['log','analytics'].map(t=>(
+              <button key={t} onClick={()=>setTab(t)} style={{padding:'6px 14px',background:tab===t?'var(--acc)':'none',color:tab===t?'#000':'var(--muted)',border:'none',cursor:'pointer',fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.08em',textTransform:'uppercase',transition:'all .15s'}}>
+                {t==='log'?'Log':'Analytics'}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn-p" onClick={openAdd} style={{fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.06em'}}>+ Log Pull</button>
+        </div>
+      </div>
+
+      <StatRow cols={5}>
+        <StatCard label="Total Pulls" value={totalPulls} small/>
+        <StatCard label="Last 30 Days" value={recent30} small/>
+        <StatCard label="Pending" value={pendingPulls} color={pendingPulls>0?'var(--warn)':undefined} small/>
+        <StatCard label="Orders Affected" value={unresolved} color={unresolved>0?'var(--err)':undefined} small/>
+        <StatCard label="Resolved" value={returnedCount} color="var(--ok)" small/>
+      </StatRow>
+
+      {tab==='log'&&<>
+        <div className="card" style={{padding:'10px 14px',marginBottom:12,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} className="search" placeholder="Search order, customer, material, reason..." style={{flex:'1 1 220px',minWidth:180}}/>
+          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="search" style={{minWidth:160}}>
+            <option value="All">All Statuses</option>
+            {PULL_STATUS.map(s=><option key={s}>{s}</option>)}
+          </select>
+          <select value={filterReason} onChange={e=>setFilterReason(e.target.value)} className="search" style={{minWidth:200}}>
+            <option value="All">All Reasons</option>
+            {PULL_REASONS.map(r=><option key={r}>{r}</option>)}
+          </select>
+          <button className="btn btn-sm" style={{color:'var(--muted)',border:'1px solid var(--bdr)'}} onClick={()=>{setSearch('');setFilterStatus('All');setFilterReason('All');}}>Reset</button>
+          <span style={{fontSize:10,color:'var(--muted)',marginLeft:4}}>{filtered.length} record{filtered.length!==1?'s':''}</span>
+        </div>
+
+        <div className="card" style={{padding:0,overflow:'auto'}}>
+          <table>
+            <thead>
+              <tr>
+                <th onClick={()=>sort('id')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>ID <SortIcon col="id"/></th>
+                <th onClick={()=>sort('pulledDate')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Date <SortIcon col="pulledDate"/></th>
+                <th onClick={()=>sort('robbedOrderId')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Robbed Order <SortIcon col="robbedOrderId"/></th>
+                <th onClick={()=>sort('robbedCustomer')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Robbed Customer <SortIcon col="robbedCustomer"/></th>
+                <th onClick={()=>sort('sentToCustomer')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Sent To <SortIcon col="sentToCustomer"/></th>
+                <th onClick={()=>sort('materialName')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Material <SortIcon col="materialName"/></th>
+                <th className="center" onClick={()=>sort('qtyPulled')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Qty <SortIcon col="qtyPulled"/></th>
+                <th onClick={()=>sort('reason')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Reason <SortIcon col="reason"/></th>
+                <th onClick={()=>sort('status')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>Status <SortIcon col="status"/></th>
+                <th onClick={()=>sort('pulledBy')} style={{cursor:'pointer',whiteSpace:'nowrap'}}>By <SortIcon col="pulledBy"/></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length===0&&<tr><td colSpan={11}><Empty msg="No pull records match your filters"/></td></tr>}
+              {filtered.map(p=>{
+                const sc=statusColor(p.status);
+                return (
+                  <tr key={p.id} style={{cursor:'pointer'}} onClick={()=>openDetail(p)}>
+                    <td className="mono" style={{fontSize:11,color:'var(--acc)',fontWeight:700}}>{p.id}</td>
+                    <td style={{color:'var(--muted)',fontSize:11,whiteSpace:'nowrap'}}>{fmtD(p.pulledDate)}</td>
+                    <td style={{fontSize:11,fontWeight:600,color:'var(--err)'}}>{p.robbedOrderId||'—'}</td>
+                    <td style={{fontSize:12}}>{p.robbedCustomer||'—'}</td>
+                    <td style={{fontSize:12,color:'var(--ok)',fontWeight:500}}>{p.sentToCustomer||<span style={{color:'var(--muted)'}}>—</span>}</td>
+                    <td style={{fontSize:12,fontWeight:500,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.materialName}</td>
+                    <td className="center mono" style={{fontWeight:700}}>{p.qtyPulled} <span style={{color:'var(--muted)',fontSize:10}}>{p.materialUnit}</span></td>
+                    <td style={{fontSize:11,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.reason}</td>
+                    <td><span style={{background:sc.bg,color:sc.c,border:`1px solid ${sc.b}`,borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',letterSpacing:'.06em',whiteSpace:'nowrap'}}>{p.status}</span></td>
+                    <td style={{fontSize:11,color:'var(--muted)'}}>{p.pulledBy}</td>
+                    <td onClick={e=>e.stopPropagation()}>
+                      <button className="btn btn-sm" style={{fontSize:10,padding:'2px 8px'}} onClick={()=>openEdit(p)}>Edit</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
+      {tab==='analytics'&&<>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:14,letterSpacing:'.06em'}}>Top Pull Reasons</div>
+            {topReasons.length===0&&<Empty msg="No pulls logged yet"/>}
+            {topReasons.map(([reason,count])=>(
+              <div key={reason} style={{marginBottom:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                  <span style={{fontSize:12}}>{reason}</span>
+                  <span style={{fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,color:'var(--acc)'}}>{count}</span>
+                </div>
+                <div style={{background:'var(--s2)',borderRadius:3,height:6,overflow:'hidden'}}>
+                  <div style={{width:`${(count/(topReasons[0]?.[1]||1))*100}%`,background:'var(--acc)',height:'100%',borderRadius:3,transition:'width .4s'}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="card">
+            <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:14,letterSpacing:'.06em'}}>Disposition Breakdown</div>
+            {PULL_STATUS.map(s=>{
+              const cnt = pulls.filter(p=>p.status===s).length;
+              const pct = totalPulls>0?(cnt/totalPulls*100).toFixed(1):0;
+              const sc = statusColor(s);
+              return (
+                <div key={s} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                  <span style={{background:sc.bg,color:sc.c,border:`1px solid ${sc.b}`,borderRadius:4,padding:'2px 8px',fontSize:10,fontWeight:700,fontFamily:'Barlow Condensed',minWidth:130,textAlign:'center'}}>{s}</span>
+                  <div style={{flex:1,background:'var(--s2)',borderRadius:3,height:6,overflow:'hidden'}}>
+                    <div style={{width:`${pct}%`,background:sc.c,height:'100%',borderRadius:3,transition:'width .4s'}}/>
+                  </div>
+                  <span style={{fontSize:11,fontFamily:'Barlow Condensed',fontWeight:700,minWidth:30,textAlign:'right'}}>{cnt}</span>
+                  <span style={{fontSize:10,color:'var(--muted)',minWidth:38}}>{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="card">
+          <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:13,marginBottom:14,letterSpacing:'.06em'}}>Cost Impact</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
+            <StatCard label="Total Pull Cost" value={fmt$(totalCost)} color="var(--err)" small/>
+            <StatCard label="Orders Affected" value={unresolved} color="var(--err)" small/>
+            <StatCard label="Pending Replacement" value={pendingPulls} color="var(--warn)" small/>
+            <StatCard label="Avg Cost / Pull" value={totalPulls>0?fmt$(totalCost/totalPulls):'$0.00'} small/>
+          </div>
+        </div>
+      </>}
+
+      {modal==='add'&&(
+        <Modal title={form.id?'Edit Pull Record':'Log Material Rob'} onClose={()=>setModal(null)} lg>
+          <SectionHeader label="Order That Got Robbed"/>
+          <div className="grid2">
+            <Field label="Robbed Order">
+              <select value={form.robbedOrderId} onChange={e=>handleOrderSelect(e.target.value)}>
+                <option value="">Select order or enter manually</option>
+                {orders.map(o=><option key={o.id} value={o.id}>{o.id} - {o.customer} ({o.project||''})</option>)}
+              </select>
+            </Field>
+            <Field label="Robbed Customer">
+              <input value={form.robbedCustomer} onChange={e=>setForm(f=>({...f,robbedCustomer:e.target.value}))} placeholder="Auto-filled or enter manually"/>
+            </Field>
+            <Field label="Robbed PO / Reference">
+              <input value={form.robbedPO} onChange={e=>setForm(f=>({...f,robbedPO:e.target.value}))} placeholder="Customer PO #"/>
+            </Field>
+            <Field label="Robbed Project">
+              <input value={form.robbedProject} onChange={e=>setForm(f=>({...f,robbedProject:e.target.value}))} placeholder="Project name"/>
+            </Field>
+          </div>
+          <SectionHeader label="Where It Went"/>
+          <div className="grid2">
+            <Field label="Sent To Order">
+              <select value={form.sentToOrderId} onChange={e=>handleSentToSelect(e.target.value)}>
+                <option value="">Select order or enter manually</option>
+                {orders.map(o=><option key={o.id} value={o.id}>{o.id} - {o.customer} ({o.project||''})</option>)}
+              </select>
+            </Field>
+            <Field label="Sent To Customer">
+              <input value={form.sentToCustomer} onChange={e=>setForm(f=>({...f,sentToCustomer:e.target.value}))} placeholder="Auto-filled or enter manually"/>
+            </Field>
+            <Field label="Sent To Project">
+              <input value={form.sentToProject} onChange={e=>setForm(f=>({...f,sentToProject:e.target.value}))} placeholder="Project name"/>
+            </Field>
+            <Field label="Pulled By">
+              <input value={form.pulledBy} onChange={e=>setForm(f=>({...f,pulledBy:e.target.value}))}/>
+            </Field>
+          </div>
+          <SectionHeader label="Material"/>
+          <div className="grid2">
+            <Field label="Material (from inventory)">
+              <select value={form.materialId} onChange={e=>handleMaterialSelect(e.target.value)}>
+                <option value="">Select or enter manually below</option>
+                <optgroup label="Raw Materials">{rawMats.map(m=><option key={m.id} value={m.id}>{m.name} (On Hand: {m.qty} {m.unit})</option>)}</optgroup>
+                <optgroup label="Inventory">{inventory.map(m=><option key={m.id} value={m.id}>{m.name} (On Hand: {m.qty} {m.unit||'ea'})</option>)}</optgroup>
+              </select>
+            </Field>
+            <Field label="Material Name">
+              <input value={form.materialName} onChange={e=>setForm(f=>({...f,materialName:e.target.value}))} placeholder="e.g. 6061-T6 Tube 2x2x1/8 or just type it"/>
+            </Field>
+            <Field label="Qty Robbed *">
+              <input type="text" inputMode="decimal" value={form.qtyPulled} onChange={e=>setForm(f=>({...f,qtyPulled:e.target.value}))} placeholder="0"/>
+            </Field>
+            <Field label="Unit">
+              <input value={form.materialUnit} onChange={e=>setForm(f=>({...f,materialUnit:e.target.value}))} placeholder="FT, EA, LB, PCS..."/>
+            </Field>
+          </div>
+          <SectionHeader label="Why"/>
+          <div className="grid2">
+            <Field label="Reason *">
+              <select value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))}>
+                <option value="">Select reason</option>
+                {PULL_REASONS.map(r=><option key={r}>{r}</option>)}
+              </select>
+            </Field>
+            <Field label="Notes / Detail">
+              <input value={form.reasonDetail} onChange={e=>setForm(f=>({...f,reasonDetail:e.target.value}))} placeholder="What happened, who authorized it..."/>
+            </Field>
+            <Field label="Date">
+              <input type="date" value={form.pulledDate} onChange={e=>setForm(f=>({...f,pulledDate:e.target.value}))}/>
+            </Field>
+            <Field label="Impact on Robbed Order">
+              <select value={form.impact} onChange={e=>setForm(f=>({...f,impact:e.target.value}))}>
+                <option value="">Select</option>
+                <option>None - Material Replaced Same Day</option>
+                <option>Minor Delay (less than 1 day)</option>
+                <option>Moderate Delay (1-3 days)</option>
+                <option>Significant Delay (more than 3 days)</option>
+                <option>Order Shipped Short</option>
+                <option>Order On Hold</option>
+              </select>
+            </Field>
+          </div>
+          <SectionHeader label="Resolution"/>
+          <div className="grid2">
+            <Field label="Status">
+              <select value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+                {PULL_STATUS.map(s=><option key={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Qty Replaced Back">
+              <input type="text" inputMode="decimal" value={form.replacedQty} onChange={e=>setForm(f=>({...f,replacedQty:e.target.value}))} placeholder="0"/>
+            </Field>
+            <Field label="Est. Cost of Material ($)">
+              <input type="text" inputMode="decimal" value={form.estCost} onChange={e=>setForm(f=>({...f,estCost:e.target.value}))} placeholder="0.00"/>
+            </Field>
+            <Field label="Resolution Notes">
+              <input value={form.resolutionNote} onChange={e=>setForm(f=>({...f,resolutionNote:e.target.value}))} placeholder="How was it resolved?"/>
+            </Field>
+          </div>
+          <div style={{display:'flex',gap:8,marginTop:16}}>
+            <button className="btn btn-p" onClick={savePull} disabled={!form.materialName||!form.reason}>{form.id?'Save Changes':'Log Rob'}</button>
+            <button className="btn btn-g" onClick={()=>setModal(null)}>Cancel</button>
+            {form.id&&<button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>deletePull(form.id)}>Delete</button>}
+          </div>
+        </Modal>
+      )}
+
+      {modal==='detail'&&selected&&(()=>{
+        const p=selected;
+        const sc=statusColor(p.status);
+        return (
+          <Modal title={'Rob Record - '+p.id} onClose={()=>setModal(null)} lg>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+              <div>
+                <SectionHeader label="Order Robbed"/>
+                <div style={{fontSize:12,lineHeight:1.8}}>
+                  <div><span style={{color:'var(--muted)'}}>Order: </span><span style={{fontWeight:700,fontFamily:'Barlow Condensed',color:'var(--err)'}}>{p.robbedOrderId||'—'}</span></div>
+                  <div><span style={{color:'var(--muted)'}}>Customer: </span>{p.robbedCustomer||'—'}</div>
+                  <div><span style={{color:'var(--muted)'}}>PO: </span>{p.robbedPO||'—'}</div>
+                  <div><span style={{color:'var(--muted)'}}>Project: </span>{p.robbedProject||'—'}</div>
+                </div>
+              </div>
+              <div>
+                <SectionHeader label="Sent To"/>
+                <div style={{fontSize:12,lineHeight:1.8}}>
+                  <div><span style={{color:'var(--muted)'}}>Order: </span><span style={{fontWeight:700,fontFamily:'Barlow Condensed',color:'var(--ok)'}}>{p.sentToOrderId||'—'}</span></div>
+                  <div><span style={{color:'var(--muted)'}}>Customer: </span>{p.sentToCustomer||'—'}</div>
+                  <div><span style={{color:'var(--muted)'}}>Project: </span>{p.sentToProject||'—'}</div>
+                  <div><span style={{color:'var(--muted)'}}>By: </span>{p.pulledBy||'—'} on {fmtD(p.pulledDate)}</div>
+                </div>
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+              <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 14px'}}>
+                <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:4}}>Material Robbed</div>
+                <div style={{fontWeight:700,fontSize:14}}>{p.materialName||'—'}</div>
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:22,color:'var(--err)',marginTop:4}}>{p.qtyPulled} <span style={{fontSize:13,color:'var(--muted)'}}>{p.materialUnit}</span></div>
+              </div>
+              <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 14px'}}>
+                <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:4}}>Reason</div>
+                <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{p.reason}</div>
+                {p.reasonDetail&&<div style={{fontSize:11,color:'var(--muted)'}}>{p.reasonDetail}</div>}
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:14}}>
+              <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'10px 12px'}}>
+                <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:4}}>Status</div>
+                <span style={{background:sc.bg,color:sc.c,border:`1px solid ${sc.b}`,borderRadius:4,padding:'2px 8px',fontSize:11,fontWeight:700,fontFamily:'Barlow Condensed'}}>{p.status}</span>
+              </div>
+              <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'10px 12px'}}>
+                <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:4}}>Est. Cost</div>
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:20,color:p.estCost>0?'var(--err)':'var(--txt)'}}>{p.estCost>0?fmt$(p.estCost):'—'}</div>
+              </div>
+              <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'10px 12px'}}>
+                <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.1em',textTransform:'uppercase',fontFamily:'Barlow Condensed',marginBottom:4}}>Qty Replaced</div>
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:20}}>{p.replacedQty||'—'}</div>
+              </div>
+            </div>
+            {(p.impact||p.resolutionNote)&&(
+              <div style={{background:'var(--s2)',border:'1px solid var(--bdr)',borderRadius:8,padding:'12px 16px',marginBottom:14}}>
+                <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--muted)',marginBottom:8}}>Resolution</div>
+                <div style={{fontSize:12,lineHeight:1.8}}>
+                  {p.impact&&<div><span style={{color:'var(--muted)'}}>Impact: </span>{p.impact}</div>}
+                  {p.resolutionNote&&<div><span style={{color:'var(--muted)'}}>Notes: </span>{p.resolutionNote}</div>}
+                </div>
+              </div>
+            )}
+            <div style={{fontSize:10,color:'var(--muted)',marginBottom:14}}>Logged by {p.createdBy||'—'} on {p.createdAt||'—'}</div>
+            <div style={{display:'flex',gap:8}}>
+              <button className="btn btn-p" onClick={()=>openEdit(p)}>Edit</button>
+              <button className="btn btn-g" onClick={()=>setModal(null)}>Close</button>
+              <button className="btn btn-d" style={{marginLeft:'auto'}} onClick={()=>deletePull(p.id)}>Delete</button>
+            </div>
+          </Modal>
+        );
+      })()}
+    </div>
+  );
+};
+// ─── END MATERIAL PULL TRACKER ──────────────────────────────────────────────
 const PAGES = {
   dashboard:Dashboard, todo:Todo,
   sales:Sales, production:Production, inventory:Inventory, inventorybellevue:InventoryBellevue, shipping:Shipping,
@@ -37967,18 +38760,18 @@ const PAGES = {
   jobcost:JobCost, customers:Customers, autopo:AutoPO,
   sister:Sister, people:People, automation:Automation,
   shopref:ShopRef, orders:Orders, workorders:WorkOrders, orderimport:OrderImport, srscatalog:SRSCatalog, salespipeline:SalesPipeline, commissions:Commissions, payments:Payments, quickbooks:QuickBooks, taxcenter:TaxCenter, shipcalc:ShipCalc, legacyorders:LegacyOrders, kpi:KPIDashboard, printcenter:PrintCenter, reports:Reports,
-  queueanalyzer:QueueAnalyzer, hotqueue:HotRushQueue, workbookgen:WorkbookGenerator, orderanalyzer:OrderAnalyzer,
+  queueanalyzer:QueueAnalyzer, hotqueue:HotRushQueue, materialpulls:MaterialPulls, workbookgen:WorkbookGenerator, orderanalyzer:OrderAnalyzer,
   buildschedule:BuildSchedule, processtracker:ProcessTracker, processcost:ProcessCostAnalysis, shifthandoff:ShiftHandoff, calculators:Calculators,
   facilitymove:FacilityMove, employeereviews:EmployeeReviews, productcatalog:ProductCatalog, opsreference:OpsReference,
 };
 const TITLES = {
   dashboard:'Dashboard', todo:'To-Do & Hot List',
-  sales:'Sales & Quotes', production:'Production', inventory:'Inventory', inventorybellevue:'Inventory — Bellevue', shipping:'Shipping',
+  sales:'Sales & Quotes', production:'Production', inventory:'Inventory', inventorybellevue:'Inventory - Bellevue', shipping:'Shipping',
   invoicing:'Invoicing & A/R', purchasing:'Purchasing', finance:'Finance & P&L',
   jobcost:'Job Costing', customers:'Customers', autopo:'Auto Reorder',
   sister:'Sister Company', people:'People & HR', automation:'Automation Roadmap',
   shopref:'Shop Reference', orders:'Orders', workorders:'Work Orders', orderimport:'Order Import', srscatalog:'SRS Catalog', legacyorders:'Legacy Orders', kpi:'KPI Dashboard', printcenter:'Print Center', reports:'Reports',
-  queueanalyzer:'Queue Analyzer', hotqueue:'Hot / Rush Queue', workbookgen:'Workbook Generator', orderanalyzer:'Order Analyzer',
+  queueanalyzer:'Queue Analyzer', hotqueue:'Hot / Rush Queue', materialpulls:'Material Pull Tracker', workbookgen:'Workbook Generator', orderanalyzer:'Order Analyzer',
   buildschedule:'Build Schedule', processtracker:'Process Tracker', processcost:'Process Cost Analysis', shifthandoff:'Shift Handoff', calculators:'Shop Calculators',
   facilitymove:'Facility Move', employeereviews:'Employee Reviews', productcatalog:'Product Catalog', opsreference:'Ops Reference',
 };
@@ -37992,8 +38785,21 @@ if(typeof window !== 'undefined' && !window.XLSX && !window.__xlsxLoading) {
   document.head.appendChild(s);
 }
 
+const APP_VERSION = '6.10';
+
 export default function MaisyERP() {
-  const [user,  setUser]  = useState(null);
+  const [user,  setUser]  = useState(()=>{
+    // Auto-logout on version change: if stored version != current, clear session
+    try {
+      const storedVer = localStorage.getItem('maisy_app_version');
+      if (storedVer && storedVer !== APP_VERSION) {
+        localStorage.removeItem('maisy_session_user');
+        localStorage.setItem('maisy_app_version', APP_VERSION);
+        return null;
+      }
+    } catch(e) {}
+    return null;
+  });
   const [page,  setPage]  = useState('dashboard');
   const [data,  setData]  = useState(INIT);
   const [aiOpen,setAiOpen]= useState(false);
@@ -38034,7 +38840,7 @@ export default function MaisyERP() {
       } catch(e) {}
     }
 
-    // 3. Fallback: seed-data.json (fresh machine, cleared cache, new browser — always has real data)
+    // 3. Fallback: seed-data.json (fresh machine, cleared cache, new browser - always has real data)
     if(!savedData) {
       try {
         const res = await fetch('/seed-data.json');
@@ -38061,7 +38867,7 @@ export default function MaisyERP() {
 
   const [saveError, setSaveError] = useState(null);
   useEffect(()=>{if(!loaded||!data)return;const t=setTimeout(async()=>{try{
-    // Save to IndexedDB — no size limit, works for any amount of data
+    // Save to IndexedDB - no size limit, works for any amount of data
     await idbSet('maisy_erp_v4', data);
     setSaved(true);
     setSaveError(null);
@@ -38074,7 +38880,11 @@ export default function MaisyERP() {
   const [backupModal, setBackupModal] = useState(false);
   const importRef = useRef();
 
-  const handleLogin=(u)=>{setUser(u);setPage(u.defaultPage||'dashboard');};
+  const handleLogin=(u)=>{
+    try { localStorage.setItem('maisy_app_version', APP_VERSION); } catch(e) {}
+    setUser(u);
+    setPage(u.defaultPage||'dashboard');
+  };
   const handleLogout=()=>{setUser(null);setAiOpen(false);};
 
   // ── Export full data snapshot as JSON ──────────────────────────────────────
@@ -38132,7 +38942,7 @@ export default function MaisyERP() {
   const access=ROLE_ACCESS[user.role]||[];
   const alerts=data.invoices.filter(i=>i.status==='Overdue').length+data.inventory.filter(i=>i.qty<=i.reorder).length+data.todos.filter(t=>t.priority==='Critical'&&t.status!=='Done').length;
 
-  // ── Shopqueue role: stripped-down layout — only Hot/Rush Queue + Queue Analyzer ──
+  // ── Shopqueue role: stripped-down layout - only Hot/Rush Queue + Queue Analyzer ──
   if(user.role==='shopqueue') {
     const SQPageComp = PAGES[page] || HotRushQueue;
     return (
@@ -38179,7 +38989,7 @@ export default function MaisyERP() {
           <div className="topbar">
             <span className="hd" style={{fontSize:13,color:'var(--muted)',flex:1}}>{TITLES[page]}</span>
             {saved&&<span style={{fontSize:10,color:'var(--ok)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',animation:'fadeIn .2s ease'}}>● Saved</span>}
-            {saveError&&<span style={{fontSize:10,color:'var(--err)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',animation:'fadeIn .2s ease',cursor:'pointer'}} title={saveError} onClick={()=>setBackupModal(true)}>⚠ SAVE FAILED — EXPORT NOW</span>}
+            {saveError&&<span style={{fontSize:10,color:'var(--err)',fontFamily:'Barlow Condensed',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',animation:'fadeIn .2s ease',cursor:'pointer'}} title={saveError} onClick={()=>setBackupModal(true)}>⚠ SAVE FAILED - EXPORT NOW</span>}
             <div style={{width:1,height:18,background:'var(--bdr)',margin:'0 6px'}}/>
             <button onClick={()=>setBackupModal(true)} title="Backup & Restore your data" style={{background:'none',border:'1px solid var(--bdr)',color:'var(--muted)',borderRadius:5,padding:'5px 10px',cursor:'pointer',fontFamily:'Barlow Condensed',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',transition:'all .15s'}} onMouseOver={e=>e.target.style.color='var(--acc)'} onMouseOut={e=>e.target.style.color='var(--muted)'}>💾 Backup</button>
             <div style={{width:1,height:18,background:'var(--bdr)',margin:'0 6px'}}/>
@@ -38210,7 +39020,7 @@ export default function MaisyERP() {
             <div style={{background:'rgba(16,185,129,.08)',border:'1px solid rgba(16,185,129,.25)',borderRadius:6,padding:'10px 14px',marginBottom:16}}>
               <div style={{fontFamily:'Barlow Condensed',fontWeight:700,fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--ok)',marginBottom:4}}>● Auto-Save Active</div>
               <div style={{fontSize:12,color:'var(--muted)',lineHeight:1.5}}>
-                Your data saves automatically to this browser every time you make a change. It will survive page refreshes, new tabs, and new deploys — as long as you access the ERP from this same Claude.ai account.
+                Your data saves automatically to this browser every time you make a change. It will survive page refreshes, new tabs, and new deploys - as long as you access the ERP from this same Claude.ai account.
               </div>
             </div>
 
@@ -38256,7 +39066,7 @@ export default function MaisyERP() {
             {/* Actions */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <button className="btn btn-p" onClick={exportData} style={{justifyContent:'center',fontSize:13,padding:'10px'}}>
-                ⬇ Download JSON Backup — {new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+                ⬇ Download JSON Backup - {new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
               </button>
               <div>
                 <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>importData(e.target.files[0])}/>
