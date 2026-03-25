@@ -32,3 +32,6 @@ dist-ssr
 !backups/**
 !public/seed-data.json
 !scripts/
+
+# Large archive files
+docs/claude-history/conversations.json
