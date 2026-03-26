@@ -32681,6 +32681,7 @@ const Orders = ({data, setData}) => {
             <th>Lengths</th>
             <th>Color</th>
             <SortTh f="status"     label="Status" style={{minWidth:140}}/>
+            <th style={{minWidth:130}}>Stage</th>
             <SortTh f="orderTotal" label="Total"/>
             <SortTh f="balance"    label="Balance"/>
             <th>Notes</th>
@@ -32731,6 +32732,20 @@ const Orders = ({data, setData}) => {
                     </select>
                     {o.cancelReason&&<div style={{fontSize:9,color:'var(--err)',fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:140}} title={o.cancelReason}>✕ {o.cancelReason}</div>}
                   </div>
+                </td>
+                <td>
+                  {(()=>{
+                    const STAGES=['','Que Cut','Cutting','Que Drill/CNC','Drill/CNC','Que Weld','Weld','Que Prep','Prep','Que Powder Coat','Powder Coat','Que Packaging','Packaging','Que Shipping','Shipping'];
+                    const stageColors={'Cutting':'#0369a1','Drill/CNC':'#7c3aed','Weld':'#b45309','Prep':'#a16207','Powder Coat':'#be185d','Packaging':'#047857','Shipping':'#065f46','Que Cut':'#1e3a5f','Que Drill/CNC':'#3b1f6e','Que Weld':'#5c3210','Que Prep':'#4a3608','Que Powder Coat':'#6b1040','Que Packaging':'#014532','Que Shipping':'#01291e'};
+                    const cur = o.productionStage||'';
+                    const col = stageColors[cur]||'var(--s2)';
+                    return (
+                      <select value={cur} onChange={e=>setData(d=>({...d,orders:(d.orders||[]).map(x=>x.id===o.id?{...x,productionStage:e.target.value}:x)}))}
+                        style={{background:col,color:cur?'#fff':'var(--muted)',border:'none',borderRadius:4,padding:'3px 6px',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none',fontFamily:'Barlow Condensed',letterSpacing:'.04em',width:130,minWidth:130}}>
+                        {STAGES.map(s=><option key={s} value={s}>{s||'— Stage —'}</option>)}
+                      </select>
+                    );
+                  })()}
                 </td>
                 <td style={{fontWeight:700,color:'var(--ok)',whiteSpace:'nowrap'}}>{o.orderTotal?fmt$(o.orderTotal):'-'}</td>
                 <td style={{fontWeight:600,whiteSpace:'nowrap',color:o.balance>0?'var(--warn)':'var(--ok)'}}>{o.balance?fmt$(o.balance):'✓'}</td>
