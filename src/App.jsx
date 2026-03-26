@@ -31392,75 +31392,95 @@ const ShopRef = ({data,setData}) => {
 
       {shopTab==='postmfg'&&(()=>{
         const pmList = data.postsMfgList||[];
-        const updPM = (i, field, val) => setData(d=>({...d, postsMfgList:(d.postsMfgList||[]).map((r,ri)=>ri===i?{...r,[field]:val}:r)}));
+        const [pmEditIdx, setPmEditIdx] = React.useState(null);
+        const [pmForm, setPmForm] = React.useState({});
+        const openEdit = (i) => { setPmForm({...pmList[i]}); setPmEditIdx(i); };
+        const saveEdit = () => {
+          setData(d=>({...d,postsMfgList:(d.postsMfgList||[]).map((r,ri)=>ri===pmEditIdx?{...pmForm}:r)}));
+          setPmEditIdx(null);
+        };
         const delPM = (i) => { if(window.confirm('Delete this SKU entry?')) setData(d=>({...d,postsMfgList:(d.postsMfgList||[]).filter((_,ri)=>ri!==i)})); };
-        const addPM = () => setData(d=>({...d,postsMfgList:[...d.postsMfgList||[],{sku:'',desc:'',subCat:'Post',family:'Cable Post',material:'Aluminum',finish:'',mfgHeight:'',cutLength:'',rawStock:'Tube | Square | Aluminum | 2 x 2 x 1/8 x 20 ft',partsRequired:'PLT-TOP x1',tooling:'Band Saw, Drill Press w/ 5/16" bit, TIG Welder',srsChannel:'No',onlineDirect:'Yes',homeDepot:'No'}]}));
-        const cellInput = (i, field, val, opts={}) => (
-          <input
-            value={val||''}
-            onChange={e=>updPM(i, field, e.target.value)}
-            style={{background:'transparent',border:'none',borderBottom:'1px solid var(--bdr)',color:'var(--txt)',fontSize:opts.mono?10:11,fontFamily:opts.mono?'monospace':'inherit',fontWeight:opts.bold?700:400,width:'100%',padding:'2px 4px',outline:'none',minWidth:opts.min||60}}
-          />
-        );
-        return <div className="card" style={{padding:0,overflow:'auto'}}>
-          <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <span style={{fontSize:11,color:'var(--muted)'}}>Post MFG reference — {pmList.length} SKUs · Click any cell to edit</span>
-            <button className="btn btn-p btn-xs" onClick={addPM}>+ Add Row</button>
+        const addPM = () => {
+          const blank = {sku:'',desc:'',subCat:'Post',family:'Cable Post',material:'Aluminum',finish:'',mfgHeight:'',cutLength:'',rawStock:'Tube | Square | Aluminum | 2 x 2 x 1/8 x 20 ft',partsRequired:'PLT-TOP x1',tooling:'Band Saw, Drill Press w/ 5/16" bit, TIG Welder',srsChannel:'No',onlineDirect:'Yes',homeDepot:'No'};
+          setData(d=>({...d,postsMfgList:[...d.postsMfgList||[],blank]}));
+          setPmForm(blank); setPmEditIdx((data.postsMfgList||[]).length);
+        };
+        return <>
+          <div className="card" style={{padding:0,overflow:'auto'}}>
+            <div style={{padding:'10px 14px',borderBottom:'1px solid var(--bdr)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:11,color:'var(--muted)'}}>Post MFG reference — {pmList.length} SKUs · MFG height, cut lengths, raw stock & tooling</span>
+              <button className="btn btn-p btn-xs" onClick={addPM}>+ Add Row</button>
+            </div>
+            <table style={{minWidth:900}}>
+              <thead><tr>
+                <th>SKU / Part #</th>
+                <th>Description</th>
+                <th>Sub Cat</th>
+                <th>Family</th>
+                <th>Finish</th>
+                <th style={{textAlign:'center'}}>MFG Height</th>
+                <th style={{textAlign:'center'}}>Cut Length</th>
+                <th>Raw Stock</th>
+                <th>Parts Required</th>
+                <th>Tooling</th>
+                <th style={{textAlign:'center'}}>SRS</th>
+                <th style={{textAlign:'center'}}>Online</th>
+                <th style={{textAlign:'center'}}>HD</th>
+                <th></th>
+              </tr></thead>
+              <tbody>
+                {pmList.length===0&&<tr><td colSpan={14}><Empty msg="No MFG data"/></td></tr>}
+                {pmList.map((p,i)=>(
+                  <tr key={i}>
+                    <td style={{fontFamily:'monospace',fontSize:11,color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{p.sku||p.partNo||'-'}</td>
+                    <td style={{fontSize:11}}>{p.desc||'-'}</td>
+                    <td style={{fontSize:10,color:'var(--muted)'}}>{p.subCat||'-'}</td>
+                    <td style={{fontSize:10,color:'var(--muted)'}}>{p.family||'-'}</td>
+                    <td style={{fontSize:10,color:'var(--muted)'}}>{p.finish||'-'}</td>
+                    <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--ok)',textAlign:'center',whiteSpace:'nowrap'}}>{p.mfgHeight||'-'}</td>
+                    <td style={{fontFamily:'monospace',fontWeight:700,color:'var(--warn)',textAlign:'center',whiteSpace:'nowrap'}}>{p.cutLength||'-'}</td>
+                    <td style={{fontSize:10,color:'var(--muted)',whiteSpace:'nowrap'}}>{p.rawStock||'-'}</td>
+                    <td style={{fontSize:10,color:'var(--muted)'}}>{p.partsRequired||'-'}</td>
+                    <td style={{fontSize:10,color:'var(--muted)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={p.tooling||''}>{p.tooling||'-'}</td>
+                    <td style={{textAlign:'center',fontSize:10,color:p.srsChannel==='Yes'?'var(--ok)':'var(--muted)',fontWeight:700}}>{p.srsChannel||'No'}</td>
+                    <td style={{textAlign:'center',fontSize:10,color:p.onlineDirect==='Yes'?'var(--ok)':'var(--muted)',fontWeight:700}}>{p.onlineDirect||'No'}</td>
+                    <td style={{textAlign:'center',fontSize:10,color:p.homeDepot==='Yes'?'var(--ok)':'var(--muted)',fontWeight:700}}>{p.homeDepot||'No'}</td>
+                    <td style={{whiteSpace:'nowrap'}}>
+                      <div style={{display:'flex',gap:4}}>
+                        <button className="btn btn-g btn-xs" onClick={()=>openEdit(i)}>Edit</button>
+                        <button className="btn btn-d btn-xs" onClick={()=>delPM(i)}>✕</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <table style={{minWidth:1100,fontSize:11}}>
-            <thead><tr>
-              <th style={{minWidth:180}}>SKU / Part #</th>
-              <th style={{minWidth:220}}>Description</th>
-              <th style={{minWidth:80}}>Sub Cat</th>
-              <th style={{minWidth:80}}>Family</th>
-              <th style={{minWidth:70}}>Finish</th>
-              <th style={{minWidth:90,textAlign:'center'}}>MFG Height</th>
-              <th style={{minWidth:90,textAlign:'center'}}>Cut Length</th>
-              <th style={{minWidth:200}}>Raw Stock</th>
-              <th style={{minWidth:130}}>Parts Required</th>
-              <th style={{minWidth:180}}>Tooling</th>
-              <th style={{minWidth:50,textAlign:'center'}}>SRS</th>
-              <th style={{minWidth:50,textAlign:'center'}}>Online</th>
-              <th style={{minWidth:50,textAlign:'center'}}>HD</th>
-              <th style={{width:36}}></th>
-            </tr></thead>
-            <tbody>
-              {pmList.length===0&&<tr><td colSpan={14}><Empty msg="No MFG data — click + Add Row to start"/></td></tr>}
-              {pmList.map((p,i)=>(
-                <tr key={i} style={{borderBottom:'1px solid var(--bdr)'}}>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'sku',p.sku,{mono:true,bold:true,min:150})}</td>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'desc',p.desc,{min:200})}</td>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'subCat',p.subCat,{min:70})}</td>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'family',p.family,{min:70})}</td>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'finish',p.finish,{min:60})}</td>
-                  <td style={{padding:'3px 6px',textAlign:'center'}}>{cellInput(i,'mfgHeight',p.mfgHeight,{mono:true,bold:true,min:70})}</td>
-                  <td style={{padding:'3px 6px',textAlign:'center'}}>{cellInput(i,'cutLength',p.cutLength,{mono:true,bold:true,min:70})}</td>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'rawStock',p.rawStock,{min:180})}</td>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'partsRequired',p.partsRequired,{min:110})}</td>
-                  <td style={{padding:'3px 6px'}}>{cellInput(i,'tooling',p.tooling,{min:160})}</td>
-                  <td style={{padding:'3px 6px',textAlign:'center'}}>
-                    <select value={p.srsChannel||'No'} onChange={e=>updPM(i,'srsChannel',e.target.value)} style={{background:'transparent',border:'none',color:p.srsChannel==='Yes'?'var(--ok)':'var(--muted)',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none'}}>
-                      <option>Yes</option><option>No</option>
-                    </select>
-                  </td>
-                  <td style={{padding:'3px 6px',textAlign:'center'}}>
-                    <select value={p.onlineDirect||'No'} onChange={e=>updPM(i,'onlineDirect',e.target.value)} style={{background:'transparent',border:'none',color:p.onlineDirect==='Yes'?'var(--ok)':'var(--muted)',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none'}}>
-                      <option>Yes</option><option>No</option>
-                    </select>
-                  </td>
-                  <td style={{padding:'3px 6px',textAlign:'center'}}>
-                    <select value={p.homeDepot||'No'} onChange={e=>updPM(i,'homeDepot',e.target.value)} style={{background:'transparent',border:'none',color:p.homeDepot==='Yes'?'var(--ok)':'var(--muted)',fontSize:10,fontWeight:700,cursor:'pointer',outline:'none'}}>
-                      <option>Yes</option><option>No</option>
-                    </select>
-                  </td>
-                  <td style={{padding:'3px 6px',textAlign:'center'}}>
-                    <button className="btn btn-d btn-xs" onClick={()=>delPM(i)} title="Delete row" style={{padding:'2px 6px',fontSize:10}}>✕</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>;
+          {pmEditIdx!==null&&<Modal title={(pmForm.sku||'New Entry')+' — Edit'} onClose={()=>setPmEditIdx(null)}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <Field label="SKU"><input value={pmForm.sku||''} onChange={e=>setPmForm(f=>({...f,sku:e.target.value}))} style={{fontFamily:'monospace',fontWeight:700}}/></Field>
+              <Field label="Description"><input value={pmForm.desc||''} onChange={e=>setPmForm(f=>({...f,desc:e.target.value}))}/></Field>
+              <Field label="Sub Category"><input value={pmForm.subCat||''} onChange={e=>setPmForm(f=>({...f,subCat:e.target.value}))}/></Field>
+              <Field label="Family"><input value={pmForm.family||''} onChange={e=>setPmForm(f=>({...f,family:e.target.value}))}/></Field>
+              <Field label="Material"><input value={pmForm.material||''} onChange={e=>setPmForm(f=>({...f,material:e.target.value}))}/></Field>
+              <Field label="Finish"><input value={pmForm.finish||''} onChange={e=>setPmForm(f=>({...f,finish:e.target.value}))}/></Field>
+              <Field label="MFG Height"><input value={pmForm.mfgHeight||''} placeholder='e.g. 47 3/4"' onChange={e=>setPmForm(f=>({...f,mfgHeight:e.target.value}))}/></Field>
+              <Field label="Cut Length"><input value={pmForm.cutLength||''} placeholder='e.g. 47 1/2"' onChange={e=>setPmForm(f=>({...f,cutLength:e.target.value}))}/></Field>
+            </div>
+            <Field label="Raw Stock" style={{marginTop:8}}><input value={pmForm.rawStock||''} onChange={e=>setPmForm(f=>({...f,rawStock:e.target.value}))}/></Field>
+            <Field label="Parts Required" style={{marginTop:8}}><input value={pmForm.partsRequired||''} placeholder="PLT-TOP x1, PLT-SM x1" onChange={e=>setPmForm(f=>({...f,partsRequired:e.target.value}))}/></Field>
+            <Field label="Tooling" style={{marginTop:8}}><input value={pmForm.tooling||''} onChange={e=>setPmForm(f=>({...f,tooling:e.target.value}))}/></Field>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:8}}>
+              <Field label="SRS Channel"><select value={pmForm.srsChannel||'No'} onChange={e=>setPmForm(f=>({...f,srsChannel:e.target.value}))}><option>Yes</option><option>No</option></select></Field>
+              <Field label="Online Direct"><select value={pmForm.onlineDirect||'No'} onChange={e=>setPmForm(f=>({...f,onlineDirect:e.target.value}))}><option>Yes</option><option>No</option></select></Field>
+              <Field label="Home Depot"><select value={pmForm.homeDepot||'No'} onChange={e=>setPmForm(f=>({...f,homeDepot:e.target.value}))}><option>Yes</option><option>No</option></select></Field>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:14}}>
+              <button className="btn btn-p" onClick={saveEdit}>Save</button>
+              <button className="btn btn-g" onClick={()=>setPmEditIdx(null)}>Cancel</button>
+            </div>
+          </Modal>}
+        </>;
       })()}
       {shopTab==='materialsdb'&&<div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
