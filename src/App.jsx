@@ -31859,6 +31859,41 @@ const KPIDashboard = ({data,setData}) => {
 // CABLE: entered directly as footage
 // DERIVED ALU: surface posts→4×1/4 flatbar(RM-004)+2×1/8 flatbar(RM-002) @4in/post
 //   fascia posts→2×1/8 flatbar(RM-002) @4in/post, corner→angle iron pieces
+// ── derivePostSKUs ────────────────────────────────────────────────────────────
+// Returns array of {type, qty, sku, desc} for each post type present on an order.
+// SKU format: P-{RAIL}-{MOUNT}-{TYPE}-{HEIGHT}-{COLOR_CLASS}
+// Color class: BLK = any black finish, CLR = custom/other color
+const derivePostSKUs = (order, postsMfgList = []) => {
+  const mount = (order.mountType||'').toLowerCase();
+  const rail  = (order.railType||'').toLowerCase();
+  const h     = String(parseInt(order.height)||42);
+  const color = (order.color||'').toLowerCase();
+
+  const mountCode = mount.includes('fascia') ? 'FM' : 'SM';
+  const railCode  = rail.includes('glass') ? 'GLS' : rail.includes('picket') ? 'PKT' : 'CBL';
+
+  // Detect black finish: BK codes, "black", "matte black", etc.
+  const BLACK_KEYWORDS = ['blk','black','bk 303','t075-bk','t002-bk','t005-bk','c206-bk','c241-bk','t375-bk','p000-bk'];
+  const isBlack = BLACK_KEYWORDS.some(k => color.includes(k));
+  const colorCode = isBlack ? 'BLK' : 'CLR';
+
+  const postTypes = [
+    { key: 'line',   typeCode: 'LINE', qty: order.lineQty   || 0 },
+    { key: 'stair',  typeCode: 'STR',  qty: order.stairQty  || 0 },
+    { key: 'corner', typeCode: 'CRN',  qty: order.cornerQty || 0 },
+  ];
+
+  return postTypes
+    .filter(p => p.qty > 0)
+    .map(p => {
+      const sku = `P-${railCode}-${mountCode}-${p.typeCode}-${h}-${colorCode}`;
+      // Look up desc from postsMfgList if available, else build it
+      const entry = postsMfgList.find(e => e.sku === sku);
+      const desc = entry?.desc || `Post | ${railCode === 'CBL' ? 'Cable' : railCode === 'GLS' ? 'Glass' : 'Picket'} | ${mountCode === 'FM' ? 'Fascia Mount' : 'Surface Mount'} | ${p.key.charAt(0).toUpperCase()+p.key.slice(1)} - ${h}" | ${isBlack ? 'Black' : 'Custom Color'}`;
+      return { type: p.key, typeCode: p.typeCode, qty: p.qty, sku, desc, mountCode, railCode, h, colorCode };
+    });
+};
+
 const calcBOM = (order) => {
   const {
     lineQty=0, stairQty=0, cornerQty=0,
@@ -32714,7 +32749,18 @@ const Orders = ({data, setData}) => {
                 <td style={{textAlign:'center',color:o.cornerQty>0?'var(--txt)':'var(--muted)'}}>{o.cornerQty||'-'}</td>
                 <td style={{textAlign:'center',color:o.topRailQty>0?'var(--txt)':'var(--muted)'}}>{o.topRailQty||'-'}</td>
                 <td style={{fontSize:10,color:'var(--muted)',maxWidth:120,overflow:'auto',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={o.lengths||''}>{o.lengths||'-'}</td>
-                <td style={{fontSize:11,whiteSpace:'nowrap'}}>{o.color||'-'}</td>
+                <td style={{fontSize:11,whiteSpace:'nowrap'}}>
+                  <div>{o.color||'-'}</div>
+                  {(()=>{
+                    const skus = derivePostSKUs(o, data.postsMfgList||[]);
+                    if (!skus.length) return null;
+                    return <div style={{display:'flex',flexWrap:'wrap',gap:2,marginTop:3}}>
+                      {skus.map(s=>(
+                        <span key={s.sku} title={s.desc} style={{background:'rgba(0,229,255,.1)',border:'1px solid rgba(0,229,255,.25)',borderRadius:3,padding:'1px 5px',fontSize:9,fontFamily:'monospace',color:'var(--acc)',fontWeight:700,whiteSpace:'nowrap'}}>{s.sku}</span>
+                      ))}
+                    </div>;
+                  })()}
+                </td>
                 <td>
                   <div style={{display:'flex',flexDirection:'column',gap:2}}>
                     <select value={o.status} onChange={e=>{
@@ -32842,6 +32888,23 @@ const Orders = ({data, setData}) => {
             <Field label="Stair Posts"><input type="number" min="0" value={form.stairQty||''} onChange={e=>setForm(f=>({...f,stairQty:+e.target.value}))}/></Field>
             <Field label="Corner Posts"><input type="number" min="0" value={form.cornerQty||''} onChange={e=>setForm(f=>({...f,cornerQty:+e.target.value}))}/></Field>
           </div>
+          {/* Derived SKUs */}
+          {(()=>{
+            const skus = derivePostSKUs(form, data.postsMfgList||[]);
+            if (!skus.length) return null;
+            return <div style={{background:'rgba(0,229,255,.06)',border:'1px solid rgba(0,229,255,.2)',borderRadius:6,padding:'8px 12px',marginBottom:10}}>
+              <div style={{fontSize:9,fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--acc)',marginBottom:6}}>Derived Post SKUs</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                {skus.map(s=>(
+                  <div key={s.sku} style={{background:'var(--card2)',border:'1px solid var(--border2)',borderRadius:4,padding:'4px 10px'}}>
+                    <div style={{fontFamily:'monospace',fontSize:11,fontWeight:700,color:'var(--acc)'}}>{s.sku}</div>
+                    <div style={{fontSize:9,color:'var(--muted)',marginTop:1}}>{s.desc}</div>
+                    <div style={{fontSize:9,color:'var(--dim)',marginTop:1}}>Qty: {s.qty}</div>
+                  </div>
+                ))}
+              </div>
+            </div>;
+          })()}
           {/* Top Rail - Deck Top & Stair Top = same material (RM-006 1x2 tube) */}
           <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:6}}>Top Rail Pieces <span style={{color:'var(--acc)',fontWeight:400,textTransform:'none',letterSpacing:0}}>- Deck Top + Stair Top = same 1×2 aluminum</span></div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:6}}>
@@ -35827,9 +35890,9 @@ ${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware'
         <div>Maisy Railing · Printed ${printedDate} · CONFIDENTIAL — SHOP USE ONLY</div>
       </div>`;
 
-    const buildPostPage = (type, qty) => {
+    const buildPostPage = (type, qty, matId, matDesc) => {
       const typeLabel = type === 'line' ? 'Line Post' : type === 'stair' ? 'Stair Post' : 'Corner Post';
-      const matId = `P-${railAbbr}-${mountAbbr}-${type.toUpperCase()}-${height}`;
+      matId = matId || `P-${railAbbr}-${mountAbbr}-${type.toUpperCase()}-${height}`;
       const holes = holeCount(type);
       const fixtures = isFascia
         ? 'Saw Stop, Cable Hole Template, Fascia Hole Template, Weld Fixture - Post'
@@ -35876,7 +35939,8 @@ ${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware'
         </div>
 
         <div style="margin-bottom:16px">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:10px">BUILD SPECIFICATIONS — ${matId}</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:2px">BUILD SPECIFICATIONS — ${matId}</div>
+          ${matDesc ? `<div style="font-size:10px;color:#9ca3af;margin-bottom:8px">${matDesc}</div>` : '<div style="margin-bottom:8px"></div>'}
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
               <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Raw Stock</div>
@@ -36027,13 +36091,9 @@ ${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware'
 
       ${pageFooter('Hardware & Assembly Pack')}`;
 
-    const postTypes = [
-      {type:'line',   qty: order.lineQty||0},
-      {type:'stair',  qty: order.stairQty||0},
-      {type:'corner', qty: order.cornerQty||0},
-    ].filter(p => p.qty > 0);
+    const postTypes = derivePostSKUs(order, data.postsMfgList||[]);
 
-    const allPages = [...postTypes.map(p => buildPostPage(p.type, p.qty)), hardwarePage];
+    const allPages = [...postTypes.map(p => buildPostPage(p.type, p.qty, p.sku, p.desc)), hardwarePage];
     const pagesToRender = autoPrint ? allPages : (allPages.length > 0 ? [allPages[0]] : [hardwarePage]);
 
     const html = `<!DOCTYPE html>
