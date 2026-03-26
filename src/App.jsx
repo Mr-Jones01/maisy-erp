@@ -34342,7 +34342,8 @@ const OrderImport = ({data, setData}) => {
   const [checking, setChecking] = useState(false);
   const [parsing, setParsing] = useState(null);
   const [draftModal, setDraftModal] = useState(null);
-  const [aiApiKey, setAiApiKey] = useState(() => { try { return sessionStorage.getItem('maisy_ai_key')||''; } catch(e){ return ''; } });
+  const [aiApiKey, setAiApiKey] = useState(() => { try { return localStorage.getItem('maisy_ai_key')||''; } catch(e){ return ''; } });
+  const saveAiKey = (val) => { setAiApiKey(val); try { if(val) localStorage.setItem('maisy_ai_key', val); else localStorage.removeItem('maisy_ai_key'); } catch(e){} };
   const [forceModal, setForceModal] = useState(false);
   const [draftForm, setDraftForm] = useState({});
   const [fileInput, setFileInput] = useState(null);
@@ -35129,8 +35130,21 @@ Return ONLY the JSON object, no other text.`;
             <div style={{fontSize:10,color:'var(--muted)',marginTop:4}}>All subfolders (monthly) scanned automatically. 534 order files indexed.</div>
           </div>
           <Field label="Anthropic API Key (for PDF/Image parsing)" style={{marginBottom:14}}>
-            <input type="password" value={aiApiKey} onChange={e=>{setAiApiKey(e.target.value);try{sessionStorage.setItem('maisy_ai_key',e.target.value);}catch(ex){}}} placeholder="sk-ant-... (required to parse PDFs and images)" style={{fontFamily:'monospace',fontSize:11}}/>
-            <div style={{fontSize:9,color:'var(--muted)',marginTop:3}}>Session only — not saved to disk. Re-enter after refresh. Excel files parse without a key.</div>
+            {aiApiKey
+              ? <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <div style={{flex:1,background:'rgba(16,185,129,.08)',border:'1px solid rgba(16,185,129,.25)',borderRadius:5,padding:'6px 10px',fontFamily:'monospace',fontSize:11,color:'var(--ok)'}}>
+                    ✓ sk-ant-···{aiApiKey.slice(-6)} <span style={{color:'var(--muted)',fontSize:9,fontWeight:400}}>saved</span>
+                  </div>
+                  <button className="btn btn-xs" style={{border:'1px solid var(--err)',color:'var(--err)',fontSize:10}} onClick={()=>{ if(window.confirm('Remove saved API key?')) saveAiKey(''); }}>Remove</button>
+                </div>
+              : <div style={{display:'flex',gap:8}}>
+                  <input type="password" placeholder="sk-ant-... paste once, stored permanently" style={{flex:1,fontFamily:'monospace',fontSize:11}}
+                    onBlur={e=>{ if(e.target.value.startsWith('sk-ant-')) saveAiKey(e.target.value); e.target.value=''; }}
+                    onKeyDown={e=>{ if(e.key==='Enter' && e.target.value.startsWith('sk-ant-')){ saveAiKey(e.target.value); e.target.value=''; } }}
+                  />
+                </div>
+            }
+            <div style={{fontSize:9,color:'var(--muted)',marginTop:3}}>Stored in localStorage — survives refreshes and updates. Only the last 6 chars shown. Required to parse PDFs/images; Excel works without it.</div>
           </Field>
           <div style={{marginTop:10,display:'flex',alignItems:'center',gap:10}}>
             <input type="checkbox" id="autoCheck" checked={od.autoCheck!==false} onChange={e=>saveOD({autoCheck:e.target.checked})}/>
