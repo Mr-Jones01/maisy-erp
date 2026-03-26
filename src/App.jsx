@@ -35739,6 +35739,315 @@ ${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware'
     setTimeout(() => win.print(), 800);
   };
 
+  const printTraveler = (order, autoPrint = true) => {
+    const bom = order.bom && order.bom.length > 0 ? order.bom : calcBOM(order);
+    const printedDate = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+    const isOverdue = order.dueDate && order.dueDate < now() && !['Completed','Shipped','Invoiced','Cancelled'].includes(order.status);
+
+    const mountAbbr = (order.mountType||'').toLowerCase().includes('fascia') ? 'FA' : 'SM';
+    const isFascia = mountAbbr === 'FA';
+    const height = parseInt(order.height) || 42;
+    const railAbbr = (() => {
+      const rt = (order.railType||'').toLowerCase();
+      if (rt.includes('cable')) return 'CBL';
+      if (rt.includes('glass')) return 'GLS';
+      if (rt.includes('picket')) return 'PKT';
+      return 'CBL';
+    })();
+
+    const cutLength = isFascia
+      ? (height === 36 ? '42 7/8"' : '47 1/2"')
+      : (height === 36 ? '34 5/8"' : '40 5/8"');
+    const mfgLength = isFascia ? '47 3/4"' : cutLength;
+
+    const holeCount = (type) => {
+      if (type === 'stair') return height === 36 ? 10 : 12;
+      return height === 36 ? 11 : 13;
+    };
+
+    const stations = ['CNC / Cutting','Drilling','Welding','Grind & Finish','Powder Coat Prep','Powder Coat','Assembly','QC & Pack'];
+    const stationStrip = `
+      <div style="margin-top:18px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:10px">PRODUCTION STATION SIGN-OFF</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          ${stations.map(s => `
+            <div style="border:1.5px solid #d1d5db;border-radius:5px;padding:10px 8px;text-align:center">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#374151;margin-bottom:8px">${s}</div>
+              <div style="width:32px;height:32px;border:2px solid #9ca3af;border-radius:4px;margin:0 auto 6px"></div>
+              <div style="font-size:9px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:4px">Initial: _______</div>
+              <div style="font-size:8px;color:#9ca3af;margin-top:3px">Date: _________</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+
+    const pageHeader = (subtitle) => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a1a1a;padding-bottom:14px;margin-bottom:18px">
+        <div>
+          <div style="font-size:20px;font-weight:900;letter-spacing:.04em;text-transform:uppercase">🏗 MAISY RAILING</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Hayden, Idaho · Custom Aluminum Railing</div>
+          <div style="margin-top:8px;font-size:20px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#1a1a1a">JOB TRAVELER — <span style="color:#374151">${subtitle}</span></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:28px;font-weight:900;font-family:monospace;color:#1a1a1a">${order.id}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:3px">Customer: <strong>${order.customer||'-'}</strong></div>
+          <div style="font-size:11px;color:#6b7280">Project: <strong>${order.project||'-'}</strong></div>
+          <div style="font-size:11px;color:#6b7280">PO#: <strong>${order.po||'-'}</strong></div>
+          ${order.dueDate ? `<div style="font-size:11px;font-weight:700;color:${isOverdue?'#dc2626':'#374151'};margin-top:3px">Due: ${order.dueDate}${isOverdue?' ⚠ OVERDUE':''}</div>` : ''}
+          <div style="margin-top:6px;background:#1a1a1a;color:#fff;padding:4px 12px;border-radius:3px;font-size:14px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;display:inline-block">${order.color||'COLOR TBD'}</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:3px">Printed: ${printedDate}</div>
+        </div>
+      </div>`;
+
+    const blackHardwareWarning = (() => {
+      const n = (order.notes||'').toLowerCase();
+      if (n.includes('black hardware')||n.includes('black cable')||n.includes('all black')||n.includes('blk hardware')||n.includes('black swage')) {
+        return `<div style="margin-top:10px;background:#7f1d1d;color:#fca5a5;border:2px solid #ef4444;border-radius:6px;padding:12px 16px;font-weight:900;font-size:13px;letter-spacing:.06em;text-transform:uppercase">⚠ BLACK HARDWARE — Use black cable, black swages, black angle washers per order notes</div>`;
+      }
+      return '';
+    })();
+
+    const pageFooter = (label) => `
+      <div style="border-top:2px solid #1a1a1a;margin-top:18px;padding-top:8px;display:flex;justify-content:space-between;font-size:9px;color:#9ca3af">
+        <div>Order ${order.id} · ${order.customer||''} · ${label}</div>
+        <div>Maisy Railing · Printed ${printedDate} · CONFIDENTIAL — SHOP USE ONLY</div>
+      </div>`;
+
+    const buildPostPage = (type, qty) => {
+      const typeLabel = type === 'line' ? 'Line Post' : type === 'stair' ? 'Stair Post' : 'Corner Post';
+      const matId = `P-${railAbbr}-${mountAbbr}-${type.toUpperCase()}-${height}`;
+      const holes = holeCount(type);
+      const fixtures = isFascia
+        ? 'Saw Stop, Cable Hole Template, Fascia Hole Template, Weld Fixture - Post'
+        : 'Saw Stop, Cable Hole Template, Weld Fixture - Post';
+      const sticksNeeded = Math.ceil(qty / 5);
+
+      const postBomRows = [
+        `<tr style="border-bottom:1px solid #e5e7eb">
+          <td style="padding:7px 10px;font-size:11px;font-weight:600">Tube · Square · Aluminum · 2×2×1/8×20ft</td>
+          <td style="padding:7px 10px;font-size:10px;color:#6b7280">TUB-SQ-ALU-2x2x20</td>
+          <td style="padding:7px 10px;text-align:center;font-size:13px;font-weight:700">${sticksNeeded}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">sticks</td>
+          <td style="padding:7px 10px;text-align:center"><div style="width:16px;height:16px;border:2px solid #d1d5db;border-radius:3px;display:inline-block"></div></td>
+        </tr>`,
+        `<tr style="border-bottom:1px solid #e5e7eb;background:#f9fafb">
+          <td style="padding:7px 10px;font-size:11px;font-weight:600">Top Plate</td>
+          <td style="padding:7px 10px;font-size:10px;color:#6b7280">PLT-TOP</td>
+          <td style="padding:7px 10px;text-align:center;font-size:13px;font-weight:700">${qty}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">ea</td>
+          <td style="padding:7px 10px;text-align:center"><div style="width:16px;height:16px;border:2px solid #d1d5db;border-radius:3px;display:inline-block"></div></td>
+        </tr>`,
+        !isFascia ? `<tr style="border-bottom:1px solid #e5e7eb">
+          <td style="padding:7px 10px;font-size:11px;font-weight:600">Surface Mount Plate</td>
+          <td style="padding:7px 10px;font-size:10px;color:#6b7280">PLT-SM</td>
+          <td style="padding:7px 10px;text-align:center;font-size:13px;font-weight:700">${qty}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">ea</td>
+          <td style="padding:7px 10px;text-align:center"><div style="width:16px;height:16px;border:2px solid #d1d5db;border-radius:3px;display:inline-block"></div></td>
+        </tr>` : ''
+      ].join('');
+
+      return `
+        ${pageHeader(typeLabel)}
+
+        <div style="background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:5px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-bottom:2px">Powder Coat Color</div>
+            <div style="font-size:22px;font-weight:900;letter-spacing:.04em">${order.color||'NOT SPECIFIED'}</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;opacity:.7;margin-bottom:2px;letter-spacing:.1em;text-transform:uppercase">QTY TO BUILD</div>
+            <div style="font-size:56px;font-weight:900;line-height:1">${qty}</div>
+            <div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.08em">${typeLabel}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:10px">BUILD SPECIFICATIONS — ${matId}</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Raw Stock</div>
+              <div style="font-size:12px;font-weight:700">Tube · Square · Aluminum</div>
+              <div style="font-size:11px;color:#374151">2 × 2 × 1/8 × 20 ft</div>
+            </div>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Cut Length</div>
+              <div style="font-size:20px;font-weight:900">${cutLength}</div>
+            </div>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Mfg Length</div>
+              <div style="font-size:20px;font-weight:900">${mfgLength}</div>
+            </div>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Hole Count</div>
+              <div style="font-size:20px;font-weight:900">${holes} <span style="font-size:12px;font-weight:600">holes</span></div>
+            </div>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Yield</div>
+              <div style="font-size:20px;font-weight:900">5 <span style="font-size:12px;font-weight:600">pcs / stick</span></div>
+            </div>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Sticks Needed</div>
+              <div style="font-size:20px;font-weight:900">${sticksNeeded} <span style="font-size:12px;font-weight:600">sticks</span></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Tooling</div>
+              <div style="font-size:11px;font-weight:600">Band Saw · Drill Press (5/16" bit) · TIG Welder</div>
+            </div>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px">
+              <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px">Fixtures</div>
+              <div style="font-size:11px;font-weight:600">${fixtures}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:8px">PARTS PICK LIST — ${typeLabel}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:#1a1a1a;color:#fff">
+                <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Item / Material</th>
+                <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Material ID</th>
+                <th style="padding:7px 10px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Qty</th>
+                <th style="padding:7px 10px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Unit</th>
+                <th style="padding:7px 10px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">✓ Pulled</th>
+              </tr>
+            </thead>
+            <tbody>${postBomRows}</tbody>
+          </table>
+        </div>
+
+        ${stationStrip}
+
+        ${order.notes ? `<div style="margin-top:14px;border:1px solid #e5e7eb;border-radius:5px;padding:10px 12px;font-size:11px;background:#fffbeb"><strong>Notes:</strong> ${order.notes}</div>` : ''}
+        ${blackHardwareWarning}
+
+        ${pageFooter(`${typeLabel} Traveler`)}`;
+    };
+
+    const powderCoat = bom.find(i => i.isPowder);
+    const railPieces = [
+      (order.rail8ft||0)>0        ? `${order.rail8ft}× 8ft deck`      : '',
+      (order.rail12ft||0)>0       ? `${order.rail12ft}× 12ft deck`     : '',
+      (order.rail20ft||0)>0       ? `${order.rail20ft}× 20ft deck`     : '',
+      (order.stairRail8ft||0)>0   ? `${order.stairRail8ft}× 8ft stair`  : '',
+      (order.stairRail12ft||0)>0  ? `${order.stairRail12ft}× 12ft stair` : '',
+      (order.stairRail20ft||0)>0  ? `${order.stairRail20ft}× 20ft stair` : '',
+    ].filter(Boolean);
+
+    const allHardwareBomRows = bom.filter(i => !i.isPowder).map(item => {
+      const inv = (data.inventory||[]).find(i => i.id === item.inventoryId);
+      const onHand = inv?.qty || 0;
+      const ok = onHand >= item.qty;
+      return `
+        <tr style="border-bottom:1px solid #e5e7eb">
+          <td style="padding:7px 10px;font-size:11px;font-weight:600">${item.name}</td>
+          <td style="padding:7px 10px;font-size:10px;color:#6b7280">${item.inventoryId||'-'}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:13px;font-weight:700">${item.qty}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280">${item.unit||'-'}</td>
+          <td style="padding:7px 10px;text-align:center;font-size:11px;font-weight:700;color:${ok?'#065f46':'#991b1b'}">${onHand}</td>
+          <td style="padding:7px 10px;text-align:center"><div style="width:16px;height:16px;border:2px solid #d1d5db;border-radius:3px;display:inline-block"></div></td>
+        </tr>`;
+    }).join('');
+
+    const hardwarePage = `
+      ${pageHeader('HARDWARE & ASSEMBLY PACK')}
+
+      ${railPieces.length > 0 ? `
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:8px">TOP RAIL — Raw Stock: Tube · Square · Aluminum · 1×2×1/8×20ft</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${railPieces.map(r => `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:8px 14px;font-size:14px;font-weight:700">${r}</div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:8px">POWDER COAT</div>
+        <div style="background:#1a1a1a;color:#fff;padding:14px 18px;border-radius:6px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;align-items:center">
+          <div>
+            <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:3px">Color</div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:.04em">${order.color||'NOT SPECIFIED'}</div>
+            ${powderCoat&&powderCoat.inventoryId!=='PC-UNKNOWN' ? `<div style="font-size:10px;opacity:.6;margin-top:3px">${powderCoat.inventoryId}</div>` : '<div style="font-size:10px;color:#f87171;margin-top:3px">⚠ Color not matched to inventory — verify manually</div>'}
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;opacity:.7;margin-bottom:3px">Powder Needed</div>
+            <div style="font-size:36px;font-weight:900">${powderCoat ? powderCoat.qty : '-'}</div>
+            <div style="font-size:9px;opacity:.7">lbs</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;opacity:.7;margin-bottom:3px">On Hand</div>
+            ${(()=>{
+              if (!powderCoat||powderCoat.inventoryId==='PC-UNKNOWN') return '<div style="font-size:18px;color:#f87171;font-weight:700">⚠ Check</div>';
+              const inv = (data.inventory||[]).find(i => i.id === powderCoat.inventoryId);
+              const oh = inv?.qty||0;
+              const ok = oh >= (powderCoat.qty||0);
+              return `<div style="font-size:36px;font-weight:900;color:${ok?'#86efac':'#f87171'}">${oh}</div><div style="font-size:9px;opacity:.7">lbs</div>${!ok?'<div style="font-size:10px;color:#f87171;font-weight:700;margin-top:4px">⚠ SHORT</div>':''}`;
+            })()}
+          </div>
+        </div>
+        ${powderCoat ? `<div style="font-size:10px;color:#6b7280;margin-top:4px">${powderCoat.note||''}</div>` : ''}
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:8px">FULL ORDER BOM — PICK LIST</div>
+        ${allHardwareBomRows ? `<table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:#1a1a1a;color:#fff">
+              <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Item / Material</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Material ID</th>
+              <th style="padding:7px 10px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Qty</th>
+              <th style="padding:7px 10px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Unit</th>
+              <th style="padding:7px 10px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">On Hand</th>
+              <th style="padding:7px 10px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">✓ Pulled</th>
+            </tr>
+          </thead>
+          <tbody>${allHardwareBomRows}</tbody>
+        </table>` : '<div style="color:#6b7280;font-size:11px;padding:10px">No hardware BOM items found — ensure order has a stored BOM.</div>'}
+      </div>
+
+      ${stationStrip}
+
+      ${order.notes ? `<div style="margin-top:14px;border:1px solid #e5e7eb;border-radius:5px;padding:10px 12px;font-size:11px;background:#fffbeb"><strong>Special Instructions:</strong> ${order.notes}</div>` : ''}
+      ${blackHardwareWarning}
+
+      ${pageFooter('Hardware & Assembly Pack')}`;
+
+    const postTypes = [
+      {type:'line',   qty: order.lineQty||0},
+      {type:'stair',  qty: order.stairQty||0},
+      {type:'corner', qty: order.cornerQty||0},
+    ].filter(p => p.qty > 0);
+
+    const allPages = [...postTypes.map(p => buildPostPage(p.type, p.qty)), hardwarePage];
+    const pagesToRender = autoPrint ? allPages : (allPages.length > 0 ? [allPages[0]] : [hardwarePage]);
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Shop Traveler — ${order.id}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;background:#fff}
+  .traveler-page{padding:24px}
+  @media print{
+    .traveler-page{padding:16px;page-break-after:always}
+    .traveler-page:last-child{page-break-after:avoid}
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+${pagesToRender.map(p => `<div class="traveler-page">${p}</div>`).join('')}
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'width=1000,height=800');
+    win.document.write(html);
+    win.document.close();
+    if (autoPrint) setTimeout(() => win.print(), 800);
+  };
+
   return (
     <div className="fade-up">
       <div className="section-hd">
@@ -35803,9 +36112,11 @@ ${(()=>{ const n=(order.notes||'').toLowerCase(); if(n.includes('black hardware'
                       : <span style={{color:'var(--dim)',fontSize:11}}>-</span>}
                   </td>
                   <td>
-                    <button className="btn btn-p btn-sm" onClick={()=>printWO(o)}>
-                      🖨 Print Work Order
-                    </button>
+                    <div style={{display:'flex',gap:4,flexWrap:'nowrap'}}>
+                      <button className="btn btn-p btn-sm" onClick={()=>printWO(o)} title="Print Work Order">🖨 WO</button>
+                      <button className="btn btn-sm" style={{background:'none',border:'1px solid var(--acc)',color:'var(--acc)'}} onClick={()=>printTraveler(o,false)} title="Preview traveler (first page)">👁 Traveler</button>
+                      <button className="btn btn-p btn-sm" onClick={()=>printTraveler(o,true)} title="Print all traveler pages">🖨 Traveler</button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -38882,7 +39193,7 @@ if(typeof window !== 'undefined' && !window.XLSX && !window.__xlsxLoading) {
   document.head.appendChild(s);
 }
 
-const APP_VERSION = '6.10';
+const APP_VERSION = typeof __BUILD_ID__ !== 'undefined' ? __BUILD_ID__ : '6.10';
 
 export default function MaisyERP() {
   const [user,  setUser]  = useState(()=>{
